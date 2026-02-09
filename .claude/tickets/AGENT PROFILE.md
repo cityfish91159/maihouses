@@ -1579,9 +1579,11 @@ Trigger `trg_agents_trust_score` 會在 UPDATE 時自動執行 `fn_calculate_tru
    - 移除 `getTrustBreakdown` 與 `trustBreakdown`，避免假拆分誤導（12-A）
    - Tooltip 改為說明型內容：顯示 `信任分數 N / 100`、三項指標、更新說明
    - 清理未使用 icon import：`CheckCircle`、`FileText`
+   - 補強鍵盤可用性：`Space/Enter` 切換時 `preventDefault`，`Escape` 可關閉；新增 `aria-expanded` + `aria-describedby`
 
 2. `src/components/__tests__/AgentTrustCard.memo.test.tsx`
-   - 更新 Tooltip 測試斷言，改驗證說明型文案（`綜合以下指標自動計算：`、`平台實名認證`）
+   - 更新 Tooltip 測試斷言，改驗證說明型文案並防止舊假拆分文案回歸
+   - 新增鍵盤互動測試：`Space` 觸發 `preventDefault`、`Escape` 關閉 Tooltip
 
 3. `supabase/migrations/20260209_fix_mh100001_agent_seed_metrics.sql`（新增）
    - 補齊 seed agent 指標：`service_rating=4.8`、`review_count=32`、`completed_cases=45`、`encouragement_count=156`、`joined_at=NOW()-4 years`

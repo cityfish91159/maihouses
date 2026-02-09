@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo, type CSSProperties } from 'react';
+import React, { useState, useMemo, memo, useId, type CSSProperties } from 'react';
 import {
   Shield,
   ThumbsUp,
@@ -28,6 +28,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
 }) {
   const [showTrustTooltip, setShowTrustTooltip] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const trustTooltipId = useId();
 
   const isTestEnv = import.meta.env.MODE === 'test' || import.meta.env.VITEST;
   const shouldFetchProfile = Boolean(agent.id) && !isDemo && !isTestEnv;
@@ -138,12 +139,21 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
               className="relative flex cursor-pointer items-center gap-1.5"
               role="button"
               tabIndex={0}
+              aria-expanded={showTrustTooltip}
+              aria-describedby={showTrustTooltip ? trustTooltipId : undefined}
+              aria-label={`信任分數 ${trustScore}，顯示計算說明`}
               onMouseEnter={() => setShowTrustTooltip(true)}
               onMouseLeave={() => setShowTrustTooltip(false)}
               onFocus={() => setShowTrustTooltip(true)}
               onBlur={() => setShowTrustTooltip(false)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setShowTrustTooltip(!showTrustTooltip);
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowTrustTooltip((prev) => !prev);
+                }
+                if (e.key === 'Escape') {
+                  setShowTrustTooltip(false);
+                }
               }}
             >
               <div className="flex size-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
@@ -157,6 +167,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
               {/* Trust Score Tooltip */}
               {showTrustTooltip && (
                 <div
+                  id={trustTooltipId}
                   role="tooltip"
                   className="absolute bottom-full left-0 z-10 mb-2 w-52 rounded-lg bg-slate-800 p-3 text-xs text-white shadow-xl"
                 >

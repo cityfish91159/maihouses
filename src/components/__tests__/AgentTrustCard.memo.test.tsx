@@ -7,7 +7,7 @@
  * 4. useMemo 計算的 agentMetrics 快取
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, createEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactElement } from 'react';
 import { AgentTrustCard } from '../AgentTrustCard';
@@ -504,12 +504,32 @@ describe('AgentTrustCard React.memo Performance', () => {
       // 驗證 tooltip 顯示
       expect(screen.getByText('綜合以下指標自動計算：')).toBeInTheDocument();
       expect(screen.getByText('平台實名認證')).toBeInTheDocument();
+      expect(screen.queryByText('信任分數構成')).not.toBeInTheDocument();
+      expect(screen.queryByText('回覆速度')).not.toBeInTheDocument();
 
       // 觸發父組件重渲染
       fireEvent.click(getByText('Increment'));
 
       // 因為 memo，組件不應重渲染，tooltip 應保持顯示
       // 注意：實際上 tooltip 是組件內部狀態，memo 會保持內部狀態
+    });
+
+    it('應該支援鍵盤切換 tooltip 並處理 Escape 關閉', () => {
+      const agent = createMockAgent();
+      const { container } = renderWithClient(
+        <AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />
+      );
+
+      const trustScoreDiv = container.querySelector('[role="button"]') as HTMLElement;
+      expect(trustScoreDiv).toBeInTheDocument();
+
+      const spaceKeyDown = createEvent.keyDown(trustScoreDiv, { key: ' ' });
+      fireEvent(trustScoreDiv, spaceKeyDown);
+      expect(spaceKeyDown.defaultPrevented).toBe(true);
+      expect(screen.getByRole('tooltip')).toBeInTheDocument();
+
+      fireEvent.keyDown(trustScoreDiv, { key: 'Escape' });
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
     });
   });
 
