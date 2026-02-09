@@ -8,6 +8,7 @@ import { logger } from '../../lib/logger';
 import { calcProgressWidthClass } from '../../constants/progress';
 import { StepCard } from '../../components/Assure/StepCard';
 import { StepContent } from '../../components/Assure/StepContent';
+import { ReviewPromptModal } from '../../components/Assure/ReviewPromptModal';
 
 /** 房仲代付金額（新台幣） */
 const AGENT_PAYMENT_AMOUNT = 2000;
@@ -43,6 +44,9 @@ export default function AssureDetail() {
   const [pendingAction, setPendingAction] = useState<null | 'pay' | 'reset'>(null);
   const [hasDismissedDataModal, setHasDismissedDataModal] = useState(false);
 
+  // #13b: 評價提示 Modal
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
+
   // Note: Token handling and initialization is now managed by useTrustRoom hook
   // We just need to handle the "No Token" state in the UI
 
@@ -53,11 +57,20 @@ export default function AssureDetail() {
       setInputBuffer('');
       setSupplementInput('');
     }
+    return success;
   };
 
   const submitAgent = (step: string) =>
     handleAction('submit', { step, data: { note: inputBuffer } });
-  const confirmStep = (step: string) => handleAction('confirm', { step, note: inputBuffer });
+  const confirmStep = async (step: string) => {
+    const success = await handleAction('confirm', { step, note: inputBuffer });
+    // #13b: Step 2 確認成功後 500ms 彈出評價提示
+    if (success && step === '2' && role === 'buyer') {
+      setTimeout(() => {
+        setShowReviewPrompt(true);
+      }, 500);
+    }
+  };
   const pay = () => {
     if (pendingAction !== 'pay') {
       setPendingAction('pay');
@@ -357,6 +370,21 @@ export default function AssureDetail() {
           onSubmit={handleDataSubmit}
           onSkip={handleDataSkip}
           isSubmitting={isSubmittingData}
+        />
+      )}
+
+      {/* #13b: 評價提示 Modal */}
+      {showReviewPrompt && tx && caseId && (
+        <ReviewPromptModal
+          open={showReviewPrompt}
+          agentId={localStorage.getItem('uag_last_aid') || ''}
+          agentName={tx.agentName || ''}
+          trustCaseId={caseId}
+          onClose={() => setShowReviewPrompt(false)}
+          onSubmitted={() => {
+            logger.info('Review submitted successfully from Assure Detail');
+            toast.success('評價已送出！');
+          }}
         />
       )}
     </div>

@@ -79,12 +79,8 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
         </div>
       </div>
       <div className={styles['uag-cluster']} id="radar-container">
-        <div
-          className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-outer']}`}
-        ></div>
-        <div
-          className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-inner']}`}
-        ></div>
+        <div className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-outer']}`}></div>
+        <div className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-inner']}`}></div>
         <div className={styles['uag-cluster-live-badge']}>
           <span className={styles['uag-live-dot']}></span>
           <span style={{ fontWeight: 700 }}>Live 監控中</span>
@@ -139,9 +135,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
                 {lead.grade}
               </div>
               <div className={styles['uag-bubble-content']}>
-                <div className={styles['uag-bubble-id']}>
-                  {leadLabels[lead.id] || lead.grade}
-                </div>
+                <div className={styles['uag-bubble-id']}>{leadLabels[lead.id] || lead.grade}</div>
                 <div className={styles['uag-bubble-intent']}>{lead.intent}%</div>
               </div>
               <div className={styles['uag-bubble-label']}>{lead.prop}</div>

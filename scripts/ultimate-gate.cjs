@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 'use strict';
 
 const { spawnSync } = require('child_process');
@@ -235,3 +235,4 @@ checkBundleSize();
 const totalDuration = ((Date.now() - totalStart) / 1000).toFixed(2);
 console.log(`\n${C.green}${C.bold}ALL CHECKS PASSED${C.reset}`);
 console.log(`${C.gray}Total duration: ${totalDuration}s${C.reset}\n`);
+

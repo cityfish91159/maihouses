@@ -126,6 +126,20 @@ const renderWithClient = (ui: ReactElement) => {
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 };
 
+const setViewport = (width: number, height: number) => {
+  Object.defineProperty(window, 'innerWidth', {
+    configurable: true,
+    writable: true,
+    value: width,
+  });
+  Object.defineProperty(window, 'innerHeight', {
+    configurable: true,
+    writable: true,
+    value: height,
+  });
+  window.dispatchEvent(new Event('resize'));
+};
+
 describe('PropertyDetailPage header branding (#11)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -140,7 +154,7 @@ describe('PropertyDetailPage header branding (#11)', () => {
   });
 
   it('uses branded logo link and navigation semantics', async () => {
-    const { container } = renderWithClient(
+    renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
         <PropertyDetailPage />
       </MemoryRouter>
@@ -150,12 +164,11 @@ describe('PropertyDetailPage header branding (#11)', () => {
       expect(screen.getByText('Skyline B1-12')).toBeInTheDocument();
     });
 
-    const nav = container.querySelector('nav[aria-label]');
-    expect(nav).toBeTruthy();
-    expect(nav?.className).toContain('border-brand-100');
+    const nav = screen.getByRole('navigation', { name: '物件導覽' });
+    expect(nav.className).toContain('border-brand-100');
 
-    const logoLink = container.querySelector('a[href="/maihouses/"][aria-label]');
-    expect(logoLink).toBeTruthy();
+    const logoLink = screen.getByRole('link', { name: '回到邁房子首頁' });
+    expect(logoLink).toHaveAttribute('href', '/maihouses/');
   });
 
   it('renders property id status above gallery (outside header)', async () => {
@@ -169,7 +182,7 @@ describe('PropertyDetailPage header branding (#11)', () => {
       expect(screen.getByText('Skyline B1-12')).toBeInTheDocument();
     });
 
-    const nav = container.querySelector('nav[aria-label]');
+    const nav = screen.getByRole('navigation', { name: '物件導覽' });
     const propertyStatus = container.querySelector('[role="status"][aria-label*="MH-100001"]');
     expect(propertyStatus?.textContent).toContain('MH-100001');
     expect(propertyStatus?.getAttribute('aria-label')).toContain('MH-100001');
@@ -178,7 +191,7 @@ describe('PropertyDetailPage header branding (#11)', () => {
 
   it('clicking back button calls navigate with resolved target', async () => {
     const user = userEvent.setup();
-    const { container } = renderWithClient(
+    renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
         <PropertyDetailPage />
       </MemoryRouter>
@@ -189,14 +202,29 @@ describe('PropertyDetailPage header branding (#11)', () => {
     });
 
     const expectedTarget = resolvePropertyDetailBackTarget(window.history.length);
-    const backButton = container.querySelector('nav button[aria-label]');
-    expect(backButton).toBeTruthy();
-    await user.click(backButton as HTMLButtonElement);
+    const backButton = screen.getByRole('button', { name: '返回上一頁' });
+    await user.click(backButton);
     expect(mockNavigate).toHaveBeenCalledWith(expectedTarget);
   });
 
   it('resolves back target correctly for both history branches', () => {
     expect(resolvePropertyDetailBackTarget(1)).toBe('/maihouses/');
     expect(resolvePropertyDetailBackTarget(2)).toBe(-1);
+  });
+
+  it('has no horizontal overflow on 320px viewport', async () => {
+    setViewport(320, 568);
+    renderWithClient(
+      <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
+        <PropertyDetailPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Skyline B1-12')).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('navigation', { name: '物件導覽' })).toBeInTheDocument();
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   });
 });

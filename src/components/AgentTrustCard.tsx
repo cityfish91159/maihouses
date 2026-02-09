@@ -18,6 +18,7 @@ interface AgentTrustCardProps {
   isDemo?: boolean;
   onLineClick?: () => void;
   onCallClick?: () => void;
+  onReviewClick?: () => void;
 }
 
 export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function AgentTrustCard({
@@ -25,6 +26,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   isDemo = false,
   onLineClick,
   onCallClick,
+  onReviewClick,
 }) {
   const [showTrustTooltip, setShowTrustTooltip] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -223,13 +225,19 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
 
       {/* 經紀人績效指標 */}
       <div className="mt-4 grid grid-cols-3 gap-2 border-y border-border py-3">
-        <div className="text-center">
+        <button
+          onClick={onReviewClick}
+          className="cursor-pointer rounded-lg p-1 text-center transition-colors hover:bg-bg-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+          aria-label={`查看 ${agentMetrics.reviewCount} 則服務評價`}
+        >
           <div className="text-lg font-bold text-brand-700">
             {agentMetrics.serviceRating.toFixed(1)}
           </div>
           <div className="text-xs text-text-muted">服務評價</div>
-          <div className="text-xs text-text-muted">({agentMetrics.reviewCount})</div>
-        </div>
+          <div className="text-xs text-brand-600 underline decoration-dotted underline-offset-2">
+            ({agentMetrics.reviewCount})
+          </div>
+        </button>
         <div className="border-x border-border text-center">
           <div className="text-lg font-bold text-ink-900">{agentMetrics.completedCases}</div>
           <div className="text-xs text-text-muted">完成案件</div>

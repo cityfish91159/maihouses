@@ -44,7 +44,7 @@
 
 - [x] **#12** [P1] 信任分 Tooltip 修正 + seed 校正（2 項：12-A/B）✅ 2026-02-09
 - [x] **#13a** [P0] 房仲評價系統 — DB + API + 類型（4 項：13-A DB + 13-B API + 13-C 類型 + 13-I Hook）✅ 2026-02-09
-- [ ] **#13b** [P0] 房仲評價系統 — 前端組件 + 整合（5 項：13-D ReviewPromptModal + 13-E ReviewListModal + 13-F AgentTrustCard + 13-G DetailPage 整合 + 13-H Assure Step 2 觸發）
+- [x] **#13b** [P0] 房仲評價系統 — 前端組件 + 整合（5 項：13-D ReviewPromptModal + 13-E ReviewListModal + 13-F AgentTrustCard + 13-G DetailPage 整合 + 13-H Assure Step 2 觸發）✅ 2026-02-09
 - [ ] **#14a** [P1] 獲得鼓勵系統 — DB + API + 類型（4 項：14-A DB + 14-B API + 14-C 類型 + 14-E Hook）
 - [ ] **#14b** [P1] 獲得鼓勵系統 — 前端組件 + 整合（3 項：14-D 按讚 UI + 14-F DetailPage 整合 + 14-G 資料流）
 
@@ -1356,7 +1356,7 @@ npm run lint
 |------|------|------|
 | `PropertyDetailPage.tsx` L506 | Header border | `border-slate-100` → `border-brand-100` |
 | `PropertyDetailPage.tsx` L523 | 物件編號文字 | `text-[#003366]` → `text-brand-700` |
-| `PropertyDetailPage.tsx` L702 | 報告 FAB 漸層 | `from-[#003366] to-[#00A8E8]` → `from-brand-700 to-brand-600` |
+| `PropertyDetailPage.tsx` | 報告 FAB 漸層 | **不適用**（已由 #17 移除「生成報告」FAB） |
 
 #### 11-D. [P2] 無障礙補強
 
@@ -2069,12 +2069,57 @@ BuyerActions 點擊「確認送出」(Step 2)
 
 ### #13b 驗收標準
 
-- [ ] 前端：`ReviewPromptModal` 可選 1-5 星 + 評語（選填）+ 送出/稍後再說
-- [ ] 前端：`AgentReviewListModal` 顯示星級分佈長條圖 + 評價列表
-- [ ] 前端：`AgentTrustCard` 的 `(32)` 可點擊，有 hover 效果 + 虛線底線
-- [ ] 前端：Assure Step 2 確認成功後 500ms 彈出 `ReviewPromptModal`
-- [ ] 前端：Mock 模式 AgentReviewListModal 顯示假資料
-- [ ] typecheck + lint 通過
+- [x] 前端：`ReviewPromptModal` 可選 1-5 星 + 評語（選填）+ 送出/稍後再說
+- [x] 前端：`AgentReviewListModal` 顯示星級分佈長條圖 + 評價列表
+- [x] 前端：`AgentTrustCard` 的 `(32)` 可點擊，有 hover 效果 + 虛線底線
+- [x] 前端：Assure Step 2 確認成功後 500ms 彈出 `ReviewPromptModal`
+- [x] 前端：Mock 模式 AgentReviewListModal 顯示假資料
+- [x] typecheck + lint 通過
+
+### #13b 施工紀錄（2026-02-09）
+
+#### 修改檔案
+1. `src/components/Assure/ReviewPromptModal.tsx`（新增，13-D）
+   - 新增評價彈窗組件：支援 1-5 星選擇（hover 預覽）+ 500 字評語（選填）
+   - 送出按鈕：POST `/api/agent/reviews` + Zod 驗證 + 防重複提交 `isBusy` 狀態
+   - 稍後再說按鈕：直接關閉，不再提醒
+   - Modal backdrop click-to-close + 完整 ARIA 支援（`role="dialog"`, `aria-modal`, `aria-labelledby`）
+   - 錯誤處理：網路異常/系統錯誤分類提示
+
+2. `src/components/AgentReviewListModal.tsx`（新增，13-E）
+   - 新增評價列表 Modal：顯示平均分 + 星級分佈長條圖（純 CSS）+ 評價列表
+   - 支援分頁「載入更多」按鈕
+   - Mock 模式：顯示 3 筆假資料（林***/王***/陳***）
+   - 空狀態處理：`reviewCount=0` 顯示「尚無評價」
+   - 使用 `useQuery` + Zod safeParse 驗證 API 回應
+   - 完整 ARIA 支援
+
+3. `src/components/AgentTrustCard.tsx`（修改，13-F）
+   - 新增 `onReviewClick?: () => void` prop
+   - 服務評價區塊從靜態 `<div>` 改為可點擊 `<button>`
+   - 評價數 `(32)` 加上虛線底線（`underline decoration-dotted`）+ `text-brand-600` 色
+   - hover 效果：`hover:bg-bg-base` + `transition-colors`
+   - 完整 ARIA：`aria-label="查看 N 則服務評價"` + focus ring
+
+4. `src/pages/PropertyDetailPage.tsx`（修改，13-G）
+   - 新增 `reviewListOpen` state + `handleReviewClick` callback
+   - `<AgentTrustCard>` 傳入 `onReviewClick={handleReviewClick}`
+   - 新增 `<AgentReviewListModal>` 渲染，傳入 agent 資訊
+   - import `AgentReviewListModal`
+
+5. `src/pages/Assure/Detail.tsx`（修改，13-H）
+   - 新增 `showReviewPrompt` state
+   - 修改 `handleAction` 回傳 `success` boolean
+   - 修改 `confirmStep` 為 async，Step 2 確認成功後 500ms 觸發 `setShowReviewPrompt(true)`
+   - 新增 `<ReviewPromptModal>` 渲染，從 localStorage 取得 `agentId`（`uag_last_aid`）
+   - import `ReviewPromptModal`
+
+#### 驗證命令
+```bash
+npm run typecheck
+npm run lint
+npm test
+```
 
 ---
 

@@ -7,6 +7,7 @@ import { AgentTrustCard } from '../components/AgentTrustCard';
 import { TrustBadge } from '../components/TrustBadge';
 import { TrustServiceBanner } from '../components/TrustServiceBanner';
 import { Logo } from '../components/Logo/Logo';
+import { AgentReviewListModal } from '../components/AgentReviewListModal';
 import ErrorBoundary from '../app/ErrorBoundary';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal, type ContactChannel } from '../components/ContactModal';
@@ -88,6 +89,9 @@ export const PropertyDetailPage: React.FC = () => {
   const [callPanelOpen, setCallPanelOpen] = useState(false);
   const [linePanelSource, setLinePanelSource] = useState<'sidebar' | 'mobile_bar'>('sidebar');
   const [callPanelSource, setCallPanelSource] = useState<'sidebar' | 'mobile_bar'>('sidebar');
+
+  // #13b: 評價列表 Modal
+  const [reviewListOpen, setReviewListOpen] = useState(false);
 
   // S 級 VIP 攔截 Modal
   const [showVipModal, setShowVipModal] = useState(false);
@@ -466,6 +470,10 @@ export const PropertyDetailPage: React.FC = () => {
     openCallPanel('mobile_bar');
   }, [openCallPanel]);
 
+  const handleReviewClick = useCallback(() => {
+    setReviewListOpen(true);
+  }, []);
+
   const handleBackClick = useCallback(() => {
     const backTarget = resolvePropertyDetailBackTarget(window.history.length);
     if (typeof backTarget === 'number') {
@@ -693,6 +701,7 @@ export const PropertyDetailPage: React.FC = () => {
                   {...(property.isDemo !== undefined ? { isDemo: property.isDemo } : {})}
                   onLineClick={handleAgentLineClick}
                   onCallClick={handleAgentCallClick}
+                  onReviewClick={handleReviewClick}
                 />
 
                 {/* FE-2: 安心留痕徽章（僅當房仲開啟服務時顯示） */}
@@ -755,6 +764,14 @@ export const PropertyDetailPage: React.FC = () => {
           onLineClick={handleVipLineClick}
           onCallClick={handleVipCallClick}
           reason={vipReason}
+        />
+
+        {/* #13b: 評價列表 Modal */}
+        <AgentReviewListModal
+          open={reviewListOpen}
+          agentId={property.agent?.id || ''}
+          agentName={property.agent?.name || ''}
+          onClose={() => setReviewListOpen(false)}
         />
       </div>
     </ErrorBoundary>
