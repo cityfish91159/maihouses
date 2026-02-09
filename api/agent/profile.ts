@@ -28,6 +28,7 @@ const UpdateProfileSchema = z
     certifications: z.array(z.string().trim().min(1).max(50)).max(10).optional(),
     phone: z.union([z.string().trim().regex(/^09\d{8}$/), z.null()]).optional(),
     line_id: z.union([z.string().trim().min(1).max(50), z.null()]).optional(),
+    license_number: z.union([z.string().trim().min(5).max(100), z.null()]).optional(),
     joined_at: z.string().datetime().optional(),
   })
   .strict();
@@ -43,6 +44,9 @@ const AgentRowSchema = z.object({
   certifications: z.array(z.string()).nullable().optional(),
   phone: z.string().nullable().optional(),
   line_id: z.string().nullable().optional(),
+  license_number: z.string().nullable().optional(),
+  is_verified: z.boolean().nullable().optional(),
+  verified_at: z.string().nullable().optional(),
   trust_score: z.number().nullable().optional(),
   encouragement_count: z.number().nullable().optional(),
   service_rating: z.union([z.number(), z.string()]).nullable().optional(),
@@ -68,6 +72,9 @@ function buildProfilePayload(row: z.infer<typeof AgentRowSchema>) {
     certifications: normalizeStringArray(row.certifications),
     phone: row.phone ?? null,
     line_id: row.line_id ?? null,
+    license_number: row.license_number ?? null,
+    is_verified: row.is_verified ?? false,
+    verified_at: row.verified_at ?? null,
     trust_score: toNumber(row.trust_score, 60),
     encouragement_count: toNumber(row.encouragement_count, 0),
     service_rating: toNumber(row.service_rating, 0),
@@ -121,7 +128,7 @@ async function handleGetProfile(req: VercelRequest, res: VercelResponse): Promis
     const { data, error } = await supabase
       .from('agents')
       .select(
-        'id, internal_code, name, avatar_url, company, bio, specialties, certifications, phone, line_id, trust_score, encouragement_count, service_rating, review_count, completed_cases, active_listings, joined_at, created_at'
+        'id, internal_code, name, avatar_url, company, bio, specialties, certifications, phone, line_id, license_number, is_verified, verified_at, trust_score, encouragement_count, service_rating, review_count, completed_cases, active_listings, joined_at, created_at'
       )
       .eq('id', id)
       .single();

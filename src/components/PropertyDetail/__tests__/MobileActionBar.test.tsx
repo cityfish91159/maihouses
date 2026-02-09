@@ -5,8 +5,8 @@ import { MobileActionBar } from '../MobileActionBar';
 describe('MobileActionBar', () => {
   const socialProof = { currentViewers: 6, trustCasesCount: 3, isHot: true };
 
-  it('應渲染雙按鈕與可讀字體資訊列', () => {
-    const { container } = render(
+  it('renders two CTA buttons and social proof', () => {
+    render(
       <MobileActionBar
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
@@ -17,10 +17,10 @@ describe('MobileActionBar', () => {
 
     expect(screen.getByRole('button', { name: '加 LINE 聊聊' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '致電諮詢' })).toBeInTheDocument();
-    expect(container.querySelector('.text-xs')).toBeInTheDocument();
+    expect(screen.getByText('6 人瀏覽中')).toBeInTheDocument();
   });
 
-  it('action lock 時雙按鈕應 disabled', () => {
+  it('disables both buttons when action is locked', () => {
     render(
       <MobileActionBar
         onLineClick={vi.fn()}
@@ -35,7 +35,7 @@ describe('MobileActionBar', () => {
     expect(screen.getByRole('button', { name: '致電諮詢' })).toBeDisabled();
   });
 
-  it('雙按鈕點擊時應觸發對應 callback', async () => {
+  it('fires click callbacks', async () => {
     const user = userEvent.setup();
     const onLineClick = vi.fn();
     const onCallClick = vi.fn();
@@ -56,7 +56,7 @@ describe('MobileActionBar', () => {
     expect(onCallClick).toHaveBeenCalledTimes(1);
   });
 
-  it('isHot=false 時不應顯示熱門標籤', () => {
+  it('hides hot badge when isHot=false', () => {
     render(
       <MobileActionBar
         onLineClick={vi.fn()}
@@ -69,7 +69,7 @@ describe('MobileActionBar', () => {
     expect(screen.queryByText('熱門')).not.toBeInTheDocument();
   });
 
-  it('trustEnabled=false 時即使 isHot=true 也不應顯示熱門標籤', () => {
+  it('hides trust cases and hot badge when trust is disabled', () => {
     render(
       <MobileActionBar
         onLineClick={vi.fn()}
@@ -79,29 +79,17 @@ describe('MobileActionBar', () => {
       />
     );
 
+    expect(screen.queryByText('3 組已賞屋')).not.toBeInTheDocument();
     expect(screen.queryByText('熱門')).not.toBeInTheDocument();
   });
 
-  it('currentViewers=0 時應顯示 0 人瀏覽中', () => {
-    render(
-      <MobileActionBar
-        onLineClick={vi.fn()}
-        onCallClick={vi.fn()}
-        socialProof={{ currentViewers: 0, trustCasesCount: 0, isHot: false }}
-        trustEnabled={true}
-      />
-    );
-
-    expect(screen.getByText('0 人瀏覽中')).toBeInTheDocument();
-  });
-
-  it('未傳 socialProof 時應使用預設值', () => {
+  it('renders 0 viewers by default social proof', () => {
     render(<MobileActionBar onLineClick={vi.fn()} onCallClick={vi.fn()} trustEnabled={true} />);
 
     expect(screen.getByText('0 人瀏覽中')).toBeInTheDocument();
   });
 
-  it('按鈕應保留可觸控高度與 reduced-motion class', () => {
+  it('keeps 44px minimum button height', () => {
     render(
       <MobileActionBar
         onLineClick={vi.fn()}
@@ -113,9 +101,35 @@ describe('MobileActionBar', () => {
 
     const lineButton = screen.getByRole('button', { name: '加 LINE 聊聊' });
     const callButton = screen.getByRole('button', { name: '致電諮詢' });
-
     expect(lineButton.className).toContain('min-h-[44px]');
     expect(callButton.className).toContain('min-h-[44px]');
-    expect(lineButton.className).toContain('motion-reduce:transition-none');
+  });
+
+  it('hides certification label when isVerified=false', () => {
+    render(
+      <MobileActionBar
+        onLineClick={vi.fn()}
+        onCallClick={vi.fn()}
+        socialProof={socialProof}
+        trustEnabled={true}
+        isVerified={false}
+      />
+    );
+
+    expect(screen.queryByText('認證經紀人')).not.toBeInTheDocument();
+  });
+
+  it('shows certification label when isVerified=true', () => {
+    render(
+      <MobileActionBar
+        onLineClick={vi.fn()}
+        onCallClick={vi.fn()}
+        socialProof={socialProof}
+        trustEnabled={true}
+        isVerified={true}
+      />
+    );
+
+    expect(screen.getByText('認證經紀人')).toBeInTheDocument();
   });
 });

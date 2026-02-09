@@ -23,6 +23,9 @@ const MOCK_PROFILE: AgentProfileMe = {
   certifications: ['不動產經紀人', '地政士'],
   phone: '0912345678',
   lineId: 'maihouses_demo',
+  licenseNumber: '(113)北市經紀字第004521號',
+  isVerified: true,
+  verifiedAt: '2024-06-15T00:00:00Z',
   trustScore: 87,
   encouragementCount: 23,
   serviceRating: 4.8,
@@ -85,6 +88,9 @@ export function useAgentProfile() {
               : {}),
             ...(payload.phone !== undefined ? { phone: payload.phone } : {}),
             ...(payload.lineId !== undefined ? { lineId: payload.lineId } : {}),
+            ...(payload.licenseNumber !== undefined
+              ? { licenseNumber: payload.licenseNumber }
+              : {}),
             ...(payload.joinedAt !== undefined ? { joinedAt: payload.joinedAt } : {}),
           };
         });

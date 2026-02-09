@@ -8,6 +8,9 @@ export interface AgentProfile {
   certifications: string[];
   phone: string | null;
   lineId: string | null;
+  licenseNumber?: string | null;
+  isVerified?: boolean;
+  verifiedAt?: string | null;
   trustScore: number;
   encouragementCount: number;
   serviceRating: number;
@@ -36,5 +39,6 @@ export interface UpdateAgentProfilePayload {
   certifications?: string[];
   phone?: string | null;
   lineId?: string | null;
+  licenseNumber?: string | null;
   joinedAt?: string;
 }

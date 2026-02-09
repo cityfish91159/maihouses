@@ -13,6 +13,7 @@ interface MobileActionBarProps {
     isHot: boolean;
   };
   trustEnabled: boolean; // #8 控制賞屋組數顯示
+  isVerified?: boolean;
   isActionLocked?: boolean;
 }
 
@@ -35,6 +36,7 @@ export const MobileActionBar = memo(function MobileActionBar({
   onCallClick,
   socialProof = { currentViewers: 0, trustCasesCount: 0, isHot: false },
   trustEnabled,
+  isVerified = true,
   isActionLocked = false,
 }: MobileActionBarProps) {
   const lineBrandVars = {
@@ -49,10 +51,12 @@ export const MobileActionBar = memo(function MobileActionBar({
     >
       {/* 社會證明資訊（#8 真實數據） */}
       <div className="mb-2 flex items-center justify-center gap-4 text-xs text-slate-500">
-        <span className="flex items-center gap-1">
-          <Shield size={12} className="text-green-500" />
-          認證經紀人
-        </span>
+        {isVerified && (
+          <span className="flex items-center gap-1">
+            <Shield size={12} className="text-green-500" />
+            認證經紀人
+          </span>
+        )}
         {/* 瀏覽人數 — 永遠顯示 */}
         <span className="flex items-center gap-1">
           <Eye size={12} className="text-blue-500" />

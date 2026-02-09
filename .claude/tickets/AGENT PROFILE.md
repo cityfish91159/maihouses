@@ -50,7 +50,7 @@
 
 ### 待開發 — 經紀人認證 / 店名
 
-- [ ] **#15** [P0] 經紀人認證 + 完成案件累積（6 項：15-A DB + 15-B 類型 + 15-C API + 15-D/E 前端 + 15-F UAG Profile）
+- [x] **#15** [P0] 經紀人認證 + 完成案件累積（6 項：15-A DB + 15-B 類型 + 15-C API + 15-D/E 前端 + 15-F UAG Profile）✅ 2026-02-09
 - [ ] **#16** [P1] 店名開放編輯（3 項：16-A API + 16-B 前端 + 16-C 類型）
 
 ### 待開發 — Header / 品牌 / MaiMai
@@ -2642,7 +2642,7 @@ const MOCK_REVIEWS: ReviewPreview[] = [
 
 | 檔案 | 操作 |
 |------|------|
-| `supabase/migrations/YYYYMMDD_agent_verification_and_cases.sql` | **新增** |
+| `supabase/migrations/20260209_agent_verification_and_cases.sql` | **新增** |
 
 **新增欄位：**
 
@@ -2823,7 +2823,7 @@ interface MobileActionBarProps {
   onLineClick={handleAgentLineClick}
   onCallClick={handleAgentCallClick}
   socialProof={socialProof}
-  isVerified={property.agent.isVerified}   // 新增
+  isVerified={property.isDemo ? true : (property.agent?.isVerified ?? false)}   // 新增
 />
 ```
 
@@ -2863,7 +2863,7 @@ interface MobileActionBarProps {
 | 元素 | Mock 行為 | 正式版行為 |
 |------|----------|-----------|
 | `AgentTrustCard` 已認證 | 繼續 hardcode 顯示（`isDemo=true` 時跳過條件判斷） | 條件式 `isVerified` 判斷 |
-| `AgentTrustCard` 經紀人編號 | 繼續顯示 `#0`（Mock seed） | 有證照顯示字號，無證照顯示 `MH-00001` |
+| `AgentTrustCard` 經紀人資訊 | Mock 走平台編號 + 已認證（`isDemo=true`） | 有證照顯示字號，無證照顯示 `MH-00001` |
 | `MobileActionBar` 認證經紀人 | 繼續顯示（Mock `isVerified` 默認 `true`） | 條件式判斷 |
 | `completed_cases` | 硬編碼 `45` | DB Trigger 自動累積 |
 | UAG Profile 證照欄 | Mock 模式顯示假值 | 正式版可編輯 |
@@ -2879,7 +2879,7 @@ const licenseNumber = isDemo ? null : (profile?.licenseNumber ?? agent.licenseNu
 
 | 層級 | 檔案 | 操作 | 說明 |
 |------|------|------|------|
-| DB | `supabase/migrations/YYYYMMDD_agent_verification_and_cases.sql` | **新增** | 認證欄位 + 結案 Trigger |
+| DB | `supabase/migrations/20260209_agent_verification_and_cases.sql` | **新增** | 認證欄位 + 結案 Trigger |
 | Type | `src/lib/types.ts` | 修改 | `Agent` 加 `licenseNumber` / `isVerified` |
 | Type | `src/types/agent.types.ts` | 修改 | `AgentProfile` + `UpdateAgentProfilePayload` 加欄位 |
 | API | `api/agent/profile.ts` | 修改 | Schema + response + PUT 加 `license_number` |
@@ -2893,21 +2893,67 @@ const licenseNumber = isDemo ? null : (profile?.licenseNumber ?? agent.licenseNu
 
 ### 驗收標準
 
-- [ ] DB：`agents` 表有 `license_number` / `is_verified` / `verified_at` 欄位
-- [ ] DB：Demo 房仲 seed 已設為 `is_verified = true`
-- [ ] DB：`trust_cases` 結案時 `agents.completed_cases` 自動 +1（Trigger 正確）
-- [ ] DB：重複結案（已是 closed 再 UPDATE）不會重複 +1
-- [ ] DB：`completed_cases` +1 後 `trust_score` 連帶更新
-- [ ] API：GET `/api/agent/profile` 回傳 `license_number` / `is_verified` / `verified_at`
-- [ ] API：PUT `/api/agent/profile` 可更新 `license_number`
-- [ ] 前端：有 `license_number` 時顯示「經紀人證照：(113)北市經紀字第004521號」
-- [ ] 前端：無 `license_number` 時顯示「平台編號：MH-00001」
-- [ ] 前端：`is_verified = true` → 綠色「已認證」badge
-- [ ] 前端：`is_verified = false` → 灰色「未認證」badge
-- [ ] 手機版：`MobileActionBar` 僅 `isVerified = true` 時顯示「認證經紀人」
-- [ ] Mock：`isDemo=true` 時維持現有行為（hardcode 顯示已認證）
-- [ ] UAG Profile：有「經紀人證照字號」輸入欄，提交後存入 DB
-- [ ] typecheck + lint 通過
+- [x] DB：`agents` 表有 `license_number` / `is_verified` / `verified_at` 欄位
+- [x] DB：Demo 房仲 seed 已設為 `is_verified = true`
+- [x] DB：`trust_cases` 結案時 `agents.completed_cases` 自動 +1（Trigger 正確）
+- [x] DB：重複結案（已是 closed 再 UPDATE）不會重複 +1
+- [x] DB：`completed_cases` +1 後 `trust_score` 連帶更新
+- [x] API：GET `/api/agent/profile` 回傳 `license_number` / `is_verified` / `verified_at`
+- [x] API：PUT `/api/agent/profile` 可更新 `license_number`
+- [x] 前端：有 `license_number` 時顯示「經紀人證照：(113)北市經紀字第004521號」
+- [x] 前端：無 `license_number` 時顯示「平台編號：MH-00001」
+- [x] 前端：`is_verified = true` → 綠色「已認證」badge
+- [x] 前端：`is_verified = false` → 灰色「未認證」badge
+- [x] 手機版：`MobileActionBar` 僅 `isVerified = true` 時顯示「認證經紀人」
+- [x] Mock：`isDemo=true` 時維持現有行為（hardcode 顯示已認證）
+- [x] UAG Profile：有「經紀人證照字號」輸入欄，提交後存入 DB
+- [x] typecheck + lint 通過
+
+### #15 施工紀錄（2026-02-09）
+
+#### 修改檔案
+1. `supabase/migrations/20260209_agent_verification_and_cases.sql`（15-A）
+   - 新增 `agents.license_number` / `agents.is_verified` / `agents.verified_at`
+   - 新增 `idx_agents_is_verified` 部分索引
+   - 回填 Demo 房仲認證資料（字號 + 驗證時間）
+   - 新增 `fn_increment_completed_cases` + `trg_trust_cases_completed`
+   - 結案狀態從未結案 → 結案時，自動累加 `agents.completed_cases`
+
+2. `src/lib/types.ts`、`src/types/agent.types.ts`、`src/types/supabase-schema.ts`（15-B）
+   - `Agent`、`AgentProfile`、`UpdateAgentProfilePayload` 補齊 `licenseNumber/isVerified/verifiedAt`
+   - Supabase Agent Row 型別同步新增 `license_number/is_verified/verified_at`
+
+3. `api/agent/profile.ts`、`api/agent/me.ts`、`src/services/agentService.ts`、`src/services/propertyService.ts`（15-C）
+   - API 查詢與回傳補齊 `license_number/is_verified/verified_at`
+   - `PUT /api/agent/profile` 新增 `license_number` 可更新
+   - 前端 service schema + mapping + 更新 payload 同步
+   - property agent 資料流加入 `licenseNumber/isVerified/verifiedAt`
+
+4. `src/components/AgentTrustCard.tsx`、`src/components/PropertyDetail/MobileActionBar.tsx`、`src/pages/PropertyDetailPage.tsx`、`src/pages/propertyDetail/PropertyDetailActionLayer.tsx`（15-D/15-E）
+   - `AgentTrustCard` 改為條件式顯示認證 badge（已認證/未認證）
+   - 有證照顯示「經紀人證照」，無證照顯示「平台編號：MH-xxxxx」
+   - `MobileActionBar` 新增 `isVerified` prop，僅已認證顯示「認證經紀人」
+   - DetailPage 與 ActionLayer 傳入 `isVerified`（Mock 模式強制 `true`）
+
+5. `src/pages/UAG/Profile/BasicInfoSection.tsx`、`src/pages/UAG/Profile/hooks/useAgentProfile.ts`（15-F）
+   - UAG Profile 新增「經紀人證照字號」欄位與 payload 傳遞
+   - Mock 模式快取更新同步 `licenseNumber`
+
+6. 測試檔案
+   - 新增：`api/agent/__tests__/profile.test.ts`
+   - 新增：`api/agent/__tests__/me.test.ts`
+   - 新增：`src/services/__tests__/agentService.test.ts`
+   - 新增：`src/pages/UAG/Profile/BasicInfoSection.test.tsx`
+   - 重寫：`src/components/PropertyDetail/__tests__/MobileActionBar.test.tsx`
+   - 更新：`src/components/__tests__/AgentTrustCard.memo.test.tsx`
+
+#### 驗證命令
+```bash
+npm run test -- api/agent/__tests__/profile.test.ts api/agent/__tests__/me.test.ts src/services/__tests__/agentService.test.ts src/pages/UAG/Profile/BasicInfoSection.test.tsx src/components/PropertyDetail/__tests__/MobileActionBar.test.tsx src/components/__tests__/AgentTrustCard.memo.test.tsx
+npm run typecheck
+npm run lint
+npm run check:utf8
+```
 
 ---
 

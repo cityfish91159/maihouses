@@ -16,6 +16,9 @@ export interface Agent {
   certifications?: string[];
   phone?: string | null;
   lineId?: string | null;
+  licenseNumber?: string | null;
+  isVerified?: boolean;
+  verifiedAt?: string | null;
 }
 
 export interface Imported591Data {

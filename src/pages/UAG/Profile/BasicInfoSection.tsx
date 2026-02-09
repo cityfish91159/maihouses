@@ -42,6 +42,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
   const [bio, setBio] = useState(profile.bio ?? '');
   const [phone, setPhone] = useState(profile.phone ?? '');
   const [lineId, setLineId] = useState(profile.lineId ?? '');
+  const [licenseNumber, setLicenseNumber] = useState(profile.licenseNumber ?? '');
   const [joinedAt, setJoinedAt] = useState(toDateInputValue(profile.joinedAt || profile.createdAt));
   const [specialties, setSpecialties] = useState<string[]>(profile.specialties ?? []);
   const [certifications, setCertifications] = useState<string[]>(profile.certifications ?? []);
@@ -54,12 +55,13 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
       certifications,
       phone: phone.trim() ? phone.trim() : null,
       lineId: lineId.trim() ? lineId.trim() : null,
+      licenseNumber: licenseNumber.trim() ? licenseNumber.trim() : null,
     };
     if (joinedAt) {
       result.joinedAt = new Date(joinedAt).toISOString();
     }
     return result;
-  }, [name, bio, specialties, certifications, phone, lineId, joinedAt]);
+  }, [name, bio, specialties, certifications, phone, lineId, licenseNumber, joinedAt]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -157,6 +159,21 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             aria-label="加入日期"
           />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="agent-license" className="text-sm font-medium text-slate-700">
+            經紀人證照字號
+          </label>
+          <input
+            id="agent-license"
+            type="text"
+            value={licenseNumber}
+            onChange={(event) => setLicenseNumber(event.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+            placeholder="例：(113)北市經紀字第004521號"
+            aria-label="經紀人證照字號"
+          />
+          <p className="text-[10px] text-slate-400">填寫後可在詳情頁顯示認證資訊</p>
         </div>
       </div>
 

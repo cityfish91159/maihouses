@@ -350,6 +350,9 @@ export const DEFAULT_PROPERTY: PropertyData = {
     encouragementCount: 23,
     phone: '0912345678',
     lineId: 'maihouses_demo',
+    licenseNumber: '(113)北市經紀字第004521號',
+    isVerified: true,
+    verifiedAt: '2024-06-15T00:00:00Z',
     serviceRating: 4.8,
     reviewCount: 32,
     completedCases: 45,
@@ -469,6 +472,18 @@ export const propertyService: PropertyService = {
 
       if (data.agent.line_id !== undefined && data.agent.line_id !== null) {
         agent.lineId = data.agent.line_id;
+      }
+
+      if (typeof data.agent.license_number === 'string' || data.agent.license_number === null) {
+        agent.licenseNumber = data.agent.license_number;
+      }
+
+      if (typeof data.agent.is_verified === 'boolean') {
+        agent.isVerified = data.agent.is_verified;
+      }
+
+      if (typeof data.agent.verified_at === 'string' || data.agent.verified_at === null) {
+        agent.verifiedAt = data.agent.verified_at;
       }
 
       const result: PropertyData = {

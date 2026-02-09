@@ -729,6 +729,7 @@ export const PropertyDetailPage: React.FC = () => {
           onCallClick={handleMobileCallClick}
           socialProof={socialProof}
           trustEnabled={isTrustEnabled}
+          isVerified={property.isDemo ? true : (property.agent?.isVerified ?? false)}
           isActionLocked={isActionLocked}
         />
 

@@ -183,6 +183,9 @@ export interface AgentRow {
   joined_at: string | null; // TIMESTAMPTZ
   phone: string | null; // TEXT
   line_id: string | null; // TEXT
+  license_number: string | null; // TEXT
+  is_verified: boolean; // BOOLEAN DEFAULT false
+  verified_at: string | null; // TIMESTAMPTZ
   service_rating: number; // DECIMAL(2,1) DEFAULT 0
   review_count: number; // INTEGER DEFAULT 0
   completed_cases: number; // INTEGER DEFAULT 0

@@ -83,6 +83,7 @@ export function PropertyDetailActionLayer({
         onCallClick={mobileActions.onMobileCallClick}
         socialProof={mobileActions.socialProof}
         trustEnabled={property.trustEnabled ?? false}
+        isVerified={property.isDemo ? true : (property.agent?.isVerified ?? false)}
         isActionLocked={mobileActions.isActionLocked}
       />
 

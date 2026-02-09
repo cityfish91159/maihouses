@@ -53,6 +53,9 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   const displayName = profile?.name ?? agent.name;
   const rawAvatar = profile?.avatarUrl ?? agent.avatarUrl;
   const displayCompany = profile?.company ?? agent.company ?? '邁房子';
+  const licenseNumber = isDemo ? null : (profile?.licenseNumber ?? agent.licenseNumber ?? null);
+  const isVerified = isDemo ? true : (profile?.isVerified ?? agent.isVerified ?? false);
+  const platformCode = `MH-${String(agent.internalCode).padStart(5, '0')}`;
 
   const lineBrandVars = {
     '--line-brand-green': LINE_BRAND_GREEN,
@@ -126,11 +129,21 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
                 </span>
               </h3>
               <div className="mt-0.5 flex items-center gap-2">
-                <p className="text-xs text-text-muted">經紀人編號：#{agent.internalCode}</p>
-                <div className="flex items-center gap-0.5 rounded bg-green-50 px-1.5 py-0.5 text-xs text-green-600">
-                  <Shield size={10} />
-                  <span>已認證</span>
-                </div>
+                {licenseNumber ? (
+                  <p className="text-xs text-text-muted">經紀人證照：{licenseNumber}</p>
+                ) : (
+                  <p className="text-xs text-text-muted">平台編號：{platformCode}</p>
+                )}
+                {isVerified ? (
+                  <div className="flex items-center gap-0.5 rounded bg-green-50 px-1.5 py-0.5 text-xs text-green-600">
+                    <Shield size={10} />
+                    <span>已認證</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-0.5 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-text-muted">
+                    <span>未認證</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

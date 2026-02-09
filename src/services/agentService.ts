@@ -13,6 +13,9 @@ const AgentProfileApiSchema = z.object({
   certifications: z.array(z.string()).optional(),
   phone: z.string().nullable().optional(),
   line_id: z.string().nullable().optional(),
+  license_number: z.string().nullable().optional(),
+  is_verified: z.boolean().optional(),
+  verified_at: z.string().nullable().optional(),
   trust_score: z.number(),
   encouragement_count: z.number(),
   service_rating: z.number(),
@@ -67,6 +70,9 @@ const mapAgentProfile = (data: z.infer<typeof AgentProfileApiSchema>): AgentProf
     certifications: data.certifications ?? [],
     phone: data.phone ?? null,
     lineId: data.line_id ?? null,
+    licenseNumber: data.license_number ?? null,
+    isVerified: data.is_verified ?? false,
+    verifiedAt: data.verified_at ?? null,
     trustScore: data.trust_score,
     encouragementCount: data.encouragement_count,
     serviceRating: data.service_rating,
@@ -179,6 +185,7 @@ export async function updateAgentProfile(payload: UpdateAgentProfilePayload): Pr
     certifications: payload.certifications,
     phone: payload.phone,
     line_id: payload.lineId,
+    license_number: payload.licenseNumber,
     joined_at: payload.joinedAt,
   };
 

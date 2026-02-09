@@ -34,6 +34,7 @@ describe('AgentTrustCard React.memo Performance', () => {
     reviewCount: 32,
     completedCases: 45,
     serviceYears: 4,
+    isVerified: true,
     ...overrides,
   });
 
@@ -629,6 +630,20 @@ describe('AgentTrustCard React.memo Performance', () => {
       renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
 
       expect(screen.getByText('已認證')).toBeInTheDocument();
+    });
+
+    it('有證照字號時應顯示經紀人證照', () => {
+      const agent = createMockAgent({ licenseNumber: '(113)北市經紀字第004521號' });
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
+
+      expect(screen.getByText('經紀人證照：(113)北市經紀字第004521號')).toBeInTheDocument();
+    });
+
+    it('未認證時應顯示未認證標記', () => {
+      const agent = createMockAgent({ isVerified: false });
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
+
+      expect(screen.getByText('未認證')).toBeInTheDocument();
     });
   });
 });

@@ -22,6 +22,9 @@ const AgentMeRowSchema = z.object({
   certifications: z.array(z.string()).nullable().optional(),
   phone: z.string().nullable().optional(),
   line_id: z.string().nullable().optional(),
+  license_number: z.string().nullable().optional(),
+  is_verified: z.boolean().nullable().optional(),
+  verified_at: z.string().nullable().optional(),
   trust_score: z.number().nullable().optional(),
   encouragement_count: z.number().nullable().optional(),
   service_rating: z.union([z.number(), z.string()]).nullable().optional(),
@@ -69,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const { data, error } = await supabase
       .from('agents')
       .select(
-        'id, internal_code, name, avatar_url, company, bio, specialties, certifications, phone, line_id, trust_score, encouragement_count, service_rating, review_count, completed_cases, active_listings, joined_at, created_at, points, quota_s, quota_a, visit_count, deal_count'
+        'id, internal_code, name, avatar_url, company, bio, specialties, certifications, phone, line_id, license_number, is_verified, verified_at, trust_score, encouragement_count, service_rating, review_count, completed_cases, active_listings, joined_at, created_at, points, quota_s, quota_a, visit_count, deal_count'
       )
       .eq('id', authResult.userId)
       .single();
@@ -111,6 +114,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         certifications: normalizeStringArray(row.certifications),
         phone: row.phone ?? null,
         line_id: row.line_id ?? null,
+        license_number: row.license_number ?? null,
+        is_verified: row.is_verified ?? false,
+        verified_at: row.verified_at ?? null,
         trust_score: toNumber(row.trust_score, 60),
         encouragement_count: toNumber(row.encouragement_count, 0),
         service_rating: toNumber(row.service_rating, 0),
