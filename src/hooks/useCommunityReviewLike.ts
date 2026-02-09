@@ -1,41 +1,120 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import type { ReviewLikeResponse } from '../types/community-review-like';
+import {
+  ToggleReviewLikePayloadSchema,
+  ReviewLikeResponseSchema,
+  ReviewLikeApiErrorSchema,
+  type ReviewLikeResponse,
+} from '../types/community-review-like';
+
+export const reviewLikeQueryKey = (propertyId: string) =>
+  ['community-review-like', propertyId] as const;
+
+function parseErrorMessage(payload: unknown, fallback: string): string {
+  const parsed = ReviewLikeApiErrorSchema.safeParse(payload);
+  if (parsed.success && parsed.data.error?.message) {
+    return parsed.data.error.message;
+  }
+  return fallback;
+}
+
+export async function fetchReviewLikeStatus(propertyId: string): Promise<ReviewLikeResponse> {
+  const parsedPayload = ToggleReviewLikePayloadSchema.safeParse({ propertyId });
+  if (!parsedPayload.success) {
+    throw new Error('Invalid review like payload');
+  }
+
+  const query = new URLSearchParams({ propertyId: parsedPayload.data.propertyId });
+  const response = await fetch(`/api/community/review-like?${query.toString()}`);
+  const payload: unknown = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(payload, 'Failed to fetch review-like status'));
+  }
+
+  const parsedResponse = ReviewLikeResponseSchema.safeParse(payload);
+  if (!parsedResponse.success) {
+    throw new Error('Invalid review-like response payload');
+  }
+
+  return parsedResponse.data;
+}
+
+export async function postReviewLike(propertyId: string): Promise<ReviewLikeResponse> {
+  const parsedPayload = ToggleReviewLikePayloadSchema.safeParse({ propertyId });
+  if (!parsedPayload.success) {
+    throw new Error('Invalid review like payload');
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Unauthorized');
+  }
+
+  const response = await fetch('/api/community/review-like', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(parsedPayload.data),
+  });
+
+  const payload: unknown = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(payload, 'Failed to toggle review-like'));
+  }
+
+  const parsedResponse = ReviewLikeResponseSchema.safeParse(payload);
+  if (!parsedResponse.success) {
+    throw new Error('Invalid review-like response payload');
+  }
+
+  return parsedResponse.data;
+}
+
+export function useCommunityReviewLikeStatus(propertyId: string, enabled = true) {
+  return useQuery({
+    queryKey: reviewLikeQueryKey(propertyId),
+    queryFn: () => fetchReviewLikeStatus(propertyId),
+    enabled: enabled && Boolean(propertyId),
+    staleTime: 60_000,
+  });
+}
 
 export function useCommunityReviewLike() {
   const queryClient = useQueryClient();
 
   const toggleLike = useMutation({
-    mutationFn: async (propertyId: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
+    mutationFn: (propertyId: string) => postReviewLike(propertyId),
+    onMutate: async (propertyId: string) => {
+      const key = reviewLikeQueryKey(propertyId);
+      await queryClient.cancelQueries({ queryKey: key });
 
-      if (!token) {
-        throw new Error('Unauthorized');
+      const previous = queryClient.getQueryData<ReviewLikeResponse>(key);
+      if (previous) {
+        queryClient.setQueryData<ReviewLikeResponse>(key, {
+          ...previous,
+          liked: !previous.liked,
+          totalLikes: Math.max(0, previous.totalLikes + (previous.liked ? -1 : 1)),
+        });
       }
 
-      const res = await fetch('/api/community/review-like', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ propertyId }),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to toggle like');
+      return { previous, key };
+    },
+    onError: (_error, _propertyId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.key, context.previous);
       }
-
-      return res.json() as Promise<ReviewLikeResponse>;
     },
     onSuccess: (data, propertyId) => {
-      // 1. 刷新 agent-profile 讓 AgentTrustCard 的 encouragement_count 更新
+      queryClient.setQueryData(reviewLikeQueryKey(propertyId), data);
       queryClient.invalidateQueries({ queryKey: ['agent-profile'] });
-      
-      // 2. 也可以選擇性刷新 property-reviews 或手動更新 cache
-      // 這裡簡單起見，依賴父層的 optimistic update 或 refetch
+    },
+    onSettled: (_data, _error, propertyId) => {
+      queryClient.invalidateQueries({ queryKey: reviewLikeQueryKey(propertyId) });
     },
   });
 
