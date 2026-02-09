@@ -42,7 +42,7 @@
 
 ### 待開發 — 信任分 / 評價 / 鼓勵
 
-- [ ] **#12** [P1] 信任分 Tooltip 修正 + seed 校正（2 項：12-A/B）
+- [x] **#12** [P1] 信任分 Tooltip 修正 + seed 校正（2 項：12-A/B）✅ 2026-02-09
 - [ ] **#13a** [P0] 房仲評價系統 — DB + API + 類型（4 項：13-A DB + 13-B API + 13-C 類型 + 13-I Hook）
 - [ ] **#13b** [P0] 房仲評價系統 — 前端組件 + 整合（5 項：13-D ReviewPromptModal + 13-E ReviewListModal + 13-F AgentTrustCard + 13-G DetailPage 整合 + 13-H Assure Step 2 觸發）
 - [ ] **#14a** [P1] 獲得鼓勵系統 — DB + API + 類型（4 項：14-A DB + 14-B API + 14-C 類型 + 14-E Hook）
@@ -1466,7 +1466,7 @@ Mock 版硬編碼在 `agentMetrics`（L76-83），不受 DB 影響，永遠正�
 |------|------|
 | `src/components/AgentTrustCard.tsx` L26-35 | 移除 `getTrustBreakdown` 函數 |
 | `src/components/AgentTrustCard.tsx` L73 | 移除 `trustBreakdown` 變數 |
-| `src/components/AgentTrustCard.tsx` L8-10 | 移除 `Clock`、`CheckCircle`、`FileText` import（不再使用） |
+| `src/components/AgentTrustCard.tsx` L8-10 | 移除 `CheckCircle`、`FileText` import（`Clock` 保留給在線回覆提示） |
 | `src/components/AgentTrustCard.tsx` L174-192 | Tooltip 內容替換為說明型 |
 
 **改動前（假拆分）：**
@@ -1506,7 +1506,7 @@ const getTrustBreakdown = (score: number) => {
       </li>
     </ul>
     <p className="mt-2 border-t border-slate-600 pt-2 text-[10px] text-slate-400">
-      每筆交易完成後即時更新
+      每次資料更新後重新計算
     </p>
     <div className="absolute left-4 top-full border-8 border-transparent border-t-slate-800" />
   </div>
@@ -1519,7 +1519,7 @@ const getTrustBreakdown = (score: number) => {
 
 | 檔案 | 改動 |
 |------|------|
-| `supabase/migrations/YYYYMMDD_fix_agent_seed_metrics.sql` | **新增** — 為 seed agent 補齊所有指標欄位 |
+| `supabase/migrations/20260209_fix_mh100001_agent_seed_metrics.sql` | **新增** — 為 seed agent 補齊所有指標欄位 |
 
 ```sql
 UPDATE public.agents
@@ -1530,7 +1530,7 @@ SET
   encouragement_count = 156,     -- 維持不變（已有值）
   joined_at = NOW() - INTERVAL '4 years'  -- 正式版顯示 4年（與 Mock 一致）
 WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
--- Trigger 自動重算 trust_score = 60 + 19 + 9 + 7 = 95
+-- Trigger / 函數重算 trust_score = 60 + (4.8::INTEGER * 4 = 20) + 9 + 7 = 96
 ```
 
 校正後正式版 vs Mock 對照：
@@ -1541,7 +1541,7 @@ WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 | reviewCount | (0) | **(32)** | (32) |
 | completedCases | 0 | **45** | 45 |
 | serviceYears | 0年 | **4年** | 4年 |
-| trustScore | 92（硬編碼） | **95**（Trigger 算） | 92（prop 值） |
+| trustScore | 92（硬編碼） | **96**（Trigger 算） | 92（prop 值） |
 | encouragementCount | 156 | 156 | 156 |
 
 Trigger `trg_agents_trust_score` 會在 UPDATE 時自動執行 `fn_calculate_trust_score`，重算 `trust_score`。
@@ -1553,7 +1553,8 @@ Trigger `trg_agents_trust_score` 會在 UPDATE 時自動執行 `fn_calculate_tru
 | 檔案 | 操作 | 說明 |
 |------|------|------|
 | `src/components/AgentTrustCard.tsx` | 修改 | 移除假拆分函數 + Tooltip 改說明型 + 清理 import |
-| `supabase/migrations/YYYYMMDD_fix_agent_seed_metrics.sql` | 新增 | seed agent 全量指標校正（觸發 Trigger 重算） |
+| `src/components/__tests__/AgentTrustCard.memo.test.tsx` | 修改 | Tooltip 互動測試改為檢查說明型內容 |
+| `supabase/migrations/20260209_fix_mh100001_agent_seed_metrics.sql` | 新增 | seed agent 全量指標校正（觸發 Trigger 重算） |
 
 ### Mock 版影響
 
@@ -1561,15 +1562,37 @@ Trigger `trg_agents_trust_score` 會在 UPDATE 時自動執行 `fn_calculate_tru
 
 ### 驗收標準
 
-- [ ] Tooltip 不再顯示假拆分數值
-- [ ] Tooltip 顯示「信任分數 N / 100」+ 三項指標說明 + 更新頻率
-- [ ] `getTrustBreakdown` 函數已移除
-- [ ] `Clock`、`CheckCircle`、`FileText` import 已清理（確認無其他使用）
-- [ ] 正式版績效指標顯示正確：4.8 / (32) / 45 / 4年
-- [ ] MH-100001 的 `service_rating`、`review_count`、`completed_cases`、`joined_at` 已補齊
-- [ ] Trigger 重算後 `trust_score` 為合理值（預期 95）
-- [ ] Mock 頁行為不變（績效指標 + Tooltip 均不受影響）
-- [ ] typecheck + lint 通過
+- [x] Tooltip 不再顯示假拆分數值
+- [x] Tooltip 顯示「信任分數 N / 100」+ 三項指標說明 + 更新頻率
+- [x] `getTrustBreakdown` 函數已移除
+- [x] `CheckCircle`、`FileText` import 已清理（`Clock` 仍供在線回覆提示使用）
+- [x] 正式版績效指標資料來源已校正：4.8 / (32) / 45 / 4年
+- [x] MH-100001 的 `service_rating`、`review_count`、`completed_cases`、`joined_at` 已補齊
+- [x] Trigger 重算後 `trust_score` 為合理值（依現行公式為 96）
+- [x] Mock 頁行為不變（績效指標 + Tooltip 均不受影響）
+- [x] typecheck + lint 通過
+
+### #12 施工紀錄（2026-02-09）
+
+#### 修改檔案
+1. `src/components/AgentTrustCard.tsx`
+   - 移除 `getTrustBreakdown` 與 `trustBreakdown`，避免假拆分誤導（12-A）
+   - Tooltip 改為說明型內容：顯示 `信任分數 N / 100`、三項指標、更新說明
+   - 清理未使用 icon import：`CheckCircle`、`FileText`
+
+2. `src/components/__tests__/AgentTrustCard.memo.test.tsx`
+   - 更新 Tooltip 測試斷言，改驗證說明型文案（`綜合以下指標自動計算：`、`平台實名認證`）
+
+3. `supabase/migrations/20260209_fix_mh100001_agent_seed_metrics.sql`（新增）
+   - 補齊 seed agent 指標：`service_rating=4.8`、`review_count=32`、`completed_cases=45`、`encouragement_count=156`、`joined_at=NOW()-4 years`
+   - 追加 `trust_score = fn_calculate_trust_score(id)`，確保信任分按現行公式重算
+
+#### 驗證命令
+```bash
+npm run test -- src/components/__tests__/AgentTrustCard.memo.test.tsx
+npm run typecheck
+npm run lint
+```
 
 ---
 

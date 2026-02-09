@@ -6,8 +6,6 @@ import {
   MessageCircle,
   Phone,
   Clock,
-  CheckCircle,
-  FileText,
   UserCircle,
 } from 'lucide-react';
 import { Agent } from '../lib/types';
@@ -21,18 +19,6 @@ interface AgentTrustCardProps {
   onLineClick?: () => void;
   onCallClick?: () => void;
 }
-
-// 信任分數構成說明
-const getTrustBreakdown = (score: number) => {
-  const base = Math.floor(score * 0.4);
-  const response = Math.floor(score * 0.3);
-  const deals = Math.floor(score * 0.3);
-  return [
-    { label: '實名認證', value: base, icon: CheckCircle },
-    { label: '回覆速度', value: response, icon: Clock },
-    { label: '成交記錄', value: deals, icon: FileText },
-  ];
-};
 
 export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function AgentTrustCard({
   agent,
@@ -69,8 +55,6 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
     '--line-brand-green': LINE_BRAND_GREEN,
     '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
   } as CSSProperties;
-
-  const trustBreakdown = getTrustBreakdown(trustScore);
 
   const agentMetrics = useMemo(() => {
     if (isDemo) {
@@ -174,22 +158,29 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
               {showTrustTooltip && (
                 <div
                   role="tooltip"
-                  className="absolute bottom-full left-0 z-10 mb-2 w-48 rounded-lg bg-slate-800 p-3 text-xs text-white shadow-xl"
+                  className="absolute bottom-full left-0 z-10 mb-2 w-52 rounded-lg bg-slate-800 p-3 text-xs text-white shadow-xl"
                 >
-                  <div className="mb-2 font-bold">信任分數構成</div>
-                  {trustBreakdown.map((item) => (
-                    <div key={item.label} className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-1.5">
-                        <item.icon size={12} className="text-green-400" />
-                        <span>{item.label}</span>
-                      </div>
-                      <span className="font-medium">+{item.value}</span>
-                    </div>
-                  ))}
-                  <div className="mt-2 flex justify-between border-t border-slate-600 pt-2 font-bold">
-                    <span>總計</span>
-                    <span className="text-green-400">{trustScore}</span>
+                  <div className="mb-1 font-bold">
+                    信任分數 <span className="text-green-400">{trustScore}</span> / 100
                   </div>
+                  <p className="mb-2 text-slate-300">綜合以下指標自動計算：</p>
+                  <ul className="space-y-1 text-slate-300">
+                    <li className="flex items-center gap-1.5">
+                      <Shield size={10} className="shrink-0 text-green-400" />
+                      平台實名認證
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Star size={10} className="shrink-0 text-green-400" />
+                      歷史服務評價
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <ThumbsUp size={10} className="shrink-0 text-green-400" />
+                      成交記錄與客戶回饋
+                    </li>
+                  </ul>
+                  <p className="mt-2 border-t border-slate-600 pt-2 text-[10px] text-slate-400">
+                    每次資料更新後重新計算
+                  </p>
                   {/* Tooltip Arrow */}
                   <div className="absolute left-4 top-full border-8 border-transparent border-t-slate-800" />
                 </div>

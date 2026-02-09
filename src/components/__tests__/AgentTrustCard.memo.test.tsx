@@ -502,7 +502,8 @@ describe('AgentTrustCard React.memo Performance', () => {
       fireEvent.mouseEnter(trustScoreDiv!);
 
       // 驗證 tooltip 顯示
-      expect(screen.getByText('信任分數構成')).toBeInTheDocument();
+      expect(screen.getByText('綜合以下指標自動計算：')).toBeInTheDocument();
+      expect(screen.getByText('平台實名認證')).toBeInTheDocument();
 
       // 觸發父組件重渲染
       fireEvent.click(getByText('Increment'));
