@@ -71,7 +71,7 @@
 ### 待開發 — UAG Radar 泡泡強化（原 #19 拆分）
 
 - [x] **#19a** [P0] Radar 泡泡手機版核心（5 項：R1 尺寸自適應 + R2 碰撞偏移 + R3 觸控擴展 + R4 標籤 Tooltip + R5 S 級光暈）✅ 2026-02-10
-- [ ] **#19b** [P1] Radar 進階效果（3 項：R6 選中展開 + R7 動態高度 + R8 篩選 Chips）
+- [x] **#19b** [P1] Radar 進階效果（3 項：R6 選中展開 + R7 動態高度 + R8 篩選 Chips）✅ 2026-02-10
 
 ### 待開發 — UAG 導航 + 佈局重設計（原 #19 拆分）
 
@@ -4410,10 +4410,43 @@ const containerHeight = useMemo(() => {
 
 ### #19b 驗收標準
 
-- [ ] R6: 選中泡泡 `scale(1.15)` 彈出，未選中 `opacity-0.4 scale-0.92` 退場
-- [ ] R7: Radar 容器高度根據泡泡數量動態調整
-- [ ] R8: Radar 頂部等級篩選 Chips，含各等級數量顯示
-- [ ] typecheck + lint 通過
+- [x] R6: 選中泡泡 `scale(1.15)` 彈出，未選中 `opacity-0.4 scale-0.92` 退場
+- [x] R7: Radar 容器高度根據泡泡數量動態調整
+- [x] R8: Radar 頂部等級篩選 Chips，含各等級數量顯示
+- [x] typecheck + lint 通過
+
+### #19b 施工紀錄（2026-02-10）
+
+#### 修改檔案
+1. `src/pages/UAG/components/RadarCluster.tsx`
+   - 新增 `R8` 等級篩選狀態：`all/S/A/B/C/F`，並計算各等級即時數量
+   - 新增 Chips UI（顯示「全部 + 等級數量」），切換篩選時會清除目前選中狀態避免殘留高亮
+   - 新增 `getRadarContainerHeightPx()`，在手機版依可見泡泡數動態調整高度（`<=3:240 / <=8:320 / >8:380`，桌面維持 `450`）
+   - 泡泡選中狀態改為 `data-selected`，容器加上 `data-has-selection`，供 R6 視覺退場效果使用
+
+2. `src/pages/UAG/UAG.module.css`
+   - 新增 `R8` 篩選 Chips 樣式（含 active 狀態與等級色彩）
+   - 實作 `R6` 選中展開：`.uag-bubble[data-selected='true']` 使用 `scale(1.15)`、250ms 彈性 transition、強化陰影
+   - 實作 `R6` 退場：`.uag-cluster[data-has-selection='true'] .uag-bubble:not([data-selected='true'])` 套用 `opacity: 0.4`、`scale(0.92)`、`grayscale(30%)`
+   - 補上 `prefers-reduced-motion`：選中/退場 transition 可關閉
+
+3. `src/pages/UAG/components/RadarCluster.test.tsx`
+   - 新增 R6 選中標記測試（`data-selected` + `data-has-selection`）
+   - 新增 R8 Chips 計數與篩選測試（切到 S 僅保留 S 級泡泡）
+   - 新增 R7 手機高度測試（2 顆泡泡 `240px`、9 顆泡泡 `380px`）
+
+4. `src/pages/UAG/components/RadarCluster.integration.test.tsx`
+   - 解析泡泡座標改讀取 `#radar-section` 實際高度，支援 R7 動態容器
+   - `resolveOverlap` 呼叫參數驗證改用 `getRadarContainerHeightPx()` 計算預期高度
+   - 保留 320px/12 泡泡不重疊驗證，並同步驗證動態高度為 `380px`
+
+#### 驗證命令
+```bash
+npm run test -- src/pages/UAG/components/RadarCluster.test.tsx src/pages/UAG/components/RadarCluster.integration.test.tsx src/pages/UAG/utils/resolveOverlap.test.ts
+npm run lint
+npm run typecheck
+npm run check:utf8
+```
 
 ---
 

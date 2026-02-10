@@ -6,6 +6,7 @@ import RadarCluster, {
   BUBBLE_MIN_PADDING_PX,
   RADAR_CONTAINER_HEIGHT_PX,
   TOOLTIP_AUTO_HIDE_MS,
+  getRadarContainerHeightPx,
 } from './RadarCluster';
 import type { Lead } from '../types/uag.types';
 import * as overlapUtils from '../utils/resolveOverlap';
@@ -54,16 +55,27 @@ class ResizeObserverMock {
 
 global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
-function parseBubblePositionPx(bubble: HTMLElement): { x: number; y: number; size: number } {
+function parseBubblePositionPx(
+  bubble: HTMLElement,
+  containerHeightPx: number
+): { x: number; y: number; size: number } {
   const leftPercent = Number.parseFloat(bubble.style.left);
   const topPercent = Number.parseFloat(bubble.style.top);
   const size = Number.parseFloat(bubble.style.getPropertyValue('--w'));
 
   return {
     x: (leftPercent / 100) * mockContainerWidth,
-    y: (topPercent / 100) * RADAR_CONTAINER_HEIGHT_PX,
+    y: (topPercent / 100) * containerHeightPx,
     size,
   };
+}
+
+function getRadarSectionHeightPx(container: HTMLElement): number {
+  const section = container.querySelector('#radar-section') as HTMLElement | null;
+  if (!section) throw new Error('radar-section not found');
+  const parsed = Number.parseFloat(section.style.minHeight);
+  if (!Number.isFinite(parsed)) throw new Error('radar-section min-height is invalid');
+  return parsed;
 }
 
 const sampleLeads: Lead[] = [
@@ -168,13 +180,15 @@ describe('RadarCluster integration', () => {
     const overlapTolerancePx = BUBBLE_MIN_PADDING_PX;
 
     const { container } = render(<RadarCluster leads={denseMobileLeads} onSelectLead={vi.fn()} />);
+    const containerHeightPx = getRadarSectionHeightPx(container);
     const sBubble = container.querySelector('[aria-label="Dense Lead 1 - S級"]');
     expect(sBubble).toHaveStyle('--w: 72px');
+    expect(containerHeightPx).toBe(380);
 
     const bubbles = Array.from(container.querySelectorAll('[role="button"][data-grade]')) as HTMLElement[];
     expect(bubbles).toHaveLength(12);
 
-    const parsed = bubbles.map(parseBubblePositionPx);
+    const parsed = bubbles.map((bubble) => parseBubblePositionPx(bubble, containerHeightPx));
 
     for (let i = 0; i < parsed.length; i++) {
       for (let j = i + 1; j < parsed.length; j++) {
@@ -203,9 +217,10 @@ describe('RadarCluster integration', () => {
     if (!latestCall) throw new Error('resolveOverlap call not found');
 
     const [bubbles, containerWidth, containerHeight, padding] = latestCall;
+    const expectedHeight = getRadarContainerHeightPx(sampleLeads.length, true);
 
     expect(containerWidth).toBe(360);
-    expect(containerHeight).toBe(RADAR_CONTAINER_HEIGHT_PX);
+    expect(containerHeight).toBe(expectedHeight);
     expect(padding).toBe(BUBBLE_MIN_PADDING_PX);
     expect(bubbles).toEqual(
       expect.arrayContaining([

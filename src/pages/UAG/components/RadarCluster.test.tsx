@@ -80,6 +80,21 @@ const sampleLeads: Lead[] = [
   },
 ];
 
+const mobileDenseLeads: Lead[] = Array.from({ length: 9 }, (_, index) => ({
+  id: `dense-${index + 1}`,
+  name: `Dense ${index + 1}`,
+  grade: (['S', 'A', 'B', 'C', 'F'][index % 5] ?? 'F') as Lead['grade'],
+  intent: 70 + index,
+  prop: `Property ${index + 1}`,
+  visit: 10 + index,
+  price: 1200 + index * 20,
+  status: 'new',
+  ai: 'Dense data',
+  session_id: `sess-dense-${index + 1}`,
+  x: 48 + index * 0.4,
+  y: 49 + index * 0.3,
+}));
+
 describe('RadarCluster', () => {
   beforeEach(() => {
     setMockContainerWidth(800);
@@ -105,14 +120,44 @@ describe('RadarCluster', () => {
     expect(screen.getByRole('button', { name: 'lead-f-1 - F級' })).toBeInTheDocument();
   });
 
-  it('updates data-clicked after selection', () => {
-    render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+  it('updates selection markers and cluster state after selection', () => {
+    const { container } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
 
     const bubble = screen.getByRole('button', { name: 'Buyer Alpha - F級' });
+    const cluster = container.querySelector('#radar-container');
+    expect(cluster).not.toHaveAttribute('data-has-selection');
     expect(bubble).not.toHaveAttribute('data-clicked');
+    expect(bubble).not.toHaveAttribute('data-selected');
 
     fireEvent.click(bubble);
     expect(bubble).toHaveAttribute('data-clicked', 'true');
+    expect(bubble).toHaveAttribute('data-selected', 'true');
+    expect(cluster).toHaveAttribute('data-has-selection', 'true');
+  });
+
+  it('renders grade chips with counts and filters bubbles by selected grade', () => {
+    const { container } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: /全部\s*2/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /S\s*1/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /F\s*1/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /S\s*1/ }));
+
+    expect(container.querySelector('[aria-label="Buyer Beta - S級"]')).toBeInTheDocument();
+    expect(container.querySelector('[aria-label="Buyer Alpha - F級"]')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /S\s*1/ })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('uses dynamic mobile container height from visible bubble count', () => {
+    setMockContainerWidth(375);
+    const { container, rerender } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+
+    const radarSection = container.querySelector('#radar-section');
+    expect(radarSection).toHaveStyle('min-height: 240px');
+
+    rerender(<RadarCluster leads={mobileDenseLeads} onSelectLead={vi.fn()} />);
+    expect(radarSection).toHaveStyle('min-height: 380px');
   });
 
   it('supports click and keyboard selection', () => {
@@ -145,6 +190,9 @@ describe('RadarCluster', () => {
     expect(cssContent).toMatch(/\.uag-bubble\s*{[\s\S]*?min-width:\s*48px;[\s\S]*?min-height:\s*48px;/);
     expect(cssContent).toContain('.uag-bubble:focus-visible');
     expect(cssContent).toContain('outline: 3px solid var(--uag-brand);');
+    expect(cssContent).toContain(".uag-bubble[data-selected='true']");
+    expect(cssContent).toContain(".uag-cluster[data-has-selection='true'] .uag-bubble:not([data-selected='true'])");
+    expect(cssContent).toContain('.uag-grade-chip');
     expect(cssContent).toContain('.uag-bubble::after');
     expect(cssContent).toContain('z-index: -1;');
     expect(cssContent).toContain('pointer-events: none;');
