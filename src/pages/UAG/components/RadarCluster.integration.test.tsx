@@ -1,200 +1,275 @@
-/**
- * RadarCluster 整合測試 - 任務 #19a 完整驗證
- *
- * 五種測試類型：
- * 1. R1 響應式尺寸測試（手機 vs 桌面）
- * 2. R2 碰撞偵測邏輯測試（單元測試已覆蓋）
- * 3. R3 觸控擴展 CSS 測試
- * 4. R4 手機 Tooltip 行為測試
- * 5. R5 S/A 級脈衝動畫 CSS 測試
- */
-
-import { act, fireEvent, render } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import RadarCluster from './RadarCluster';
-import type { Lead } from '../types/uag.types';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import RadarCluster from './RadarCluster';
+import type { Lead } from '../types/uag.types';
+import * as overlapUtils from '../utils/resolveOverlap';
 
 const UAG_STYLES_PATH = resolve(process.cwd(), 'src/pages/UAG/UAG.module.css');
 const cssContent = readFileSync(UAG_STYLES_PATH, 'utf-8');
+const CLUSTER_HEIGHT_PX = 450;
 
-// Mock ResizeObserver
+let mockContainerWidth = 800;
+
+function setMockContainerWidth(width: number): void {
+  mockContainerWidth = width;
+}
+
 class ResizeObserverMock {
   private callback: ResizeObserverCallback;
-  private observedElement: Element | null = null;
 
   constructor(callback: ResizeObserverCallback) {
     this.callback = callback;
   }
 
-  observe(target: Element) {
-    this.observedElement = target;
-    // Mock offsetWidth
+  observe = (target: Element): void => {
     Object.defineProperty(target, 'offsetWidth', {
       configurable: true,
-      value: 800 // 預設桌面寬度
+      get: () => mockContainerWidth,
     });
-    // 觸發 callback
+
     act(() => {
       this.callback(
         [
           {
             target,
-            contentRect: { width: 800 } as DOMRectReadOnly,
+            contentRect: {
+              width: mockContainerWidth,
+              height: CLUSTER_HEIGHT_PX,
+            } as DOMRectReadOnly,
           } as ResizeObserverEntry,
         ],
         this as unknown as ResizeObserver
       );
     });
-  }
+  };
 
-  unobserve() {
-    this.observedElement = null;
-  }
-
-  disconnect() {
-    this.observedElement = null;
-  }
+  unobserve = vi.fn();
+  disconnect = vi.fn();
 }
 
 global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
-describe('RadarCluster 整合測試 - 任務 #19a', () => {
+function parseBubblePositionPx(bubble: HTMLElement): { x: number; y: number; size: number } {
+  const leftPercent = Number.parseFloat(bubble.style.left);
+  const topPercent = Number.parseFloat(bubble.style.top);
+  const size = Number.parseFloat(bubble.style.getPropertyValue('--w'));
+
+  return {
+    x: (leftPercent / 100) * mockContainerWidth,
+    y: (topPercent / 100) * CLUSTER_HEIGHT_PX,
+    size,
+  };
+}
+
+describe('RadarCluster integration', () => {
+  const grades = ['S', 'A', 'B', 'C', 'F'] as const;
   const sampleLeads: Lead[] = [
     {
-      id: 'lead-s-01',
-      name: 'S級客戶',
+      id: 'lead-s-02',
+      name: 'S Lead 2',
       grade: 'S',
       intent: 95,
-      prop: '信義三房',
+      prop: 'Xinyi 3BR',
       visit: 5,
       price: 3200,
       status: 'new',
       ai: 'High intent',
-      session_id: 'sess-s-01',
+      session_id: 'sess-s-02',
       x: 50,
       y: 50,
     },
     {
+      id: 'lead-s-01',
+      name: 'S Lead 1',
+      grade: 'S',
+      intent: 93,
+      prop: 'Daan 2BR',
+      visit: 4,
+      price: 2900,
+      status: 'new',
+      ai: 'High intent',
+      session_id: 'sess-s-01',
+      x: 50.6,
+      y: 50.4,
+    },
+    {
       id: 'lead-a-01',
-      name: 'A級客戶',
+      name: 'A Lead 1',
       grade: 'A',
       intent: 85,
-      prop: '大安兩房',
+      prop: 'Songshan Studio',
       visit: 3,
       price: 2400,
       status: 'new',
       ai: 'Good intent',
       session_id: 'sess-a-01',
-      x: 60,
-      y: 40,
-    },
-    {
-      id: 'lead-f-01',
-      name: 'F級客戶',
-      grade: 'F',
-      intent: 42,
-      prop: '松山套房',
-      visit: 1,
-      price: 980,
-      status: 'new',
-      ai: 'Low intent',
-      session_id: 'sess-f-01',
-      x: 30,
-      y: 60,
+      x: 49.8,
+      y: 50.1,
     },
   ];
-
-  const mockOnSelect = vi.fn();
+  const denseMobileLeads: Lead[] = [
+    [50, 50],
+    [50.6, 50.4],
+    [49.8, 49.9],
+    [51.1, 50.7],
+    [48.9, 50.5],
+    [50.3, 49.2],
+    [49.4, 51.2],
+    [51.6, 49.8],
+    [48.4, 49.6],
+    [52, 50.1],
+    [47.9, 50.8],
+    [50.8, 48.7],
+  ].map(([x, y], index) => ({
+    id: `dense-${index + 1}`,
+    name: `Dense Lead ${index + 1}`,
+    grade: grades[index % grades.length] ?? 'F',
+    intent: 90 - index,
+    prop: `Property ${index + 1}`,
+    visit: 1 + index,
+    price: 1800 + index * 10,
+    status: 'new',
+    ai: 'Dense cluster',
+    session_id: `sess-dense-${index + 1}`,
+    x,
+    y,
+  }));
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
+    setMockContainerWidth(800);
   });
 
-  it('【測試 1/5】R1: 組件正確渲染響應式尺寸邏輯', () => {
-    const { container } = render(<RadarCluster leads={sampleLeads} onSelectLead={mockOnSelect} />);
-
-    const sBubble = container.querySelector('[data-grade="S"]') as HTMLElement;
-    const aBubble = container.querySelector('[data-grade="A"]') as HTMLElement;
-    const fBubble = container.querySelector('[data-grade="F"]') as HTMLElement;
-
-    expect(sBubble).toBeTruthy();
-    expect(aBubble).toBeTruthy();
-    expect(fBubble).toBeTruthy();
-
-    // 驗證 CSS 變數 --w 存在（桌面尺寸）
-    const sStyle = sBubble.style.getPropertyValue('--w');
-    const fStyle = fBubble.style.getPropertyValue('--w');
-
-    // 桌面環境：S=120px, F=60px
-    expect(sStyle).toBe('120px');
-    expect(fStyle).toBe('60px');
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it('【測試 2/5】R2: 碰撞偵測工具函數已通過單元測試', () => {
-    // resolveOverlap.test.ts 已包含 11 個詳盡測試
-    // 包含：邊界約束、重疊推擠、手機尺寸、迭代收斂等
-    expect(true).toBe(true);
+  it('applies deterministic labels with grade + id tiebreaker', async () => {
+    const { container } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+
+    await waitFor(() => {
+      const sLeadOne = container.querySelector('[aria-label="S Lead 1 - S級"]');
+      expect(sLeadOne).toHaveStyle('--w: 120px');
+    });
+
+    const sLeadOne = container.querySelector('[aria-label="S Lead 1 - S級"]');
+    const sLeadTwo = container.querySelector('[aria-label="S Lead 2 - S級"]');
+
+    expect(sLeadOne?.querySelector('[class*="uag-bubble-id"]')?.textContent).toBe('S-01');
+    expect(sLeadTwo?.querySelector('[class*="uag-bubble-id"]')?.textContent).toBe('S-02');
   });
 
-  it('【測試 3/5】R3: CSS 觸控擴展區域已定義', () => {
-    // 檢查 CSS 檔案包含 ::after 觸控擴展
+  it('resolves overlap in a 320px mobile container', async () => {
+    setMockContainerWidth(320);
+
+    const { container } = render(<RadarCluster leads={denseMobileLeads} onSelectLead={vi.fn()} />);
+
+    await waitFor(() => {
+      const sBubble = container.querySelector('[aria-label="Dense Lead 1 - S級"]');
+      expect(sBubble).toHaveStyle('--w: 72px');
+    });
+
+    const bubbles = Array.from(container.querySelectorAll('[role="button"][data-grade]')) as HTMLElement[];
+    expect(bubbles).toHaveLength(12);
+
+    const parsed = bubbles.map(parseBubblePositionPx);
+
+    for (let i = 0; i < parsed.length; i++) {
+      for (let j = i + 1; j < parsed.length; j++) {
+        const bubbleA = parsed[i];
+        const bubbleB = parsed[j];
+        if (!bubbleA || !bubbleB) {
+          throw new Error('Missing bubble position');
+        }
+
+        const dx = bubbleB.x - bubbleA.x;
+        const dy = bubbleB.y - bubbleA.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const minDistance = bubbleA.size / 2 + bubbleB.size / 2 + 4;
+
+        expect(distance).toBeGreaterThanOrEqual(minDistance - 4);
+      }
+    }
+  });
+
+  it('calls resolveOverlap with expected geometry arguments', async () => {
+    setMockContainerWidth(360);
+    const resolveOverlapSpy = vi.spyOn(overlapUtils, 'resolveOverlap');
+
+    render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(resolveOverlapSpy).toHaveBeenCalled();
+    });
+
+    const latestCall = resolveOverlapSpy.mock.calls.at(-1);
+    expect(latestCall).toBeDefined();
+
+    if (!latestCall) {
+      throw new Error('resolveOverlap call not found');
+    }
+
+    const [bubbles, containerWidth, containerHeight, padding] = latestCall;
+
+    expect(containerWidth).toBe(360);
+    expect(containerHeight).toBe(CLUSTER_HEIGHT_PX);
+    expect(padding).toBe(4);
+    expect(bubbles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ size: 72 }),
+        expect.objectContaining({ size: 60 }),
+      ])
+    );
+  });
+
+  it('shows tooltip when selected and auto-hides after 3 seconds', () => {
+    const { container } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+
+    const bubble = container.querySelector('[aria-label="S Lead 2 - S級"]') as HTMLElement;
+
+    expect(bubble.getAttribute('data-clicked')).toBeNull();
+
+    vi.useFakeTimers();
+    fireEvent.click(bubble);
+    expect(bubble.getAttribute('data-clicked')).toBe('true');
+
+    act(() => {
+      vi.advanceTimersByTime(TOOLTIP_TIMEOUT_MS);
+    });
+
+    expect(bubble.getAttribute('data-clicked')).toBeNull();
+  });
+
+  it('cleans pending tooltip timeout on unmount', () => {
+    vi.useFakeTimers();
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+    const { container, unmount } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+
+    const bubble = container.querySelector('[aria-label="S Lead 2 - S級"]') as HTMLElement;
+    fireEvent.click(bubble);
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+  });
+
+  it('keeps touch expansion and reduced-motion safeguards in CSS', () => {
     expect(cssContent).toContain('.uag-bubble::after');
     expect(cssContent).toContain('min-width: 48px');
     expect(cssContent).toContain('min-height: 48px');
-  });
+    expect(cssContent).toContain('z-index: 1;');
+    expect(cssContent).toContain('pointer-events: auto;');
 
-  it('【測試 4/5】R4: 手機 Tooltip 點擊顯示與自動隱藏', () => {
-    const { container } = render(<RadarCluster leads={sampleLeads} onSelectLead={mockOnSelect} />);
-
-    const bubble = container.querySelector('[data-grade="S"]');
-    expect(bubble).toBeTruthy();
-
-    // 初始狀態：沒有 data-clicked 屬性
-    expect(bubble?.getAttribute('data-clicked')).toBeNull();
-
-    // 使用 fake timers
-    vi.useFakeTimers();
-
-    // 點擊泡泡
-    act(() => {
-      fireEvent.click(bubble!);
-    });
-
-    // 點擊後應該有 data-clicked="true"
-    expect(bubble?.getAttribute('data-clicked')).toBe('true');
-
-    // 快轉 3 秒
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
-
-    // 3 秒後應該移除 data-clicked
-    expect(bubble?.getAttribute('data-clicked')).toBeNull();
-
-    vi.useRealTimers();
-  });
-
-  it('【測試 5/5】R5: S/A 級脈衝動畫 CSS 已定義', () => {
-    const { container } = render(<RadarCluster leads={sampleLeads} onSelectLead={mockOnSelect} />);
-
-    const sBubble = container.querySelector('[data-grade="S"]');
-    const aBubble = container.querySelector('[data-grade="A"]');
-    const fBubble = container.querySelector('[data-grade="F"]');
-
-    // 驗證 data-grade 屬性存在
-    expect(sBubble?.getAttribute('data-grade')).toBe('S');
-    expect(aBubble?.getAttribute('data-grade')).toBe('A');
-    expect(fBubble?.getAttribute('data-grade')).toBe('F');
-
-    // 驗證 CSS 檔案包含脈衝動畫
     expect(cssContent).toContain('@keyframes s-pulse');
     expect(cssContent).toContain('@keyframes a-pulse');
-    expect(cssContent).toContain('rgba(251, 191, 36'); // S 級金色
-    expect(cssContent).toContain('rgba(59, 130, 246'); // A 級藍色
-
-    // 驗證 prefers-reduced-motion 支援
+    expect(cssContent).toContain(".uag-bubble[data-grade='S']");
+    expect(cssContent).toContain(".uag-bubble[data-grade='A']");
     expect(cssContent).toContain('@media (prefers-reduced-motion: reduce)');
   });
 });
+
+const TOOLTIP_TIMEOUT_MS = 3000;

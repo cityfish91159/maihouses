@@ -16,6 +16,8 @@ interface Position {
   y: number;
 }
 
+const MAX_OVERLAP_ITERATIONS = 6;
+
 /**
  * 解決泡泡重疊問題
  *
@@ -36,8 +38,8 @@ export function resolveOverlap(
   // 初始化位置陣列（深拷貝避免修改原始資料）
   const positions: Position[] = bubbles.map(b => ({ x: b.x, y: b.y }));
 
-  // 迭代 3 次推擠（通常足夠解決大部分重疊）
-  for (let iter = 0; iter < 3; iter++) {
+  // 經驗值：6 次可在手機 12 泡泡密集場景下顯著降低重疊，同時維持可接受成本
+  for (let iter = 0; iter < MAX_OVERLAP_ITERATIONS; iter++) {
     for (let i = 0; i < bubbles.length; i++) {
       for (let j = i + 1; j < bubbles.length; j++) {
         const bubbleA = bubbles[i];

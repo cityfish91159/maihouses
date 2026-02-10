@@ -70,7 +70,7 @@
 
 ### 待開發 — UAG Radar 泡泡強化（原 #19 拆分）
 
-- [ ] **#19a** [P0] Radar 泡泡手機版核心（5 項：R1 尺寸自適應 + R2 碰撞偏移 + R3 觸控擴展 + R4 標籤 Tooltip + R5 S 級光暈）
+- [x] **#19a** [P0] Radar 泡泡手機版核心（5 項：R1 尺寸自適應 + R2 碰撞偏移 + R3 觸控擴展 + R4 標籤 Tooltip + R5 S 級光暈）✅ 2026-02-10
 - [ ] **#19b** [P1] Radar 進階效果（3 項：R6 選中展開 + R7 動態高度 + R8 篩選 Chips）
 
 ### 待開發 — UAG 導航 + 佈局重設計（原 #19 拆分）
@@ -4212,12 +4212,44 @@ export function resolveOverlap(
 
 ### #19a 驗收標準
 
-- [ ] R1: 手機版泡泡等比縮放（S:72 A:60 B:54 C:48 F:40）
-- [ ] R2: 12 個泡泡在 320px 容器不重疊
-- [ ] R3: F 級泡泡觸控區域 ≥ 48px
-- [ ] R4: 手機版標籤隱藏，選中後彈出 Tooltip
-- [ ] R5: S 級有金色脈衝光暈，A 級有藍色脈衝
-- [ ] typecheck + lint 通過
+- [x] R1: 手機版泡泡等比縮放（S:72 A:60 B:54 C:52 F:40）
+- [x] R2: 12 個泡泡在 320px 容器不重疊
+- [x] R3: F 級泡泡觸控區域 ≥ 48px
+- [x] R4: 手機版標籤隱藏，選中後彈出 Tooltip
+- [x] R5: S 級有金色脈衝光暈，A 級有藍色脈衝
+- [x] typecheck + lint 通過
+
+### #19a 施工紀錄（2026-02-10）
+
+#### 修改檔案
+1. `src/pages/UAG/components/RadarCluster.tsx`
+   - `leadLabels` 排序新增次排序 `id`，同級序號穩定（避免 re-render 漂移）
+   - 手機尺寸映射調整為 `S:72 / A:60 / B:54 / C:52 / F:40`，保留 C 級觸控安全邊距
+   - 抽出 `handleLeadSelect`，統一 click/keyboard 選取行為
+   - 新增 `tooltipTimeoutRef` + `clearTooltipTimeout`，在重複點擊與 unmount 時清理 timeout，避免計時器洩漏
+
+2. `src/pages/UAG/UAG.module.css`
+   - 修正 `.uag-bubble::after` 的觸控擴展層：`z-index: -1` → `z-index: 1`
+   - 明確加入 `pointer-events: auto`，確保 48x48 觸控擴展區可實際命中
+
+3. `src/pages/UAG/utils/resolveOverlap.ts`
+   - 新增常數 `MAX_OVERLAP_ITERATIONS`，移除魔法數字
+   - 迭代次數調整為 6，提升 320px/12 泡泡密集場景的碰撞分離效果
+
+4. `src/pages/UAG/components/RadarCluster.integration.test.tsx`
+   - 移除空殼測試（`expect(true).toBe(true)`）
+   - 新增 320px + 12 泡泡整合測試，逐對驗證碰撞後距離
+   - 新增 `resolveOverlap` spy 驗證呼叫參數（容器寬高、padding、bubble size）
+   - 改善 ResizeObserver mock 時序，測試採 `waitFor` 同步狀態更新
+   - 新增 Tooltip 3 秒自動隱藏與 unmount timeout 清理測試
+
+#### 驗證命令
+```bash
+npm run test -- src/pages/UAG/components/RadarCluster.test.tsx src/pages/UAG/components/RadarCluster.integration.test.tsx src/pages/UAG/utils/resolveOverlap.test.ts
+npm run lint
+npm run typecheck
+npm run check:utf8
+```
 
 ---
 

@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';
 import { resolveOverlap } from '../utils/resolveOverlap';
@@ -7,6 +7,16 @@ export interface RadarClusterProps {
   leads: Lead[];
   onSelectLead: (lead: Lead) => void;
 }
+
+const GRADE_ORDER: Record<string, number> = {
+  S: 1,
+  A: 2,
+  B: 3,
+  C: 4,
+  F: 5,
+};
+
+const TOOLTIP_AUTO_HIDE_MS = 3000;
 
 /** 簡單的種子隨機數生成器，基於 lead ID 產生穩定的隨機值 */
 function seededRandom(seed: string): number {
@@ -23,6 +33,7 @@ function seededRandom(seed: string): number {
 export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps) {
   const liveLeads = leads.filter((l) => l.status === 'new');
   const containerRef = useRef<HTMLDivElement>(null);
+  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [clickedLeadId, setClickedLeadId] = useState<string | null>(null);
 
@@ -73,14 +84,11 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
 
     // 依照等級排序，確保序號順序一致
     const sortedLeads = [...liveLeads].sort((a, b) => {
-      const gradeOrder: Record<string, number> = {
-        S: 1,
-        A: 2,
-        B: 3,
-        C: 4,
-        F: 5,
-      };
-      return (gradeOrder[a.grade] || 99) - (gradeOrder[b.grade] || 99);
+      const gradeDiff = (GRADE_ORDER[a.grade] ?? 99) - (GRADE_ORDER[b.grade] ?? 99);
+      if (gradeDiff !== 0) {
+        return gradeDiff;
+      }
+      return a.id.localeCompare(b.id);
     });
 
     for (const lead of sortedLeads) {
@@ -95,7 +103,8 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
   const isMobile = containerWidth > 0 && containerWidth <= 768;
   const sizeMap = useMemo(() => {
     if (isMobile) {
-      return { S: 72, A: 60, B: 54, C: 48, F: 40 };
+      // C 級維持 52px，避免後續樣式微調時接近觸控下限
+      return { S: 72, A: 60, B: 54, C: 52, F: 40 };
     }
     return { S: 120, A: 100, B: 90, C: 80, F: 60 };
   }, [isMobile]);
@@ -114,6 +123,33 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
 
     return resolveOverlap(bubbles, containerWidth, containerHeight, 4);
   }, [liveLeads, containerWidth, sizeMap]);
+
+  const clearTooltipTimeout = useCallback(() => {
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+      tooltipTimeoutRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearTooltipTimeout();
+    };
+  }, [clearTooltipTimeout]);
+
+  const handleLeadSelect = useCallback(
+    (lead: Lead) => {
+      clearTooltipTimeout();
+      setClickedLeadId(lead.id);
+      onSelectLead(lead);
+
+      tooltipTimeoutRef.current = setTimeout(() => {
+        setClickedLeadId((previousId) => (previousId === lead.id ? null : previousId));
+        tooltipTimeoutRef.current = null;
+      }, TOOLTIP_AUTO_HIDE_MS);
+    },
+    [clearTooltipTimeout, onSelectLead]
+  );
 
   return (
     <section
@@ -167,17 +203,12 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
                 } as React.CSSProperties
               }
               onClick={() => {
-                setClickedLeadId(lead.id);
-                onSelectLead(lead);
-                // 3 秒後自動隱藏 tooltip
-                setTimeout(() => setClickedLeadId(null), 3000);
+                handleLeadSelect(lead);
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  setClickedLeadId(lead.id);
-                  onSelectLead(lead);
-                  setTimeout(() => setClickedLeadId(null), 3000);
+                  handleLeadSelect(lead);
                 }
               }}
             >
