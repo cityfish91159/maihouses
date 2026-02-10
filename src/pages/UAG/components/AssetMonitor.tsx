@@ -51,127 +51,106 @@ export default function AssetMonitor({ leads, onSendMessage, onViewChat }: Asset
                 </td>
               </tr>
             ) : (
-              boughtLeads.map((lead, index) => {
+              boughtLeads.map((lead) => {
                 const { percent, timeDisplay } = calculateProtectionInfo(lead);
                 const colorVar = `var(--grade-${lead.grade.toLowerCase()})`;
                 const protectText = getProtectionText(lead);
-                // M4: 首次提示動畫 (僅第一張卡片)
-                const shouldShowHint = index === 0;
 
                 return (
                   <tr key={lead.id}>
-                    <td colSpan={4} style={{ padding: 0 }}>
-                      {/* M4: Swipe-to-Action 容器 */}
-                      <div
-                        className={`${styles['monitor-card-swipe']} ${shouldShowHint ? styles['swipe-hint'] : ''}`}
-                      >
-                        {/* 主要內容 */}
-                        <div className={styles['monitor-card-content']}>
+                    <td data-label="客戶等級/名稱">
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        {/* 工單 6: 等級徽章圓角優化 */}
+                        {/* 規則: html-tailwind.csv Row 38 - Card structure */}
+                        {/* Code: rounded-lg (8px) 風格，避免圓形 AI 感 */}
+                        <span
+                          style={{
+                            display: 'inline-grid',
+                            placeItems: 'center',
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '6px', // 從 50% 改為 6px
+                            fontSize: '11px',
+                            fontWeight: 900,
+                            color: 'var(--bg-card)',
+                            marginRight: '8px',
+                            background: colorVar,
+                          }}
+                        >
+                          {lead.grade}
+                        </span>
+                        <div>
+                          <div style={{ fontWeight: 800, color: 'var(--ink-100)' }}>
+                            {lead.name}
+                          </div>
                           <div
                             style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'auto 1fr auto auto',
-                              gap: '12px',
-                              alignItems: 'center',
-                              padding: '12px',
+                              fontSize: '11px',
+                              color: 'var(--ink-300)',
                             }}
                           >
-                            {/* 等級徽章 + 名稱 */}
-                            <div style={{ display: 'flex', alignItems: 'center', gridColumn: '1 / 3' }}>
-                              <span
-                                style={{
-                                  display: 'inline-grid',
-                                  placeItems: 'center',
-                                  width: '24px',
-                                  height: '24px',
-                                  borderRadius: '6px',
-                                  fontSize: '11px',
-                                  fontWeight: 900,
-                                  color: 'var(--bg-card)',
-                                  marginRight: '8px',
-                                  background: colorVar,
-                                }}
-                              >
-                                {lead.grade}
-                              </span>
-                              <div>
-                                <div style={{ fontWeight: 800, color: 'var(--ink-100)' }}>
-                                  {lead.name}
-                                </div>
-                                <div style={{ fontSize: '11px', color: 'var(--ink-300)' }}>
-                                  {lead.prop}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* 保護期倒數 */}
-                            <div style={{ gridColumn: '1 / 3' }}>
-                              <div
-                                style={{
-                                  fontSize: '11px',
-                                  fontWeight: 700,
-                                  marginBottom: '2px',
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                }}
-                              >
-                                <span style={{ color: colorVar }}>{protectText}</span>
-                                <span className={styles['t-countdown']}>{timeDisplay}</span>
-                              </div>
-                              <div className={styles['progress-bg']}>
-                                <div
-                                  className={styles['progress-fill']}
-                                  style={{ width: `${percent}%`, background: colorVar }}
-                                ></div>
-                              </div>
-                            </div>
-
-                            {/* 狀態 Badge */}
-                            <div style={{ gridColumn: '3 / 4' }}>
-                              {(() => {
-                                const display = getNotificationDisplay(lead.notification_status);
-                                return (
-                                  <span
-                                    className={styles['uag-badge']}
-                                    style={{
-                                      background: display.bgColor,
-                                      color: display.textColor,
-                                      border: 'none',
-                                    }}
-                                  >
-                                    {display.text}
-                                  </span>
-                                );
-                              })()}
-                            </div>
+                            {lead.prop}
                           </div>
                         </div>
-
-                        {/* M4: 隱藏操作按鈕區 (左滑顯示) */}
-                        <div className={styles['monitor-card-actions-hidden']}>
-                          {lead.conversation_id ? (
-                            <button
-                              className={`${styles['uag-btn']} ${styles.secondary}`}
-                              onClick={() => {
-                                if (lead.conversation_id) {
-                                  onViewChat?.(lead.conversation_id);
-                                }
-                              }}
-                              aria-label="查看對話"
-                            >
-                              查看對話
-                            </button>
-                          ) : (
-                            <button
-                              className={`${styles['uag-btn']} ${styles.primary} ${styles.small}`}
-                              onClick={() => onSendMessage?.(lead)}
-                              aria-label="發送訊息"
-                            >
-                              發送訊息
-                            </button>
-                          )}
-                        </div>
                       </div>
+                    </td>
+                    <td data-label="保護期倒數">
+                      <div
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          marginBottom: '2px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <span style={{ color: colorVar }}>{protectText}</span>
+                        <span className={styles['t-countdown']}>{timeDisplay}</span>
+                      </div>
+                      <div className={styles['progress-bg']}>
+                        <div
+                          className={styles['progress-fill']}
+                          style={{ width: `${percent}%`, background: colorVar }}
+                        ></div>
+                      </div>
+                    </td>
+                    <td data-label="目前狀態">
+                      {(() => {
+                        const display = getNotificationDisplay(lead.notification_status);
+                        return (
+                          <span
+                            className={styles['uag-badge']}
+                            style={{
+                              background: display.bgColor,
+                              color: display.textColor,
+                              border: 'none',
+                            }}
+                          >
+                            {display.text}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td data-label="操作">
+                      {lead.conversation_id ? (
+                        <button
+                          className={`${styles['uag-btn']} ${styles['secondary']}`}
+                          onClick={() => {
+                            if (lead.conversation_id) {
+                              onViewChat?.(lead.conversation_id);
+                            }
+                          }}
+                        >
+                          查看對話
+                        </button>
+                      ) : (
+                        <button
+                          className={`${styles['uag-btn']} ${styles['primary']} ${styles['small']}`}
+                          onClick={() => onSendMessage?.(lead)}
+                        >
+                          發送訊息
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

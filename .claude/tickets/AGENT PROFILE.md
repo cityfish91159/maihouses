@@ -3889,51 +3889,10 @@ interface ActionBottomSheetProps {
 
 ### #19d 驗收標準
 
-- [x] M3: 手機版選中泡泡後 ActionPanel 以 Bottom Sheet 滑出
-- [x] M4: AssetMonitor 手機版支援左滑顯示操作按鈕
-- [x] M5: 核心卡片改為 Glassmorphism 風格
-- [x] typecheck + lint 通過
-
-### #19d 實作記錄
-
-**實作時間:** 2026-02-10
-**實作者:** Claude Sonnet 4.5 + zero-slack-coder
-
-**M3 實作細節:**
-- 新增 `ActionBottomSheet.tsx` (207 行)
-- ESC 鍵關閉 + Overlay 點擊關閉
-- body scroll lock 當 sheet 開啟
-- role="dialog" + aria-modal WCAG 2.1 支援
-- prefers-reduced-motion 支援
-
-**M4 實作細節:**
-- 修改 `AssetMonitor.tsx` 使用 Swipe-to-Action
-- scroll-snap-type: x mandatory 實現滑動
-- 首張卡片提示動畫 (hintSlide 1.5s)
-- 桌面版 (≥768px) 直接顯示按鈕
-- 觸控目標 ≥44px 符合 WCAG 2.1
-
-**M5 實作細節:**
-- .uag-card 改為 backdrop-filter: blur(12px)
-- background: rgba(255, 255, 255, 0.75)
-- .uag-page 增加淡灰藍漸層背景
-- hover 效果: opacity 0.75 → 0.85
-
-**Strict Audit 評分:** 84.85/100 (可接受)
-
-**發現問題 (P1):**
-1. ActionBottomSheet 缺下拉關閉手勢 (需 touch 事件)
-2. Glassmorphism 缺 Safari 15- fallback
-3. AssetMonitor Grid 佈局需調整
-4. 缺 ActionBottomSheet.test.tsx
-
-**檔案清單:**
-- `src/pages/UAG/components/ActionBottomSheet.tsx` (新增, 207 行)
-- `src/pages/UAG/components/AssetMonitor.tsx` (修改, 185 行)
-- `src/pages/UAG/UAG.module.css` (修改, 新增 M3/M4/M5 樣式)
-- `src/pages/UAG/index.tsx` (修改, 整合 Bottom Sheet)
-
-**Git Commit:** 待建立
+- [ ] M3: 手機版選中泡泡後 ActionPanel 以 Bottom Sheet 滑出
+- [ ] M4: AssetMonitor 手機版支援左滑顯示操作按鈕
+- [ ] M5: 核心卡片改為 Glassmorphism 風格
+- [ ] typecheck + lint 通過
 
 ---
 
