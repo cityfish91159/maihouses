@@ -214,6 +214,30 @@ describe('CallConfirmPanel', () => {
     );
   });
 
+  it('shows warning and stays open when trust action fails', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const onTrustAction = vi.fn().mockRejectedValue(new Error('trust failed'));
+
+    render(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={onClose}
+        agentPhone="0912-345-678"
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+        onTrustAction={onTrustAction}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /撥打電話/i }));
+
+    expect(onTrustAction).toHaveBeenCalledTimes(1);
+    expect(notify.warning).toHaveBeenCalledWith('操作未完成', '請稍後再試');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('supports panel slide-in animation classes', async () => {
     render(
       <CallConfirmPanel

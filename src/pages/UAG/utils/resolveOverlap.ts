@@ -47,6 +47,8 @@ export function resolveOverlap(
 
   // Iteratively separate overlaps while keeping runtime predictable.
   for (let iter = 0; iter < MAX_OVERLAP_ITERATIONS; iter++) {
+    let hasAdjustment = false;
+
     for (let i = 0; i < bubbles.length; i++) {
       for (let j = i + 1; j < bubbles.length; j++) {
         const bubbleA = bubbles[i];
@@ -75,6 +77,7 @@ export function resolveOverlap(
           posA.y -= nudgeY;
           posB.x += nudgeX;
           posB.y += nudgeY;
+          hasAdjustment = true;
 
           dx = posB.x - posA.x;
           dy = posB.y - posA.y;
@@ -90,8 +93,13 @@ export function resolveOverlap(
           posA.y -= dy * pushRatio;
           posB.x += dx * pushRatio;
           posB.y += dy * pushRatio;
+          hasAdjustment = true;
         }
       }
+    }
+
+    if (!hasAdjustment) {
+      break;
     }
   }
 

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { StrictMode } from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import RadarCluster, {
@@ -240,6 +241,31 @@ describe('RadarCluster integration', () => {
 
     expect(bubble).not.toHaveAttribute('data-clicked');
     fireEvent.click(bubble);
+    expect(bubble).toHaveAttribute('data-clicked', 'true');
+
+    act(() => {
+      vi.advanceTimersByTime(TOOLTIP_AUTO_HIDE_MS);
+    });
+
+    expect(bubble).not.toHaveAttribute('data-clicked');
+  });
+
+  it('auto-hides tooltip in React.StrictMode', async () => {
+    vi.useFakeTimers();
+
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(
+        <StrictMode>
+          <RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />
+        </StrictMode>
+      ));
+    });
+
+    const bubble = container.querySelector('[aria-label="S Lead 2 - S級"]') as HTMLElement;
+    act(() => {
+      fireEvent.click(bubble);
+    });
     expect(bubble).toHaveAttribute('data-clicked', 'true');
 
     act(() => {

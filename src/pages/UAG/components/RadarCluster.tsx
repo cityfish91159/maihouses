@@ -71,9 +71,8 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
       }
     };
 
-    updateWidth();
-
     if (typeof ResizeObserver === 'undefined') {
+      updateWidth();
       window.addEventListener('resize', updateWidth);
       return () => window.removeEventListener('resize', updateWidth);
     }
@@ -83,6 +82,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
       resizeObserver.observe(container);
       return () => resizeObserver.disconnect();
     } catch {
+      updateWidth();
       window.addEventListener('resize', updateWidth);
       return () => window.removeEventListener('resize', updateWidth);
     }
@@ -171,6 +171,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
   }, [filteredLeads, containerWidth, containerHeight, sizeMap]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
       clearTooltipTimeout();

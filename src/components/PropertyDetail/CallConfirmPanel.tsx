@@ -115,6 +115,8 @@ export function CallConfirmPanel({
       void track('call_dial_attempt', { has_phone: false });
       onClose();
       onFallbackContact?.(trustChecked);
+    } catch {
+      notify.warning('操作未完成', '請稍後再試');
     } finally {
       setIsSubmitting(false);
     }
