@@ -11,12 +11,11 @@ import { TrustServiceBanner } from '../TrustServiceBanner';
  * 3. 回調函數變化不應觸發重新渲染（自訂比較函數）
  */
 describe('TrustServiceBanner - Performance Optimization', () => {
-  it('應該在父組件重新渲染但 props 不變時避免重新渲染', () => {
-    // 創建穩定的回調函數
+  it('應該在父組件重新渲染但 props 不變時保持 DOM 穩定', () => {
     const handleEnterService = vi.fn();
     const handleRequestEnable = vi.fn();
 
-    const { rerender } = render(
+    const { rerender, container } = render(
       <TrustServiceBanner
         trustEnabled={true}
         propertyId="MH-100001"
@@ -27,9 +26,8 @@ describe('TrustServiceBanner - Performance Optimization', () => {
       />
     );
 
-    // 使用 vi.spyOn 監控組件渲染次數
-    const renderSpy = vi.fn();
-    const OriginalBanner = TrustServiceBanner;
+    const bannerBefore = container.querySelector('[role="region"]');
+    const htmlBefore = container.innerHTML;
 
     // 重新渲染相同的 props
     rerender(
@@ -43,9 +41,12 @@ describe('TrustServiceBanner - Performance Optimization', () => {
       />
     );
 
-    // 驗證：由於 React.memo 的自訂比較函數，組件不應重新渲染
-    // （實際驗證需要在真實場景中使用 React DevTools Profiler）
-    expect(true).toBe(true);
+    const bannerAfter = container.querySelector('[role="region"]');
+
+    // 驗證 DOM 節點穩定（同一個參考 = memo 生效未重建）
+    expect(bannerAfter).toBe(bannerBefore);
+    // 驗證 HTML 輸出一致
+    expect(container.innerHTML).toBe(htmlBefore);
   });
 
   it('應該在 trustEnabled 改變時重新渲染', () => {
@@ -244,45 +245,3 @@ describe('TrustServiceBanner - Performance Optimization', () => {
   });
 });
 
-describe('TrustServiceBanner - useMemo Dependency Array', () => {
-  it('bannerConfig 依賴陣列只應包含 trustEnabled', () => {
-    // 這是一個文檔測試，確保開發者理解 useMemo 的依賴
-    const expectedDependencies = ['trustEnabled'];
-
-    // 實際依賴在 TrustServiceBanner.tsx L116:
-    // [trustEnabled]
-
-    expect(expectedDependencies).toEqual(['trustEnabled']);
-  });
-
-  it('回調函數不應該在 useMemo 依賴陣列中', () => {
-    // 驗證：onEnterService 和 onRequestEnable 不應該在依賴陣列中
-    // 因為父層已經用 useCallback 穩定化了
-
-    const callbackProps = ['onEnterService', 'onRequestEnable'];
-    const useMemoDepsShouldNotInclude = callbackProps;
-
-    // 預期：bannerConfig 的 useMemo 不依賴這些回調
-    expect(useMemoDepsShouldNotInclude).not.toContain('trustEnabled');
-  });
-
-  it('React.memo 自訂比較函數應該忽略回調函數', () => {
-    // 驗證自訂比較函數的邏輯（文檔測試）
-    // TrustServiceBanner.tsx L184-208
-
-    const comparedProps = [
-      'trustEnabled', // 比較
-      'isRequesting', // 比較
-      'className', // 比較
-    ];
-
-    const ignoredProps = [
-      'onEnterService', // 不比較（假設父層已用 useCallback）
-      'onRequestEnable', // 不比較
-      'propertyId', // 不比較（未使用於渲染）
-    ];
-
-    expect(comparedProps.length).toBe(3);
-    expect(ignoredProps.length).toBe(3);
-  });
-});

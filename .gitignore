@@ -49,3 +49,6 @@ supabase/migrations/*muse*.sql
 supabase/migrations/*godview*.sql
 google-adk-ralph-loop-demo
 nul
+
+# Backup files
+*.backup

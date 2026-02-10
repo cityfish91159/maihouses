@@ -11,7 +11,7 @@ export interface RadarClusterProps {
 const RADAR_FILTER_OPTIONS = ['all', 'S', 'A', 'B', 'C', 'F'] as const;
 type RadarGradeFilter = (typeof RADAR_FILTER_OPTIONS)[number];
 
-const GRADE_ORDER: Record<string, number> = {
+const GRADE_ORDER: Record<Grade, number> = {
   S: 1,
   A: 2,
   B: 3,
@@ -22,6 +22,12 @@ const GRADE_ORDER: Record<string, number> = {
 export const RADAR_CONTAINER_HEIGHT_PX = 450;
 export const BUBBLE_MIN_PADDING_PX = 4;
 export const TOOLTIP_AUTO_HIDE_MS = 3000;
+export const MOBILE_BREAKPOINT_PX = 768;
+export const FLOAT_BASE_DURATION_S = 5;
+export const FLOAT_RANDOM_RANGE_S = 3;
+
+export const BUBBLE_SIZE_MOBILE = { S: 72, A: 60, B: 54, C: 52, F: 40 } as const;
+export const BUBBLE_SIZE_DESKTOP = { S: 120, A: 100, B: 90, C: 80, F: 60 } as const;
 
 export function getRadarContainerHeightPx(leadCount: number, isMobile: boolean): number {
   if (!isMobile) return RADAR_CONTAINER_HEIGHT_PX;
@@ -30,7 +36,10 @@ export function getRadarContainerHeightPx(leadCount: number, isMobile: boolean):
   return 380;
 }
 
-/** 簡單的種子隨機數生成器，基於 lead ID 產生穩定的隨機值 */
+/**
+ * 簡單的種子隨機數生成器，基於 lead ID 產生穩定的隨機值
+ * Empty seed returns 0 (Math.sin(0) = 0)
+ */
 export function seededRandom(seed: string): number {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -44,10 +53,13 @@ export function seededRandom(seed: string): number {
 
 export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps) {
   const liveLeads = leads.filter((l) => l.status === 'new');
+  // Note: If all leads are filtered out (e.g., all 'contacted'), empty state is handled in render
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(
+    () => (typeof window !== 'undefined' ? window.innerWidth : 0)
+  );
   const [activeGrade, setActiveGrade] = useState<RadarGradeFilter>('all');
   const [clickedLeadId, setClickedLeadId] = useState<string | null>(null);
 
@@ -71,10 +83,14 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
       }
     };
 
-    if (typeof ResizeObserver === 'undefined') {
+    const addResizeListener = () => {
       updateWidth();
       window.addEventListener('resize', updateWidth);
       return () => window.removeEventListener('resize', updateWidth);
+    };
+
+    if (typeof ResizeObserver === 'undefined') {
+      return addResizeListener();
     }
 
     try {
@@ -82,9 +98,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
       resizeObserver.observe(container);
       return () => resizeObserver.disconnect();
     } catch {
-      updateWidth();
-      window.addEventListener('resize', updateWidth);
-      return () => window.removeEventListener('resize', updateWidth);
+      return addResizeListener();
     }
   }, []);
 
@@ -96,6 +110,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
     return initialCounts;
   }, [liveLeads]);
 
+  // Fallback to 'all' if selected grade has 0 count
   const normalizedActiveGrade: RadarGradeFilter =
     activeGrade === 'all' || gradeCounts[activeGrade] > 0 ? activeGrade : 'all';
 
@@ -105,7 +120,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
   }, [liveLeads, normalizedActiveGrade]);
 
   // R7: Radar 容器高度依據手機泡泡數量調整
-  const isMobile = containerWidth > 0 && containerWidth <= 768;
+  const isMobile = containerWidth > 0 && containerWidth <= MOBILE_BREAKPOINT_PX;
   const containerHeight = useMemo(
     () => getRadarContainerHeightPx(filteredLeads.length, isMobile),
     [filteredLeads.length, isMobile]
@@ -120,8 +135,8 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
   const floatDurations = useMemo(() => {
     const durations: Record<string, string> = {};
     for (const lead of filteredLeads) {
-      const randomOffset = seededRandom(lead.id) * 3; // 0-3 範圍
-      durations[lead.id] = 5 + randomOffset + 's';
+      const randomOffset = seededRandom(lead.id) * FLOAT_RANDOM_RANGE_S;
+      durations[lead.id] = FLOAT_BASE_DURATION_S + randomOffset + 's';
     }
     return durations;
   }, [filteredLeads]);
@@ -149,11 +164,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
 
   // R1: 響應式尺寸對應表（手機 vs 桌面）
   const sizeMap = useMemo(() => {
-    if (isMobile) {
-      // C 級維持 52px，避免後續樣式微調時接近觸控下限
-      return { S: 72, A: 60, B: 54, C: 52, F: 40 };
-    }
-    return { S: 120, A: 100, B: 90, C: 80, F: 60 };
+    return isMobile ? BUBBLE_SIZE_MOBILE : BUBBLE_SIZE_DESKTOP;
   }, [isMobile]);
 
   // R2: 碰撞偵測與位置解析
@@ -256,12 +267,28 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
           <span style={{ fontWeight: 700 }}>Live 監控中</span>
         </div>
 
-        {filteredLeads.map((lead, index) => {
+        {filteredLeads.length === 0 ? (
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+              color: 'var(--ink-300)',
+              fontSize: '14px',
+            }}
+          >
+            目前無符合條件的潛客
+          </div>
+        ) : (
+          filteredLeads.map((lead, index) => {
           const size = sizeMap[lead.grade as keyof typeof sizeMap] ?? 60;
           const floatDuration = floatDurations[lead.id] ?? '6s';
           const resolvedPos = resolvedPositions[index];
 
-          // 若尚未解析位置，使用原始百分比位置
+          // 若 resolvedPositions 陣列長度不足（containerWidth=0 等邊界情況），
+          // 使用原始百分比位置作為安全回退
           const x = resolvedPos ? (resolvedPos.x / containerWidth) * 100 : (lead.x ?? 50);
           const y = resolvedPos ? (resolvedPos.y / containerHeight) * 100 : (lead.y ?? 50);
 
@@ -279,6 +306,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
               tabIndex={0}
               style={
                 {
+                  // --w: bubble size (px), --float: animation duration
                   '--w': size + 'px',
                   '--float': floatDuration,
                   left: x + '%',
@@ -311,7 +339,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
               <div className={styles['uag-bubble-label']}>{lead.prop}</div>
             </div>
           );
-        })}
+        }))}
       </div>
     </section>
   );

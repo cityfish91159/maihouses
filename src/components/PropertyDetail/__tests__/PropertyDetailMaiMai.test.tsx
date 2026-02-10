@@ -89,7 +89,7 @@ describe('PropertyDetailMaiMai', () => {
   });
 
   it('shows default welcome copy when trust is disabled and not hot', () => {
-    const { container } = render(
+    render(
       <PropertyDetailMaiMai
         trustEnabled={false}
         isHot={false}
@@ -99,8 +99,7 @@ describe('PropertyDetailMaiMai', () => {
       />
     );
 
-    const messageText = container.querySelector('p.text-sm');
-    expect(messageText).toHaveTextContent('嗨～歡迎看屋！游杰倫 正在線上等你');
+    expect(screen.getByText('嗨～歡迎看屋！游杰倫 正在線上等你')).toBeInTheDocument();
     expect(track).toHaveBeenCalledWith(
       'maimai_property_mood',
       expect.objectContaining({ propertyId: 'MH-100001', mood: 'idle', trigger: 'default' })
@@ -108,7 +107,7 @@ describe('PropertyDetailMaiMai', () => {
   });
 
   it('shows trust-enabled copy', () => {
-    const { container } = render(
+    render(
       <PropertyDetailMaiMai
         trustEnabled={true}
         isHot={false}
@@ -118,8 +117,7 @@ describe('PropertyDetailMaiMai', () => {
       />
     );
 
-    const messageText = container.querySelector('p.text-sm');
-    expect(messageText).toHaveTextContent('這位房仲有開啟安心留痕，交易更有保障');
+    expect(screen.getByText('這位房仲有開啟安心留痕，交易更有保障')).toBeInTheDocument();
     expect(track).toHaveBeenCalledWith(
       'maimai_property_mood',
       expect.objectContaining({
@@ -133,7 +131,7 @@ describe('PropertyDetailMaiMai', () => {
   it('keeps hot mood priority even after idle timeout', () => {
     vi.useFakeTimers();
 
-    const { container } = render(
+    render(
       <PropertyDetailMaiMai
         trustEnabled={true}
         isHot={true}
@@ -147,13 +145,12 @@ describe('PropertyDetailMaiMai', () => {
       vi.advanceTimersByTime(30_000);
     });
 
-    const messageText = container.querySelector('p.text-sm');
-    expect(messageText).toHaveTextContent('這間好搶手！已經有 5 組在看了');
+    expect(screen.getByText('這間好搶手！已經有 5 組在看了')).toBeInTheDocument();
     expect(screen.queryByText('還在考慮嗎？可以加 LINE 先聊聊看')).not.toBeInTheDocument();
   });
 
   it('clamps trust case count in hot message', () => {
-    const { rerender, container } = render(
+    const { rerender } = render(
       <PropertyDetailMaiMai
         trustEnabled={true}
         isHot={true}
@@ -163,8 +160,7 @@ describe('PropertyDetailMaiMai', () => {
       />
     );
 
-    let messageText = container.querySelector('p.text-sm');
-    expect(messageText).toHaveTextContent('這間好搶手！已經有 0 組在看了');
+    expect(screen.getByText('這間物件很受關注，快來看看！')).toBeInTheDocument();
 
     rerender(
       <PropertyDetailMaiMai
@@ -176,14 +172,13 @@ describe('PropertyDetailMaiMai', () => {
       />
     );
 
-    messageText = container.querySelector('p.text-sm');
-    expect(messageText).toHaveTextContent('這間好搶手！已經有 999 組在看了');
+    expect(screen.getByText('這間好搶手！已經有 999 組在看了')).toBeInTheDocument();
   });
 
   it('switches to thinking copy after idle timeout when not hot', () => {
     vi.useFakeTimers();
 
-    const { container } = render(
+    render(
       <PropertyDetailMaiMai
         trustEnabled={false}
         isHot={false}
@@ -197,8 +192,7 @@ describe('PropertyDetailMaiMai', () => {
       vi.advanceTimersByTime(30_000);
     });
 
-    const messageText = container.querySelector('p.text-sm');
-    expect(messageText).toHaveTextContent('還在考慮嗎？可以加 LINE 先聊聊看');
+    expect(screen.getByText('還在考慮嗎？可以加 LINE 先聊聊看')).toBeInTheDocument();
     expect(track).toHaveBeenCalledWith(
       'maimai_property_mood',
       expect.objectContaining({ propertyId: 'MH-100001', mood: 'thinking', trigger: 'idle_timer' })
@@ -289,6 +283,7 @@ describe('PropertyDetailMaiMai', () => {
 
   it('prevents state updates after unmount', () => {
     vi.useFakeTimers();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const { unmount } = render(
       <PropertyDetailMaiMai
@@ -300,16 +295,18 @@ describe('PropertyDetailMaiMai', () => {
       />
     );
 
+    consoleErrorSpy.mockClear();
     unmount();
 
     act(() => {
       vi.advanceTimersByTime(30_000);
     });
 
-    const mousemoveEvent = new Event('mousemove');
-    window.dispatchEvent(mousemoveEvent);
+    window.dispatchEvent(new Event('mousemove'));
+    document.dispatchEvent(new Event('visibilitychange'));
 
-    const visibilityEvent = new Event('visibilitychange');
-    document.dispatchEvent(visibilityEvent);
+    // unmount 後的 timer / event 不應觸發 React state update warning
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });

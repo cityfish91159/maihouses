@@ -3,10 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { LineLinkPanel } from '../LineLinkPanel';
 import { notify } from '../../../lib/notify';
 import { track } from '../../../analytics/track';
-import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
+// mock useFocusTrap：攔截 Escape keydown 時呼叫 onEscape
+let capturedOnEscape: (() => void) | undefined;
 vi.mock('../../../hooks/useFocusTrap', () => ({
-  useFocusTrap: vi.fn(),
+  useFocusTrap: vi.fn((opts: { onEscape?: () => void }) => {
+    capturedOnEscape = opts.onEscape;
+  }),
 }));
 
 vi.mock('../../../lib/notify', () => ({
@@ -243,7 +246,7 @@ describe('LineLinkPanel', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('wires focus trap escape handler to onClose', () => {
+  it('closes on Escape via useDetailPanelShell onEscape callback', () => {
     const onClose = vi.fn();
 
     render(
@@ -257,10 +260,9 @@ describe('LineLinkPanel', () => {
       />
     );
 
-    const focusTrapMock = vi.mocked(useFocusTrap);
-    const config = focusTrapMock.mock.calls[0]?.[0];
-    config?.onEscape?.();
-
+    // useDetailPanelShell 將 onClose 轉發給 useFocusTrap 的 onEscape
+    expect(capturedOnEscape).toBeDefined();
+    capturedOnEscape?.();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

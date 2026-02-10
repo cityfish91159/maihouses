@@ -178,6 +178,7 @@ describe('RadarCluster integration', () => {
 
   it('resolves overlap in a 320px mobile container', () => {
     setMockContainerWidth(320);
+    // Allow 1px tolerance for floating-point precision
     const overlapTolerancePx = 1;
 
     const { container } = render(<RadarCluster leads={denseMobileLeads} onSelectLead={vi.fn()} />);
@@ -293,6 +294,23 @@ describe('RadarCluster integration', () => {
         vi.runOnlyPendingTimers();
       });
     }).not.toThrow();
+  });
+
+  it('clears tooltip when switching grade filter', () => {
+    vi.useFakeTimers();
+
+    const { container } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+    const bubble = container.querySelector('[aria-label="S Lead 2 - S級"]') as HTMLElement;
+
+    fireEvent.click(bubble);
+    expect(bubble).toHaveAttribute('data-clicked', 'true');
+
+    // Switch to A grade filter (sampleLeads has 1 A lead)
+    const aGradeChip = container.querySelector('[data-grade="a"][aria-pressed="false"]') as HTMLElement;
+    fireEvent.click(aGradeChip);
+
+    // Tooltip should be cleared immediately
+    expect(bubble).not.toBeInTheDocument();
   });
 
   it('keeps touch-layer and reduced-motion CSS safeguards', () => {

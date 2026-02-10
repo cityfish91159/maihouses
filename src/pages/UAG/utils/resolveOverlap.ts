@@ -87,7 +87,9 @@ export function resolveOverlap(
         // 如果重疊，推開它們
         if (distance < minDist && distance > 0) {
           const overlap = minDist - distance;
-          const pushRatio = overlap / distance / 2; // 平均分配推擠距離
+          // pushRatio = (overlap / distance) / 2
+          // overlap/distance 得出單位向量上的推擠量，/2 讓雙方各承擔一半
+          const pushRatio = overlap / distance / 2;
 
           posA.x -= dx * pushRatio;
           posA.y -= dy * pushRatio;

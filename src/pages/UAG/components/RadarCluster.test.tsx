@@ -149,6 +149,19 @@ describe('RadarCluster', () => {
     expect(screen.getByRole('button', { name: /S\s*1/ })).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('clears selected lead when switching grade filter', () => {
+    const { container } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+    const bubble = screen.getByRole('button', { name: 'Buyer Alpha - F級' });
+
+    fireEvent.click(bubble);
+    expect(bubble).toHaveAttribute('data-selected', 'true');
+    expect(container.querySelector('#radar-container')).toHaveAttribute('data-has-selection', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: /S\s*1/ }));
+    expect(bubble).not.toBeInTheDocument();
+    expect(container.querySelector('#radar-container')).not.toHaveAttribute('data-has-selection');
+  });
+
   it('uses dynamic mobile container height from visible bubble count', () => {
     setMockContainerWidth(375);
     const { container, rerender } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
@@ -190,6 +203,7 @@ describe('RadarCluster', () => {
   });
 
   it('keeps focus and reduced-motion safeguards in CSS', () => {
+    // Only verifies existence, not numerical correctness (values should match BUBBLE_SIZE constants)
     expect(cssContent).toMatch(/\.uag-bubble\s*{[\s\S]*?min-width:\s*40px;[\s\S]*?min-height:\s*40px;/);
     expect(cssContent).toContain('.uag-bubble:focus-visible');
     expect(cssContent).toContain('outline: 3px solid var(--uag-brand);');

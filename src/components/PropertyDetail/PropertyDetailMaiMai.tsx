@@ -102,7 +102,10 @@ export const PropertyDetailMaiMai = memo(function PropertyDetailMaiMai({
     if (isHot) {
       return {
         mood: 'excited',
-        message: `這間好搶手！已經有 ${safeTrustCasesCount} 組在看了`,
+        message:
+          safeTrustCasesCount > 0
+            ? `這間好搶手！已經有 ${safeTrustCasesCount} 組在看了`
+            : '這間物件很受關注，快來看看！',
         trigger: 'hot_property',
       };
     }
@@ -153,7 +156,6 @@ export const PropertyDetailMaiMai = memo(function PropertyDetailMaiMai({
           <MaiMaiSpeech messages={[moodState.message]} />
           <MaiMaiBase mood={mood} size="sm" {...maiMaiA11yProps} />
         </div>
-        <p className="text-sm font-medium leading-relaxed text-slate-700">{moodState.message}</p>
       </div>
     </div>
   );

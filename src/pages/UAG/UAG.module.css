@@ -51,6 +51,7 @@
   --z-bg-grid: 0;
   --z-content: 1;
   --z-live-badge: 5;
+  /* Radar bubble layers: default 10, active/selected 20 */
   --z-bubble: 10;
   --z-bubble-active: 20;
   --z-sticky: 50;
@@ -759,6 +760,7 @@
 
 .uag-cluster {
   position: relative;
+  /* min-height overridden by inline style (dynamic R7 mobile height: 240/320/380) */
   min-height: 450px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: var(--radius-lg);
@@ -785,6 +787,7 @@
 }
 @media (max-width: 768px) {
   .uag-cluster {
+    /* min-height overridden by inline style (dynamic R7) */
     min-height: 320px;
   }
 }
@@ -853,6 +856,7 @@
   transition: all 250ms ease-out;
 }
 
+/* R6: 鍵盤 focus-visible 使用 outline 而非 scale，避免與選中效果衝突 */
 .uag-bubble:focus-visible {
   outline: 3px solid var(--uag-brand);
   outline-offset: 2px;
@@ -901,7 +905,7 @@
 .uag-bubble[data-grade='A'] {
   background: var(--grade-a-bg);
   border-color: var(--grade-a);
-  animation: float var(--float) ease-in-out infinite, a-pulse 2s ease-in-out infinite;
+  animation: float var(--float) ease-in-out infinite, a-pulse 3s ease-in-out infinite;
 }
 .uag-bubble[data-grade='B'] {
   background: var(--grade-b-bg);
@@ -1069,7 +1073,7 @@
   }
 }
 
-/* prefers-reduced-motion：停用脈衝動畫 */
+/* prefers-reduced-motion：停用脈衝動畫 + tooltip 動畫 */
 @media (prefers-reduced-motion: reduce) {
   .uag-bubble[data-grade='S'],
   .uag-bubble[data-grade='A'] {
@@ -1079,6 +1083,14 @@
   .uag-bubble[data-selected='true'],
   .uag-cluster[data-has-selection='true'] .uag-bubble:not([data-selected='true']) {
     transition: none;
+  }
+
+  @keyframes tooltip-fade-in {
+    from,
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   }
 }
 @keyframes skeleton {

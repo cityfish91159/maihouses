@@ -86,7 +86,9 @@ export function LineLinkPanel({
     try {
       await runTrustAction();
 
-      const lineUrl = `https://line.me/R/ti/p/${encodeURIComponent(trimmedLineId)}`;
+      // LINE deep link 不需要 @ 前綴
+      const bareId = trimmedLineId.replace(/^@/, '');
+      const lineUrl = `https://line.me/R/ti/p/${encodeURIComponent(bareId)}`;
       const newWindow = window.open(lineUrl, '_blank', 'noopener,noreferrer');
       if (!newWindow) {
         window.location.href = lineUrl;
