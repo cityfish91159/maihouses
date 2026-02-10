@@ -61,6 +61,16 @@ describe('LineLinkPanel', () => {
 
     rerender(
       <LineLinkPanel
+        isOpen={false}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    rerender(
+      <LineLinkPanel
         isOpen={true}
         onClose={vi.fn()}
         agentName="游杰倫"
@@ -74,6 +84,39 @@ describe('LineLinkPanel', () => {
       'maimai_panel_welcome',
       expect.objectContaining({ panelType: 'line', hasContact: false })
     );
+  });
+
+  it('tracks welcome once per open even if props change while open', () => {
+    const { rerender } = render(
+      <LineLinkPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentLineId="maihouses_demo"
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    const initialTrackCalls = vi.mocked(track).mock.calls.filter(
+      ([eventName]) => eventName === 'maimai_panel_welcome'
+    ).length;
+    expect(initialTrackCalls).toBe(1);
+
+    rerender(
+      <LineLinkPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    const finalTrackCalls = vi.mocked(track).mock.calls.filter(
+      ([eventName]) => eventName === 'maimai_panel_welcome'
+    ).length;
+    expect(finalTrackCalls).toBe(1);
   });
 
   it('opens LINE deep link when line id exists', async () => {

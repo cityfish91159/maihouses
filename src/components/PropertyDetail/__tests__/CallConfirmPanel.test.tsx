@@ -44,6 +44,16 @@ describe('CallConfirmPanel', () => {
 
     rerender(
       <CallConfirmPanel
+        isOpen={false}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    rerender(
+      <CallConfirmPanel
         isOpen={true}
         onClose={vi.fn()}
         agentName="游杰倫"
@@ -57,6 +67,39 @@ describe('CallConfirmPanel', () => {
       'maimai_panel_welcome',
       expect.objectContaining({ panelType: 'call', hasContact: false })
     );
+  });
+
+  it('tracks welcome once per open even if props change while open', () => {
+    const { rerender } = render(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentPhone="0912-345-678"
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    const initialTrackCalls = vi.mocked(track).mock.calls.filter(
+      ([eventName]) => eventName === 'maimai_panel_welcome'
+    ).length;
+    expect(initialTrackCalls).toBe(1);
+
+    rerender(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    const finalTrackCalls = vi.mocked(track).mock.calls.filter(
+      ([eventName]) => eventName === 'maimai_panel_welcome'
+    ).length;
+    expect(finalTrackCalls).toBe(1);
   });
 
   it('dials with tel scheme on mobile', async () => {

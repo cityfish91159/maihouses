@@ -45,6 +45,7 @@ import {
   getTrustScenario,
   shouldAttachTrustAssureLeadNote,
 } from '../components/PropertyDetail/trustAssure';
+import { DEFAULT_AGENT_NAME, normalizeAgentName } from '../components/PropertyDetail/agentName';
 import { useTrustAssureFlow } from './propertyDetail/useTrustAssureFlow';
 import {
   classifyTrustServiceError,
@@ -231,6 +232,7 @@ export const PropertyDetailPage: React.FC = () => {
   const closeCallPanel = useCallback(() => setCallPanelOpen(false), []);
 
   const isTrustEnabled = property.trustEnabled ?? false;
+  const safeAgentName = useMemo(() => normalizeAgentName(property.agent?.name), [property.agent?.name]);
 
   // #8 社會證明真實數據 — 正式版從 API 取得，Mock 保持假數據
   const { data: publicStats } = useQuery({
@@ -618,7 +620,9 @@ export const PropertyDetailPage: React.FC = () => {
             animated={!prefersReducedMotion}
             showEffects={!prefersReducedMotion}
           />
-          <p className="text-base text-slate-600">正在幫你找房子資訊…</p>
+          <p className="text-base text-slate-600">
+            {reloadAttempt > 0 ? '重新載入中…' : '正在幫你找房子資訊…'}
+          </p>
         </div>
       </ErrorBoundary>
     );
@@ -634,7 +638,7 @@ export const PropertyDetailPage: React.FC = () => {
             animated={!prefersReducedMotion}
             showEffects={!prefersReducedMotion}
           />
-          <p className="text-base text-slate-600">哎呀！找不到這個物件…</p>
+          <p className="text-base text-slate-600">載入失敗</p>
           <p className="max-w-sm text-sm text-slate-500">{propertyLoadError}</p>
           <button
             type="button"
@@ -804,7 +808,8 @@ export const PropertyDetailPage: React.FC = () => {
                     trustEnabled={isTrustEnabled}
                     isHot={socialProof.isHot}
                     trustCasesCount={socialProof.trustCasesCount}
-                    agentName={property.agent?.name || '專屬業務'}
+                    agentName={safeAgentName}
+                    propertyId={property.publicId}
                   />
                 </div>
               </div>
@@ -826,7 +831,7 @@ export const PropertyDetailPage: React.FC = () => {
           isOpen={linePanelOpen}
           onClose={closeLinePanel}
           agentLineId={property.agent?.lineId ?? null}
-          agentName={property.agent?.name || '專屬業務'}
+          agentName={safeAgentName || DEFAULT_AGENT_NAME}
           isLoggedIn={isLoggedIn}
           trustEnabled={isTrustEnabled}
           onTrustAction={(checked) => handleTrustAssureAction('line', checked)}
@@ -837,7 +842,7 @@ export const PropertyDetailPage: React.FC = () => {
           isOpen={callPanelOpen}
           onClose={closeCallPanel}
           agentPhone={property.agent?.phone ?? null}
-          agentName={property.agent?.name || '專屬業務'}
+          agentName={safeAgentName || DEFAULT_AGENT_NAME}
           isLoggedIn={isLoggedIn}
           trustEnabled={isTrustEnabled}
           onTrustAction={(checked) => handleTrustAssureAction('call', checked)}
@@ -852,7 +857,7 @@ export const PropertyDetailPage: React.FC = () => {
             propertyId={property.publicId}
             propertyTitle={property.title}
             agentId={leadAgentId}
-            agentName={property.agent?.name || '專屬業務'}
+            agentName={safeAgentName || DEFAULT_AGENT_NAME}
             source={contactSource}
             defaultChannel={contactDefaultChannel}
             trustAssureRequested={contactTrustAssureRequested}

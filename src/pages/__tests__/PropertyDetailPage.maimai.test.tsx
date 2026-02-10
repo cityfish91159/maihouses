@@ -157,7 +157,7 @@ describe('PropertyDetailPage MaiMai integration (#18)', () => {
     expect(screen.getByText('正在幫你找房子資訊…')).toBeInTheDocument();
   });
 
-  it('shows MaiMai error state and retries successfully', async () => {
+  it('shows generic error title and retries successfully', async () => {
     const user = userEvent.setup();
     vi.mocked(propertyService.getPropertyByPublicId)
       .mockRejectedValueOnce(new Error('NetworkError: Failed to fetch'))
@@ -170,7 +170,8 @@ describe('PropertyDetailPage MaiMai integration (#18)', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('哎呀！找不到這個物件…')).toBeInTheDocument();
+      expect(screen.getByText('載入失敗')).toBeInTheDocument();
+      expect(screen.getByText('網路連線異常，請檢查網路後重試')).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: '再試一次' }));
@@ -180,6 +181,29 @@ describe('PropertyDetailPage MaiMai integration (#18)', () => {
     });
 
     expect(propertyService.getPropertyByPublicId).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows reloading copy after retry is triggered', async () => {
+    const user = userEvent.setup();
+    vi.mocked(propertyService.getPropertyByPublicId)
+      .mockRejectedValueOnce(new Error('500 Internal Server Error'))
+      .mockImplementationOnce(() => new Promise(() => undefined));
+
+    renderWithClient(
+      <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
+        <PropertyDetailPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('載入失敗')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: '再試一次' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('重新載入中…')).toBeInTheDocument();
+    });
   });
 
   it('renders sidebar MaiMai companion below AgentTrustCard', async () => {

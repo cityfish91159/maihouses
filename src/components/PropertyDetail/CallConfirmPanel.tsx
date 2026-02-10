@@ -8,6 +8,7 @@ import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
 import { isValidPhone, sanitizePhoneInput } from './contactUtils';
 import { MaiMaiBase } from '../MaiMai';
+import { normalizeAgentName } from './agentName';
 
 interface CallConfirmPanelProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export function CallConfirmPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fallbackPhone, setFallbackPhone] = useState('');
   const [panelReady, setPanelReady] = useState(false);
+  const hasTrackedWelcomeRef = useRef(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const firstButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -41,6 +43,7 @@ export function CallConfirmPanel({
 
   const normalizedPhone = agentPhone?.trim() ?? '';
   const hasPhone = Boolean(normalizedPhone);
+  const safeAgentName = useMemo(() => normalizeAgentName(agentName), [agentName]);
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return false;
@@ -62,7 +65,12 @@ export function CallConfirmPanel({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      hasTrackedWelcomeRef.current = false;
+      return;
+    }
+    if (hasTrackedWelcomeRef.current) return;
+    hasTrackedWelcomeRef.current = true;
     void track('maimai_panel_welcome', {
       panelType: 'call',
       hasContact: hasPhone,
@@ -170,7 +178,7 @@ export function CallConfirmPanel({
               </h3>
               <p className="text-sm opacity-90">
                 {hasPhone
-                  ? `${agentName} 的聯絡電話已準備好，可一鍵撥打。`
+                  ? `${safeAgentName} 的聯絡電話已準備好，可一鍵撥打。`
                   : '經紀人尚未設定電話，可改用聯絡表單。'}
               </p>
             </div>

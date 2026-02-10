@@ -8,6 +8,7 @@ import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
 import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER, LINE_ID_PATTERN } from './constants';
 import { MaiMaiBase } from '../MaiMai';
+import { normalizeAgentName } from './agentName';
 
 interface LineLinkPanelProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export function LineLinkPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fallbackLineId, setFallbackLineId] = useState('');
   const [panelReady, setPanelReady] = useState(false);
+  const hasTrackedWelcomeRef = useRef(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const firstButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -50,6 +52,7 @@ export function LineLinkPanel({
     }
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }, []);
+  const safeAgentName = useMemo(() => normalizeAgentName(agentName), [agentName]);
 
   // LINE ID: trim 後驗證 pattern，不合法視同無 lineId
   const trimmedLineId = agentLineId?.trim() ?? '';
@@ -70,7 +73,12 @@ export function LineLinkPanel({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      hasTrackedWelcomeRef.current = false;
+      return;
+    }
+    if (hasTrackedWelcomeRef.current) return;
+    hasTrackedWelcomeRef.current = true;
     void track('maimai_panel_welcome', {
       panelType: 'line',
       hasContact: hasLineId,
@@ -96,7 +104,7 @@ export function LineLinkPanel({
     try {
       await runTrustAction();
 
-      const lineUrl = `https://line.me/R/ti/p/${trimmedLineId}`;
+      const lineUrl = `https://line.me/R/ti/p/${encodeURIComponent(trimmedLineId)}`;
       const newWindow = window.open(lineUrl, '_blank', 'noopener,noreferrer');
       if (!newWindow) {
         window.location.href = lineUrl;
@@ -175,7 +183,7 @@ export function LineLinkPanel({
               </h3>
               <p className="text-sm opacity-90">
                 {hasLineId
-                  ? `點擊下方按鈕，直接加入 ${agentName} 的 LINE。`
+                  ? `點擊下方按鈕，直接加入 ${safeAgentName} 的 LINE。`
                   : '經紀人尚未設定 LINE ID，可改用聯絡表單。'}
               </p>
             </div>

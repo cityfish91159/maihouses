@@ -22,13 +22,14 @@ describe('PropertyDetailMaiMai', () => {
         isHot={false}
         trustCasesCount={0}
         agentName="游杰倫"
+        propertyId="MH-100001"
       />
     );
 
     expect(screen.getAllByText(/歡迎看屋/).length).toBeGreaterThan(0);
     expect(track).toHaveBeenCalledWith(
       'maimai_property_mood',
-      expect.objectContaining({ mood: 'idle', trigger: 'default' })
+      expect.objectContaining({ propertyId: 'MH-100001', mood: 'idle', trigger: 'default' })
     );
   });
 
@@ -39,33 +40,44 @@ describe('PropertyDetailMaiMai', () => {
         isHot={false}
         trustCasesCount={0}
         agentName="游杰倫"
+        propertyId="MH-100001"
       />
     );
 
-    expect(screen.getAllByText('這位房仲有開啟安心留痕，交易更有保障').length).toBeGreaterThan(
-      0
-    );
+    expect(screen.getAllByText('這位房仲有開啟安心留痕，交易更有保障').length).toBeGreaterThan(0);
     expect(track).toHaveBeenCalledWith(
       'maimai_property_mood',
-      expect.objectContaining({ mood: 'happy', trigger: 'trust_enabled' })
+      expect.objectContaining({
+        propertyId: 'MH-100001',
+        mood: 'happy',
+        trigger: 'trust_enabled',
+      })
     );
   });
 
-  it('shows hot property copy with trust case count', () => {
-    render(
+  it('clamps trust case count in hot message', () => {
+    const { rerender } = render(
       <PropertyDetailMaiMai
         trustEnabled={true}
         isHot={true}
-        trustCasesCount={6}
+        trustCasesCount={-5}
         agentName="游杰倫"
+        propertyId="MH-100001"
       />
     );
 
-    expect(screen.getAllByText('這間好搶手！已經有 6 組在看了').length).toBeGreaterThan(0);
-    expect(track).toHaveBeenCalledWith(
-      'maimai_property_mood',
-      expect.objectContaining({ mood: 'excited', trigger: 'hot_property' })
+    expect(screen.getAllByText('這間好搶手！已經有 0 組在看了').length).toBeGreaterThan(0);
+
+    rerender(
+      <PropertyDetailMaiMai
+        trustEnabled={true}
+        isHot={true}
+        trustCasesCount={99999}
+        agentName="游杰倫"
+        propertyId="MH-100001"
+      />
     );
+    expect(screen.getAllByText('這間好搶手！已經有 999 組在看了').length).toBeGreaterThan(0);
   });
 
   it('switches to thinking copy after idle timeout', () => {
@@ -77,6 +89,7 @@ describe('PropertyDetailMaiMai', () => {
         isHot={false}
         trustCasesCount={0}
         agentName="游杰倫"
+        propertyId="MH-100001"
       />
     );
 
@@ -87,7 +100,7 @@ describe('PropertyDetailMaiMai', () => {
     expect(screen.getAllByText('還在考慮嗎？可以加 LINE 先聊聊看').length).toBeGreaterThan(0);
     expect(track).toHaveBeenCalledWith(
       'maimai_property_mood',
-      expect.objectContaining({ mood: 'thinking', trigger: 'idle_timer' })
+      expect.objectContaining({ propertyId: 'MH-100001', mood: 'thinking', trigger: 'idle_timer' })
     );
   });
 });
