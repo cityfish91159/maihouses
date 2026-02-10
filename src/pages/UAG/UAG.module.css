@@ -1745,37 +1745,129 @@
 }
 
 /* ====== Footer ====== */
+/* ====== Footer Bar — Deep Navy ====== */
 .uag-footer-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.96);
-  border-top: 1px solid var(--line-soft);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.1);
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 12px;
+  height: 48px;
+  background: linear-gradient(135deg, #00385a 0%, #004e7c 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -4px 20px rgba(0, 56, 90, 0.35);
   z-index: var(--z-footer);
 }
-@media (max-width: 768px) {
+
+/* ── 共用膠囊基底 ── */
+.footer-capsule {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  min-height: 44px; /* Touch target ≥ 44px (WCAG) */
+  max-height: 40px; /* 視覺高度 40px */
+  padding: 0 12px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+/* 隱形觸碰擴展區 — 視覺 40px 但觸碰 44px */
+.footer-capsule::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
+}
+
+/* ── Ghost（方案設定）── */
+.footer-capsule--ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+.footer-capsule--ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+.footer-capsule--ghost:active {
+  transform: scale(0.97);
+}
+.footer-capsule--ghost:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0, 159, 232, 0.5);
+}
+
+/* ── Primary CTA（加值點數）── */
+.footer-capsule--cta {
+  background: linear-gradient(135deg, #009fe8, #00b4ff);
+  border: 1px solid transparent;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(0, 159, 232, 0.4);
+}
+.footer-capsule--cta:hover {
+  background: linear-gradient(135deg, #00b4ff, #33c4ff);
+  box-shadow: 0 4px 18px rgba(0, 159, 232, 0.55);
+}
+.footer-capsule--cta:active {
+  transform: scale(0.97);
+}
+.footer-capsule--cta:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0, 180, 255, 0.5);
+}
+
+/* ── Badge（點數）── */
+.footer-capsule--badge {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: default;
+}
+.footer-capsule--badge strong {
+  color: #fbbf24;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+}
+/* 微弱脈衝動畫 */
+.footer-capsule--badge strong {
+  animation: points-glow 3s ease-in-out infinite;
+}
+@keyframes points-glow {
+  0%, 100% { text-shadow: 0 0 8px rgba(251, 191, 36, 0.4); }
+  50% { text-shadow: 0 0 14px rgba(251, 191, 36, 0.7); }
+}
+
+/* ── 桌面版 ── */
+@media (min-width: 769px) {
   .uag-footer-bar {
-    padding: 10px 12px;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: space-between; /* Ensure items are spread out */
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 4px 24px;
   }
-  /* Ensure points badge is visible and distinct */
-  .uag-footer-bar .uag-badge {
-    order: -1; /* Move points to top/left on mobile if needed, or keep as is */
-    margin-left: auto; /* Push to right if space allows */
+  .footer-capsule {
+    flex: none;
+    min-width: 120px;
   }
-  /* Adjust buttons size for mobile */
-  .uag-footer-bar .uag-btn {
-    padding: 4px 10px;
-    font-size: 12px;
+}
+
+/* ── 減少動態偏好 ── */
+@media (prefers-reduced-motion: reduce) {
+  .footer-capsule--badge strong {
+    animation: none;
+  }
+  .footer-capsule {
+    transition: none;
   }
 }
 

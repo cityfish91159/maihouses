@@ -32,41 +32,94 @@ const toDateInputValue = (value: string | null) => (value ? value.slice(0, 10) :
 const toggleSelection = (items: string[], option: string) =>
   items.includes(option) ? items.filter((item) => item !== option) : [...items, option];
 
+interface ProfileFormValues {
+  name: string;
+  company: string;
+  bio: string;
+  specialties: string[];
+  certifications: string[];
+  phone: string;
+  lineId: string;
+  licenseNumber: string;
+  joinedAt: string;
+}
+
+function buildProfilePayload(values: ProfileFormValues): UpdateAgentProfilePayload {
+  const payload: UpdateAgentProfilePayload = {
+    name: values.name.trim(),
+    company: values.company.trim() ? values.company.trim() : null,
+    bio: values.bio.trim() ? values.bio.trim() : null,
+    specialties: values.specialties,
+    certifications: values.certifications,
+    phone: values.phone.trim() ? values.phone.trim() : null,
+    lineId: values.lineId.trim() ? values.lineId.trim() : null,
+    licenseNumber: values.licenseNumber.trim() ? values.licenseNumber.trim() : null,
+  };
+
+  if (values.joinedAt) {
+    payload.joinedAt = new Date(values.joinedAt).toISOString();
+  }
+
+  return payload;
+}
+
 /**
  * 內部表單組件
  * 使用 key={profile.id} 在父組件中渲染，當 profile 更新時自動重新初始化所有狀態
  */
 const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onSave }) => {
   const today = new Date().toISOString().slice(0, 10);
-  const [name, setName] = useState(profile.name);
-  const [company, setCompany] = useState(profile.company ?? '邁房子');
-  const [bio, setBio] = useState(profile.bio ?? '');
-  const [phone, setPhone] = useState(profile.phone ?? '');
-  const [lineId, setLineId] = useState(profile.lineId ?? '');
-  const [licenseNumber, setLicenseNumber] = useState(profile.licenseNumber ?? '');
-  const [joinedAt, setJoinedAt] = useState(toDateInputValue(profile.joinedAt || profile.createdAt));
-  const [specialties, setSpecialties] = useState<string[]>(profile.specialties ?? []);
-  const [certifications, setCertifications] = useState<string[]>(profile.certifications ?? []);
+  const initialValues = useMemo<ProfileFormValues>(
+    () => ({
+      name: profile.name,
+      company: profile.company ?? '邁房子',
+      bio: profile.bio ?? '',
+      phone: profile.phone ?? '',
+      lineId: profile.lineId ?? '',
+      licenseNumber: profile.licenseNumber ?? '',
+      joinedAt: toDateInputValue(profile.joinedAt || profile.createdAt),
+      specialties: profile.specialties ?? [],
+      certifications: profile.certifications ?? [],
+    }),
+    [profile]
+  );
+
+  const [name, setName] = useState(initialValues.name);
+  const [company, setCompany] = useState(initialValues.company);
+  const [bio, setBio] = useState(initialValues.bio);
+  const [phone, setPhone] = useState(initialValues.phone);
+  const [lineId, setLineId] = useState(initialValues.lineId);
+  const [licenseNumber, setLicenseNumber] = useState(initialValues.licenseNumber);
+  const [joinedAt, setJoinedAt] = useState(initialValues.joinedAt);
+  const [specialties, setSpecialties] = useState<string[]>(initialValues.specialties);
+  const [certifications, setCertifications] = useState<string[]>(initialValues.certifications);
 
   const payload = useMemo<UpdateAgentProfilePayload>(() => {
-    const result: UpdateAgentProfilePayload = {
-      name: name.trim(),
-      company: company.trim() ? company.trim() : null,
-      bio: bio.trim() ? bio.trim() : null,
+    return buildProfilePayload({
+      name,
+      company,
+      bio,
       specialties,
       certifications,
-      phone: phone.trim() ? phone.trim() : null,
-      lineId: lineId.trim() ? lineId.trim() : null,
-      licenseNumber: licenseNumber.trim() ? licenseNumber.trim() : null,
-    };
-    if (joinedAt) {
-      result.joinedAt = new Date(joinedAt).toISOString();
-    }
-    return result;
+      phone,
+      lineId,
+      licenseNumber,
+      joinedAt,
+    });
   }, [name, company, bio, specialties, certifications, phone, lineId, licenseNumber, joinedAt]);
+
+  const initialPayload = useMemo(() => buildProfilePayload(initialValues), [initialValues]);
+
+  const hasUnsavedChanges = useMemo(
+    () => JSON.stringify(payload) !== JSON.stringify(initialPayload),
+    [payload, initialPayload]
+  );
+
+  const isSubmitDisabled = isSaving || !hasUnsavedChanges;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isSubmitDisabled) return;
     await onSave(payload);
   };
 
@@ -83,9 +136,9 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
         <button
           type="submit"
           className="min-h-[44px] w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
-          disabled={isSaving}
+          disabled={isSubmitDisabled}
         >
-          {isSaving ? '儲存中...' : '儲存變更'}
+          {isSaving ? '儲存中...' : hasUnsavedChanges ? '儲存變更' : '尚未修改'}
         </button>
       </div>
 
@@ -116,9 +169,20 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             onChange={(event) => setCompany(event.target.value)}
             className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             placeholder="公司/分店名稱"
+            autoComplete="organization"
+            enterKeyHint="done"
             maxLength={100}
             aria-label="公司名稱"
+            aria-describedby="agent-company-help agent-company-count"
           />
+          <div className="flex items-center justify-between gap-3">
+            <p id="agent-company-help" className="text-sm text-slate-500">
+              將顯示在房源頁與名片卡。
+            </p>
+            <p id="agent-company-count" className="shrink-0 text-sm text-slate-500">
+              {company.length}/100
+            </p>
+          </div>
         </div>
         <div className="space-y-2">
           <label htmlFor="agent-phone" className="text-sm font-medium text-slate-700">

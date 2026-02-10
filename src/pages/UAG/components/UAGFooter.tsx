@@ -1,46 +1,41 @@
-﻿import React from 'react';
+import React from 'react';
+import { Settings, Plus, Coins } from 'lucide-react';
 import styles from '../UAG.module.css';
 import { UserData } from '../types/uag.types';
 
 interface UAGFooterProps {
   user: UserData;
-  useMock: boolean;
-  toggleMode: () => void;
 }
 
-export const UAGFooter: React.FC<UAGFooterProps> = ({ user, useMock, toggleMode }) => (
-  <div className={styles['uag-footer-bar']}>
-    <div style={{ marginRight: 'auto', fontSize: '12px', color: 'var(--ink-300)' }}>
-      系統模式：
-      <strong style={{ color: useMock ? '#f59e0b' : '#16a34a' }}>
-        {useMock ? 'Local Mock' : 'Live API'}
-      </strong>
-      <button
-        onClick={toggleMode}
-        style={{
-          marginLeft: '10px',
-          fontSize: '10px',
-          cursor: 'pointer',
-          border: '1px solid #ccc',
-          padding: '2px 6px',
-          borderRadius: '4px',
-        }}
-      >
-        切換模式
-      </button>
-    </div>
-    <button className={styles['uag-btn']}>方案設定</button>
-    <button className={`${styles['uag-btn']} ${styles['primary']}`}>加值點數</button>
-    <span
-      className={styles['uag-badge']}
-      style={{
-        fontSize: '14px',
-        background: '#fff8dc',
-        color: 'var(--grade-s)',
-        borderColor: '#fcd34d',
-      }}
+export const UAGFooter: React.FC<UAGFooterProps> = ({ user }) => (
+  <div className={styles['uag-footer-bar']} role="toolbar" aria-label="快捷操作列">
+    <button
+      className={`${styles['footer-capsule']} ${styles['footer-capsule--ghost']}`}
+      type="button"
+      aria-label="方案設定"
     >
-      點數 <span id="user-points">{user.points}</span>
-    </span>
+      <Settings size={14} strokeWidth={2.5} aria-hidden="true" />
+      <span>方案設定</span>
+    </button>
+
+    <button
+      className={`${styles['footer-capsule']} ${styles['footer-capsule--cta']}`}
+      type="button"
+      aria-label="加值點數"
+    >
+      <Plus size={14} strokeWidth={2.5} aria-hidden="true" />
+      <span>加值點數</span>
+    </button>
+
+    <div
+      className={`${styles['footer-capsule']} ${styles['footer-capsule--badge']}`}
+      role="status"
+      aria-label={`目前點數 ${user.points}`}
+    >
+      <Coins size={14} strokeWidth={2.5} aria-hidden="true" />
+      <span>
+        點數 <strong id="user-points">{user.points}</strong>
+      </span>
+    </div>
   </div>
 );

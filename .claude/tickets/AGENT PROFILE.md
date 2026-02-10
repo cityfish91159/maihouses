@@ -3063,6 +3063,8 @@ company: payload.company,
    - 公司欄位移除 disabled，改為受控輸入並回寫 payload
    - 手機版 UX 對齊：公司/姓名/手機/LINE/加入日期/證照欄位統一 `min-h-[44px]`
    - 表單容器 `p-4 sm:p-6`，降低手機首屏擁擠
+   - 新增公司欄位即時輔助文案與字數計數（`x/100`），並加上 `autoComplete="organization"`
+   - 新增「尚未修改」狀態：無變更時禁用提交，避免無效 API 請求
 
 5. `src/pages/UAG/Profile/hooks/useAgentProfile.ts`
    - Mock 模式更新快取新增 `company` 回寫，符合「可編輯但不打 API」需求
@@ -3070,7 +3072,7 @@ company: payload.company,
 6. 測試更新
    - `api/agent/__tests__/profile.test.ts`：驗證 PUT 可更新 `company + license_number`
    - `src/services/__tests__/agentService.test.ts`：驗證 request body 含 `company`
-   - `src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx`：新增公司欄位可編輯與手機觸控尺寸驗證
+   - `src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx`：新增公司欄位可編輯、手機觸控尺寸、無修改禁送與字數回饋驗證
    - `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx`：驗證 Mock 更新可回寫 `company`
 
 #### 驗證命令

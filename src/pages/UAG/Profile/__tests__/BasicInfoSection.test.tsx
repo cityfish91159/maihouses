@@ -42,8 +42,12 @@ describe('BasicInfoSection (#15)', () => {
     const companyInput = screen.getByLabelText('公司名稱');
     expect(companyInput).toHaveValue('邁房子');
     expect(companyInput).not.toBeDisabled();
+    expect(companyInput).toHaveAttribute('autoComplete', 'organization');
+    expect(companyInput).toHaveAttribute('aria-describedby', 'agent-company-help agent-company-count');
     expect(companyInput).toHaveAttribute('maxLength', '100');
     expect(companyInput).toHaveClass('min-h-[44px]');
+    expect(screen.getByText('將顯示在房源頁與名片卡。')).toBeInTheDocument();
+    expect(screen.getByText('3/100')).toBeInTheDocument();
   });
 
   it('keeps primary form controls touch-friendly on mobile', () => {
@@ -55,7 +59,23 @@ describe('BasicInfoSection (#15)', () => {
     expect(screen.getByLabelText('LINE ID')).toHaveClass('min-h-[44px]');
     expect(screen.getByLabelText('加入日期')).toHaveClass('min-h-[44px]');
     expect(screen.getByLabelText('經紀人證照字號')).toHaveClass('min-h-[44px]');
-    expect(screen.getByRole('button', { name: '儲存變更' })).toHaveClass('min-h-[44px]');
+    expect(screen.getByRole('button', { name: '尚未修改' })).toHaveClass('min-h-[44px]');
+  });
+
+  it('disables submit before any edits and enables after field changes', async () => {
+    const user = userEvent.setup();
+
+    render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={vi.fn()} />);
+
+    const initialButton = screen.getByRole('button', { name: '尚未修改' });
+    expect(initialButton).toBeDisabled();
+
+    const companyInput = screen.getByLabelText('公司名稱');
+    await user.clear(companyInput);
+    await user.type(companyInput, '邁房子信義店');
+
+    const submitButton = screen.getByRole('button', { name: '儲存變更' });
+    expect(submitButton).toBeEnabled();
   });
 
   it('renders license number input with initial value', () => {

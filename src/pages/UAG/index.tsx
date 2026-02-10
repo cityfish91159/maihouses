@@ -289,7 +289,7 @@ function UAGPageContent() {
         </div>
       </main>
 
-      <UAGFooter user={appData.user} useMock={useMock} toggleMode={toggleMode} />
+      <UAGFooter user={appData.user} />
 
       {/* MSG-5: 購買成功後發送訊息 Modal */}
       {/* 問題 #10-11 修復：只有在有真實 agentId 和 sessionId 時才渲染 */}
