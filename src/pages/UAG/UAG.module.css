@@ -67,7 +67,7 @@
   color: var(--ink-100);
   line-height: 1.5;
   min-height: 100dvh;
-  padding-bottom: 80px;
+  padding-bottom: 96px;
   position: relative;
   overscroll-behavior: contain;
   overscroll-behavior-y: contain;
@@ -87,6 +87,12 @@
   opacity: 0.22;
   pointer-events: none;
   z-index: var(--z-bg-grid);
+}
+
+@media (max-width: 767px) {
+  .uag-page {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .uag-header {
@@ -112,102 +118,191 @@
   align-items: center;
 }
 
-/* ====== Agent Bar (房仲資訊條) ====== */
-.agent-bar {
+/* ====== Agent KPI (M6) ====== */
+.agent-kpi-wrap {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 8px 24px;
-  background: linear-gradient(90deg, rgba(0, 56, 90, 0.04), transparent);
+  padding: 10px 24px 14px;
   border-top: 1px solid var(--line-soft);
+  background: linear-gradient(90deg, rgba(23, 73, 215, 0.05), transparent 72%);
+}
+
+.agent-kpi-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
-.agent-bar-avatar {
-  width: 32px;
-  height: 32px;
+
+.agent-kpi-avatar {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: #00385a;
   color: #fff;
+  font-size: 13px;
+  font-weight: 800;
   display: grid;
   place-items: center;
-  font-size: 13px;
-  font-weight: 700;
   flex-shrink: 0;
 }
-.agent-bar-info {
-  flex: 1;
+
+.agent-kpi-identity {
   min-width: 0;
 }
-.agent-bar-name-row {
+
+.agent-kpi-name-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
   color: var(--ink-100);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
 }
-.agent-bar-code {
+
+.agent-kpi-code {
   font-size: 11px;
-  color: #00385a;
-  font-weight: 600;
+  color: var(--uag-brand-dark);
+  font-weight: 700;
 }
-.agent-bar-stats {
-  display: flex;
-  gap: 12px;
-  font-size: 11px;
-  color: var(--ink-300);
+
+.agent-kpi-company {
   margin-top: 2px;
+  color: var(--ink-300);
+  font-size: 12px;
 }
-.agent-bar-stat {
+
+.agent-kpi-inline {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.agent-kpi-inline-item {
+  font-size: 12px;
+  color: var(--ink-300);
   white-space: nowrap;
 }
-.agent-bar-stat strong {
+
+.agent-kpi-inline-item strong {
   color: var(--ink-100);
-  font-weight: 700;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   margin-right: 2px;
+}
+
+.agent-kpi-grid {
+  display: none;
+  margin-top: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.agent-kpi-card {
+  min-height: 74px;
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 2px;
+  border: 1px solid transparent;
+}
+
+.agent-kpi-icon {
+  opacity: 0.95;
+}
+
+.agent-kpi-value {
+  font-size: 26px;
+  line-height: 1.05;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
-.agent-bar-stat.trust strong {
-  color: #0f6a23;
+
+.agent-kpi-label {
+  font-size: 12px;
+  color: var(--ink-300);
 }
+
+.agent-kpi-card-trust {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.agent-kpi-card-trust .agent-kpi-icon,
+.agent-kpi-card-trust .agent-kpi-value {
+  color: #1d4ed8;
+}
+
+.agent-kpi-card-visit {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.agent-kpi-card-visit .agent-kpi-icon,
+.agent-kpi-card-visit .agent-kpi-value {
+  color: #047857;
+}
+
+.agent-kpi-card-deal {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.agent-kpi-card-deal .agent-kpi-icon,
+.agent-kpi-card-deal .agent-kpi-value {
+  color: #b45309;
+}
+
+.agent-kpi-card-encourage {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+}
+
+.agent-kpi-card-encourage .agent-kpi-icon,
+.agent-kpi-card-encourage .agent-kpi-value {
+  color: #6d28d9;
+}
+
 @media (max-width: 1024px) {
-  .agent-bar {
-    padding: 8px 12px;
-    gap: 10px;
-  }
-  .agent-bar-stats {
-    gap: 8px;
+  .agent-kpi-wrap {
+    padding: 10px 12px 12px;
   }
 }
-@media (max-width: 768px) {
-  .agent-bar-stats {
-    font-size: 12px;
+
+@media (max-width: 767px) {
+  .agent-kpi-inline {
+    display: none;
+  }
+
+  .agent-kpi-grid {
+    display: grid;
   }
 }
+
 @media (max-width: 380px) {
   .uag-header-inner {
     padding: 10px 8px;
   }
+
   .uag-header-actions {
     gap: 6px;
   }
+
   .uag-logo-wrap {
     transform: scale(0.92);
     transform-origin: left center;
   }
-  .agent-bar {
-    padding: 6px 10px;
-    gap: 8px;
+
+  .agent-kpi-wrap {
+    padding: 8px 8px 10px;
   }
-  .agent-bar-code {
+
+  .agent-kpi-code {
     display: none;
-  }
-  .agent-bar-stats {
-    gap: 6px;
-    font-size: 12px;
-    flex-wrap: wrap;
-    row-gap: 2px;
   }
 }
 /* ====== UAG Header Actions ====== */
@@ -436,6 +531,123 @@
   align-items: start;
 }
 
+/* ====== M1 Mobile Tab + Content ====== */
+.uag-mobile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.uag-mobile-settings {
+  gap: 14px;
+}
+
+.uag-mobile-settings-header {
+  display: grid;
+  gap: 4px;
+}
+
+.uag-mobile-settings-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink-100);
+}
+
+.uag-mobile-settings-sub {
+  font-size: 12px;
+  color: var(--ink-300);
+}
+
+.uag-mobile-settings-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--ink-200);
+}
+
+.uag-mobile-settings-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.uag-mobile-settings-actions .uag-btn {
+  min-height: 44px;
+}
+
+.uag-mobile-settings-points {
+  font-size: 13px;
+  color: var(--ink-300);
+}
+
+.uag-mobile-settings-points strong {
+  color: var(--ink-100);
+  font-size: 20px;
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.uag-tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-footer);
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.1);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.uag-tab-item {
+  flex: 1;
+  min-height: 56px;
+  border: none;
+  background: transparent;
+  color: var(--ink-300);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.uag-tab-item:hover {
+  background: rgba(23, 73, 215, 0.06);
+}
+
+.uag-tab-item:focus-visible {
+  outline: 2px solid var(--uag-brand);
+  outline-offset: -2px;
+}
+
+.uag-tab-item-active {
+  color: var(--uag-brand);
+  background: rgba(23, 73, 215, 0.08);
+}
+
+.uag-tab-icon {
+  display: block;
+}
+
+.uag-tab-label {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 /* Grid System */
 .k-span-2 {
   grid-column: span 2;
@@ -456,6 +668,12 @@
   .uag-grid > #action-panel-container,
   .uag-grid > #asset-monitor-container {
     grid-column: span 3;
+  }
+}
+
+@media (min-width: 768px) {
+  .uag-tab-bar {
+    display: none;
   }
 }
 
@@ -546,12 +764,10 @@
 }
 
 /* ====== Cards ====== */
-/* M5: Glassmorphism 卡片風格升級 */
+/* M5: Glassmorphism 卡片風格升級 (含 Safari 15- fallback) */
 .uag-card {
-  /* 玻璃質感背景 */
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Safari 15- fallback: 不透明背景 */
+  background: rgba(255, 255, 255, 0.95);
   /* 淡白色邊框 */
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
@@ -563,11 +779,26 @@
   flex-direction: column;
   gap: 16px;
 }
+
+/* 支援 backdrop-filter 的瀏覽器: 玻璃質感 */
+@supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
+  .uag-card {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
 /* M5: Glassmorphism hover 效果 */
 .uag-card:hover {
   box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
-  background: rgba(255, 255, 255, 0.85);
   border-color: rgba(23, 73, 215, 0.2);
+}
+
+@supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
+  .uag-card:hover {
+    background: rgba(255, 255, 255, 0.85);
+  }
 }
 .uag-card-header {
   display: flex;
@@ -1750,32 +1981,96 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 12px 24px;
+  padding: 12px 20px 14px;
   background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--line-soft);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
+  gap: 14px;
   box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.1);
   z-index: var(--z-footer);
 }
-@media (max-width: 768px) {
+
+.uag-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-300);
+}
+
+.uag-footer-label {
+  color: var(--ink-300);
+  font-size: 12px;
+}
+
+.uag-footer-mode-live {
+  color: #166534;
+}
+
+.uag-footer-mode-mock {
+  color: #b45309;
+}
+
+.uag-mode-toggle {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: var(--ink-200);
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.uag-mode-toggle:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+}
+
+.uag-mode-toggle:focus-visible {
+  outline: 2px solid var(--uag-brand);
+  outline-offset: 2px;
+}
+
+.uag-footer-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.uag-footer-actions .uag-btn {
+  min-height: 38px;
+}
+
+.uag-points-badge {
+  border-radius: 999px;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+  min-height: 38px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.uag-points-badge #user-points {
+  margin-left: 4px;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767px) {
   .uag-footer-bar {
-    padding: 10px 12px;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: space-between; /* Ensure items are spread out */
-  }
-  /* Ensure points badge is visible and distinct */
-  .uag-footer-bar .uag-badge {
-    order: -1; /* Move points to top/left on mobile if needed, or keep as is */
-    margin-left: auto; /* Push to right if space allows */
-  }
-  /* Adjust buttons size for mobile */
-  .uag-footer-bar .uag-btn {
-    padding: 4px 10px;
-    font-size: 12px;
+    display: none;
   }
 }
 
@@ -1895,6 +2190,191 @@
   border-color: var(--uag-brand);
   outline: none;
   box-shadow: 0 0 0 2px rgba(23, 73, 215, 0.1);
+}
+
+/* ====== M3: ActionBottomSheet 樣式 ====== */
+/* 規範引用: ux-guidelines #30 (手勢互動)、#7 (動畫 150-300ms)、#9 (prefers-reduced-motion) */
+
+/* Overlay 遮罩 */
+.action-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 40;
+  opacity: 0;
+  transition: opacity 250ms;
+}
+.action-sheet-overlay.open {
+  opacity: 1;
+}
+
+/* Bottom Sheet 主體 */
+.action-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  background: white;
+  border-radius: 16px 16px 0 0;
+  max-height: 85vh;
+  transform: translateY(100%);
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  display: flex;
+  flex-direction: column;
+}
+.action-sheet.open {
+  transform: translateY(0);
+}
+
+/* Drag handle (拖曳手柄) */
+.action-sheet-handle {
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #d1d5db;
+  margin: 8px auto 16px;
+  flex-shrink: 0;
+}
+
+/* 內容區 (可滾動) */
+.action-sheet-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 16px;
+}
+
+/* CTA 區 (黏在底部) */
+.action-sheet-cta {
+  position: sticky;
+  bottom: 0;
+  padding: 16px 24px;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+/* 獨家徽章 */
+.action-sheet-exclusive-badge {
+  background: var(--notif-warning-bg);
+  color: var(--notif-warning-text);
+  font-weight: 700;
+  font-size: 12px;
+  text-align: center;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid var(--notif-warning-bg);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* 免責聲明 */
+.action-sheet-disclaimer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-300);
+  margin-top: 8px;
+}
+
+/* 桌面版：不使用 Bottom Sheet */
+@media (min-width: 768px) {
+  .action-sheet-overlay,
+  .action-sheet {
+    display: none !important;
+  }
+}
+
+/* prefers-reduced-motion: 移除動畫 */
+@media (prefers-reduced-motion: reduce) {
+  .action-sheet,
+  .action-sheet-overlay {
+    transition: none;
+  }
+}
+
+/* ====== M4: AssetMonitor Swipe-to-Action 樣式 ====== */
+/* 規範引用: ux-guidelines #22 (觸控 ≥ 44px)、#23 (間距 ≥ 8px)、#30 (手勢互動) */
+
+/* Swipe 容器 */
+.monitor-card-swipe {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* 隱藏捲軸 */
+}
+.monitor-card-swipe::-webkit-scrollbar {
+  display: none;
+}
+
+/* 卡片主要內容 */
+.monitor-card-content {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+/* 隱藏操作按鈕區 */
+.monitor-card-actions-hidden {
+  scroll-snap-align: end;
+  flex-shrink: 0;
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 8px;
+  background: #f8fafc;
+}
+.monitor-card-actions-hidden button {
+  min-height: 44px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 12px;
+  padding: 8px 4px;
+}
+
+/* 首次提示動畫 */
+.swipe-hint {
+  animation: hintSlide 1.5s ease-out;
+  animation-delay: 1s;
+  animation-fill-mode: forwards;
+}
+@keyframes hintSlide {
+  0% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(-30px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* 桌面版：顯示為傳統表格 (不使用 Swipe) */
+@media (min-width: 768px) {
+  .monitor-card-swipe {
+    display: table-row;
+  }
+  .monitor-card-content {
+    display: table-cell;
+  }
+  .monitor-card-actions-hidden {
+    display: table-cell;
+    width: auto;
+    background: transparent;
+    padding: 12px;
+  }
+  .swipe-hint {
+    animation: none;
+  }
 }
 
 .modal-select:disabled {

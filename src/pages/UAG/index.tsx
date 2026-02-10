@@ -16,6 +16,8 @@ import { useAuth } from '../../hooks/useAuth';
 
 import { UAGHeader } from './components/UAGHeader';
 import { UAGFooter } from './components/UAGFooter';
+import { UAGTabBar } from './components/UAGTabBar';
+import type { UAGMobileTab } from './components/UAGTabBar';
 import { UAGLoadingSkeleton } from './components/UAGLoadingSkeleton';
 import { UAGErrorState } from './components/UAGErrorState';
 
@@ -25,6 +27,7 @@ import AssetMonitor from './components/AssetMonitor';
 import ListingFeed from './components/ListingFeed';
 import ReportGenerator from './components/ReportGenerator';
 import TrustFlow from './components/TrustFlow';
+import { useWindowSize } from './hooks/useWindowSize';
 
 // MSG-5: 購買成功後發送訊息 Modal
 import { SendMessageModal } from '../../components/UAG/SendMessageModal';
@@ -37,6 +40,8 @@ function UAGPageContent() {
   const { selectedLead, selectLead, close } = useLeadSelection();
   const { user, loading: authLoading, error: authError, signOut } = useAuth();
   const { profile: agentProfile } = useAgentProfile(user?.id);
+  const { width } = useWindowSize();
+  const isMobileLayout = width < 768;
   const actionPanelRef = useRef<HTMLDivElement>(null);
 
   // MSG-5: Modal 狀態
@@ -50,6 +55,7 @@ function UAGPageContent() {
   // 修9: AssetMonitor 發送訊息狀態
   const [assetMessageLead, setAssetMessageLead] = useState<Lead | null>(null);
   const [showAssetMessageModal, setShowAssetMessageModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<UAGMobileTab>('overview');
 
   // 修9: AssetMonitor 回調
   const handleSendMessageFromAsset = useCallback((lead: Lead) => {
@@ -123,22 +129,25 @@ function UAGPageContent() {
   /**
    * MSG-5 FIX 1: 使用 await 確認購買成功後才顯示 Modal
    */
-  const onBuyLead = async (leadId: string) => {
-    if (!appData || isBuying) return;
+  const onBuyLead = useCallback(
+    async (leadId: string) => {
+      if (!appData || isBuying) return;
 
-    close();
+      close();
 
-    // 等待購買結果，只有成功才顯示 Modal
-    const result = await buyLead(leadId);
+      // 等待購買結果，只有成功才顯示 Modal
+      const result = await buyLead(leadId);
 
-    if (result.success && result.lead) {
-      setPurchasedLead(result.lead);
-      // UAG-13: 如果有回傳 conversation_id，存起來傳給 Modal
-      setCurrentConversationId(result.conversation_id);
-      setShowMessageModal(true);
-    }
-    // 失敗時 useUAG 已經顯示 toast 錯誤訊息
-  };
+      if (result.success && result.lead) {
+        setPurchasedLead(result.lead);
+        // UAG-13: 如果有回傳 conversation_id，存起來傳給 Modal
+        setCurrentConversationId(result.conversation_id);
+        setShowMessageModal(true);
+      }
+      // 失敗時 useUAG 已經顯示 toast 錯誤訊息
+    },
+    [appData, isBuying, close, buyLead]
+  );
 
   const handleCloseModal = useCallback(() => {
     setShowMessageModal(false);
@@ -216,6 +225,12 @@ function UAGPageContent() {
     [queryClient]
   );
 
+  // Profile navigation (must be before early return)
+  const profileHref = useMock ? `${ROUTES.UAG_PROFILE}?mock=true` : ROUTES.UAG_PROFILE;
+  const handleOpenProfile = useCallback(() => {
+    navigate(profileHref);
+  }, [navigate, profileHref]);
+
   if (isLoading) return <UAGLoadingSkeleton />;
   if (!appData) return null;
 
@@ -241,6 +256,89 @@ function UAGPageContent() {
   // 問題 #10-11 修復：判斷是否可以發送訊息
   const canSendMessage = Boolean(agentId && consumerSessionId);
 
+  const renderMobileTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className={styles['uag-mobile-content']}>
+            <RadarCluster leads={appData.leads} onSelectLead={selectLead} />
+            <ActionPanel
+              ref={actionPanelRef}
+              selectedLead={selectedLead}
+              onBuyLead={onBuyLead}
+              isProcessing={isBuying}
+            />
+          </div>
+        );
+      case 'leads':
+        return (
+          <div className={styles['uag-mobile-content']}>
+            <ListingFeed
+              listings={appData.listings}
+              feed={appData.feed}
+              onCreatePost={handleCreatePost}
+              availableCommunities={availableCommunities}
+            />
+            <ReportGenerator listings={appData.listings} agentName={agentName} />
+          </div>
+        );
+      case 'monitor':
+        return (
+          <div className={styles['uag-mobile-content']}>
+            <AssetMonitor
+              leads={appData.leads}
+              onSendMessage={handleSendMessageFromAsset}
+              onViewChat={handleViewChat}
+            />
+            <TrustFlow toggleMode={toggleMode} />
+          </div>
+        );
+      case 'settings':
+        return (
+          <section className={`${styles['uag-card']} ${styles['uag-mobile-settings']}`}>
+            <div className={styles['uag-mobile-settings-header']}>
+              <div className={styles['uag-mobile-settings-title']}>工作台設定</div>
+              <div className={styles['uag-mobile-settings-sub']}>管理模式、方案與個人資料入口</div>
+            </div>
+
+            <div className={styles['uag-mobile-settings-mode']}>
+              <span>系統模式</span>
+              <strong
+                className={useMock ? styles['uag-footer-mode-mock'] : styles['uag-footer-mode-live']}
+              >
+                {useMock ? 'Local Mock' : 'Live API'}
+              </strong>
+              <button type="button" className={styles['uag-mode-toggle']} onClick={toggleMode}>
+                切換模式
+              </button>
+            </div>
+
+            <div className={styles['uag-mobile-settings-actions']}>
+              <button type="button" className={styles['uag-btn']}>
+                方案設定
+              </button>
+              <button type="button" className={`${styles['uag-btn']} ${styles['primary']}`}>
+                加值點數
+              </button>
+              <button
+                type="button"
+                className={`${styles['uag-btn']} ${styles['uag-btn-link']}`}
+                onClick={handleOpenProfile}
+              >
+                個人資料
+              </button>
+            </div>
+
+            <div className={styles['uag-mobile-settings-points']}>
+              點數餘額 <strong>{appData.user.points}</strong>
+            </div>
+          </section>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className={styles['uag-page']}>
       <UAGHeader
@@ -254,42 +352,50 @@ function UAGPageContent() {
       />
 
       <main className={styles['uag-container']}>
-        <div className={styles['uag-grid']}>
-          {/* [1] UAG Radar */}
-          <RadarCluster leads={appData.leads} onSelectLead={selectLead} />
+        {isMobileLayout ? (
+          renderMobileTabContent()
+        ) : (
+          <div className={styles['uag-grid']}>
+            {/* [1] UAG Radar */}
+            <RadarCluster leads={appData.leads} onSelectLead={selectLead} />
 
-          {/* [Action Panel] */}
-          <ActionPanel
-            ref={actionPanelRef}
-            selectedLead={selectedLead}
-            onBuyLead={onBuyLead}
-            isProcessing={isBuying}
-          />
+            {/* [Action Panel] */}
+            <ActionPanel
+              ref={actionPanelRef}
+              selectedLead={selectedLead}
+              onBuyLead={onBuyLead}
+              isProcessing={isBuying}
+            />
 
-          {/* [2] Asset Monitor */}
-          <AssetMonitor
-            leads={appData.leads}
-            onSendMessage={handleSendMessageFromAsset}
-            onViewChat={handleViewChat}
-          />
+            {/* [2] Asset Monitor */}
+            <AssetMonitor
+              leads={appData.leads}
+              onSendMessage={handleSendMessageFromAsset}
+              onViewChat={handleViewChat}
+            />
 
-          {/* [3] Listings & [4] Feed */}
-          <ListingFeed
-            listings={appData.listings}
-            feed={appData.feed}
-            onCreatePost={handleCreatePost}
-            availableCommunities={availableCommunities}
-          />
+            {/* [3] Listings & [4] Feed */}
+            <ListingFeed
+              listings={appData.listings}
+              feed={appData.feed}
+              onCreatePost={handleCreatePost}
+              availableCommunities={availableCommunities}
+            />
 
-          {/* [5] 手機報告生成器 */}
-          <ReportGenerator listings={appData.listings} agentName={agentName} />
+            {/* [5] 手機報告生成器 */}
+            <ReportGenerator listings={appData.listings} agentName={agentName} />
 
-          {/* [6] Trust Flow */}
-          <TrustFlow toggleMode={toggleMode} />
-        </div>
+            {/* [6] Trust Flow */}
+            <TrustFlow toggleMode={toggleMode} />
+          </div>
+        )}
       </main>
 
-      <UAGFooter user={appData.user} useMock={useMock} toggleMode={toggleMode} />
+      {isMobileLayout ? (
+        <UAGTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      ) : (
+        <UAGFooter user={appData.user} useMock={useMock} toggleMode={toggleMode} />
+      )}
 
       {/* MSG-5: 購買成功後發送訊息 Modal */}
       {/* 問題 #10-11 修復：只有在有真實 agentId 和 sessionId 時才渲染 */}
@@ -325,6 +431,7 @@ function UAGPageContent() {
           {...(assetMessageLead.property_id ? { propertyId: assetMessageLead.property_id } : {})}
         />
       )}
+
     </div>
   );
 }
