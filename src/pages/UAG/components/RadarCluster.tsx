@@ -16,15 +16,17 @@ const GRADE_ORDER: Record<string, number> = {
   F: 5,
 };
 
-const TOOLTIP_AUTO_HIDE_MS = 3000;
+export const RADAR_CONTAINER_HEIGHT_PX = 450;
+export const BUBBLE_MIN_PADDING_PX = 4;
+export const TOOLTIP_AUTO_HIDE_MS = 3000;
 
 /** 簡單的種子隨機數生成器，基於 lead ID 產生穩定的隨機值 */
-function seededRandom(seed: string): number {
+export function seededRandom(seed: string): number {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
     const char = seed.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash |= 0; // Convert to 32-bit signed integer
   }
   // 正規化到 0-1 範圍
   return Math.abs((Math.sin(hash) * 10000) % 1);
@@ -34,6 +36,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
   const liveLeads = leads.filter((l) => l.status === 'new');
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
   const [containerWidth, setContainerWidth] = useState(0);
   const [clickedLeadId, setClickedLeadId] = useState<string | null>(null);
 
@@ -44,21 +47,27 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
 
     const updateWidth = () => {
       const width = container.offsetWidth;
+      // width=0 代表容器尚未完成 layout，保留前次有效寬度
       if (width > 0) {
         setContainerWidth(width);
       }
     };
 
-    // 立即執行一次（處理測試環境）
-    const immediateWidth = container.offsetWidth;
-    if (immediateWidth > 0) {
-      setContainerWidth(immediateWidth);
+    updateWidth();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateWidth);
+      return () => window.removeEventListener('resize', updateWidth);
     }
 
-    const resizeObserver = new ResizeObserver(updateWidth);
-    resizeObserver.observe(container);
-
-    return () => resizeObserver.disconnect();
+    try {
+      const resizeObserver = new ResizeObserver(updateWidth);
+      resizeObserver.observe(container);
+      return () => resizeObserver.disconnect();
+    } catch {
+      window.addEventListener('resize', updateWidth);
+      return () => window.removeEventListener('resize', updateWidth);
+    }
   }, []);
 
   // 預先計算每個 lead 的動畫時長（基於 lead ID 產生穩定的隨機值）
@@ -74,28 +83,21 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
   // 產生「等級-序號」標籤（例如 S-01, A-05）
   const leadLabels = useMemo(() => {
     const labels: Record<string, string> = {};
-    const gradeCounters: Record<string, number> = {
-      S: 0,
-      A: 0,
-      B: 0,
-      C: 0,
-      F: 0,
-    };
+    const gradeCounters: Record<string, number> = {};
 
-    // 依照等級排序，確保序號順序一致
+    // 依照等級排序，確保序號順序一致；同級以 id 排序保證穩定性
     const sortedLeads = [...liveLeads].sort((a, b) => {
-      const gradeDiff = (GRADE_ORDER[a.grade] ?? 99) - (GRADE_ORDER[b.grade] ?? 99);
-      if (gradeDiff !== 0) {
-        return gradeDiff;
-      }
-      return a.id.localeCompare(b.id);
+      const orderA = GRADE_ORDER[a.grade] ?? 99;
+      const orderB = GRADE_ORDER[b.grade] ?? 99;
+      return orderA !== orderB ? orderA - orderB : a.id.localeCompare(b.id);
     });
 
     for (const lead of sortedLeads) {
-      gradeCounters[lead.grade] = (gradeCounters[lead.grade] || 0) + 1;
-      const seq = String(gradeCounters[lead.grade]).padStart(2, '0');
-      labels[lead.id] = `${lead.grade}-${seq}`;
+      const count = (gradeCounters[lead.grade] ?? 0) + 1;
+      gradeCounters[lead.grade] = count;
+      labels[lead.id] = `${lead.grade}-${String(count).padStart(2, '0')}`;
     }
+
     return labels;
   }, [liveLeads]);
 
@@ -113,7 +115,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
   const resolvedPositions = useMemo(() => {
     if (containerWidth === 0 || liveLeads.length === 0) return [];
 
-    const containerHeight = 450; // 固定高度（與 CSS minHeight 一致）
+    const containerHeight = RADAR_CONTAINER_HEIGHT_PX;
     const bubbles = liveLeads.map((lead) => {
       const x = lead.x != null ? (lead.x / 100) * containerWidth : containerWidth / 2;
       const y = lead.y != null ? (lead.y / 100) * containerHeight : containerHeight / 2;
@@ -121,7 +123,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
       return { x, y, size };
     });
 
-    return resolveOverlap(bubbles, containerWidth, containerHeight, 4);
+    return resolveOverlap(bubbles, containerWidth, containerHeight, BUBBLE_MIN_PADDING_PX);
   }, [liveLeads, containerWidth, sizeMap]);
 
   const clearTooltipTimeout = useCallback(() => {
@@ -133,6 +135,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
 
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       clearTooltipTimeout();
     };
   }, [clearTooltipTimeout]);
@@ -144,7 +147,9 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
       onSelectLead(lead);
 
       tooltipTimeoutRef.current = setTimeout(() => {
-        setClickedLeadId((previousId) => (previousId === lead.id ? null : previousId));
+        if (isMountedRef.current) {
+          setClickedLeadId((previousId) => (previousId === lead.id ? null : previousId));
+        }
         tooltipTimeoutRef.current = null;
       }, TOOLTIP_AUTO_HIDE_MS);
     },
@@ -155,7 +160,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
     <section
       className={`${styles['uag-card']} ${styles['k-span-6']}`}
       id="radar-section"
-      style={{ minHeight: '450px' }}
+      style={{ minHeight: `${RADAR_CONTAINER_HEIGHT_PX}px` }}
     >
       <div className={styles['uag-card-header']}>
         <div>
@@ -181,7 +186,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
 
           // 若尚未解析位置，使用原始百分比位置
           const x = resolvedPos ? (resolvedPos.x / containerWidth) * 100 : (lead.x ?? 50);
-          const y = resolvedPos ? (resolvedPos.y / 450) * 100 : (lead.y ?? 50);
+          const y = resolvedPos ? (resolvedPos.y / RADAR_CONTAINER_HEIGHT_PX) * 100 : (lead.y ?? 50);
 
           const isClicked = clickedLeadId === lead.id;
 

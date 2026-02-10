@@ -34,6 +34,7 @@ export function resolveOverlap(
   padding: number = 4
 ): Position[] {
   if (bubbles.length === 0) return [];
+  const safePadding = Math.max(0, padding);
 
   // 初始化位置陣列（深拷貝避免修改原始資料）
   const positions: Position[] = bubbles.map(b => ({ x: b.x, y: b.y }));
@@ -57,7 +58,7 @@ export function resolveOverlap(
         // 計算最小安全距離（半徑和 + padding）
         const radiusA = bubbleA.size / 2;
         const radiusB = bubbleB.size / 2;
-        const minDist = radiusA + radiusB + padding;
+        const minDist = radiusA + radiusB + safePadding;
 
         // 如果重疊，推開它們
         if (distance < minDist && distance > 0) {

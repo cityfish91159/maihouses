@@ -19,6 +19,10 @@ vi.mock('../../../analytics/track', () => ({
   track: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('../../MaiMai', () => ({
+  MaiMaiBase: ({ mood }: { mood: string }) => <div data-testid="maimai-base" data-mood={mood} />,
+}));
+
 describe('CallConfirmPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -37,6 +41,7 @@ describe('CallConfirmPanel', () => {
     );
 
     expect(screen.getByText('撥打電話前確認一下～')).toBeInTheDocument();
+    expect(screen.getByTestId('maimai-base')).toHaveAttribute('data-mood', 'happy');
     expect(track).toHaveBeenCalledWith(
       'maimai_panel_welcome',
       expect.objectContaining({ panelType: 'call', hasContact: true })
@@ -63,6 +68,7 @@ describe('CallConfirmPanel', () => {
     );
 
     expect(screen.getByText('房仲還沒設定電話，用表單留言吧')).toBeInTheDocument();
+    expect(screen.getByTestId('maimai-base')).toHaveAttribute('data-mood', 'thinking');
     expect(track).toHaveBeenCalledWith(
       'maimai_panel_welcome',
       expect.objectContaining({ panelType: 'call', hasContact: false })
@@ -241,5 +247,62 @@ describe('CallConfirmPanel', () => {
     const fallbackInput = screen.getByLabelText('你的電話');
     expect(fallbackButton.className).toContain('motion-reduce:transition-none');
     expect(fallbackInput.className).toContain('motion-reduce:transition-none');
+  });
+
+  it('handles empty string vs null vs undefined agentPhone', () => {
+    const { rerender } = render(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentPhone=""
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.getByText('房仲還沒設定電話，用表單留言吧')).toBeInTheDocument();
+
+    rerender(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentPhone={null}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.getByText('房仲還沒設定電話，用表單留言吧')).toBeInTheDocument();
+
+    rerender(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.getByText('房仲還沒設定電話，用表單留言吧')).toBeInTheDocument();
+  });
+
+  it('sanitizes agentName to prevent XSS', () => {
+    render(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentPhone="0912-345-678"
+        agentName="<script>alert('xss')</script>"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.queryByRole('script')).not.toBeInTheDocument();
+    const headerText = screen.getByText(/的聯絡電話已準備好/);
+    expect(headerText).toBeInTheDocument();
   });
 });

@@ -20,6 +20,10 @@ vi.mock('../../../analytics/track', () => ({
   track: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('../../MaiMai', () => ({
+  MaiMaiBase: ({ mood }: { mood: string }) => <div data-testid="maimai-base" data-mood={mood} />,
+}));
+
 describe('LineLinkPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,6 +58,7 @@ describe('LineLinkPanel', () => {
     );
 
     expect(screen.getByText('加 LINE 直接聊，回覆最快喔！')).toBeInTheDocument();
+    expect(screen.getByTestId('maimai-base')).toHaveAttribute('data-mood', 'wave');
     expect(track).toHaveBeenCalledWith(
       'maimai_panel_welcome',
       expect.objectContaining({ panelType: 'line', hasContact: true })
@@ -80,6 +85,7 @@ describe('LineLinkPanel', () => {
     );
 
     expect(screen.getByText('房仲還沒設定 LINE，用表單留言吧')).toBeInTheDocument();
+    expect(screen.getByTestId('maimai-base')).toHaveAttribute('data-mood', 'thinking');
     expect(track).toHaveBeenCalledWith(
       'maimai_panel_welcome',
       expect.objectContaining({ panelType: 'line', hasContact: false })
@@ -290,5 +296,51 @@ describe('LineLinkPanel', () => {
       configurable: true,
       value: originalLocation,
     });
+  });
+
+  it('uses correct aria-labelledby reference', () => {
+    render(
+      <LineLinkPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentLineId="maihouses_demo"
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    const dialog = screen.getByRole('dialog');
+    const labelId = dialog.getAttribute('aria-labelledby');
+
+    expect(labelId).toBeTruthy();
+    const labelElement = document.getElementById(labelId!);
+    expect(labelElement).toHaveTextContent('加 LINE 聊聊');
+  });
+
+  it('removes dialog from DOM when closed', () => {
+    const { rerender } = render(
+      <LineLinkPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    rerender(
+      <LineLinkPanel
+        isOpen={false}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ import { track } from '../../analytics/track';
 import { MaiMaiBase, MaiMaiSpeech, useMaiMaiMood } from '../MaiMai';
 import type { MaiMaiMood } from '../MaiMai';
 import { normalizeAgentName } from './agentName';
+import { useMaiMaiA11yProps } from '../../hooks/useMaiMaiA11yProps';
 
 interface PropertyDetailMaiMaiProps {
   trustEnabled: boolean;
@@ -36,13 +37,7 @@ export const PropertyDetailMaiMai = memo(function PropertyDetailMaiMai({
     () => Math.min(MAX_TRUST_CASES, Math.max(0, Math.trunc(trustCasesCount))),
     [trustCasesCount]
   );
-
-  const prefersReducedMotion = useMemo(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return false;
-    }
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }, []);
+  const maiMaiA11yProps = useMaiMaiA11yProps();
 
   useEffect(() => {
     let idleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -97,15 +92,13 @@ export const PropertyDetailMaiMai = memo(function PropertyDetailMaiMai({
     };
   }, []);
 
+  // Mood 優先級邏輯: isHot > isIdle > trustEnabled > default
+  // Priority 1 (最高): 熱門物件 - 最強訊號，立即吸引注意
+  // Priority 2: 閒置偵測 - 時效性高，需即時引導
+  // Priority 3: 安心留痕 - 持續性功能，背景展示
+  // Priority 4 (最低): 預設歡迎 - 通用訊息
   const moodState = useMemo<MoodState>(() => {
-    if (isIdle) {
-      return {
-        mood: 'thinking',
-        message: '還在考慮嗎？可以加 LINE 先聊聊看',
-        trigger: 'idle_timer',
-      };
-    }
-
+    // Priority 1: Hot property (strongest signal)
     if (isHot) {
       return {
         mood: 'excited',
@@ -114,6 +107,16 @@ export const PropertyDetailMaiMai = memo(function PropertyDetailMaiMai({
       };
     }
 
+    // Priority 2: User idle (time-sensitive)
+    if (isIdle) {
+      return {
+        mood: 'thinking',
+        message: '還在考慮嗎？可以加 LINE 先聊聊看',
+        trigger: 'idle_timer',
+      };
+    }
+
+    // Priority 3: Trust enabled (persistent feature)
     if (trustEnabled) {
       return {
         mood: 'happy',
@@ -122,6 +125,7 @@ export const PropertyDetailMaiMai = memo(function PropertyDetailMaiMai({
       };
     }
 
+    // Priority 4: Default welcome
     return {
       mood: 'idle',
       message: `嗨～歡迎看屋！${safeAgentName} 正在線上等你`,
@@ -147,12 +151,7 @@ export const PropertyDetailMaiMai = memo(function PropertyDetailMaiMai({
       <div className="relative flex items-end gap-3">
         <div className="relative shrink-0">
           <MaiMaiSpeech messages={[moodState.message]} />
-          <MaiMaiBase
-            mood={mood}
-            size="sm"
-            animated={!prefersReducedMotion}
-            showEffects={!prefersReducedMotion}
-          />
+          <MaiMaiBase mood={mood} size="sm" {...maiMaiA11yProps} />
         </div>
         <p className="text-sm font-medium leading-relaxed text-slate-700">{moodState.message}</p>
       </div>

@@ -2,13 +2,15 @@
 import { MessageCircle, X } from 'lucide-react';
 import { notify } from '../../lib/notify';
 import { track } from '../../analytics/track';
-import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
 import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER, LINE_ID_PATTERN } from './constants';
 import { MaiMaiBase } from '../MaiMai';
 import { normalizeAgentName } from './agentName';
+import { useMaiMaiA11yProps } from '../../hooks/useMaiMaiA11yProps';
+import { usePanelWelcomeTrack } from './usePanelWelcomeTrack';
+import { useDetailPanelShell } from './useDetailPanelShell';
 
 interface LineLinkPanelProps {
   isOpen: boolean;
@@ -34,8 +36,6 @@ export function LineLinkPanel({
   const [trustChecked, setTrustChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fallbackLineId, setFallbackLineId] = useState('');
-  const [panelReady, setPanelReady] = useState(false);
-  const hasTrackedWelcomeRef = useRef(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const firstButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -46,12 +46,7 @@ export function LineLinkPanel({
     '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
   } as CSSProperties;
 
-  const prefersReducedMotion = useMemo(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return false;
-    }
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }, []);
+  const maiMaiA11yProps = useMaiMaiA11yProps();
   const safeAgentName = useMemo(() => normalizeAgentName(agentName), [agentName]);
 
   // LINE ID: trim 後驗證 pattern，不合法視同無 lineId
@@ -64,32 +59,19 @@ export function LineLinkPanel({
     setTrustChecked(false);
     setIsSubmitting(false);
     setFallbackLineId('');
-    setPanelReady(false);
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setPanelReady(true);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      hasTrackedWelcomeRef.current = false;
-      return;
-    }
-    if (hasTrackedWelcomeRef.current) return;
-    hasTrackedWelcomeRef.current = true;
-    void track('maimai_panel_welcome', {
-      panelType: 'line',
-      hasContact: hasLineId,
-    });
-  }, [hasLineId, isOpen]);
-
-  useFocusTrap({
+  const panelReady = useDetailPanelShell({
+    isOpen,
     containerRef: modalRef,
     initialFocusRef: firstButtonRef,
     onEscape: onClose,
-    isActive: isOpen,
+  });
+
+  usePanelWelcomeTrack({
+    panelType: 'line',
+    isOpen,
+    hasContact: hasLineId,
   });
 
   const runTrustAction = useCallback(async () => {
@@ -204,12 +186,7 @@ export function LineLinkPanel({
         {/* Content */}
         <div className="p-4">
           <div className="animate-in fade-in bg-brand-50/60 mb-4 flex items-center gap-3 rounded-xl p-3 duration-200 motion-reduce:transition-none">
-            <MaiMaiBase
-              mood={hasLineId ? 'wave' : 'thinking'}
-              size="xs"
-              animated={!prefersReducedMotion}
-              showEffects={!prefersReducedMotion}
-            />
+            <MaiMaiBase mood={hasLineId ? 'wave' : 'thinking'} size="xs" {...maiMaiA11yProps} />
             <p className="text-sm text-ink-900">
               {hasLineId
                 ? '加 LINE 直接聊，回覆最快喔！'

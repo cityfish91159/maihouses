@@ -2,13 +2,15 @@
 import { Phone, X } from 'lucide-react';
 import { notify } from '../../lib/notify';
 import { track } from '../../analytics/track';
-import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
 import { isValidPhone, sanitizePhoneInput } from './contactUtils';
 import { MaiMaiBase } from '../MaiMai';
 import { normalizeAgentName } from './agentName';
+import { useMaiMaiA11yProps } from '../../hooks/useMaiMaiA11yProps';
+import { usePanelWelcomeTrack } from './usePanelWelcomeTrack';
+import { useDetailPanelShell } from './useDetailPanelShell';
 
 interface CallConfirmPanelProps {
   isOpen: boolean;
@@ -34,8 +36,6 @@ export function CallConfirmPanel({
   const [trustChecked, setTrustChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fallbackPhone, setFallbackPhone] = useState('');
-  const [panelReady, setPanelReady] = useState(false);
-  const hasTrackedWelcomeRef = useRef(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const firstButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -44,44 +44,26 @@ export function CallConfirmPanel({
   const normalizedPhone = agentPhone?.trim() ?? '';
   const hasPhone = Boolean(normalizedPhone);
   const safeAgentName = useMemo(() => normalizeAgentName(agentName), [agentName]);
-  const prefersReducedMotion = useMemo(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return false;
-    }
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }, []);
+  const maiMaiA11yProps = useMaiMaiA11yProps();
 
   useEffect(() => {
     if (isOpen) return;
     setTrustChecked(false);
     setIsSubmitting(false);
     setFallbackPhone('');
-    setPanelReady(false);
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setPanelReady(true);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      hasTrackedWelcomeRef.current = false;
-      return;
-    }
-    if (hasTrackedWelcomeRef.current) return;
-    hasTrackedWelcomeRef.current = true;
-    void track('maimai_panel_welcome', {
-      panelType: 'call',
-      hasContact: hasPhone,
-    });
-  }, [hasPhone, isOpen]);
-
-  useFocusTrap({
+  const panelReady = useDetailPanelShell({
+    isOpen,
     containerRef: modalRef,
     initialFocusRef: firstButtonRef,
     onEscape: onClose,
-    isActive: isOpen,
+  });
+
+  usePanelWelcomeTrack({
+    panelType: 'call',
+    isOpen,
+    hasContact: hasPhone,
   });
 
   const handlePrimaryAction = useCallback(async () => {
@@ -198,12 +180,7 @@ export function CallConfirmPanel({
 
         <div className="p-4">
           <div className="animate-in fade-in bg-brand-50/60 mb-4 flex items-center gap-3 rounded-xl p-3 duration-200 motion-reduce:transition-none">
-            <MaiMaiBase
-              mood={hasPhone ? 'happy' : 'thinking'}
-              size="xs"
-              animated={!prefersReducedMotion}
-              showEffects={!prefersReducedMotion}
-            />
+            <MaiMaiBase mood={hasPhone ? 'happy' : 'thinking'} size="xs" {...maiMaiA11yProps} />
             <p className="text-sm text-ink-900">
               {hasPhone ? '撥打電話前確認一下～' : '房仲還沒設定電話，用表單留言吧'}
             </p>

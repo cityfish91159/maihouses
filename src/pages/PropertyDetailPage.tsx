@@ -24,6 +24,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useTrustActions } from '../hooks/useTrustActions';
 import { usePropertyTracker } from '../hooks/usePropertyTracker';
 import { useCommunityReviewLike } from '../hooks/useCommunityReviewLike';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { TOAST_DURATION } from '../constants/toast';
 import { isDemoPropertyId } from '../constants/property';
 
@@ -54,6 +55,12 @@ import {
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+
+const LOADING_MESSAGES = {
+  initial: '正在幫你找房子資訊…',
+  retry: '重新載入中…',
+  error: '載入失敗',
+} as const;
 
 /**
  * 解析返回目標
@@ -123,12 +130,7 @@ export const PropertyDetailPage: React.FC = () => {
   const [isPropertyLoading, setIsPropertyLoading] = useState(() => Boolean(id));
   const [propertyLoadError, setPropertyLoadError] = useState<string | null>(null);
   const [reloadAttempt, setReloadAttempt] = useState(0);
-  const prefersReducedMotion = useMemo(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return false;
-    }
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }, []);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // ✅ agentId 正規化：trim + 格式驗證（UUID / agent-* / mock-agent-*）
   const normalizeAgentId = useCallback((aid: string | null | undefined): string | null => {
@@ -621,7 +623,7 @@ export const PropertyDetailPage: React.FC = () => {
             showEffects={!prefersReducedMotion}
           />
           <p className="text-base text-slate-600">
-            {reloadAttempt > 0 ? '重新載入中…' : '正在幫你找房子資訊…'}
+            {reloadAttempt > 0 ? LOADING_MESSAGES.retry : LOADING_MESSAGES.initial}
           </p>
         </div>
       </ErrorBoundary>
@@ -638,7 +640,7 @@ export const PropertyDetailPage: React.FC = () => {
             animated={!prefersReducedMotion}
             showEffects={!prefersReducedMotion}
           />
-          <p className="text-base text-slate-600">載入失敗</p>
+          <p className="text-base text-slate-600">{LOADING_MESSAGES.error}</p>
           <p className="max-w-sm text-sm text-slate-500">{propertyLoadError}</p>
           <button
             type="button"
