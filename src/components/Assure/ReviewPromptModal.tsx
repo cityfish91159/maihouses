@@ -118,16 +118,18 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
   const displayRating = hoverRating || rating;
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Modal backdrop click-to-close pattern
     <div
-      className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) handleLater();
-      }}
+      className="fixed inset-0 z-modal flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="review-modal-title"
     >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50"
+        onClick={handleLater}
+        aria-label="關閉評價視窗"
+      />
       <div ref={dialogRef} className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         <button
           ref={closeButtonRef}

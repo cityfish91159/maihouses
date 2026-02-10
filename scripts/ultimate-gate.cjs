@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const { spawnSync } = require('child_process');
+const { spawnSync, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -41,6 +41,184 @@ function runStep(stepName, command, args, opts = {}) {
 
   console.log(`${C.green}PASS: ${stepName} (${duration}s)${C.reset}`);
   return true;
+}
+
+function getLineNumber(content, index) {
+  return content.slice(0, index).split('\n').length;
+}
+
+function toPosixPath(filePath) {
+  return filePath.split(path.sep).join('/');
+}
+
+function getGitFileList(command) {
+  try {
+    return execSync(command, {
+      cwd: process.cwd(),
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function getChangedSourceFiles() {
+  const addedLinesByFile = new Map();
+
+  const diff = execSync('git diff --unified=0 --no-color -- src', {
+    cwd: process.cwd(),
+    encoding: 'utf-8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  });
+
+  let currentFile = null;
+  let currentNewLine = 0;
+
+  diff.split(/\r?\n/).forEach((line) => {
+    if (line.startsWith('+++ b/')) {
+      currentFile = toPosixPath(line.slice('+++ b/'.length).trim());
+      if (!addedLinesByFile.has(currentFile)) {
+        addedLinesByFile.set(currentFile, new Set());
+      }
+      return;
+    }
+
+    if (line.startsWith('@@')) {
+      const match = line.match(/\+(\d+)(?:,(\d+))?/);
+      currentNewLine = match ? Number(match[1]) : 0;
+      return;
+    }
+
+    if (!currentFile || currentNewLine <= 0) return;
+
+    if (line.startsWith('+') && !line.startsWith('+++')) {
+      addedLinesByFile.get(currentFile).add(currentNewLine);
+      currentNewLine += 1;
+      return;
+    }
+
+    if (line.startsWith('-') && !line.startsWith('---')) {
+      return;
+    }
+
+    if (!line.startsWith('\\')) {
+      currentNewLine += 1;
+    }
+  });
+
+  const untrackedFiles = getGitFileList('git ls-files --others --exclude-standard');
+  untrackedFiles.forEach((filePath) => {
+    const normalized = toPosixPath(filePath);
+
+    if (!normalized.startsWith('src/')) return;
+    if (!/\.(js|jsx|ts|tsx)$/.test(normalized)) return;
+    if (!fs.existsSync(filePath)) return;
+
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lineCount = content.split('\n').length;
+
+    const lineSet = addedLinesByFile.get(normalized) ?? new Set();
+    for (let i = 1; i <= lineCount; i += 1) {
+      lineSet.add(i);
+    }
+    addedLinesByFile.set(normalized, lineSet);
+  });
+
+  return Array.from(addedLinesByFile.entries())
+    .filter(([filePath, lineSet]) => {
+      if (!lineSet || lineSet.size === 0) return false;
+
+      if (!filePath.startsWith('src/')) return false;
+      if (!/\.(js|jsx|ts|tsx)$/.test(filePath)) return false;
+      if (filePath.includes('/node_modules/')) return false;
+      if (filePath.includes('/dist/')) return false;
+      if (filePath.includes('/build/')) return false;
+
+      return fs.existsSync(path.normalize(filePath));
+    })
+    .map(([filePath, lineSet]) => ({ filePath, lineSet }));
+}
+
+function checkInlineStylePolicy() {
+  console.log(`\n${C.cyan}=> [CHECK] Inline style policy (changed files)...${C.reset}`);
+
+  const targetFiles = getChangedSourceFiles();
+  if (targetFiles.length === 0) {
+    console.log(
+      `${C.yellow}WARN: No changed source files detected. Inline style policy skipped.${C.reset}`
+    );
+    return;
+  }
+
+  const violations = [];
+  const inlineJsxRegex = /style\s*=\s*\{\{/;
+  const inlineHtmlRegex = /\bstyle\s*=\s*["'][^"']*["']/;
+  const interactiveEventRegex =
+    /\bon(MouseEnter|MouseLeave|Focus|Blur|PointerEnter|PointerLeave|TouchStart|TouchEnd)\s*=/;
+  const conditionalInlineRegex = /style\s*=\s*\{\{[\s\S]{0,240}\?[\s\S]{0,240}:/;
+
+  targetFiles.forEach(({ filePath, lineSet }) => {
+    const normalizedFilePath = path.normalize(filePath);
+    const content = fs.readFileSync(normalizedFilePath, 'utf-8');
+    const lines = content.split('\n');
+
+    Array.from(lineSet)
+      .sort((a, b) => a - b)
+      .forEach((lineNumber) => {
+        const line = lines[lineNumber - 1] ?? '';
+
+        if (inlineJsxRegex.test(line)) {
+          violations.push({
+            filePath,
+            line: lineNumber,
+            message:
+              'Inline style is forbidden when class/CSS module/Tailwind can express the same style (style={{...}}).',
+          });
+
+          const contextStart = Math.max(0, lineNumber - 4);
+          const contextEnd = Math.min(lines.length, lineNumber + 3);
+          const context = lines.slice(contextStart, contextEnd).join('\n');
+
+          if (interactiveEventRegex.test(context) || conditionalInlineRegex.test(context)) {
+            violations.push({
+              filePath,
+              line: lineNumber,
+              message:
+                'Interactive states (hover/focus/dynamic state) must not be implemented via inline style. Use class + CSS state rules.',
+            });
+          }
+        }
+
+        if (inlineHtmlRegex.test(line)) {
+          violations.push({
+            filePath,
+            line: lineNumber,
+            message:
+              'Inline HTML style attribute is forbidden when class/CSS module/Tailwind can express the same style (style=\"...\").',
+          });
+        }
+      });
+  });
+
+  if (violations.length > 0) {
+    console.log(
+      `\n${C.bgRed} FAIL: Inline style policy detected ${violations.length} violation(s). ${C.reset}`
+    );
+    violations.slice(0, 120).forEach((violation) => {
+      console.log(`${C.yellow}WARN ${violation.filePath}:${violation.line}${C.reset}`);
+      console.log(`  ${C.red}${violation.message}${C.reset}`);
+    });
+    if (violations.length > 120) {
+      console.log(`${C.yellow}...and ${violations.length - 120} more violation(s).${C.reset}`);
+    }
+    process.exit(1);
+  }
+
+  console.log(`${C.green}PASS: Inline style policy (${targetFiles.length} changed file(s))${C.reset}`);
 }
 
 function deepScan() {
@@ -204,6 +382,7 @@ console.log(
 );
 
 deepScan();
+checkInlineStylePolicy();
 
 runStep('Circular Dependency Check', 'npx', [
   'madge',

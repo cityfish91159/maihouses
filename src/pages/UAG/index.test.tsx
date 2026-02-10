@@ -47,6 +47,17 @@ beforeAll(() => {
   // jsdom does not implement scrollIntoView by default
   Element.prototype.scrollIntoView = vi.fn();
 
+  // 設定桌面寬度，避免手機版 TabBar 取代 Footer
+  Object.defineProperty(window, 'innerWidth', { writable: true, value: 1024 });
+  Object.defineProperty(window, 'innerHeight', { writable: true, value: 768 });
+
+  // Mock IntersectionObserver (Tab Bar 錨點導航使用)
+  globalThis.IntersectionObserver = vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  }));
+
   // Mock matchMedia for components that expect it (jsdom lacks implementation)
   Object.defineProperty(globalThis, 'matchMedia', {
     writable: true,
@@ -54,8 +65,8 @@ beforeAll(() => {
       matches: false,
       media: query,
       onchange: null,
-      addListener: vi.fn(), // deprecated
-      removeListener: vi.fn(), // deprecated
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),

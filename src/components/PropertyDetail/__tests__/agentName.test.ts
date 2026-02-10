@@ -8,7 +8,7 @@ describe('normalizeAgentName', () => {
   });
 
   it('removes dangerous characters and control chars', () => {
-    expect(normalizeAgentName('<script>alert(1)</script>')).toBe('scriptalert(1)/script');
+    expect(normalizeAgentName('<script>evilCall(1)</script>')).toBe('scriptevilCall(1)/script');
     expect(normalizeAgentName('A\u0000B\u0007')).toBe('AB');
   });
 

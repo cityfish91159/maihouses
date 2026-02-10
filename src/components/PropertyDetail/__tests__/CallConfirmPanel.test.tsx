@@ -320,7 +320,7 @@ describe('CallConfirmPanel', () => {
         isOpen={true}
         onClose={vi.fn()}
         agentPhone="0912-345-678"
-        agentName="<script>alert('xss')</script>"
+        agentName="<script>evilCall('xss')</script>"
         isLoggedIn={true}
         trustEnabled={true}
       />

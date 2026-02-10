@@ -75,7 +75,7 @@
 
 ### 待開發 — UAG 導航 + 佈局重設計（原 #19 拆分）
 
-- [ ] **#19c** [P0] UAG 底部 Tab + KPI 卡片（2 項：M1 Tab 導航 + M6 KPI 摘要列）
+- [x] **#19c** [P0] UAG 底部 Tab + KPI 卡片（2 項：M1 Tab 導航 + M6 KPI 摘要列）✅ 2026-02-10
 - [ ] **#19d** [P1] UAG 卡片 + 互動升級（3 項：M3 ActionPanel Bottom Sheet + M4 Swipe-to-Action + M5 Glassmorphism）
 - [ ] **#19e** [P1] UAG 收合 + 微互動 + Loading（3 項：M7 可收合區塊 + M8 微互動 + M9 MaiMai Loading）
 
@@ -3956,12 +3956,65 @@ interface ActionBottomSheetProps {
 
 **效果：** 每格 56px 高 >> 44px 觸控；數字 24px >> 11px 可讀性；取代 U9 的 flex-wrap 修補方案。
 
+### #19c 施工紀錄 (2026-02-10)
+
+> **架構調整：** 依用戶需求，手機版改為「全部展開 + Tab Bar 錨點導航」，而非原規格的「Tab 切換隱藏內容」。移除「設定」Tab，Mock toggle 從 UI 移除（依 MOCK-SYSTEM-UNIFY.md #5b）。
+
+#### 修改檔案
+
+1. `src/pages/UAG/components/UAGTabBar.tsx`（M1 重構）
+   - 移除 `activeTab` / `onTabChange` prop，改為內建 `IntersectionObserver` 自動偵測
+   - 3 個錨點 Tab（概覽/商機/監控），點擊 `scrollIntoView({ behavior: 'smooth' })`
+   - `UAGAnchorTab` type 對應 DOM id：`uag-section-overview` / `uag-section-leads` / `uag-section-monitor`
+   - Active Tab 顯示 2px 品牌色頂部指示條
+
+2. `src/pages/UAG/components/UAGHeader.tsx`（M6）
+   - 移除舊 `agent-bar` 結構，改為 `agent-kpi-wrap`
+   - 桌面版：`agent-kpi-inline`（4 項橫向排列）
+   - 手機版：`agent-kpi-grid`（2x2 Grid，每格 56px 高，數字 24px）
+   - 4 種 KPI 色彩：信任分(blue) / 帶看(green) / 成交(amber) / 鼓勵(purple)
+   - 新增 `encouragementCount` 支援（從 AgentProfile）
+   - 清除所有註解垃圾（原 Notification 相關）
+
+3. `src/pages/UAG/components/UAGFooter.tsx`（Footer 清理）
+   - 移除 `toggleMode` prop 和 Mock/Live toggle UI
+   - 移除所有 inline style，改用 CSS class
+   - 新增 `Link` 元件導向個人資料頁
+   - 空殼按鈕（方案設定/加值點數）加 `disabled` 屬性
+   - 新增 `uag-points-badge` 樣式
+
+4. `src/pages/UAG/index.tsx`（架構）
+   - 手機版改為全部展開（跟桌面版一樣），移除 `renderMobileTabContent` switch
+   - 3 個 `<section id="uag-section-xxx">` 錨點區塊
+   - 手機版顯示 `UAGTabBar`，桌面版顯示 `UAGFooter`
+   - 移除 `UAGFooter` 的 `toggleMode` 傳入
+
+5. `src/pages/UAG/UAG.module.css`
+   - 替換 `agent-bar-*` 為 `agent-kpi-*` 系列（~120 行）
+   - 新增 `.uag-tab-bar` / `.uag-tab-item` / `.uag-tab-item-active`（52px 高，glassmorphism）
+   - 新增 `.uag-anchor-section`（scroll-margin-top: 80px）
+   - 新增 `.uag-footer-actions` / `.uag-points-badge`
+   - 手機版 `@media (max-width: 767px)` 隱藏桌面 Footer
+
+6. 測試修正
+   - `UAGHeader.test.tsx`：修正 `getByText('信任分')` → `getAllByText` 多元素處理
+   - `UAGHeader.responsive.test.tsx`：同上
+
+#### 驗證結果
+```bash
+npm run gate  # TypeScript + ESLint 通過
+npx vitest run src/pages/UAG  # 21 files / 200 tests passed
+```
+
 ### #19c 驗收標準
 
-- [ ] M1: 手機版底部 Tab Bar 切換 4 個 Tab
-- [ ] M1: 桌面版（≥768px）隱藏 Tab Bar
-- [ ] M6: 手機版 KPI 2x2 Grid，數字 ≥ 24px
-- [ ] typecheck + lint 通過
+- [x] M1: 手機版底部 Tab Bar 錨點導航（3 Tab：概覽/商機/監控）
+- [x] M1: 桌面版（≥768px）隱藏 Tab Bar
+- [x] M6: 手機版 KPI 2x2 Grid，數字 24px，最小高度 56px
+- [x] M6: 桌面版 KPI inline 橫向排列
+- [x] Footer: Mock toggle 從 UI 移除
+- [x] Footer: 空殼按鈕加 disabled 狀態
+- [x] typecheck + lint 通過
 
 ---
 

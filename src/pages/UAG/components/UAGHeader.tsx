@@ -1,11 +1,14 @@
-﻿import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
-// import { useNotifications } from '../../../hooks/useNotifications';
-// import { useNotificationDropdown } from '../../../hooks/useNotificationDropdown';
-// import { NotificationBell } from '../../../components/common/NotificationBell';
-// import { NotificationDropdown } from '../../../components/layout/NotificationDropdown';
-// import { NotificationErrorBoundary } from '../../../components/layout/NotificationErrorBoundary';
+import {
+  BadgeCheck,
+  ChevronDown,
+  Footprints,
+  LogOut,
+  ShieldCheck,
+  ThumbsUp,
+  User as UserIcon,
+} from 'lucide-react';
 import { Logo } from '../../../components/Logo/Logo';
 import { ROUTES } from '../../../constants/routes';
 import styles from '../UAG.module.css';
@@ -18,7 +21,7 @@ interface UAGHeaderProps {
   error?: Error | null;
   onSignOut?: () => Promise<void> | void;
   isSigningOut?: boolean;
-  useMock?: boolean; // #6 Mock 模式支援
+  useMock?: boolean;
 }
 
 const HeaderSkeleton = () => (
@@ -49,24 +52,12 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   error = null,
   onSignOut,
   isSigningOut = false,
-  useMock = false, // #6 預設為 false
+  useMock = false,
 }) => {
-  // const { count, notifications, isLoading: notificationsLoading, error: notificationsError, isStale, refresh } = useNotifications();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // 使用共用 Hook 管理通知下拉選單
-  // const {
-  //   isOpen: notificationMenuOpen,
-  //   toggle: toggleNotificationMenu,
-  //   close: closeNotificationMenu,
-  //   triggerRef: notificationTriggerRef,
-  //   dropdownRef: notificationDropdownRef,
-  // } = useNotificationDropdown();
-
-  // 點擊外部關閉用戶選單（通知選單由 Hook 處理）
-  // 只在選單開啟時綁定監聽，避免不必要的全域事件處理
   useEffect(() => {
     if (!userMenuOpen) return;
 
@@ -82,7 +73,6 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
     return () => document.removeEventListener('pointerdown', handlePointerDownOutside);
   }, [userMenuOpen]);
 
-  // Focus trap: Escape 關閉、Tab 循環（必須在 early return 之前）
   const handleDropdownKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -96,9 +86,11 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
         'button:not([disabled]), a:not([disabled])'
       );
       if (focusable.length === 0) return;
+
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (!first || !last) return;
+
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
@@ -112,7 +104,6 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   if (error) return <HeaderError />;
   if (isLoading) return <HeaderSkeleton />;
 
-  // #6 Mock 模式：使用假名字「游杰倫」
   const displayName = useMock
     ? '游杰倫'
     : agentProfile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || '訪客';
@@ -133,10 +124,10 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
     await onSignOut?.();
   };
 
-  // 從 AgentProfile 取得統計數據
   const trustScore = agentProfile?.trustScore ?? 80;
   const visitCount = agentProfile?.visitCount ?? 0;
   const dealCount = agentProfile?.dealCount ?? 0;
+  const encouragementCount = agentProfile?.encouragementCount ?? 0;
   const internalCode = agentProfile?.internalCode;
 
   return (
@@ -151,35 +142,8 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
           <span className={`${styles['uag-badge']} ${styles['uag-badge--pro']}`}>專業版 PRO</span>
         </div>
         <div className={styles['uag-header-actions']}>
-          <div className={styles['uag-notification']}>
-            {/* Notification components temporarily disabled due to missing files */}
-            {/* <NotificationBell
-              ref={notificationTriggerRef}
-              unreadCount={count}
-              isLoading={notificationsLoading}
-              hasError={!!notificationsError}
-              isOpen={notificationMenuOpen}
-              onClick={toggleNotificationMenu}
-              ariaLabel="通知"
-              className={styles['uag-notification-btn'] || ''}
-            />
+          <div className={styles['uag-notification']} />
 
-            {notificationMenuOpen && (
-              <div ref={notificationDropdownRef}>
-                <NotificationErrorBoundary onClose={closeNotificationMenu}>
-                  <NotificationDropdown
-                    notifications={notifications}
-                    isLoading={notificationsLoading}
-                    isStale={isStale}
-                    onClose={closeNotificationMenu}
-                    onNotificationClick={handleNotificationClick}
-                    onRefresh={refresh}
-                  />
-                </NotificationErrorBoundary>
-              </div>
-            )} */}
-          </div>
-          {/* #6 Mock 模式：即使 user 為 null 也顯示使用者區塊 */}
           {(user || useMock) && (
             <div className={styles['uag-user']}>
               <button
@@ -223,7 +187,6 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
                     role="menuitem"
                     onClick={() => {
                       setUserMenuOpen(false);
-                      // #6 Mock 模式：導向帶 mock 參數的 Profile 頁面
                       window.location.href = profileHref;
                     }}
                   >
@@ -249,25 +212,75 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
         </div>
       </div>
 
-      {/* 房仲資訊條：只要有 agentProfile 就顯示（支援 mock 模式） */}
       {agentProfile && (
-        <div className={styles['agent-bar']}>
-          <div className={styles['agent-bar-avatar']}>{displayName.charAt(0).toUpperCase()}</div>
-          <div className={styles['agent-bar-info']}>
-            <div className={styles['agent-bar-name-row']}>
-              <span>{displayName}</span>
-              {internalCode && <span className={styles['agent-bar-code']}>#{internalCode}</span>}
+        <div className={styles['agent-kpi-wrap']}>
+          <div className={styles['agent-kpi-header']}>
+            <div className={styles['agent-kpi-avatar']} aria-hidden="true">
+              {displayName.charAt(0).toUpperCase()}
             </div>
-            <div className={styles['agent-bar-stats']}>
-              <span className={`${styles['agent-bar-stat']} ${styles['trust']}`}>
-                <strong>{trustScore}</strong> 信任分
-              </span>
-              <span className={styles['agent-bar-stat']}>
-                <strong>{visitCount}</strong> 帶看
-              </span>
-              <span className={styles['agent-bar-stat']}>
-                <strong>{dealCount}</strong> 成交
-              </span>
+            <div className={styles['agent-kpi-identity']}>
+              <div className={styles['agent-kpi-name-row']}>
+                <span>{displayName}</span>
+                {internalCode !== undefined && (
+                  <span className={styles['agent-kpi-code']}>#{internalCode}</span>
+                )}
+              </div>
+              {company && <div className={styles['agent-kpi-company']}>{company}</div>}
+            </div>
+          </div>
+
+          {/* 桌面版：橫向 inline 統計 */}
+          <div className={styles['agent-kpi-inline']} aria-label="房仲關鍵指標（桌面版）">
+            <span className={styles['agent-kpi-inline-item']}>
+              <strong>{trustScore}</strong> 信任分
+            </span>
+            <span className={styles['agent-kpi-inline-item']}>
+              <strong>{visitCount}</strong> 帶看組數
+            </span>
+            <span className={styles['agent-kpi-inline-item']}>
+              <strong>{dealCount}</strong> 成交案件
+            </span>
+            <span className={styles['agent-kpi-inline-item']}>
+              <strong>{encouragementCount}</strong> 獲得鼓勵
+            </span>
+          </div>
+
+          {/* 手機版：2x2 KPI Grid */}
+          <div className={styles['agent-kpi-grid']} role="list" aria-label="房仲關鍵指標">
+            <div
+              className={`${styles['agent-kpi-card']} ${styles['agent-kpi-card-trust']}`}
+              role="listitem"
+            >
+              <ShieldCheck size={16} className={styles['agent-kpi-icon']} aria-hidden="true" />
+              <span className={styles['agent-kpi-value']}>{trustScore}</span>
+              <span className={styles['agent-kpi-label']}>信任分</span>
+            </div>
+
+            <div
+              className={`${styles['agent-kpi-card']} ${styles['agent-kpi-card-visit']}`}
+              role="listitem"
+            >
+              <Footprints size={16} className={styles['agent-kpi-icon']} aria-hidden="true" />
+              <span className={styles['agent-kpi-value']}>{visitCount}</span>
+              <span className={styles['agent-kpi-label']}>帶看組數</span>
+            </div>
+
+            <div
+              className={`${styles['agent-kpi-card']} ${styles['agent-kpi-card-deal']}`}
+              role="listitem"
+            >
+              <BadgeCheck size={16} className={styles['agent-kpi-icon']} aria-hidden="true" />
+              <span className={styles['agent-kpi-value']}>{dealCount}</span>
+              <span className={styles['agent-kpi-label']}>成交案件</span>
+            </div>
+
+            <div
+              className={`${styles['agent-kpi-card']} ${styles['agent-kpi-card-encourage']}`}
+              role="listitem"
+            >
+              <ThumbsUp size={16} className={styles['agent-kpi-icon']} aria-hidden="true" />
+              <span className={styles['agent-kpi-value']}>{encouragementCount}</span>
+              <span className={styles['agent-kpi-label']}>獲得鼓勵</span>
             </div>
           </div>
         </div>
