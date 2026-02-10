@@ -793,8 +793,8 @@
   position: absolute;
   width: var(--w);
   height: var(--w);
-  min-width: 48px;
-  min-height: 48px;
+  min-width: 40px;
+  min-height: 40px;
   border-radius: 50%;
   background: #fff;
   border: 2px solid rgba(226, 232, 240, 0.9);
@@ -812,7 +812,7 @@
   z-index: var(--z-bubble);
 }
 
-/* R3: 觸控擴展區域（視覺擴展層，實際點擊目標由本體最小 48px 保證） */
+/* R3: Keep visual size while expanding the touch hit area to 48x48. */
 .uag-bubble::after {
   content: '';
   position: absolute;
@@ -824,8 +824,8 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  z-index: -1;
-  pointer-events: none;
+  z-index: 1;
+  pointer-events: auto;
 }
 .uag-bubble:hover,
 .uag-bubble:focus-visible {

@@ -61,6 +61,7 @@ describe('CallConfirmPanel', () => {
       <CallConfirmPanel
         isOpen={true}
         onClose={vi.fn()}
+        agentPhone={null}
         agentName="游杰倫"
         isLoggedIn={true}
         trustEnabled={true}

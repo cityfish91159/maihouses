@@ -177,12 +177,14 @@ describe('RadarCluster integration', () => {
 
   it('resolves overlap in a 320px mobile container', () => {
     setMockContainerWidth(320);
-    const overlapTolerancePx = BUBBLE_MIN_PADDING_PX;
+    const overlapTolerancePx = 1;
 
     const { container } = render(<RadarCluster leads={denseMobileLeads} onSelectLead={vi.fn()} />);
     const containerHeightPx = getRadarSectionHeightPx(container);
     const sBubble = container.querySelector('[aria-label="Dense Lead 1 - S級"]');
+    const fBubble = container.querySelector('[aria-label="Dense Lead 5 - F級"]');
     expect(sBubble).toHaveStyle('--w: 72px');
+    expect(fBubble).toHaveStyle('--w: 40px');
     expect(containerHeightPx).toBe(380);
 
     const bubbles = Array.from(container.querySelectorAll('[role="button"][data-grade]')) as HTMLElement[];
@@ -271,8 +273,8 @@ describe('RadarCluster integration', () => {
     expect(cssContent).toContain('.uag-bubble::after');
     expect(cssContent).toContain('min-width: 48px');
     expect(cssContent).toContain('min-height: 48px');
-    expect(cssContent).toContain('z-index: -1;');
-    expect(cssContent).toContain('pointer-events: none;');
+    expect(cssContent).toContain('z-index: 1;');
+    expect(cssContent).toContain('pointer-events: auto;');
     expect(cssContent).toContain('@keyframes s-pulse');
     expect(cssContent).toContain('@keyframes a-pulse');
     expect(cssContent).toContain('@media (prefers-reduced-motion: reduce)');

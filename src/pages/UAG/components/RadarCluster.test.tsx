@@ -187,15 +187,17 @@ describe('RadarCluster', () => {
   });
 
   it('keeps focus and reduced-motion safeguards in CSS', () => {
-    expect(cssContent).toMatch(/\.uag-bubble\s*{[\s\S]*?min-width:\s*48px;[\s\S]*?min-height:\s*48px;/);
+    expect(cssContent).toMatch(/\.uag-bubble\s*{[\s\S]*?min-width:\s*40px;[\s\S]*?min-height:\s*40px;/);
     expect(cssContent).toContain('.uag-bubble:focus-visible');
     expect(cssContent).toContain('outline: 3px solid var(--uag-brand);');
     expect(cssContent).toContain(".uag-bubble[data-selected='true']");
     expect(cssContent).toContain(".uag-cluster[data-has-selection='true'] .uag-bubble:not([data-selected='true'])");
     expect(cssContent).toContain('.uag-grade-chip');
     expect(cssContent).toContain('.uag-bubble::after');
-    expect(cssContent).toContain('z-index: -1;');
-    expect(cssContent).toContain('pointer-events: none;');
+    expect(cssContent).toContain('min-width: 48px');
+    expect(cssContent).toContain('min-height: 48px');
+    expect(cssContent).toContain('z-index: 1;');
+    expect(cssContent).toContain('pointer-events: auto;');
     expect(cssContent).toContain('@media (prefers-reduced-motion: reduce)');
     expect(cssContent).toContain(".uag-bubble[data-grade='S']");
     expect(cssContent).toContain(".uag-bubble[data-grade='A']");

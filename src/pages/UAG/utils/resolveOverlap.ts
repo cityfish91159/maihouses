@@ -16,7 +16,13 @@ interface Position {
   y: number;
 }
 
-const MAX_OVERLAP_ITERATIONS = 6;
+const MAX_OVERLAP_ITERATIONS = 10;
+const ZERO_DISTANCE_NUDGE_PX = 0.5;
+
+function getDeterministicAngle(i: number, j: number): number {
+  const hash = (((i + 1) * 73856093) ^ ((j + 1) * 19349663)) >>> 0;
+  return ((hash % 360) * Math.PI) / 180;
+}
 
 /**
  * 解決泡泡重疊問題
@@ -39,7 +45,7 @@ export function resolveOverlap(
   // 初始化位置陣列（深拷貝避免修改原始資料）
   const positions: Position[] = bubbles.map(b => ({ x: b.x, y: b.y }));
 
-  // 經驗值：6 次可在手機 12 泡泡密集場景下顯著降低重疊，同時維持可接受成本
+  // Iteratively separate overlaps while keeping runtime predictable.
   for (let iter = 0; iter < MAX_OVERLAP_ITERATIONS; iter++) {
     for (let i = 0; i < bubbles.length; i++) {
       for (let j = i + 1; j < bubbles.length; j++) {
@@ -51,14 +57,29 @@ export function resolveOverlap(
         if (!bubbleA || !bubbleB || !posA || !posB) continue;
 
         // 計算兩個泡泡中心點距離
-        const dx = posB.x - posA.x;
-        const dy = posB.y - posA.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        let dx = posB.x - posA.x;
+        let dy = posB.y - posA.y;
+        let distance = Math.hypot(dx, dy);
 
         // 計算最小安全距離（半徑和 + padding）
         const radiusA = bubbleA.size / 2;
         const radiusB = bubbleB.size / 2;
         const minDist = radiusA + radiusB + safePadding;
+
+        // Exact same center needs a deterministic nudge to avoid a deadlock.
+        if (distance === 0) {
+          const angle = getDeterministicAngle(i, j);
+          const nudgeX = Math.cos(angle) * ZERO_DISTANCE_NUDGE_PX;
+          const nudgeY = Math.sin(angle) * ZERO_DISTANCE_NUDGE_PX;
+          posA.x -= nudgeX;
+          posA.y -= nudgeY;
+          posB.x += nudgeX;
+          posB.y += nudgeY;
+
+          dx = posB.x - posA.x;
+          dy = posB.y - posA.y;
+          distance = Math.hypot(dx, dy);
+        }
 
         // 如果重疊，推開它們
         if (distance < minDist && distance > 0) {

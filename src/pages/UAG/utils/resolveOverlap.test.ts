@@ -35,6 +35,25 @@ describe('resolveOverlap', () => {
     expect(distance).toBeGreaterThanOrEqual(minDistance - 0.1);
   });
 
+  it('separates bubbles that start at the exact same coordinates', () => {
+    const result = resolveOverlap(
+      [
+        { x: 100, y: 100, size: 60 },
+        { x: 100, y: 100, size: 60 },
+      ],
+      400,
+      300,
+      4
+    );
+
+    const first = result[0];
+    const second = result[1];
+    if (!first || !second) throw new Error('Expected two bubbles');
+
+    const distance = Math.hypot(second.x - first.x, second.y - first.y);
+    expect(distance).toBeGreaterThanOrEqual(64 - 0.1);
+  });
+
   it('clamps bubbles to all four container edges', () => {
     const result = resolveOverlap(
       [
