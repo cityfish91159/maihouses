@@ -17,6 +17,7 @@ vi.mock('../../lib/notify', () => ({
   notify: mockedNotify,
 }));
 
+// Mock Supabase client to avoid environment variable issues
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     from: vi.fn(() => ({
@@ -43,16 +44,18 @@ vi.mock('../../lib/supabase', () => ({
 }));
 
 beforeAll(() => {
+  // jsdom does not implement scrollIntoView by default
   Element.prototype.scrollIntoView = vi.fn();
 
+  // Mock matchMedia for components that expect it (jsdom lacks implementation)
   Object.defineProperty(globalThis, 'matchMedia', {
     writable: true,
     value: vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,
       onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
+      addListener: vi.fn(), // deprecated
+      removeListener: vi.fn(), // deprecated
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -60,18 +63,9 @@ beforeAll(() => {
   });
 });
 
-function setViewportWidth(width: number) {
-  Object.defineProperty(window, 'innerWidth', {
-    writable: true,
-    configurable: true,
-    value: width,
-  });
-}
-
 beforeEach(() => {
   mockedNotify.success.mockClear();
   mockedNotify.error.mockClear();
-  setViewportWidth(1024);
 });
 
 const renderWithQueryClient = () => {
@@ -86,58 +80,35 @@ const renderWithQueryClient = () => {
 };
 
 describe('UAGPage', () => {
-  it('renders radar layout and desktop footer by default', async () => {
+  it('renders radar layout and default action panel', async () => {
     renderWithQueryClient();
 
     expect(await screen.findByText('UAG 精準導客雷達')).toBeInTheDocument();
     expect(screen.getByText(/請點擊上方雷達泡泡/)).toBeInTheDocument();
     expect(screen.getByText('點數')).toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'UAG 行動分頁' })).not.toBeInTheDocument();
-  });
-
-  it('shows mobile tab bar and switches 4 tabs on mobile', async () => {
-    setViewportWidth(375);
-    renderWithQueryClient();
-
-    const tabBar = await screen.findByRole('navigation', { name: 'UAG 行動分頁' });
-    expect(tabBar).toBeInTheDocument();
-
-    expect(screen.getByRole('button', { name: '概覽' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '商機' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '監控' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '設定' })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: '商機' }));
-    expect(await screen.findByText('我的房源總覽')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: '監控' }));
-    expect(await screen.findByText('已購客戶資產與保護監控')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: '設定' }));
-    expect(await screen.findByText('工作台設定')).toBeInTheDocument();
   });
 
   it('allows selecting and purchasing a lead', { timeout: 20000 }, async () => {
     renderWithQueryClient();
 
+    // Wait for data to load (mock mode is default)
     const leadBubble = await screen.findByLabelText(/買家 B218/);
     fireEvent.click(leadBubble);
 
-    expect(screen.getAllByText('S級｜買家 B218').length).toBeGreaterThan(0);
+    expect(screen.getByText('S級｜買家 B218')).toBeInTheDocument();
 
-    const purchaseButtons = screen.getAllByRole('button', { name: /獲取聯絡權限/ });
-    fireEvent.click(purchaseButtons[0]!);
-    const confirmButtons = await screen.findAllByRole('button', {
+    fireEvent.click(screen.getByRole('button', { name: /獲取聯絡權限/ }));
+    const confirmButton = await screen.findByRole('button', {
       name: /確定花費 20 點/,
     });
-    fireEvent.click(confirmButtons[0]!);
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(mockedNotify.success).toHaveBeenCalledWith('購買成功');
     });
 
     await waitFor(() => {
-      expect(screen.queryAllByText('S級｜買家 B218')).toHaveLength(0);
+      expect(screen.queryByText('S級｜買家 B218')).not.toBeInTheDocument();
     });
   });
 });

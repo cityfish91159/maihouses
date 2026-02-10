@@ -15,18 +15,6 @@ vi.mock('lucide-react', () => ({
   User: ({ className }: { className?: string }) => (
     <span data-testid="user-icon" className={className} />
   ),
-  ShieldCheck: ({ className }: { className?: string }) => (
-    <span data-testid="shield-check" className={className} />
-  ),
-  Footprints: ({ className }: { className?: string }) => (
-    <span data-testid="footprints" className={className} />
-  ),
-  BadgeCheck: ({ className }: { className?: string }) => (
-    <span data-testid="badge-check" className={className} />
-  ),
-  ThumbsUp: ({ className }: { className?: string }) => (
-    <span data-testid="thumbs-up" className={className} />
-  ),
 }));
 
 vi.mock('../../../../components/Logo/Logo', () => ({
@@ -63,22 +51,25 @@ function renderHeader() {
   );
 }
 
-describe('UAGHeader responsive behavior (M6)', () => {
+describe('UAGHeader responsive behavior (U3)', () => {
   it('renders mobile-collapse class hooks for breadcrumb and user area', () => {
     const { container } = renderHeader();
 
     const breadcrumb = screen.getByText('UAG 客戶雷達').closest('div');
     const company = container.querySelector('[class*="uag-company"]');
+    const proBadge = container.querySelector('[class*="uag-badge--pro"]');
     const userInfo = container.querySelector('[class*="uag-user-info"]');
     const userButton = screen.getByRole('button', { name: /用戶選單/i });
-    const kpiGrid = screen.getByRole('list', { name: '房仲關鍵指標' });
 
     expect(breadcrumb?.className).toContain('uag-breadcrumb');
     expect(company?.className).toContain('uag-company');
+    expect(proBadge?.className).toContain('uag-badge--pro');
     expect(userInfo?.className).toContain('uag-user-info');
     expect(userButton.className).toContain('uag-user-button');
-    expect(kpiGrid.className).toContain('agent-kpi-grid');
-    expect(screen.getByText('#6600').className).toContain('agent-kpi-code');
+
+    const stats = screen.getByText('信任分').closest('div');
+    expect(stats?.className).toContain('agent-bar-stats');
+    expect(screen.getByText('#6600').className).toContain('agent-bar-code');
   });
 
   it('defines mobile hide rules and 44px user touch target in CSS', () => {
@@ -91,21 +82,25 @@ describe('UAGHeader responsive behavior (M6)', () => {
       /@media \(max-width: 767px\)[\s\S]*?\.uag-company\s*{[\s\S]*?display:\s*none;/
     );
     expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.uag-badge--pro\s*{[\s\S]*?display:\s*none;/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.uag-user-info\s*{[\s\S]*?display:\s*none;/
+    );
+    expect(css).toMatch(
       /@media \(max-width: 767px\)[\s\S]*?\.uag-user-button\s*{[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/
     );
   });
 
-  it('defines mobile KPI grid and desktop inline KPI rules', () => {
+  it('defines extra 320px safeguards for agent bar overflow', () => {
     const css = readFileSync(UAG_STYLES_PATH, 'utf8');
 
-    expect(css).toMatch(/\.agent-kpi-grid\s*{[\s\S]*?display:\s*none;/);
-    expect(css).toMatch(/\.agent-kpi-inline\s*{[\s\S]*?display:\s*flex;/);
+    expect(css).toContain('@media (max-width: 380px)');
     expect(css).toMatch(
-      /@media \(max-width: 767px\)[\s\S]*?\.agent-kpi-inline\s*{[\s\S]*?display:\s*none;/
+      /@media \(max-width: 380px\)[\s\S]*?\.agent-bar-code\s*{[\s\S]*?display:\s*none;/
     );
     expect(css).toMatch(
-      /@media \(max-width: 767px\)[\s\S]*?\.agent-kpi-grid\s*{[\s\S]*?display:\s*grid;/
+      /@media \(max-width: 380px\)[\s\S]*?\.agent-bar-stats\s*{[\s\S]*?gap:\s*6px;[\s\S]*?font-size:\s*12px;/
     );
-    expect(css).toMatch(/\.agent-kpi-value\s*{[\s\S]*?font-size:\s*26px;/);
   });
 });
