@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+﻿import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LineLinkPanel } from '../LineLinkPanel';
 import { notify } from '../../../lib/notify';
@@ -41,6 +41,41 @@ describe('LineLinkPanel', () => {
     expect(dialog).toHaveAttribute('aria-modal', 'true');
   });
 
+  it('shows panel welcome copy for both with/without line id', () => {
+    const { rerender } = render(
+      <LineLinkPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentLineId="maihouses_demo"
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.getByText('加 LINE 直接聊，回覆最快喔！')).toBeInTheDocument();
+    expect(track).toHaveBeenCalledWith(
+      'maimai_panel_welcome',
+      expect.objectContaining({ panelType: 'line', hasContact: true })
+    );
+
+    rerender(
+      <LineLinkPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.getByText('房仲還沒設定 LINE，用表單留言吧')).toBeInTheDocument();
+    expect(track).toHaveBeenCalledWith(
+      'maimai_panel_welcome',
+      expect.objectContaining({ panelType: 'line', hasContact: false })
+    );
+  });
+
   it('opens LINE deep link when line id exists', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
@@ -58,7 +93,7 @@ describe('LineLinkPanel', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: '開啟 LINE' }));
+    await user.click(screen.getByRole('button', { name: /開啟 LINE/i }));
 
     expect(openSpy).toHaveBeenCalledWith(
       'https://line.me/R/ti/p/maihouses_demo',
@@ -118,7 +153,7 @@ describe('LineLinkPanel', () => {
     });
   });
 
-  it('applies reduced-motion transition classes to interactive controls', () => {
+  it('applies reduced-motion transition classes to fallback controls', () => {
     render(
       <LineLinkPanel
         isOpen={true}
@@ -202,7 +237,7 @@ describe('LineLinkPanel', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: '開啟 LINE' }));
+    await user.click(screen.getByRole('button', { name: /開啟 LINE/i }));
 
     expect(window.location.href).toBe('https://line.me/R/ti/p/maihouses_demo');
     expect(notify.info).toHaveBeenCalled();

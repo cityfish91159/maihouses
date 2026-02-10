@@ -56,7 +56,7 @@
 ### 待開發 — Header / 品牌 / MaiMai
 
 - [x] **#11** [P1] 詳情頁 Header 品牌統一（5 項：11-A Logo + 11-B 返回 + 11-C token + 11-D a11y + 11-E 手機版微調）✅ 2026-02-09
-- [ ] **#18** [P1] 詳情頁 MaiMai 公仔 A+C+D（3 項：18-A 右欄 + 18-B 歡迎語 + 18-C 狀態替換）
+- [x] **#18** [P1] 詳情頁 MaiMai 公仔 A+C+D（3 項：18-A 右欄 + 18-B 歡迎語 + 18-C 狀態替換）✅ 2026-02-10
 
 ### 待開發 — DetailPage 手機版 UX 修正（原 #9 拆分）
 
@@ -3474,17 +3474,51 @@ if (error) {
 
 ### 驗收標準
 
-- [ ] 桌面版（≥ 1024px）右欄 AgentTrustCard 下方顯示 MaiMai sm 公仔 + 對話氣泡
-- [ ] 手機版（< 1024px）右欄 MaiMai **不顯示**
-- [ ] MaiMai 心情根據 `trustEnabled` / `isHot` / 閒置時間正確切換
-- [ ] LineLinkPanel 開啟時頂部顯示 MaiMai xs + 歡迎語（有/無 lineId 文案不同）
-- [ ] CallConfirmPanel 開啟時頂部顯示 MaiMai xs + 歡迎語（有/無 phone 文案不同）
-- [ ] 載入中顯示 MaiMai `thinking` + 「正在幫你找房子資訊…」
-- [ ] 錯誤時顯示 MaiMai `shy` + 「哎呀！找不到這個物件…」+ 重試按鈕
-- [ ] 重試按鈕 `min-h-[44px]`（ux-guidelines #22）
-- [ ] `prefers-reduced-motion` 下所有 MaiMai 動畫停止（ux-guidelines #9）
-- [ ] Mock 頁面（`/maihouses/property/MH-100001`）正常顯示
-- [ ] typecheck + lint 通過
+- [x] 桌面版（≥ 1024px）右欄 AgentTrustCard 下方顯示 MaiMai sm 公仔 + 對話氣泡
+- [x] 手機版（< 1024px）右欄 MaiMai **不顯示**
+- [x] MaiMai 心情根據 `trustEnabled` / `isHot` / 閒置時間正確切換
+- [x] LineLinkPanel 開啟時頂部顯示 MaiMai xs + 歡迎語（有/無 lineId 文案不同）
+- [x] CallConfirmPanel 開啟時頂部顯示 MaiMai xs + 歡迎語（有/無 phone 文案不同）
+- [x] 載入中顯示 MaiMai `thinking` + 「正在幫你找房子資訊…」
+- [x] 錯誤時顯示 MaiMai `shy` + 「哎呀！找不到這個物件…」+ 重試按鈕
+- [x] 重試按鈕 `min-h-[44px]`（ux-guidelines #22）
+- [x] `prefers-reduced-motion` 下所有 MaiMai 動畫停止（ux-guidelines #9）
+- [x] Mock 頁面（`/maihouses/property/MH-100001`）正常顯示
+- [x] typecheck + lint 通過
+
+### #18 施工紀錄（2026-02-10）
+
+#### 修改檔案
+1. `src/components/PropertyDetail/PropertyDetailMaiMai.tsx`（18-A）
+   - 新增右欄 MaiMai 情境陪伴組件（`MaiMaiBase` + `MaiMaiSpeech`）
+   - 依 `trustEnabled` / `isHot` / 閒置 30 秒切換心情與文案
+   - 新增 `maimai_property_mood` 事件追蹤，僅在心情狀態變化時上報
+   - `prefers-reduced-motion` 啟用時停用 MaiMai 動畫/特效
+
+2. `src/pages/PropertyDetailPage.tsx`、`src/components/PropertyDetail/index.ts`（18-A + 18-C）
+   - 右欄 `AgentTrustCard` 下方加入 `PropertyDetailMaiMai`（`hidden lg:block`，手機不顯示）
+   - 新增頁面級載入狀態：顯示 MaiMai `thinking` +「正在幫你找房子資訊…」
+   - 新增頁面級錯誤狀態：顯示 MaiMai `shy` +「哎呀！找不到這個物件…」+「再試一次」按鈕
+   - 重試按鈕符合 `min-h-[44px]` 與 reduced-motion 規範
+
+3. `src/components/PropertyDetail/LineLinkPanel.tsx`、`src/components/PropertyDetail/CallConfirmPanel.tsx`（18-B）
+   - Panel 內容區頂部新增 MaiMai `xs` 歡迎區塊
+   - `LineLinkPanel` 依有無 `lineId` 顯示不同歡迎語與心情（`wave` / `thinking`）
+   - `CallConfirmPanel` 依有無 `phone` 顯示不同歡迎語與心情（`happy` / `thinking`）
+   - 新增 `maimai_panel_welcome` 事件追蹤（`panelType` + `hasContact`）
+
+4. 測試檔案
+   - 新增：`src/components/PropertyDetail/__tests__/PropertyDetailMaiMai.test.tsx`
+   - 新增：`src/pages/__tests__/PropertyDetailPage.maimai.test.tsx`
+   - 重寫：`src/components/PropertyDetail/__tests__/LineLinkPanel.test.tsx`
+   - 重寫：`src/components/PropertyDetail/__tests__/CallConfirmPanel.test.tsx`
+
+#### 驗證命令
+```bash
+npm run test -- src/components/PropertyDetail/__tests__/PropertyDetailMaiMai.test.tsx src/components/PropertyDetail/__tests__/LineLinkPanel.test.tsx src/components/PropertyDetail/__tests__/CallConfirmPanel.test.tsx src/pages/__tests__/PropertyDetailPage.maimai.test.tsx
+npm run typecheck
+npm run lint
+```
 
 ---
 
@@ -5058,4 +5092,3 @@ const hiddenCount = allSkills.length - 6;
 - API endpoint `/api/community/review-like` 已在 #14a 完成
 - DB trigger `fn_recalc_encouragement_count` 已在 #14a 完成
 - 按讚成功後自動刷新 `agent-profile` query，無需手動更新 cache
-

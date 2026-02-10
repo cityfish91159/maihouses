@@ -14,3 +14,4 @@ export { MobileCTA } from './MobileCTA';
 export { VipModal } from './VipModal';
 export { CallConfirmPanel } from './CallConfirmPanel';
 export { LineLinkPanel } from './LineLinkPanel';
+export { PropertyDetailMaiMai } from './PropertyDetailMaiMai';

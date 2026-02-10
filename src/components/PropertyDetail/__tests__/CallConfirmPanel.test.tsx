@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+﻿import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CallConfirmPanel } from '../CallConfirmPanel';
 import { notify } from '../../../lib/notify';
@@ -22,6 +22,41 @@ vi.mock('../../../analytics/track', () => ({
 describe('CallConfirmPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('shows panel welcome copy for both with/without phone', () => {
+    const { rerender } = render(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentPhone="0912-345-678"
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.getByText('撥打電話前確認一下～')).toBeInTheDocument();
+    expect(track).toHaveBeenCalledWith(
+      'maimai_panel_welcome',
+      expect.objectContaining({ panelType: 'call', hasContact: true })
+    );
+
+    rerender(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    expect(screen.getByText('房仲還沒設定電話，用表單留言吧')).toBeInTheDocument();
+    expect(track).toHaveBeenCalledWith(
+      'maimai_panel_welcome',
+      expect.objectContaining({ panelType: 'call', hasContact: false })
+    );
   });
 
   it('dials with tel scheme on mobile', async () => {
@@ -51,7 +86,7 @@ describe('CallConfirmPanel', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: '撥打電話' }));
+    await user.click(screen.getByRole('button', { name: /撥打電話/i }));
 
     expect(window.location.href).toBe('tel:0912345678');
     expect(track).toHaveBeenCalledWith(
@@ -95,7 +130,7 @@ describe('CallConfirmPanel', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: '撥打電話' }));
+    await user.click(screen.getByRole('button', { name: /撥打電話/i }));
 
     expect(writeText).toHaveBeenCalledWith('0912-345-678');
     expect(notify.info).toHaveBeenCalled();

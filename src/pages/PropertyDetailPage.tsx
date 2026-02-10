@@ -6,6 +6,7 @@ import { Hash, ArrowLeft } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { TrustBadge } from '../components/TrustBadge';
 import { TrustServiceBanner } from '../components/TrustServiceBanner';
+import { MaiMaiBase } from '../components/MaiMai';
 import { Logo } from '../components/Logo/Logo';
 import { AgentReviewListModal } from '../components/AgentReviewListModal';
 import ErrorBoundary from '../app/ErrorBoundary';
@@ -38,6 +39,7 @@ import {
   VipModal,
   LineLinkPanel,
   CallConfirmPanel,
+  PropertyDetailMaiMai,
 } from '../components/PropertyDetail';
 import {
   getTrustScenario,
@@ -117,6 +119,15 @@ export const PropertyDetailPage: React.FC = () => {
     publicId: id ?? DEFAULT_PROPERTY.publicId,
     isDemo: isDemoPropertyId(id),
   }));
+  const [isPropertyLoading, setIsPropertyLoading] = useState(() => Boolean(id));
+  const [propertyLoadError, setPropertyLoadError] = useState<string | null>(null);
+  const [reloadAttempt, setReloadAttempt] = useState(0);
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return false;
+    }
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
 
   // ✅ agentId 正規化：trim + 格式驗證（UUID / agent-* / mock-agent-*）
   const normalizeAgentId = useCallback((aid: string | null | undefined): string | null => {
@@ -494,6 +505,11 @@ export const PropertyDetailPage: React.FC = () => {
     navigate(backTarget);
   }, [navigate]);
 
+  const handleRetryPropertyLoad = useCallback(() => {
+    setPropertyLoadError(null);
+    setReloadAttempt((prev) => prev + 1);
+  }, []);
+
   const handleLineFallbackContact = useCallback(
     (trustAssureChecked: boolean) => {
       openContactModal(linePanelSource, 'line', shouldAttachContactTrustAssure(trustAssureChecked));
@@ -520,11 +536,23 @@ export const PropertyDetailPage: React.FC = () => {
   }, [mockTrustEnabled, property.isDemo]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchProperty = async () => {
-      if (!id) return;
+      if (!id) {
+        if (!cancelled) setIsPropertyLoading(false);
+        return;
+      }
+
+      if (!cancelled) {
+        setIsPropertyLoading(true);
+        setPropertyLoadError(null);
+      }
 
       try {
         const data = await propertyService.getPropertyByPublicId(id);
+        if (cancelled) return;
+
         if (data) {
           // 如果是 Mock 頁面且有開發測試狀態，覆寫 trustEnabled
           if (data.isDemo && mockTrustEnabled !== null) {
@@ -561,12 +589,64 @@ export const PropertyDetailPage: React.FC = () => {
           },
           duration: TOAST_DURATION.ERROR,
         });
+
+        if (!cancelled) {
+          setPropertyLoadError(description);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsPropertyLoading(false);
+        }
       }
     };
-    fetchProperty();
-  }, [id, mockTrustEnabled]);
+    void fetchProperty();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, mockTrustEnabled, reloadAttempt]);
 
   const isActionLocked = linePanelOpen || callPanelOpen || showContactModal;
+
+  if (isPropertyLoading) {
+    return (
+      <ErrorBoundary>
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[#f8fafc] px-4 text-center">
+          <MaiMaiBase
+            mood="thinking"
+            size="md"
+            animated={!prefersReducedMotion}
+            showEffects={!prefersReducedMotion}
+          />
+          <p className="text-base text-slate-600">正在幫你找房子資訊…</p>
+        </div>
+      </ErrorBoundary>
+    );
+  }
+
+  if (propertyLoadError) {
+    return (
+      <ErrorBoundary>
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[#f8fafc] px-4 text-center">
+          <MaiMaiBase
+            mood="shy"
+            size="md"
+            animated={!prefersReducedMotion}
+            showEffects={!prefersReducedMotion}
+          />
+          <p className="text-base text-slate-600">哎呀！找不到這個物件…</p>
+          <p className="max-w-sm text-sm text-slate-500">{propertyLoadError}</p>
+          <button
+            type="button"
+            onClick={handleRetryPropertyLoad}
+            className="min-h-[44px] rounded-xl bg-brand-700 px-6 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-brand-600 motion-reduce:transition-none"
+          >
+            再試一次
+          </button>
+        </div>
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <ErrorBoundary>
@@ -718,6 +798,15 @@ export const PropertyDetailPage: React.FC = () => {
 
                 {/* FE-2: 安心留痕徽章（僅當房仲開啟服務時顯示） */}
                 {isTrustEnabled && <TrustBadge />}
+
+                <div className="hidden lg:block">
+                  <PropertyDetailMaiMai
+                    trustEnabled={isTrustEnabled}
+                    isHot={socialProof.isHot}
+                    trustCasesCount={socialProof.trustCasesCount}
+                    agentName={property.agent?.name || '專屬業務'}
+                  />
+                </div>
               </div>
             </div>
           </div>

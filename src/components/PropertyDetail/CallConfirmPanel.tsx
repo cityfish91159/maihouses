@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useId, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Phone, X } from 'lucide-react';
 import { notify } from '../../lib/notify';
 import { track } from '../../analytics/track';
@@ -7,6 +7,7 @@ import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
 import { isValidPhone, sanitizePhoneInput } from './contactUtils';
+import { MaiMaiBase } from '../MaiMai';
 
 interface CallConfirmPanelProps {
   isOpen: boolean;
@@ -40,6 +41,12 @@ export function CallConfirmPanel({
 
   const normalizedPhone = agentPhone?.trim() ?? '';
   const hasPhone = Boolean(normalizedPhone);
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return false;
+    }
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
 
   useEffect(() => {
     if (isOpen) return;
@@ -53,6 +60,14 @@ export function CallConfirmPanel({
     if (!isOpen) return;
     setPanelReady(true);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    void track('maimai_panel_welcome', {
+      panelType: 'call',
+      hasContact: hasPhone,
+    });
+  }, [hasPhone, isOpen]);
 
   useFocusTrap({
     containerRef: modalRef,
@@ -174,6 +189,18 @@ export function CallConfirmPanel({
         </div>
 
         <div className="p-4">
+          <div className="animate-in fade-in bg-brand-50/60 mb-4 flex items-center gap-3 rounded-xl p-3 duration-200 motion-reduce:transition-none">
+            <MaiMaiBase
+              mood={hasPhone ? 'happy' : 'thinking'}
+              size="xs"
+              animated={!prefersReducedMotion}
+              showEffects={!prefersReducedMotion}
+            />
+            <p className="text-sm text-ink-900">
+              {hasPhone ? '撥打電話前確認一下～' : '房仲還沒設定電話，用表單留言吧'}
+            </p>
+          </div>
+
           {hasPhone ? (
             <div className="rounded-xl border border-border bg-bg-base p-4">
               <p className="text-sm text-text-muted">電話號碼</p>

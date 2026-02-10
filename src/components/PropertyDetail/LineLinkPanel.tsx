@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+﻿import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { notify } from '../../lib/notify';
 import { track } from '../../analytics/track';
@@ -7,6 +7,7 @@ import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
 import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER, LINE_ID_PATTERN } from './constants';
+import { MaiMaiBase } from '../MaiMai';
 
 interface LineLinkPanelProps {
   isOpen: boolean;
@@ -43,6 +44,13 @@ export function LineLinkPanel({
     '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
   } as CSSProperties;
 
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return false;
+    }
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
+
   // LINE ID: trim 後驗證 pattern，不合法視同無 lineId
   const trimmedLineId = agentLineId?.trim() ?? '';
   const hasLineId = LINE_ID_PATTERN.test(trimmedLineId);
@@ -60,6 +68,14 @@ export function LineLinkPanel({
     if (!isOpen) return;
     setPanelReady(true);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    void track('maimai_panel_welcome', {
+      panelType: 'line',
+      hasContact: hasLineId,
+    });
+  }, [hasLineId, isOpen]);
 
   useFocusTrap({
     containerRef: modalRef,
@@ -179,6 +195,20 @@ export function LineLinkPanel({
 
         {/* Content */}
         <div className="p-4">
+          <div className="animate-in fade-in bg-brand-50/60 mb-4 flex items-center gap-3 rounded-xl p-3 duration-200 motion-reduce:transition-none">
+            <MaiMaiBase
+              mood={hasLineId ? 'wave' : 'thinking'}
+              size="xs"
+              animated={!prefersReducedMotion}
+              showEffects={!prefersReducedMotion}
+            />
+            <p className="text-sm text-ink-900">
+              {hasLineId
+                ? '加 LINE 直接聊，回覆最快喔！'
+                : '房仲還沒設定 LINE，用表單留言吧'}
+            </p>
+          </div>
+
           {hasLineId ? (
             <div className="rounded-xl border border-border bg-bg-base p-4">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium text-ink-900">
