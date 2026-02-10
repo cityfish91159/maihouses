@@ -790,6 +790,34 @@
     /* min-height overridden by inline style (dynamic R7) */
     min-height: 320px;
   }
+
+  /* R8-mobile: Compact chip — 視覺 32px，::after 擴展觸控至 44px */
+  .uag-grade-chip-row {
+    gap: 6px;
+    margin: 0 0 8px;
+  }
+  .uag-grade-chip {
+    position: relative;
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 11px;
+    gap: 5px;
+  }
+  .uag-grade-chip::after {
+    content: '';
+    position: absolute;
+    inset: -6px -4px;
+    pointer-events: auto;
+  }
+  .uag-grade-chip[data-active='true'] {
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.10);
+  }
+  .uag-grade-chip-count {
+    min-width: 18px;
+    min-height: 18px;
+    font-size: 10px;
+    padding: 0 4px;
+  }
 }
 
 .uag-bubble {
