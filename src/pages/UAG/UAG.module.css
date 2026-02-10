@@ -420,12 +420,14 @@
   font-weight: 700;
 }
 
+/* M5: 頁面底色改為淡灰藍漸層 */
 .uag-container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 24px;
   position: relative;
   z-index: var(--z-content);
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f0f9ff 100%);
 }
 .uag-grid {
   display: grid;
@@ -544,27 +546,27 @@
 }
 
 /* ====== Cards ====== */
+/* M5: Glassmorphism 卡片風格升級 */
 .uag-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  /* 玻璃質感背景 */
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  /* 淡白色邊框 */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
   padding: 24px;
-  box-shadow:
-    var(--shadow-lg),
-    0 0 0 1px rgba(15, 23, 42, 0.02);
-  border: 1px solid var(--line);
+  /* 柔和陰影 */
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  transition: box-shadow 200ms, background 200ms;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
 }
+/* M5: Glassmorphism hover 效果 */
 .uag-card:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    var(--shadow-lg),
-    0 0 0 1px rgba(23, 73, 215, 0.18);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.85);
   border-color: rgba(23, 73, 215, 0.2);
 }
 .uag-card-header {
@@ -791,10 +793,20 @@
     min-height: 320px;
   }
 
-  /* R8-mobile: Compact chip — 視覺 32px，::after 擴展觸控至 44px */
+  /* R8-mobile: Compact chip — 單排水平捲動 + 漸層暗示可滑動 */
   .uag-grade-chip-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     gap: 6px;
-    margin: 0 0 8px;
+    margin: 0 -16px 8px;
+    padding: 0 16px;
+    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+  }
+  .uag-grade-chip-row::-webkit-scrollbar {
+    display: none;
   }
   .uag-grade-chip {
     position: relative;
@@ -802,6 +814,7 @@
     padding: 0 10px;
     font-size: 11px;
     gap: 5px;
+    flex-shrink: 0;
   }
   .uag-grade-chip::after {
     content: '';
