@@ -8,6 +8,7 @@ export interface ActionPanelProps {
   selectedLead: Lead | null;
   onBuyLead: (leadId: string) => void;
   isProcessing: boolean;
+  purchaseResult?: 'success' | 'error' | null;
 }
 
 const StatItem = ({
@@ -26,7 +27,7 @@ const StatItem = ({
 );
 
 const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
-  ({ selectedLead, onBuyLead, isProcessing }, ref) => {
+  ({ selectedLead, onBuyLead, isProcessing, purchaseResult }, ref) => {
     const [isConfirming, setIsConfirming] = useState(false);
     const prevLeadIdRef = useRef<string | null>(null);
 
@@ -87,9 +88,15 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
       setIsConfirming(false);
     };
 
+    const panelClasses = [
+      styles['uag-action-panel'],
+      purchaseResult === 'success' ? styles['animate-success'] : '',
+      purchaseResult === 'error' ? styles['animate-shake'] : '',
+    ].filter(Boolean).join(' ');
+
     return (
       <section className={styles['k-span-6']} id="action-panel-container" ref={ref}>
-        <div className={styles['uag-action-panel']} id="action-panel">
+        <div className={panelClasses} id="action-panel">
           <div className={styles['ap-head']}>
             <span
               className={`${styles['uag-badge']} ${styles['uag-badge--' + selectedLead.grade.toLowerCase()]}`}

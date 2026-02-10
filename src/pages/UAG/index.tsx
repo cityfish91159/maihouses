@@ -46,6 +46,8 @@ function UAGPageContent() {
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
   // Header signOut 狀態
   const [isSigningOut, setIsSigningOut] = useState(false);
+  // M8: 購買結果微互動
+  const [purchaseResult, setPurchaseResult] = useState<'success' | 'error' | null>(null);
 
   // 修9: AssetMonitor 發送訊息狀態
   const [assetMessageLead, setAssetMessageLead] = useState<Lead | null>(null);
@@ -127,17 +129,21 @@ function UAGPageContent() {
     if (!appData || isBuying) return;
 
     close();
+    setPurchaseResult(null);
 
     // 等待購買結果，只有成功才顯示 Modal
     const result = await buyLead(leadId);
 
     if (result.success && result.lead) {
+      setPurchaseResult('success');
       setPurchasedLead(result.lead);
-      // UAG-13: 如果有回傳 conversation_id，存起來傳給 Modal
       setCurrentConversationId(result.conversation_id);
       setShowMessageModal(true);
+    } else {
+      setPurchaseResult('error');
     }
-    // 失敗時 useUAG 已經顯示 toast 錯誤訊息
+    // 動畫結束後清除狀態
+    setTimeout(() => setPurchaseResult(null), 500);
   };
 
   const handleCloseModal = useCallback(() => {
@@ -264,6 +270,7 @@ function UAGPageContent() {
             selectedLead={selectedLead}
             onBuyLead={onBuyLead}
             isProcessing={isBuying}
+            purchaseResult={purchaseResult}
           />
 
           {/* [2] Asset Monitor */}
@@ -289,7 +296,7 @@ function UAGPageContent() {
         </div>
       </main>
 
-      <UAGFooter user={appData.user} />
+      <UAGFooter user={appData.user} pointsBumping={purchaseResult === 'success'} />
 
       {/* MSG-5: 購買成功後發送訊息 Modal */}
       {/* 問題 #10-11 修復：只有在有真實 agentId 和 sessionId 時才渲染 */}

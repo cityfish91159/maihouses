@@ -76,8 +76,12 @@
 ### 待開發 — UAG 導航 + 佈局重設計（原 #19 拆分）
 
 - [ ] **#19c** [P0] UAG 底部 Tab + KPI 卡片（2 項：M1 Tab 導航 + M6 KPI 摘要列）
-- [ ] **#19d** [P1] UAG 卡片 + 互動升級（3 項：M3 ActionPanel Bottom Sheet + M4 Swipe-to-Action + M5 Glassmorphism）
-- [ ] **#19e** [P1] UAG 收合 + 微互動 + Loading（3 項：M7 可收合區塊 + M8 微互動 + M9 MaiMai Loading）
+- [x] **#19d** [P1] UAG 卡片風格升級（M5 Glassmorphism）✅ 2026-02-10
+- [x] **#19e** [P1] UAG 微互動升級（M8 按鈕 scale + 購買成功/失敗動效 + 點數跳動）✅ 2026-02-10
+- ~~**#19d-M3** ActionPanel Bottom Sheet~~ — 不做
+- ~~**#19d-M4** Swipe-to-Action~~ — 不做
+- ~~**#19e-M7** 可收合區塊~~ — 不做
+- ~~**#19e-M9** MaiMai Loading~~ — 不做
 
 ### 待開發 — 詳情頁手機版現代化（新增 #20 拆分）
 
