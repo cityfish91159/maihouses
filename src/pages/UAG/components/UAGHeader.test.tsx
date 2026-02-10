@@ -8,23 +8,11 @@ import { UAGHeader } from './UAGHeader';
 const UAG_STYLES_PATH = resolve(process.cwd(), 'src/pages/UAG/UAG.module.css');
 
 vi.mock('lucide-react', () => ({
-  BadgeCheck: ({ className }: { className?: string }) => (
-    <span data-testid="badge-check" className={className} />
-  ),
   ChevronDown: ({ className }: { className?: string }) => (
     <span data-testid="chevron-down" className={className} />
   ),
-  Footprints: ({ className }: { className?: string }) => (
-    <span data-testid="footprints" className={className} />
-  ),
   LogOut: ({ className }: { className?: string }) => (
     <span data-testid="log-out" className={className} />
-  ),
-  ShieldCheck: ({ className }: { className?: string }) => (
-    <span data-testid="shield-check" className={className} />
-  ),
-  ThumbsUp: ({ className }: { className?: string }) => (
-    <span data-testid="thumbs-up" className={className} />
   ),
   User: ({ className }: { className?: string }) => (
     <span data-testid="user-icon" className={className} />
@@ -165,7 +153,10 @@ describe('UAGHeader', () => {
       /@media \(max-width: 380px\)[\s\S]*?\.uag-header-inner\s*{[\s\S]*?padding:\s*10px 8px;/
     );
     expect(css).toMatch(
-      /@media \(max-width: 380px\)[\s\S]*?\.uag-header-inner\s*{[\s\S]*?padding:\s*10px 8px;/
+      /@media \(max-width: 380px\)[\s\S]*?\.agent-bar-code\s*{[\s\S]*?display:\s*none;/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 380px\)[\s\S]*?\.agent-bar-stats\s*{[\s\S]*?font-size:\s*12px;/
     );
   });
 
@@ -184,10 +175,7 @@ describe('UAGHeader', () => {
       },
     });
 
-    // 現在有桌面版 inline 和手機版 grid 兩組 KPI
-    const kpiLabels = screen.getAllByText('信任分');
-    expect(kpiLabels.length).toBeGreaterThanOrEqual(1);
-    const gridLabel = kpiLabels.find((el) => el.className.includes('agent-kpi-label'));
-    expect(gridLabel).toBeDefined();
+    const statsNode = screen.getByText('信任分').closest('div');
+    expect(statsNode?.className).toContain('agent-bar-stats');
   });
 });

@@ -107,18 +107,16 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Modal backdrop click-to-close pattern
     <div
-      className="fixed inset-0 z-modal flex items-center justify-center p-4"
+      className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="review-list-modal-title"
     >
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-        aria-label="關閉服務評價清單"
-      />
       <div
         ref={dialogRef}
         className="relative h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"

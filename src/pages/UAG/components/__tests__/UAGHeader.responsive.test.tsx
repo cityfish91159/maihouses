@@ -6,23 +6,11 @@ import type { User } from '@supabase/supabase-js';
 import { UAGHeader } from '../UAGHeader';
 
 vi.mock('lucide-react', () => ({
-  BadgeCheck: ({ className }: { className?: string }) => (
-    <span data-testid="badge-check" className={className} />
-  ),
   ChevronDown: ({ className }: { className?: string }) => (
     <span data-testid="chevron-down" className={className} />
   ),
-  Footprints: ({ className }: { className?: string }) => (
-    <span data-testid="footprints" className={className} />
-  ),
   LogOut: ({ className }: { className?: string }) => (
     <span data-testid="log-out" className={className} />
-  ),
-  ShieldCheck: ({ className }: { className?: string }) => (
-    <span data-testid="shield-check" className={className} />
-  ),
-  ThumbsUp: ({ className }: { className?: string }) => (
-    <span data-testid="thumbs-up" className={className} />
   ),
   User: ({ className }: { className?: string }) => (
     <span data-testid="user-icon" className={className} />
@@ -79,13 +67,9 @@ describe('UAGHeader responsive behavior (U3)', () => {
     expect(userInfo?.className).toContain('uag-user-info');
     expect(userButton.className).toContain('uag-user-button');
 
-    // 現在有桌面版 inline 和手機版 grid 兩組 KPI，使用 getAllByText
-    const kpiLabels = screen.getAllByText('信任分');
-    expect(kpiLabels.length).toBeGreaterThanOrEqual(1);
-    // 手機版 KPI grid 的 label 有 agent-kpi-label class
-    const gridLabel = kpiLabels.find((el) => el.className.includes('agent-kpi-label'));
-    expect(gridLabel).toBeDefined();
-    expect(screen.getByText('#6600').className).toContain('agent-kpi-code');
+    const stats = screen.getByText('信任分').closest('div');
+    expect(stats?.className).toContain('agent-bar-stats');
+    expect(screen.getByText('#6600').className).toContain('agent-bar-code');
   });
 
   it('defines mobile hide rules and 44px user touch target in CSS', () => {
@@ -113,7 +97,10 @@ describe('UAGHeader responsive behavior (U3)', () => {
 
     expect(css).toContain('@media (max-width: 380px)');
     expect(css).toMatch(
-      /@media \(max-width: 380px\)[\s\S]*?\.uag-header-inner\s*{[\s\S]*?padding:\s*10px 8px;/
+      /@media \(max-width: 380px\)[\s\S]*?\.agent-bar-code\s*{[\s\S]*?display:\s*none;/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 380px\)[\s\S]*?\.agent-bar-stats\s*{[\s\S]*?gap:\s*6px;[\s\S]*?font-size:\s*12px;/
     );
   });
 });
