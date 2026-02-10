@@ -4422,6 +4422,7 @@ const containerHeight = useMemo(() => {
    - 新增 `R8` 等級篩選狀態：`all/S/A/B/C/F`，並計算各等級即時數量
    - 新增 Chips UI（顯示「全部 + 等級數量」），切換篩選時會清除目前選中狀態避免殘留高亮
    - 新增 `getRadarContainerHeightPx()`，在手機版依可見泡泡數動態調整高度（`<=3:240 / <=8:320 / >8:380`，桌面維持 `450`）
+   - 將動態高度同步套用到 `#radar-container` 本體，確保 R7 在手機低密度資料時可真實縮至 `240px`
    - 泡泡選中狀態改為 `data-selected`，容器加上 `data-has-selection`，供 R6 視覺退場效果使用
 
 2. `src/pages/UAG/UAG.module.css`
@@ -4436,7 +4437,7 @@ const containerHeight = useMemo(() => {
    - 新增 R7 手機高度測試（2 顆泡泡 `240px`、9 顆泡泡 `380px`）
 
 4. `src/pages/UAG/components/RadarCluster.integration.test.tsx`
-   - 解析泡泡座標改讀取 `#radar-section` 實際高度，支援 R7 動態容器
+   - 解析泡泡座標改讀取 `#radar-container` 實際高度，支援 R7 動態容器
    - `resolveOverlap` 呼叫參數驗證改用 `getRadarContainerHeightPx()` 計算預期高度
    - 保留 320px/12 泡泡不重疊驗證，並同步驗證動態高度為 `380px`
 

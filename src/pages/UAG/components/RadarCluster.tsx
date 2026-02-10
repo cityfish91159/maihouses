@@ -245,6 +245,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
         className={styles['uag-cluster']}
         id="radar-container"
         data-has-selection={hasSelection ? 'true' : undefined}
+        style={{ minHeight: `${containerHeight}px` }}
         ref={containerRef}
       >
         <div className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-outer']}`}></div>

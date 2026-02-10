@@ -154,10 +154,13 @@ describe('RadarCluster', () => {
     const { container, rerender } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
 
     const radarSection = container.querySelector('#radar-section');
+    const radarContainer = container.querySelector('#radar-container');
     expect(radarSection).toHaveStyle('min-height: 240px');
+    expect(radarContainer).toHaveStyle('min-height: 240px');
 
     rerender(<RadarCluster leads={mobileDenseLeads} onSelectLead={vi.fn()} />);
     expect(radarSection).toHaveStyle('min-height: 380px');
+    expect(radarContainer).toHaveStyle('min-height: 380px');
   });
 
   it('supports click and keyboard selection', () => {

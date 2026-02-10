@@ -70,11 +70,11 @@ function parseBubblePositionPx(
   };
 }
 
-function getRadarSectionHeightPx(container: HTMLElement): number {
-  const section = container.querySelector('#radar-section') as HTMLElement | null;
-  if (!section) throw new Error('radar-section not found');
-  const parsed = Number.parseFloat(section.style.minHeight);
-  if (!Number.isFinite(parsed)) throw new Error('radar-section min-height is invalid');
+function getRenderedRadarContainerHeightPx(container: HTMLElement): number {
+  const radarContainer = container.querySelector('#radar-container') as HTMLElement | null;
+  if (!radarContainer) throw new Error('radar-container not found');
+  const parsed = Number.parseFloat(radarContainer.style.minHeight);
+  if (!Number.isFinite(parsed)) throw new Error('radar-container min-height is invalid');
   return parsed;
 }
 
@@ -180,7 +180,7 @@ describe('RadarCluster integration', () => {
     const overlapTolerancePx = 1;
 
     const { container } = render(<RadarCluster leads={denseMobileLeads} onSelectLead={vi.fn()} />);
-    const containerHeightPx = getRadarSectionHeightPx(container);
+    const containerHeightPx = getRenderedRadarContainerHeightPx(container);
     const sBubble = container.querySelector('[aria-label="Dense Lead 1 - S級"]');
     const fBubble = container.querySelector('[aria-label="Dense Lead 5 - F級"]');
     expect(sBubble).toHaveStyle('--w: 72px');
