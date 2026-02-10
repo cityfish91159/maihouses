@@ -75,7 +75,7 @@
 
 ### 待開發 — UAG 導航 + 佈局重設計（原 #19 拆分）
 
-- [ ] **#19c** [P0] UAG 底部 Tab + KPI 卡片（2 項：M1 Tab 導航 + M6 KPI 摘要列）
+- [x] **#19c** [P0] UAG 底部 Tab + KPI 卡片（2 項：M1 Tab 導航 + M6 KPI 摘要列）✅ 2026-02-10
 - [ ] **#19d** [P1] UAG 卡片 + 互動升級（3 項：M3 ActionPanel Bottom Sheet + M4 Swipe-to-Action + M5 Glassmorphism）
 - [ ] **#19e** [P1] UAG 收合 + 微互動 + Loading（3 項：M7 可收合區塊 + M8 微互動 + M9 MaiMai Loading）
 
@@ -3930,10 +3930,17 @@ interface ActionBottomSheetProps {
 **檔案清單:**
 - `src/pages/UAG/components/ActionBottomSheet.tsx` (新增, 207 行)
 - `src/pages/UAG/components/AssetMonitor.tsx` (修改, 185 行)
-- `src/pages/UAG/UAG.module.css` (修改, 新增 M3/M4/M5 樣式)
+- `src/pages/UAG/UAG.module.css` (修改, +1043 -210 行)
 - `src/pages/UAG/index.tsx` (修改, 整合 Bottom Sheet)
 
-**Git Commit:** 待建立
+**優化後修復:**
+- Safari 15- fallback: @supports (backdrop-filter)
+- 內聯樣式抽為 .action-sheet-exclusive-badge
+- 硬編碼 #94a3b8 改為 var(--ink-300)
+
+**最終評分:** 90+/100 (良好)
+
+**Git Commit:** 27a84076 ✅
 
 ---
 
@@ -3999,10 +4006,54 @@ interface ActionBottomSheetProps {
 
 ### #19c 驗收標準
 
-- [ ] M1: 手機版底部 Tab Bar 切換 4 個 Tab
-- [ ] M1: 桌面版（≥768px）隱藏 Tab Bar
-- [ ] M6: 手機版 KPI 2x2 Grid，數字 ≥ 24px
-- [ ] typecheck + lint 通過
+- [x] M1: 手機版底部 Tab Bar 切換 4 個 Tab
+- [x] M1: 桌面版（≥768px）隱藏 Tab Bar
+- [x] M6: 手機版 KPI 2x2 Grid，數字 ≥ 24px
+- [x] typecheck + lint 通過
+
+### #19c 施工紀錄（2026-02-10）
+
+#### /strict-audit 檢查結果
+- 發現 1 項中等風險：桌面版 Footer「個人資料」在 Mock 模式未附帶 `?mock=true`，會導向 Live Profile 路徑，造成模式不一致。
+- 已修正 `UAGFooter` 連結邏輯並新增單元測試鎖定 Mock/Live 路由行為。
+- 其餘 M1/M6 流程未發現阻斷級缺陷。
+
+#### 修改檔案
+1. `src/pages/UAG/index.tsx`
+   - 手機版導入 `UAGTabBar`，完成 4 分頁（概覽/商機/監控/設定）切換。
+   - 桌面版保留既有 Grid 佈局與 Footer，手機版改為 Tab 導航。
+
+2. `src/pages/UAG/components/UAGTabBar.tsx`
+   - 新增底部 Tab 元件（4 個固定入口）。
+   - 使用語意化 `nav` + `aria-label="UAG 行動分頁"`，按鈕含 active 狀態。
+
+3. `src/pages/UAG/components/UAGHeader.tsx`
+   - 將 Agent Bar 統計升級為 KPI 架構：桌面 inline、手機 2x2 Grid。
+   - KPI 指標統一為「信任分 / 帶看組數 / 成交案件 / 獲得鼓勵」。
+
+4. `src/pages/UAG/UAG.module.css`
+   - 新增 M1 Tab Bar、M6 KPI Grid、手機設定卡與桌面 Footer 對應樣式。
+   - 手機 `<768px` 隱藏 Footer，桌面 `>=768px` 隱藏 Tab Bar。
+   - KPI 數字字級設為 `26px`，符合可讀性目標（>=24px）。
+
+5. `src/pages/UAG/components/UAGFooter.tsx`
+   - 修正 Mock 模式下 Profile 連結：`/uag/profile?mock=true`。
+
+6. `src/pages/UAG/components/UAGFooter.test.tsx`（新增）
+   - 新增 2 個測試覆蓋 Mock/Live Profile 路由分流。
+
+7. 測試更新
+   - `src/pages/UAG/index.test.tsx`
+   - `src/pages/UAG/components/UAGHeader.test.tsx`
+   - `src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx`
+
+#### 驗證命令
+```bash
+npm run test -- src/pages/UAG/index.test.tsx src/pages/UAG/components/UAGHeader.test.tsx src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx src/pages/UAG/components/UAGFooter.test.tsx
+npm run typecheck
+npm run lint
+npm run check:utf8
+```
 
 ---
 
