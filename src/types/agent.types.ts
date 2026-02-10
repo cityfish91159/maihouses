@@ -34,6 +34,7 @@ export interface AgentProfileMe extends AgentProfile {
 
 export interface UpdateAgentProfilePayload {
   name?: string;
+  company?: string | null;
   bio?: string | null;
   specialties?: string[];
   certifications?: string[];

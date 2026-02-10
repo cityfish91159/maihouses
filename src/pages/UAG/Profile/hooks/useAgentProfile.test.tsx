@@ -97,11 +97,13 @@ describe('useAgentProfile (#7 mock mode)', () => {
     await act(async () => {
       await result.current.updateProfile({
         name: '游杰倫-更新',
+        company: '邁房子中山店',
         phone: '0987654321',
       });
     });
 
     await waitFor(() => expect(result.current.profile?.name).toBe('游杰倫-更新'));
+    expect(result.current.profile?.company).toBe('邁房子中山店');
     expect(result.current.profile?.phone).toBe('0987654321');
     expect(mockUpdateAgentProfile).not.toHaveBeenCalled();
     expect(mockNotifySuccess).toHaveBeenCalledWith(

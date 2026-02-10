@@ -23,6 +23,7 @@ const ProfileQuerySchema = z.object({
 const UpdateProfileSchema = z
   .object({
     name: z.string().trim().min(1).max(50).optional(),
+    company: z.union([z.string().trim().min(1).max(100), z.null()]).optional(),
     bio: z.union([z.string().trim().max(500), z.null()]).optional(),
     specialties: z.array(z.string().trim().min(1).max(30)).max(10).optional(),
     certifications: z.array(z.string().trim().min(1).max(50)).max(10).optional(),

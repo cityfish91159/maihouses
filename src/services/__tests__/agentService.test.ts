@@ -60,7 +60,7 @@ describe('agentService (#15)', () => {
     expect(profile.verifiedAt).toBe('2024-06-15T00:00:00Z');
   });
 
-  it('updateAgentProfile sends license_number in request body', async () => {
+  it('updateAgentProfile sends company + license_number in request body', async () => {
     mockGetSession.mockResolvedValue({
       data: {
         session: {
@@ -80,6 +80,7 @@ describe('agentService (#15)', () => {
 
     await updateAgentProfile({
       name: '測試房仲',
+      company: '邁房子信義店',
       licenseNumber: '(113)北市經紀字第004521號',
     });
 
@@ -89,6 +90,7 @@ describe('agentService (#15)', () => {
         method: 'PUT',
         body: JSON.stringify({
           name: '測試房仲',
+          company: '邁房子信義店',
           bio: undefined,
           specialties: undefined,
           certifications: undefined,

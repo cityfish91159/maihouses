@@ -39,6 +39,7 @@ const toggleSelection = (items: string[], option: string) =>
 const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onSave }) => {
   const today = new Date().toISOString().slice(0, 10);
   const [name, setName] = useState(profile.name);
+  const [company, setCompany] = useState(profile.company ?? '邁房子');
   const [bio, setBio] = useState(profile.bio ?? '');
   const [phone, setPhone] = useState(profile.phone ?? '');
   const [lineId, setLineId] = useState(profile.lineId ?? '');
@@ -50,6 +51,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
   const payload = useMemo<UpdateAgentProfilePayload>(() => {
     const result: UpdateAgentProfilePayload = {
       name: name.trim(),
+      company: company.trim() ? company.trim() : null,
       bio: bio.trim() ? bio.trim() : null,
       specialties,
       certifications,
@@ -61,7 +63,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
       result.joinedAt = new Date(joinedAt).toISOString();
     }
     return result;
-  }, [name, bio, specialties, certifications, phone, lineId, licenseNumber, joinedAt]);
+  }, [name, company, bio, specialties, certifications, phone, lineId, licenseNumber, joinedAt]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -71,7 +73,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm"
+      className="space-y-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -97,7 +99,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             placeholder="輸入姓名"
             required
             aria-required="true"
@@ -110,10 +112,12 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
           <input
             id="agent-company"
             type="text"
-            value={profile.company ?? '邁房子'}
-            disabled
-            className="w-full rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-500"
-            aria-label="公司"
+            value={company}
+            onChange={(event) => setCompany(event.target.value)}
+            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+            placeholder="公司/分店名稱"
+            maxLength={100}
+            aria-label="公司名稱"
           />
         </div>
         <div className="space-y-2">
@@ -126,7 +130,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             inputMode="tel"
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             placeholder="0912-345-678"
             aria-label="手機號碼"
           />
@@ -141,7 +145,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             inputMode="text"
             value={lineId}
             onChange={(event) => setLineId(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             placeholder="line-id"
             aria-label="LINE ID"
           />
@@ -156,7 +160,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             value={joinedAt}
             max={today}
             onChange={(event) => setJoinedAt(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             aria-label="加入日期"
           />
         </div>
@@ -169,7 +173,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             type="text"
             value={licenseNumber}
             onChange={(event) => setLicenseNumber(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             placeholder="例：(113)北市經紀字第004521號"
             aria-label="經紀人證照字號"
           />

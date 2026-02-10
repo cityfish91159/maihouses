@@ -131,7 +131,7 @@ describe('/api/agent/profile (#15)', () => {
     });
   });
 
-  it('PUT accepts and updates license_number', async () => {
+  it('PUT accepts and updates company + license_number', async () => {
     mockVerifyAuth.mockResolvedValue({
       success: true,
       userId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
@@ -151,6 +151,7 @@ describe('/api/agent/profile (#15)', () => {
     const req = createMockRequest({
       method: 'PUT',
       body: {
+        company: '邁房子忠孝店',
         license_number: '(113)北市經紀字第009999號',
       },
       headers: { authorization: 'Bearer token', origin: 'https://maihouses.com' },
@@ -160,6 +161,7 @@ describe('/api/agent/profile (#15)', () => {
     await handler(req as unknown as VercelRequest, res as unknown as VercelResponse);
 
     expect(update).toHaveBeenCalledWith({
+      company: '邁房子忠孝店',
       license_number: '(113)北市經紀字第009999號',
     });
     expect(res.statusCode).toBe(200);

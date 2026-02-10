@@ -51,7 +51,7 @@
 ### 待開發 — 經紀人認證 / 店名
 
 - [x] **#15** [P0] 經紀人認證 + 完成案件累積（6 項：15-A DB + 15-B 類型 + 15-C API + 15-D/E 前端 + 15-F UAG Profile）✅ 2026-02-09
-- [ ] **#16** [P1] 店名開放編輯（3 項：16-A API + 16-B 前端 + 16-C 類型）
+- [x] **#16** [P1] 店名開放編輯（3 項：16-A API + 16-B 前端 + 16-C 類型）✅ 2026-02-10
 
 ### 待開發 — Header / 品牌 / MaiMai
 
@@ -2971,7 +2971,7 @@ npm run check:utf8
 
 ```typescript
 // UpdateProfileSchema 新增：
-company: z.string().trim().min(1).max(100).optional(),
+company: z.union([z.string().trim().min(1).max(100), z.null()]).optional(),
 ```
 
 ### 16-B. [P1] 前端 — `BasicInfoSection` 開放編輯
@@ -3000,11 +3000,14 @@ company: z.string().trim().min(1).max(100).optional(),
   type="text"
   value={company}
   onChange={(event) => setCompany(event.target.value)}
-  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+  className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
   placeholder="公司/分店名稱"
+  maxLength={100}
   aria-label="公司名稱"
 />
 ```
+
+**規範引用：** `/ui-ux-pro-max` `ux-guidelines #22`（觸控目標 >= 44px）、`#67`（手機可讀性）、`#23`（手機密度控制）。
 
 ### 16-C. [P1] 前端 — 類型 + Service 更新
 
@@ -3038,11 +3041,44 @@ company: payload.company,
 
 ### 驗收標準
 
-- [ ] API：PUT `/api/agent/profile` 可更新 `company` 欄位
-- [ ] 前端：BasicInfoSection 公司欄位可編輯（非 disabled）
-- [ ] 前端：修改公司名 → 儲存 → 詳情頁 AgentTrustCard 顯示新名稱
-- [ ] Mock：Mock 模式下公司欄位可編輯（本地 state，不發 API）
-- [ ] typecheck + lint 通過
+- [x] API：PUT `/api/agent/profile` 可更新 `company` 欄位
+- [x] 前端：BasicInfoSection 公司欄位可編輯（非 disabled）
+- [x] 前端：修改公司名 → 儲存 → 詳情頁 AgentTrustCard 顯示新名稱
+- [x] Mock：Mock 模式下公司欄位可編輯（本地 state，不發 API）
+- [x] typecheck + lint 通過（#16 關聯測試 + 關聯檔案 lint 通過；全域 lint/typecheck 仍受 #19 開發中檔案影響）
+
+### #16 施工紀錄（2026-02-10）
+
+#### 修改檔案
+1. `api/agent/profile.ts`
+   - `UpdateProfileSchema` 新增 `company` 更新欄位（支援字串或 `null`，保留 1~100 字限制）
+
+2. `src/types/agent.types.ts`
+   - `UpdateAgentProfilePayload` 新增 `company?: string | null`
+
+3. `src/services/agentService.ts`
+   - `updateAgentProfile` PUT body 新增 `company`
+
+4. `src/pages/UAG/Profile/BasicInfoSection.tsx`
+   - 公司欄位移除 disabled，改為受控輸入並回寫 payload
+   - 手機版 UX 對齊：公司/姓名/手機/LINE/加入日期/證照欄位統一 `min-h-[44px]`
+   - 表單容器 `p-4 sm:p-6`，降低手機首屏擁擠
+
+5. `src/pages/UAG/Profile/hooks/useAgentProfile.ts`
+   - Mock 模式更新快取新增 `company` 回寫，符合「可編輯但不打 API」需求
+
+6. 測試更新
+   - `api/agent/__tests__/profile.test.ts`：驗證 PUT 可更新 `company + license_number`
+   - `src/services/__tests__/agentService.test.ts`：驗證 request body 含 `company`
+   - `src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx`：新增公司欄位可編輯與手機觸控尺寸驗證
+   - `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx`：驗證 Mock 更新可回寫 `company`
+
+#### 驗證命令
+```bash
+npm run test -- api/agent/__tests__/profile.test.ts src/services/__tests__/agentService.test.ts src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx
+npx eslint api/agent/profile.ts src/types/agent.types.ts src/services/agentService.ts src/pages/UAG/Profile/BasicInfoSection.tsx src/pages/UAG/Profile/hooks/useAgentProfile.ts api/agent/__tests__/profile.test.ts src/services/__tests__/agentService.test.ts src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx
+npm run check:utf8
+```
 
 ---
 

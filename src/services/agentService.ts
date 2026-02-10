@@ -180,6 +180,7 @@ export async function updateAgentProfile(payload: UpdateAgentProfilePayload): Pr
 
   const body = {
     name: payload.name,
+    company: payload.company,
     bio: payload.bio,
     specialties: payload.specialties,
     certifications: payload.certifications,

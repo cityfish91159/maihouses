@@ -81,6 +81,7 @@ export function useAgentProfile() {
           return {
             ...prev,
             ...(payload.name !== undefined ? { name: payload.name } : {}),
+            ...(payload.company !== undefined ? { company: payload.company } : {}),
             ...(payload.bio !== undefined ? { bio: payload.bio } : {}),
             ...(payload.specialties !== undefined ? { specialties: payload.specialties } : {}),
             ...(payload.certifications !== undefined
