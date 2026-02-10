@@ -178,17 +178,19 @@ export async function updateAgentProfile(payload: UpdateAgentProfilePayload): Pr
     throw new Error('未登入');
   }
 
-  const body = {
-    name: payload.name,
-    company: payload.company,
-    bio: payload.bio,
-    specialties: payload.specialties,
-    certifications: payload.certifications,
-    phone: payload.phone,
-    line_id: payload.lineId,
-    license_number: payload.licenseNumber,
-    joined_at: payload.joinedAt,
-  };
+  const body = Object.fromEntries(
+    Object.entries({
+      name: payload.name,
+      company: payload.company,
+      bio: payload.bio,
+      specialties: payload.specialties,
+      certifications: payload.certifications,
+      phone: payload.phone,
+      line_id: payload.lineId,
+      license_number: payload.licenseNumber,
+      joined_at: payload.joinedAt,
+    }).filter(([, value]) => value !== undefined)
+  );
 
   const response = await fetch('/api/agent/profile', {
     method: 'PUT',

@@ -20,16 +20,33 @@ const ProfileQuerySchema = z.object({
   id: AgentIdSchema,
 });
 
+const PhoneSchema = z.preprocess(
+  (value) => {
+    if (value === null || value === undefined) return value;
+    if (typeof value !== 'string') return value;
+    return value.trim().replace(/[\s-]/g, '');
+  },
+  z.union([z.string().regex(/^09\d{8}$/), z.null()])
+);
+
 const UpdateProfileSchema = z
   .object({
+    // 顯示於房源頁標題，避免過長造成卡片與行動版折行破版。
     name: z.string().trim().min(1).max(50).optional(),
+    // 公司名稱允許 null，支援使用者主動清空欄位。
     company: z.union([z.string().trim().min(1).max(100), z.null()]).optional(),
+    // 自介文案上限 500 字，控制詳情頁資訊密度。
     bio: z.union([z.string().trim().max(500), z.null()]).optional(),
+    // 專長/證照上限 10 項，避免標籤區域過度擁擠。
     specialties: z.array(z.string().trim().min(1).max(30)).max(10).optional(),
     certifications: z.array(z.string().trim().min(1).max(50)).max(10).optional(),
-    phone: z.union([z.string().trim().regex(/^09\d{8}$/), z.null()]).optional(),
+    // 台灣手機格式，允許前端輸入連字號，後端統一正規化為 0912345678。
+    phone: PhoneSchema.optional(),
+    // LINE ID 允許清空，並限制最大長度避免資料汙染。
     line_id: z.union([z.string().trim().min(1).max(50), z.null()]).optional(),
+    // 證照格式差異大，以長度範圍防止異常輸入。
     license_number: z.union([z.string().trim().min(5).max(100), z.null()]).optional(),
+    // 使用 ISO datetime，方便與資料庫 timestamp 欄位直接對接。
     joined_at: z.string().datetime().optional(),
   })
   .strict();
@@ -62,12 +79,15 @@ const AgentRowSchema = z.object({
 // Helpers
 // ============================================================================
 
+const DEFAULT_TRUST_SCORE = 60; // 新房仲起始信任分
+const DEFAULT_METRIC = 0;
+
 function buildProfilePayload(row: z.infer<typeof AgentRowSchema>) {
   return {
     id: row.id,
     name: row.name,
     avatar_url: row.avatar_url,
-    company: row.company ?? '邁房子',
+    company: row.company ?? null,
     bio: row.bio ?? null,
     specialties: normalizeStringArray(row.specialties),
     certifications: normalizeStringArray(row.certifications),
@@ -76,12 +96,12 @@ function buildProfilePayload(row: z.infer<typeof AgentRowSchema>) {
     license_number: row.license_number ?? null,
     is_verified: row.is_verified ?? false,
     verified_at: row.verified_at ?? null,
-    trust_score: toNumber(row.trust_score, 60),
-    encouragement_count: toNumber(row.encouragement_count, 0),
-    service_rating: toNumber(row.service_rating, 0),
-    review_count: toNumber(row.review_count, 0),
-    completed_cases: toNumber(row.completed_cases, 0),
-    active_listings: toNumber(row.active_listings, 0),
+    trust_score: toNumber(row.trust_score, DEFAULT_TRUST_SCORE),
+    encouragement_count: toNumber(row.encouragement_count, DEFAULT_METRIC),
+    service_rating: toNumber(row.service_rating, DEFAULT_METRIC),
+    review_count: toNumber(row.review_count, DEFAULT_METRIC),
+    completed_cases: toNumber(row.completed_cases, DEFAULT_METRIC),
+    active_listings: toNumber(row.active_listings, DEFAULT_METRIC),
     service_years: calcServiceYears(row.joined_at, row.created_at),
     joined_at: row.joined_at ?? null,
     internal_code: row.internal_code ?? undefined,

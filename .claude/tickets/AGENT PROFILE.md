@@ -3049,36 +3049,54 @@ company: payload.company,
 
 ### #16 施工紀錄（2026-02-10）
 
+#### 優化循環摘要
+- [x] 第 1 輪優化（API/Schema）：修正 `company` 回填邏輯、`phone` 正規化驗證、預設值常數化、Schema 註解補齊
+- [x] 第 2 輪優化（前端/Service/Mock）：修正 `undefined` 欄位送出、`null` 公司名處理一致化、字數回饋補齊、快取更新可讀性提升
+- [x] 第 3 輪審核（測試/靜態檢查/UTF-8）：關聯測試全綠、typecheck/lint/check:utf8 全通過
+
 #### 修改檔案
 1. `api/agent/profile.ts`
-   - `UpdateProfileSchema` 新增 `company` 更新欄位（支援字串或 `null`，保留 1~100 字限制）
+   - `company` 回傳改為 `row.company ?? null`，不再在 API 層強制回填 `'邁房子'`
+   - 新增 `PhoneSchema`：允許輸入 `0912-345-678`，後端正規化為 `0912345678`
+   - `UpdateProfileSchema` 補上欄位業務規則註解（name/company/phone/license_number/joined_at）
+   - `trust_score` 與其餘數值欄位預設值抽成常數：`DEFAULT_TRUST_SCORE`、`DEFAULT_METRIC`
 
-2. `src/types/agent.types.ts`
-   - `UpdateAgentProfilePayload` 新增 `company?: string | null`
+2. `api/agent/me.ts`
+   - `company` 回傳改為 `row.company ?? null`，與 `/api/agent/profile` 一致
+   - 數值預設值改用共用常數，移除散落魔法數字
 
 3. `src/services/agentService.ts`
-   - `updateAgentProfile` PUT body 新增 `company`
+   - `updateAgentProfile` 改為過濾 `undefined` 後再送出 body，僅傳有意義欄位
 
 4. `src/pages/UAG/Profile/BasicInfoSection.tsx`
-   - 公司欄位移除 disabled，改為受控輸入並回寫 payload
-   - 手機版 UX 對齊：公司/姓名/手機/LINE/加入日期/證照欄位統一 `min-h-[44px]`
-   - 表單容器 `p-4 sm:p-6`，降低手機首屏擁擠
-   - 新增公司欄位即時輔助文案與字數計數（`x/100`），並加上 `autoComplete="organization"`
-   - 新增「尚未修改」狀態：無變更時禁用提交，避免無效 API 請求
+   - `initialValues.company` 改為 `profile.company ?? ''`，保留 `null` 語意到表單層處理
+   - `useMemo` 依賴從 `[profile]` 改為明確欄位清單，避免物件引用快取歧義
+   - 公司字數計數器改為防禦寫法：`(company ?? '').length`
+   - `bio` 新增字數計數器 `x/500` 與 `aria-describedby`，補齊 UX 一致性
 
 5. `src/pages/UAG/Profile/hooks/useAgentProfile.ts`
-   - Mock 模式更新快取新增 `company` 回寫，符合「可編輯但不打 API」需求
+   - Mock 更新快取改為 `updates: Partial<AgentProfileMe>` 明確賦值，提升可讀性並保留 `company: null`
 
 6. 測試更新
-   - `api/agent/__tests__/profile.test.ts`：驗證 PUT 可更新 `company + license_number`
-   - `src/services/__tests__/agentService.test.ts`：驗證 request body 含 `company`
-   - `src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx`：新增公司欄位可編輯、手機觸控尺寸、無修改禁送與字數回饋驗證
-   - `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx`：驗證 Mock 更新可回寫 `company`
+   - `api/agent/__tests__/profile.test.ts`：
+     - 驗證 GET 保留 `company: null`
+     - 驗證 PUT 接受 `company: null`
+     - 驗證 PUT `phone: 0912-345-678` 會正規化寫入
+   - `api/agent/__tests__/me.test.ts`：驗證 GET 保留 `company: null`
+   - `src/services/__tests__/agentService.test.ts`：
+     - 驗證 PUT body 僅送出 defined 欄位
+     - 驗證 `company: null` 會原樣送出
+   - `src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx`：
+     - 驗證 `company: null` 顯示空值與 `0/100`
+     - 驗證清空/空白公司名會送 `company: null`
+     - 驗證 `bio` 字數計數器
+   - `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx`：驗證 mock 模式更新 `company: null` 不呼叫 API 且保留 null
 
 #### 驗證命令
 ```bash
-npm run test -- api/agent/__tests__/profile.test.ts src/services/__tests__/agentService.test.ts src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx
-npx eslint api/agent/profile.ts src/types/agent.types.ts src/services/agentService.ts src/pages/UAG/Profile/BasicInfoSection.tsx src/pages/UAG/Profile/hooks/useAgentProfile.ts api/agent/__tests__/profile.test.ts src/services/__tests__/agentService.test.ts src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx
+npm run test -- api/agent/__tests__/profile.test.ts api/agent/__tests__/me.test.ts src/services/__tests__/agentService.test.ts src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx
+cmd /c npx eslint api/agent/profile.ts api/agent/me.ts src/services/agentService.ts src/pages/UAG/Profile/BasicInfoSection.tsx src/pages/UAG/Profile/hooks/useAgentProfile.ts api/agent/__tests__/profile.test.ts api/agent/__tests__/me.test.ts src/services/__tests__/agentService.test.ts src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx
+npm run typecheck
 npm run check:utf8
 ```
 

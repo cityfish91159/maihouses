@@ -44,6 +44,9 @@ const AgentMeRowSchema = z.object({
 // Helpers
 // ============================================================================
 
+const DEFAULT_TRUST_SCORE = 60; // 新房仲起始信任分
+const DEFAULT_METRIC = 0;
+
 // ============================================================================
 // Handler
 // ============================================================================
@@ -108,7 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         internal_code: row.internal_code ?? undefined,
         name: row.name,
         avatar_url: row.avatar_url,
-        company: row.company ?? '邁房子',
+        company: row.company ?? null,
         bio: row.bio ?? null,
         specialties: normalizeStringArray(row.specialties),
         certifications: normalizeStringArray(row.certifications),
@@ -117,20 +120,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         license_number: row.license_number ?? null,
         is_verified: row.is_verified ?? false,
         verified_at: row.verified_at ?? null,
-        trust_score: toNumber(row.trust_score, 60),
-        encouragement_count: toNumber(row.encouragement_count, 0),
-        service_rating: toNumber(row.service_rating, 0),
-        review_count: toNumber(row.review_count, 0),
-        completed_cases: toNumber(row.completed_cases, 0),
-        active_listings: toNumber(row.active_listings, 0),
+        trust_score: toNumber(row.trust_score, DEFAULT_TRUST_SCORE),
+        encouragement_count: toNumber(row.encouragement_count, DEFAULT_METRIC),
+        service_rating: toNumber(row.service_rating, DEFAULT_METRIC),
+        review_count: toNumber(row.review_count, DEFAULT_METRIC),
+        completed_cases: toNumber(row.completed_cases, DEFAULT_METRIC),
+        active_listings: toNumber(row.active_listings, DEFAULT_METRIC),
         service_years: calcServiceYears(row.joined_at, row.created_at),
         joined_at: row.joined_at ?? null,
-        visit_count: toNumber(row.visit_count, 0),
-        deal_count: toNumber(row.deal_count, 0),
+        visit_count: toNumber(row.visit_count, DEFAULT_METRIC),
+        deal_count: toNumber(row.deal_count, DEFAULT_METRIC),
         email: authResult.email ?? null,
-        points: toNumber(row.points, 0),
-        quota_s: toNumber(row.quota_s, 0),
-        quota_a: toNumber(row.quota_a, 0),
+        points: toNumber(row.points, DEFAULT_METRIC),
+        quota_s: toNumber(row.quota_s, DEFAULT_METRIC),
+        quota_a: toNumber(row.quota_a, DEFAULT_METRIC),
         created_at: row.created_at ?? null,
       })
     );

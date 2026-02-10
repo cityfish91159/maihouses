@@ -112,6 +112,24 @@ describe('useAgentProfile (#7 mock mode)', () => {
     );
   });
 
+  it('mock=true 時 company=null 應保留為 null（不強制回填）', async () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(() => useAgentProfile(), {
+      wrapper: createWrapper(queryClient, '/uag/profile?mock=true'),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.updateProfile({
+        company: null,
+      });
+    });
+
+    expect(result.current.profile?.company).toBeNull();
+    expect(mockUpdateAgentProfile).not.toHaveBeenCalled();
+  });
+
   it('同一 QueryClient 由 mock 切到 live 時，不應復用 mock 快取', async () => {
     const queryClient = createQueryClient();
 

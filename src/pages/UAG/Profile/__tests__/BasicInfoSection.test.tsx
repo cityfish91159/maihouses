@@ -36,6 +36,20 @@ function createProfile(overrides: Partial<AgentProfileMe> = {}): AgentProfileMe 
 }
 
 describe('BasicInfoSection (#15)', () => {
+  it('keeps empty company input when profile.company is null', () => {
+    render(
+      <BasicInfoSection
+        profile={createProfile({ company: null })}
+        isSaving={false}
+        onSave={vi.fn()}
+      />
+    );
+
+    const companyInput = screen.getByLabelText('公司名稱');
+    expect(companyInput).toHaveValue('');
+    expect(screen.getByText('0/100')).toBeInTheDocument();
+  });
+
   it('renders editable company input with initial value', () => {
     render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={vi.fn()} />);
 
@@ -120,5 +134,54 @@ describe('BasicInfoSection (#15)', () => {
         company: '邁房子大安店',
       })
     );
+  });
+
+  it('submits company as null when company is cleared', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={onSave} />);
+
+    const companyInput = screen.getByLabelText('公司名稱');
+    await user.clear(companyInput);
+    await user.click(screen.getByRole('button', { name: '儲存變更' }));
+
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        company: null,
+      })
+    );
+  });
+
+  it('submits company as null when company contains only whitespace', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={onSave} />);
+
+    const companyInput = screen.getByLabelText('公司名稱');
+    await user.clear(companyInput);
+    await user.type(companyInput, '   ');
+    await user.click(screen.getByRole('button', { name: '儲存變更' }));
+
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        company: null,
+      })
+    );
+  });
+
+  it('shows bio character counter', async () => {
+    const user = userEvent.setup();
+
+    render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={vi.fn()} />);
+
+    const bioInput = screen.getByLabelText('自我介紹');
+    expect(screen.getByText('0/500')).toBeInTheDocument();
+
+    await user.type(bioInput, 'hello');
+    expect(screen.getByText('5/500')).toBeInTheDocument();
   });
 });

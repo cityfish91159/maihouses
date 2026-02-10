@@ -65,14 +65,15 @@ function buildProfilePayload(values: ProfileFormValues): UpdateAgentProfilePaylo
 
 /**
  * 內部表單組件
- * 使用 key={profile.id} 在父組件中渲染，當 profile 更新時自動重新初始化所有狀態
+ * 以 profile 欄位建立初始快照，用於比對是否有未儲存變更
  */
 const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onSave }) => {
   const today = new Date().toISOString().slice(0, 10);
+  // 依賴明確列出欄位，避免僅靠物件引用造成初始值快取不更新。
   const initialValues = useMemo<ProfileFormValues>(
     () => ({
       name: profile.name,
-      company: profile.company ?? '邁房子',
+      company: profile.company ?? '',
       bio: profile.bio ?? '',
       phone: profile.phone ?? '',
       lineId: profile.lineId ?? '',
@@ -81,7 +82,18 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
       specialties: profile.specialties ?? [],
       certifications: profile.certifications ?? [],
     }),
-    [profile]
+    [
+      profile.name,
+      profile.company,
+      profile.bio,
+      profile.phone,
+      profile.lineId,
+      profile.licenseNumber,
+      profile.joinedAt,
+      profile.createdAt,
+      profile.specialties,
+      profile.certifications,
+    ]
   );
 
   const [name, setName] = useState(initialValues.name);
@@ -180,7 +192,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
               將顯示在房源頁與名片卡。
             </p>
             <p id="agent-company-count" className="shrink-0 text-sm text-slate-500">
-              {company.length}/100
+              {(company ?? '').length}/100
             </p>
           </div>
         </div>
@@ -257,7 +269,11 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
           placeholder="用 2-3 句話介紹自己"
           maxLength={500}
           aria-label="自我介紹"
+          aria-describedby="agent-bio-count"
         />
+        <p id="agent-bio-count" className="text-sm text-slate-500">
+          {bio.length}/500
+        </p>
       </div>
 
       <div>
@@ -311,8 +327,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
 
 /**
  * BasicInfoSection 外層包裝
- * 使用 key={profile.id} 確保當 profile 更新時，表單狀態會自動重新初始化
- * 這是 React 推薦的做法，避免在 useEffect 中批量調用 setState
+ * 以 agent id 作為 key，切換不同 agent 時重置表單狀態
  */
 export const BasicInfoSection: React.FC<BasicInfoSectionProps> = (props) => {
   return <BasicInfoForm key={props.profile.id} {...props} />;

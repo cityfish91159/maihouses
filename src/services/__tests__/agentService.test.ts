@@ -60,7 +60,7 @@ describe('agentService (#15)', () => {
     expect(profile.verifiedAt).toBe('2024-06-15T00:00:00Z');
   });
 
-  it('updateAgentProfile sends company + license_number in request body', async () => {
+  it('updateAgentProfile only sends defined fields in request body', async () => {
     mockGetSession.mockResolvedValue({
       data: {
         session: {
@@ -91,13 +91,40 @@ describe('agentService (#15)', () => {
         body: JSON.stringify({
           name: '測試房仲',
           company: '邁房子信義店',
-          bio: undefined,
-          specialties: undefined,
-          certifications: undefined,
-          phone: undefined,
-          line_id: undefined,
           license_number: '(113)北市經紀字第004521號',
-          joined_at: undefined,
+        }),
+      })
+    );
+  });
+
+  it('updateAgentProfile keeps company=null when clearing company name', async () => {
+    mockGetSession.mockResolvedValue({
+      data: {
+        session: {
+          access_token: 'token-123',
+        },
+      },
+    });
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: { updated_at: '2026-02-09T00:00:00.000Z' },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await updateAgentProfile({
+      company: null,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/agent/profile',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({
+          company: null,
         }),
       })
     );

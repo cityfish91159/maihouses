@@ -78,22 +78,19 @@ export function useAgentProfile() {
         // #7: Mock 模式更新本地快取，讓 UI 立即反映編輯結果
         queryClient.setQueryData<AgentProfileMe | undefined>(profileQueryKey, (prev) => {
           if (!prev) return prev;
-          return {
-            ...prev,
-            ...(payload.name !== undefined ? { name: payload.name } : {}),
-            ...(payload.company !== undefined ? { company: payload.company } : {}),
-            ...(payload.bio !== undefined ? { bio: payload.bio } : {}),
-            ...(payload.specialties !== undefined ? { specialties: payload.specialties } : {}),
-            ...(payload.certifications !== undefined
-              ? { certifications: payload.certifications }
-              : {}),
-            ...(payload.phone !== undefined ? { phone: payload.phone } : {}),
-            ...(payload.lineId !== undefined ? { lineId: payload.lineId } : {}),
-            ...(payload.licenseNumber !== undefined
-              ? { licenseNumber: payload.licenseNumber }
-              : {}),
-            ...(payload.joinedAt !== undefined ? { joinedAt: payload.joinedAt } : {}),
-          };
+          const updates: Partial<AgentProfileMe> = {};
+
+          if (payload.name !== undefined) updates.name = payload.name;
+          if (payload.company !== undefined) updates.company = payload.company;
+          if (payload.bio !== undefined) updates.bio = payload.bio;
+          if (payload.specialties !== undefined) updates.specialties = payload.specialties;
+          if (payload.certifications !== undefined) updates.certifications = payload.certifications;
+          if (payload.phone !== undefined) updates.phone = payload.phone;
+          if (payload.lineId !== undefined) updates.lineId = payload.lineId;
+          if (payload.licenseNumber !== undefined) updates.licenseNumber = payload.licenseNumber;
+          if (payload.joinedAt !== undefined) updates.joinedAt = payload.joinedAt;
+
+          return { ...prev, ...updates };
         });
       } else {
         notify.success('已更新個人資料');
