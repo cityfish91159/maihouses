@@ -1,6 +1,7 @@
-﻿import React, { useMemo } from 'react';
+﻿import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';
+import { resolveOverlap } from '../utils/resolveOverlap';
 
 export interface RadarClusterProps {
   leads: Lead[];
@@ -21,6 +22,33 @@ function seededRandom(seed: string): number {
 
 export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps) {
   const liveLeads = leads.filter((l) => l.status === 'new');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [clickedLeadId, setClickedLeadId] = useState<string | null>(null);
+
+  // 偵測容器寬度變化（響應式）
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateWidth = () => {
+      const width = container.offsetWidth;
+      if (width > 0) {
+        setContainerWidth(width);
+      }
+    };
+
+    // 立即執行一次（處理測試環境）
+    const immediateWidth = container.offsetWidth;
+    if (immediateWidth > 0) {
+      setContainerWidth(immediateWidth);
+    }
+
+    const resizeObserver = new ResizeObserver(updateWidth);
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // 預先計算每個 lead 的動畫時長（基於 lead ID 產生穩定的隨機值）
   const floatDurations = useMemo(() => {
@@ -63,6 +91,30 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
     return labels;
   }, [liveLeads]);
 
+  // R1: 響應式尺寸對應表（手機 vs 桌面）
+  const isMobile = containerWidth > 0 && containerWidth <= 768;
+  const sizeMap = useMemo(() => {
+    if (isMobile) {
+      return { S: 72, A: 60, B: 54, C: 48, F: 40 };
+    }
+    return { S: 120, A: 100, B: 90, C: 80, F: 60 };
+  }, [isMobile]);
+
+  // R2: 碰撞偵測與位置解析
+  const resolvedPositions = useMemo(() => {
+    if (containerWidth === 0 || liveLeads.length === 0) return [];
+
+    const containerHeight = 450; // 固定高度（與 CSS minHeight 一致）
+    const bubbles = liveLeads.map((lead) => {
+      const x = lead.x != null ? (lead.x / 100) * containerWidth : containerWidth / 2;
+      const y = lead.y != null ? (lead.y / 100) * containerHeight : containerHeight / 2;
+      const size = sizeMap[lead.grade as keyof typeof sizeMap] ?? 60;
+      return { x, y, size };
+    });
+
+    return resolveOverlap(bubbles, containerWidth, containerHeight, 4);
+  }, [liveLeads, containerWidth, sizeMap]);
+
   return (
     <section
       className={`${styles['uag-card']} ${styles['k-span-6']}`}
@@ -78,7 +130,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
           {/* Quota display is handled in parent or separate component, but for now static or passed props */}
         </div>
       </div>
-      <div className={styles['uag-cluster']} id="radar-container">
+      <div className={styles['uag-cluster']} id="radar-container" ref={containerRef}>
         <div className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-outer']}`}></div>
         <div className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-inner']}`}></div>
         <div className={styles['uag-cluster-live-badge']}>
@@ -86,26 +138,23 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
           <span style={{ fontWeight: 700 }}>Live 監控中</span>
         </div>
 
-        {liveLeads.map((lead) => {
-          const x = lead.x != null ? lead.x : 50;
-          const y = lead.y != null ? lead.y : 50;
-          const size =
-            lead.grade === 'S'
-              ? 120
-              : lead.grade === 'A'
-                ? 100
-                : lead.grade === 'B'
-                  ? 90
-                  : lead.grade === 'C'
-                    ? 80
-                    : 60;
+        {liveLeads.map((lead, index) => {
+          const size = sizeMap[lead.grade as keyof typeof sizeMap] ?? 60;
           const floatDuration = floatDurations[lead.id] ?? '6s';
+          const resolvedPos = resolvedPositions[index];
+
+          // 若尚未解析位置，使用原始百分比位置
+          const x = resolvedPos ? (resolvedPos.x / containerWidth) * 100 : (lead.x ?? 50);
+          const y = resolvedPos ? (resolvedPos.y / 450) * 100 : (lead.y ?? 50);
+
+          const isClicked = clickedLeadId === lead.id;
 
           return (
             <div
               key={lead.id}
               className={styles['uag-bubble']}
               data-grade={lead.grade}
+              data-clicked={isClicked ? 'true' : undefined}
               role="button"
               aria-label={`${lead.name || lead.id} - ${lead.grade}級`}
               tabIndex={0}
@@ -117,11 +166,18 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
                   top: y + '%',
                 } as React.CSSProperties
               }
-              onClick={() => onSelectLead(lead)}
+              onClick={() => {
+                setClickedLeadId(lead.id);
+                onSelectLead(lead);
+                // 3 秒後自動隱藏 tooltip
+                setTimeout(() => setClickedLeadId(null), 3000);
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
+                  setClickedLeadId(lead.id);
                   onSelectLead(lead);
+                  setTimeout(() => setClickedLeadId(null), 3000);
                 }
               }}
             >

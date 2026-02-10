@@ -1,12 +1,25 @@
 ﻿import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, vi } from 'vitest';
 import RadarCluster from './RadarCluster';
 import type { Lead } from '../types/uag.types';
 
 const UAG_STYLES_PATH = resolve(process.cwd(), 'src/pages/UAG/UAG.module.css');
 
+// Mock ResizeObserver
+class ResizeObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
+
 describe('RadarCluster', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   const sampleLeads: Lead[] = [
     {
       id: 'lead-f-1',
