@@ -34,12 +34,10 @@ function renderPropertyInfoCard(
     isFavorite?: boolean;
     onFavoriteToggle?: () => void;
     onLineShare?: () => void;
-    onMapClick?: () => void;
   } = {}
 ) {
   const onFavoriteToggle = options.onFavoriteToggle ?? vi.fn();
   const onLineShare = options.onLineShare ?? vi.fn();
-  const onMapClick = options.onMapClick ?? vi.fn();
 
   render(
     <PropertyInfoCard
@@ -47,14 +45,13 @@ function renderPropertyInfoCard(
       isFavorite={options.isFavorite ?? false}
       onFavoriteToggle={onFavoriteToggle}
       onLineShare={onLineShare}
-      onMapClick={onMapClick}
       capsuleTags={['近捷運', '採光佳']}
       socialProof={options.socialProof ?? baseSocialProof}
       trustEnabled={options.trustEnabled ?? true}
     />
   );
 
-  return { onFavoriteToggle, onLineShare, onMapClick };
+  return { onFavoriteToggle, onLineShare };
 }
 
 describe('PropertyInfoCard D5', () => {
@@ -112,7 +109,7 @@ describe('PropertyInfoCard D5', () => {
     expect(screen.getByText('收起地址')).toBeInTheDocument();
   });
 
-  it('uses >=44px touch targets for share/favorite/map controls', () => {
+  it('uses >=44px touch targets for share/favorite controls', () => {
     renderPropertyInfoCard();
 
     const actionGroup = screen.getByTestId('property-info-actions');
@@ -122,9 +119,6 @@ describe('PropertyInfoCard D5', () => {
       expect(button.className).toContain('min-h-[44px]');
       expect(button.className).toContain('min-w-[44px]');
     });
-
-    const mapLink = screen.getByTestId('map-link');
-    expect(mapLink.className).toContain('min-h-[44px]');
   });
 
   it('calls onFavoriteToggle when favorite button is clicked', () => {
@@ -134,15 +128,6 @@ describe('PropertyInfoCard D5', () => {
     fireEvent.click(screen.getByTestId('favorite-button'));
 
     expect(onFavoriteToggle).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls onMapClick when map link is clicked', () => {
-    const onMapClick = vi.fn();
-    renderPropertyInfoCard({ onMapClick });
-
-    fireEvent.click(screen.getByTestId('map-link'));
-
-    expect(onMapClick).toHaveBeenCalledTimes(1);
   });
 
   it('calls onLineShare when line share button is clicked', () => {

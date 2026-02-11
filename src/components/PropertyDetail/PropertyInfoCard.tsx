@@ -11,7 +11,6 @@ interface PropertyInfoCardProps {
   isFavorite: boolean;
   onFavoriteToggle: () => void;
   onLineShare: () => void;
-  onMapClick: () => void;
   capsuleTags: string[];
   socialProof: {
     currentViewers: number;
@@ -28,7 +27,6 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
   isFavorite,
   onFavoriteToggle,
   onLineShare,
-  onMapClick,
   capsuleTags,
   socialProof,
   trustEnabled,
@@ -44,11 +42,6 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
         ? `/maihouses/property/${property.publicId}`
         : `${window.location.origin}/maihouses/property/${property.publicId}`,
     [property.publicId]
-  );
-
-  const mapSearchUrl = useMemo(
-    () => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address)}`,
-    [property.address]
   );
 
   return (
@@ -107,18 +100,6 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
             </span>
           </button>
         </div>
-
-        <a
-          data-testid="map-link"
-          href={mapSearchUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={onMapClick}
-          className="inline-flex min-h-[44px] items-center gap-1 rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          <MapPin size={14} />
-          查看地圖
-        </a>
       </div>
 
       <div className="mt-4 flex items-baseline gap-2">

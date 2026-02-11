@@ -409,10 +409,6 @@ export const PropertyDetailPage: React.FC = () => {
     propertyTracker.trackLineClick();
   }, [propertyTracker]);
 
-  const handleMapClick = useCallback(() => {
-    propertyTracker.trackMapClick();
-  }, [propertyTracker]);
-
   const handlePhotoClick = useCallback(() => {
     propertyTracker.trackPhotoClick();
   }, [propertyTracker]);
@@ -758,7 +754,6 @@ export const PropertyDetailPage: React.FC = () => {
                 isFavorite={isFavorite}
                 onFavoriteToggle={handleFavoriteToggle}
                 onLineShare={handleLineShare}
-                onMapClick={handleMapClick}
                 capsuleTags={capsuleTags}
                 socialProof={socialProof}
                 trustEnabled={isTrustEnabled}
