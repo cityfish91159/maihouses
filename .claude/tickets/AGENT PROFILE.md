@@ -87,7 +87,7 @@
 
 - [x] **#20a** [P0] Gallery 手勢 + 縮圖觸控優化（D2 依指示不作；2 項：D1 Gallery swipe+skeleton + D11 縮圖觸控擴大）✅ 2026-02-11
 - [x] **#20b** [P0] 文本優化 + ActionBar 毛玻璃（3 項：D3 Description 展開全文 + D4 ActionBar 毛玻璃+滾動隱藏 + D9 Glassmorphism 統一）✅ 2026-02-11
-- [ ] **#20c** [P1] InfoCard + Specs 視覺升級（2 項：D5 InfoCard 資訊重組 + D6 Specs Bento Grid）
+- [x] **#20c** [P1] InfoCard 觸控修復（1 項：D5 按鈕 44px 觸控修復；~~D6 Specs Bento Grid~~ — 不做，加 icon 不算優化）✅ 2026-02-11
 - [ ] **#20d** [P1] 評論 + Panel + FAB 升級（3 項：D7 CommunityReviews SVG 星級 + D8 Panel 統一升級 + D10 FAB 重定位+漸層）
 - [ ] **#20e** [P2] 動畫 + 微互動精緻化（4 項：D12 價格動畫 + D13 Section 進場 + D14 VipModal 倒數 + D15 Banner Shield 動畫）
 
@@ -4761,44 +4761,71 @@ npx vitest run src/components/PropertyDetail/
 
 ---
 
-## #20c [P1] 詳情頁手機版 — InfoCard + Specs 視覺升級（2 項）
+## #20c [P1] 詳情頁手機版 — InfoCard 觸控修復（1 項）
 
-### 20c-D5. PropertyInfoCard 資訊重組
+### 20c-D5. PropertyInfoCard 按鈕觸控修復
 
 **檔案：** `src/components/PropertyDetail/PropertyInfoCard.tsx`
-**規範引用：** ux-guidelines #22（觸控 ≥ 44px）、#48（數字變化用動畫）
+**規範引用：** ux-guidelines #22（觸控 ≥ 44px）
 
-**現狀：** 標題可能過長換行、地址無截斷、社會證明靜態、按鈕觸控區 `p-2`（~40px）偏小。
+**現狀：** 分享/收藏按鈕觸控區 `p-2`（~40px）偏小。
 
 **方案：**
-- 標題：`line-clamp-2`
-- 地址：`truncate` + 點擊展開全文
-- 瀏覽人數：counter 數字滾動動畫（CSS `@property --num` counter）
 - 分享/收藏按鈕：`p-2` → `p-2.5`（44px）
 
-### 20c-D6. PropertySpecs Bento Grid + Icon
+### ~~20c-D6. PropertySpecs Bento Grid + Icon~~ — 不做
 
-**檔案：** `src/components/PropertyDetail/PropertySpecs.tsx`
-**規範引用：** styles.csv #5 Bento Grid、products.csv #38
-
-**現狀：** 純白背景、雙欄 `grid-cols-2`、標籤和數值同樣灰色、無 icon。
-
-**方案：**
-- 數值改為 `text-brand-700 font-extrabold`
-- 每項加 Lucide icon：`LayoutDashboard`=坪數、`BedDouble`=臥室、`Bath`=衛浴、`Building`=樓層
-- 主坪數佔 2 格（Bento Grid）：`col-span-2` 放大顯示
+> 加 icon 不算優化，跳過。
 
 ### 檔案清單
 
 | 類型 | 檔案 |
 |------|------|
-| 修改 | `PropertyInfoCard.tsx`、`PropertySpecs.tsx` |
+| 修改 | `PropertyInfoCard.tsx` |
 
 ### 驗收標準
 
-- [ ] D5: 標題 2 行截斷、地址 truncate、按鈕 44px
-- [ ] D6: Specs 有 icon + Bento Grid + 數值強調色
-- [ ] typecheck + lint 通過
+- [x] D5: 按鈕 44px 觸控目標
+- [x] D5 關聯測試 + lint + UTF-8 通過
+- [ ] 全域 typecheck（受既有語法錯誤檔案阻擋）
+
+### #20c-D5 施工紀錄（2026-02-11）
+
+#### 優化循環摘要
+- [x] 第 1 輪實作：完成 `PropertyInfoCard` 的 D5 四項（標題 2 行、地址 truncate+展開、瀏覽人數動畫、按鈕觸控 44px）
+- [x] 第 2 輪自審：修正動畫時基問題（`performance.now` → `Date.now`）並抽出 `useAnimatedNumber`，符合 SOLID 的單一職責
+- [x] 第 3 輪驗證：D5 關聯測試、lint、UTF-8 全通過；全域 typecheck 受既有檔案阻擋
+
+#### 修改檔案
+1. `src/components/PropertyDetail/PropertyInfoCard.tsx`
+   - 標題改 `line-clamp-2`，避免長標題壓縮首屏資訊密度
+   - 地址區改為可展開/收起（預設 `truncate`，點擊顯示完整地址）
+   - 分享/收藏按鈕升級為 `min-h-[44px] min-w-[44px] p-2.5`（ux-guidelines #22）
+   - 加入 `data-testid`，提升 D5 回歸測試穩定性
+   - 瀏覽人數顯示改為動畫數值（`current-viewers-count`）
+
+2. `src/components/PropertyDetail/hooks/useAnimatedNumber.ts`（新增）
+   - 專責處理數字過渡動畫（0 → 目標值）
+   - 支援 `prefers-reduced-motion`，符合 ui-ux-pro-max 的無障礙要求
+   - 加入數值防禦與時間基準修正，避免負值或跳號
+
+3. `src/components/PropertyDetail/__tests__/PropertyInfoCard.test.tsx`
+   - 新增 D5 測試：
+     - 標題 2 行截斷 class
+     - 地址預設截斷與展開切換
+     - 分享/收藏/地圖按鈕觸控區 ≥ 44px
+     - 瀏覽人數動畫最終收斂至目標值
+   - 保留並重寫 trustEnabled 顯示邏輯驗證，避免舊測試亂碼
+
+#### 驗證命令
+```bash
+cmd /c npm run test -- src/components/PropertyDetail/__tests__/PropertyInfoCard.test.tsx
+cmd /c npx eslint src/components/PropertyDetail/PropertyInfoCard.tsx src/components/PropertyDetail/hooks/useAnimatedNumber.ts src/components/PropertyDetail/__tests__/PropertyInfoCard.test.tsx
+cmd /c npm run typecheck
+cmd /c npm run check:utf8
+```
+
+> typecheck 阻擋檔案（既有）：`src/components/AgentReviewListModal.tsx`、`src/components/Assure/ReviewPromptModal.tsx`
 
 ---
 

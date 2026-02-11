@@ -1,14 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { PropertyData } from '../../../services/propertyService';
 import { PropertyInfoCard } from '../PropertyInfoCard';
 
 const baseProperty: PropertyData = {
   id: 'property-1',
   publicId: 'MH-100001',
-  title: '信義區景觀宅',
+  title: '信義區景觀宅，採光極佳，近捷運與商圈，生活機能完整',
   price: 2880,
-  address: '台北市信義區松高路 1 號',
-  description: '測試用物件描述',
+  address: '台北市信義區松高路 1 號 10 樓',
+  description: '測試物件描述',
   images: ['https://example.com/property.jpg'],
   agent: {
     id: 'agent-1',
@@ -27,42 +27,89 @@ const baseSocialProof = {
   isHot: true,
 };
 
-describe('PropertyInfoCard', () => {
-  it('trustEnabled=false 時不應顯示熱門物件與已賞屋文案', () => {
-    render(
-      <PropertyInfoCard
-        property={baseProperty}
-        isFavorite={false}
-        onFavoriteToggle={vi.fn()}
-        onLineShare={vi.fn()}
-        onMapClick={vi.fn()}
-        capsuleTags={[]}
-        socialProof={baseSocialProof}
-        trustEnabled={false}
-      />
-    );
+function renderPropertyInfoCard(options?: {
+  trustEnabled?: boolean;
+  socialProof?: typeof baseSocialProof;
+}) {
+  return render(
+    <PropertyInfoCard
+      property={baseProperty}
+      isFavorite={false}
+      onFavoriteToggle={vi.fn()}
+      onLineShare={vi.fn()}
+      onMapClick={vi.fn()}
+      capsuleTags={['近捷運', '採光佳']}
+      socialProof={options?.socialProof ?? baseSocialProof}
+      trustEnabled={options?.trustEnabled ?? true}
+    />
+  );
+}
 
-    expect(screen.queryByText('熱門物件')).not.toBeInTheDocument();
-    expect(screen.queryByText(/組客戶已賞屋/)).not.toBeInTheDocument();
+describe('PropertyInfoCard D5', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it('trustEnabled=true 且 isHot=true 時應顯示熱門物件', () => {
-    const { container } = render(
-      <PropertyInfoCard
-        property={baseProperty}
-        isFavorite={false}
-        onFavoriteToggle={vi.fn()}
-        onLineShare={vi.fn()}
-        onMapClick={vi.fn()}
-        capsuleTags={[]}
-        socialProof={baseSocialProof}
-        trustEnabled={true}
-      />
-    );
+  it('hides hot and trust-cases text when trust is disabled', () => {
+    renderPropertyInfoCard({ trustEnabled: false });
+
+    expect(screen.queryByText('熱門物件')).not.toBeInTheDocument();
+    expect(screen.queryByText(/本物件 \d+ 組客戶已賞屋/)).not.toBeInTheDocument();
+  });
+
+  it('shows hot and trust-cases text when trust is enabled', () => {
+    renderPropertyInfoCard({ trustEnabled: true });
 
     expect(screen.getByText('熱門物件')).toBeInTheDocument();
+    expect(screen.getByText('本物件 4 組客戶已賞屋')).toBeInTheDocument();
+  });
 
-    const hotBadge = container.querySelector('.animate-pulse');
-    expect(hotBadge?.className).toContain('motion-reduce:animate-none');
+  it('uses two-line clamp for long title', () => {
+    renderPropertyInfoCard();
+
+    const title = screen.getByRole('heading', { level: 1 });
+    expect(title).toHaveClass('line-clamp-2');
+  });
+
+  it('truncates address by default and expands after toggle click', () => {
+    renderPropertyInfoCard();
+
+    const toggle = screen.getByTestId('address-toggle');
+    const addressText = screen.getByTestId('property-address-text');
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(addressText).toHaveClass('truncate');
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(addressText).not.toHaveClass('truncate');
+    expect(screen.getByText('收起地址')).toBeInTheDocument();
+  });
+
+  it('uses >=44px touch targets for share/favorite/map controls', () => {
+    renderPropertyInfoCard();
+
+    const actionGroup = screen.getByTestId('property-info-actions');
+    const actionButtons = within(actionGroup).getAllByRole('button');
+
+    actionButtons.forEach((button) => {
+      expect(button.className).toContain('min-h-[44px]');
+      expect(button.className).toContain('min-w-[44px]');
+    });
+
+    const mapLink = screen.getByTestId('map-link');
+    expect(mapLink.className).toContain('min-h-[44px]');
+  });
+
+  it('animates current viewers number and settles at target value', async () => {
+    renderPropertyInfoCard();
+
+    expect(screen.getByTestId('current-viewers-count')).toHaveTextContent('0');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-viewers-count')).toHaveTextContent('12');
+    }, { timeout: 2000 });
   });
 });

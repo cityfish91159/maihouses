@@ -1,10 +1,11 @@
-﻿import { memo, type CSSProperties } from 'react';
-import { MapPin, Heart, Eye, Users, Flame } from 'lucide-react';
+import { memo, useMemo, useState, type CSSProperties } from 'react';
+import { Eye, Flame, Heart, MapPin, Users } from 'lucide-react';
 import type { PropertyData } from '../../services/propertyService';
-import { LineShareAction } from '../social/LineShareAction';
-import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
+import { LineShareAction } from '../social/LineShareAction';
+import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
+import { useAnimatedNumber } from './hooks/useAnimatedNumber';
 
 interface PropertyInfoCardProps {
   property: PropertyData;
@@ -18,21 +19,9 @@ interface PropertyInfoCardProps {
     trustCasesCount: number;
     isHot: boolean;
   };
-  trustEnabled: boolean; // #8 控制賞屋組數顯示
+  trustEnabled: boolean;
 }
 
-/**
- * 房源資訊卡片組件
- *
- * 包含:
- * - 標題、地址、價格
- * - 分享與收藏按鈕
- * - 社會證明標籤
- * - 關鍵特色標籤
- *
- * @remarks
- * 使用 React.memo 優化,僅在 props 變化時重新渲染
- */
 export const PropertyInfoCard = memo(function PropertyInfoCard({
   property,
   isFavorite,
@@ -43,44 +32,91 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
   socialProof,
   trustEnabled,
 }: PropertyInfoCardProps) {
+  const [isAddressExpanded, setIsAddressExpanded] = useState(false);
+  const animatedCurrentViewers = useAnimatedNumber(socialProof.currentViewers, { durationMs: 700 });
+
   const lineBrandVars = {
     '--line-brand-green': LINE_BRAND_GREEN,
     '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
   } as CSSProperties;
 
+  const shareUrl = useMemo(
+    () =>
+      typeof window === 'undefined'
+        ? `/maihouses/property/${property.publicId}`
+        : `${window.location.origin}/maihouses/property/${property.publicId}`,
+    [property.publicId]
+  );
+
+  const mapSearchUrl = useMemo(
+    () => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address)}`,
+    [property.address]
+  );
+
   return (
-    <div style={lineBrandVars}>
+    <div style={lineBrandVars} className="rounded-2xl p-4 glass-card sm:p-5">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="text-2xl font-bold leading-tight text-slate-900">{property.title}</h1>
-        {/* 分享 + 收藏按鈕群組 */}
-        <div className="flex items-center gap-2">
+        <h1 className="line-clamp-2 text-2xl font-bold leading-tight text-slate-900">{property.title}</h1>
+
+        <div data-testid="property-info-actions" className="flex items-center gap-2">
           <LineShareAction
-            url={`${window.location.origin}/maihouses/property/${property.publicId}`}
+            url={shareUrl}
             title={`【邁房子推薦】${property.title} | 總價 ${property.price} 萬`}
             onShareClick={onLineShare}
-            className="rounded-full bg-[var(--line-brand-green)] p-2 text-white transition-all hover:bg-[var(--line-brand-green-hover)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-[var(--line-brand-green)] p-2.5 text-white transition-all hover:bg-[var(--line-brand-green-hover)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             showIcon={true}
             btnText=""
           />
           <button
+            type="button"
             onClick={onFavoriteToggle}
             aria-label={isFavorite ? '取消收藏' : '加入收藏'}
-            className={`rounded-full p-2 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${isFavorite ? 'bg-red-50 text-red-500 focus:ring-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 focus:ring-slate-400'}`}
+            data-testid="favorite-button"
+            className={cn(
+              'inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2.5 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2',
+              isFavorite
+                ? 'bg-red-50 text-red-500 focus:ring-red-500'
+                : 'bg-slate-50 text-slate-400 hover:bg-slate-100 focus:ring-slate-400'
+            )}
           >
             <Heart size={24} fill={isFavorite ? 'currentColor' : 'none'} />
           </button>
         </div>
       </div>
 
-      <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
-        <MapPin size={16} />
-        <span>{property.address}</span>
+      <div className="mt-2 space-y-2 text-sm text-slate-500">
+        <div className="flex items-start gap-2">
+          <MapPin size={16} className="mt-3 shrink-0" />
+          <button
+            type="button"
+            aria-expanded={isAddressExpanded}
+            aria-controls="property-address-text"
+            aria-label={isAddressExpanded ? '收起完整地址' : '展開完整地址'}
+            data-testid="address-toggle"
+            onClick={() => setIsAddressExpanded((prev) => !prev)}
+            className="min-h-[44px] flex-1 rounded-xl p-2 text-left outline-none transition-colors hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+          >
+            <span
+              id="property-address-text"
+              data-testid="property-address-text"
+              className={cn('block text-sm text-slate-600', !isAddressExpanded && 'truncate')}
+              title={property.address}
+            >
+              {property.address}
+            </span>
+            <span className="mt-0.5 block text-xs font-medium text-brand-700">
+              {isAddressExpanded ? '收起地址' : '查看完整地址'}
+            </span>
+          </button>
+        </div>
+
         <a
-          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address)}`}
+          data-testid="map-link"
+          href={mapSearchUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={onMapClick}
-          className="ml-2 inline-flex min-h-[44px] items-center gap-1 rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="inline-flex min-h-[44px] items-center gap-1 rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           <MapPin size={14} />
           查看地圖
@@ -93,9 +129,7 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
         <span className="ml-2 text-sm font-medium text-red-500">可議價</span>
       </div>
 
-      {/* 社會證明提示 - FOMO (#8 真實數據) */}
       <div className="mt-3 flex flex-wrap gap-2">
-        {/* 熱門標記：trustEnabled && trustCasesCount >= 3 才顯示 */}
         {trustEnabled && socialProof.isHot && (
           <div
             className={cn(
@@ -107,12 +141,12 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
             熱門物件
           </div>
         )}
-        {/* 瀏覽人數 — 永遠顯示 */}
+
         <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-sm text-slate-600">
           <Eye size={12} className="text-blue-500" />
-          {socialProof.currentViewers} 人正在瀏覽
+          <span data-testid="current-viewers-count">{animatedCurrentViewers}</span> 人正在瀏覽
         </div>
-        {/* 賞屋組數 — 有開啟安心留痕服務 且 案件數 > 0 時才顯示 */}
+
         {trustEnabled && socialProof.trustCasesCount > 0 && (
           <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-sm text-slate-600">
             <Users size={12} className="text-green-500" />
@@ -121,13 +155,9 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
         )}
       </div>
 
-      {/* Tags */}
       <div className="mt-4 flex flex-wrap gap-2">
         {capsuleTags.map((tag) => (
-          <span
-            key={tag}
-            className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-brand-700"
-          >
+          <span key={tag} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-brand-700">
             {tag}
           </span>
         ))}
