@@ -2,23 +2,25 @@ import React from 'react';
 import { ShieldCheck, Star, BadgeCheck, Briefcase } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import type { MetricsDisplayProps } from './MetricsDisplay';
-import { buildMetricsDisplayViewModel } from './metricsDisplayUtils';
 
 type MetricsDisplayCardProps = Pick<MetricsDisplayProps, 'profile' | 'className'>;
 
 export const MetricsDisplayCard: React.FC<MetricsDisplayCardProps> = ({ profile, className }) => {
-  const { ratingText, ratingCount, serviceYearsText } = buildMetricsDisplayViewModel(profile);
+  const hasRating = Number.isFinite(profile.serviceRating);
+  const ratingText = hasRating ? profile.serviceRating.toFixed(1) : 'N/A';
+  const ratingCount = Number.isFinite(profile.reviewCount) ? profile.reviewCount : 0;
+  const serviceYearsText = Number.isFinite(profile.serviceYears) ? `${profile.serviceYears} 年` : 'N/A';
 
   return (
     <div className={cn('rounded-2xl border border-slate-100 bg-white p-5 shadow-sm', className)}>
       <h3 className="text-sm font-semibold text-slate-800">專業指標</h3>
       <div className="mt-4 grid gap-3">
-        <div className="flex items-center justify-between rounded-xl bg-brand-50 px-4 py-3">
-          <div className="flex items-center gap-3 text-sm text-brand-700">
-            <ShieldCheck size={16} className="text-brand-700" />
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition-colors duration-200 hover:border-brand-300 motion-reduce:transition-none">
+          <div className="flex items-center gap-3 text-sm text-slate-700">
+            <ShieldCheck size={16} className="text-slate-700" />
             信任分
           </div>
-          <span className="text-base font-bold text-brand-700">{profile.trustScore}</span>
+          <span className="text-base font-bold text-slate-900">{profile.trustScore}</span>
         </div>
         <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition-colors duration-200 hover:border-brand-300 motion-reduce:transition-none">
           <div className="flex items-center gap-3 text-sm text-slate-700">

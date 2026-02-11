@@ -52,8 +52,9 @@ export function useAvatarUpload({ avatarUrl, onUpload }: UseAvatarUploadParams) 
 
     try {
       await onUpload(file);
-    } finally {
       event.target.value = '';
+    } catch {
+      // Keep the current value when upload fails.
     }
   };
 

@@ -3,11 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { BasicInfoSection } from '../BasicInfoSection';
 import type { AgentProfileMe } from '../../../../types/agent.types';
 
-const PROFILE_TAB_STORAGE_KEY = 'uag-profile-active-tab';
+const PROFILE_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+const buildProfileTabStorageKey = (prefix = 'uag-profile') => `${prefix}-${PROFILE_ID}-active-tab`;
 
 function createProfile(overrides: Partial<AgentProfileMe> = {}): AgentProfileMe {
   return {
-    id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    id: PROFILE_ID,
     name: '測試房仲',
     avatarUrl: null,
     company: '邁房子',
@@ -39,7 +41,7 @@ function createProfile(overrides: Partial<AgentProfileMe> = {}): AgentProfileMe 
 
 describe('BasicInfoSection (#15)', () => {
   beforeEach(() => {
-    window.localStorage.removeItem(PROFILE_TAB_STORAGE_KEY);
+    window.localStorage.clear();
   });
 
   it('keeps empty company input when profile.company is null', () => {
@@ -232,6 +234,25 @@ describe('BasicInfoSection (#15)', () => {
 
     await user.click(screen.getByRole('button', { name: '專長證照' }));
 
-    expect(window.localStorage.getItem(PROFILE_TAB_STORAGE_KEY)).toBe('expertise');
+    expect(window.localStorage.getItem(buildProfileTabStorageKey())).toBe('expertise');
+  });
+
+  it('supports custom storage key prefix', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <BasicInfoSection
+        profile={createProfile()}
+        isSaving={false}
+        onSave={vi.fn()}
+        storageKeyPrefix="uag-profile-agent"
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: '專長證照' }));
+
+    expect(window.localStorage.getItem(buildProfileTabStorageKey('uag-profile-agent'))).toBe(
+      'expertise'
+    );
   });
 });

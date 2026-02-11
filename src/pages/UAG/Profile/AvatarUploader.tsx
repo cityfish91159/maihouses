@@ -24,7 +24,12 @@ const AVATAR_VARIANT_COMPONENTS: Record<
   compact: AvatarUploaderCompact,
 };
 
+function isAvatarUploaderVariant(value: unknown): value is AvatarUploaderVariant {
+  return value === 'card' || value === 'compact';
+}
+
 export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ variant = 'card', ...props }) => {
-  const VariantComponent = AVATAR_VARIANT_COMPONENTS[variant];
+  const safeVariant = isAvatarUploaderVariant(variant) ? variant : 'card';
+  const VariantComponent = AVATAR_VARIANT_COMPONENTS[safeVariant] ?? AVATAR_VARIANT_COMPONENTS.card;
   return <VariantComponent {...props} />;
 };

@@ -2,19 +2,20 @@ import React from 'react';
 import { ShieldCheck, Star, BadgeCheck, Briefcase } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import type { MetricsDisplayProps } from './MetricsDisplay';
-import { buildMetricsDisplayViewModel } from './metricsDisplayUtils';
 
 type MetricsDisplayCompactProps = Pick<MetricsDisplayProps, 'profile' | 'className'>;
 
 export const MetricsDisplayCompact: React.FC<MetricsDisplayCompactProps> = ({ profile, className }) => {
-  const { ratingText, serviceYearsText } = buildMetricsDisplayViewModel(profile);
+  const hasRating = Number.isFinite(profile.serviceRating);
+  const ratingText = hasRating ? profile.serviceRating.toFixed(1) : 'N/A';
+  const serviceYearsText = Number.isFinite(profile.serviceYears) ? `${profile.serviceYears} 年` : 'N/A';
 
   return (
     <div className={cn('grid grid-cols-2 gap-2', className)}>
-      <div className="border-brand-200 flex flex-col items-center justify-center rounded-xl border bg-brand-50 p-3">
-        <ShieldCheck size={16} className="text-brand-700" />
+      <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors duration-200 hover:border-brand-300 motion-reduce:transition-none">
+        <ShieldCheck size={16} className="text-slate-700" />
         <span className="mt-1 text-xs text-slate-600">信任分</span>
-        <span className="mt-1 text-lg font-bold text-brand-700">{profile.trustScore}</span>
+        <span className="mt-1 text-lg font-bold text-slate-900">{profile.trustScore}</span>
       </div>
       <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-3 transition-colors duration-200 hover:border-brand-300 motion-reduce:transition-none">
         <Star size={16} className="text-amber-500" />

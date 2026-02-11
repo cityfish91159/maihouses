@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { AvatarUploader } from './AvatarUploader';
@@ -14,21 +14,32 @@ interface FormStateInfo {
   isSubmitDisabled: boolean;
 }
 
-interface SectionErrorFallbackProps {
+interface SectionErrorFallbackProps extends Pick<FallbackProps, 'resetErrorBoundary'> {
   title: string;
   description: string;
 }
 
 const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)';
-const STICKY_SAVE_BAR_HEIGHT_PX = 80;
+const PROFILE_STICKY_SAVE_BAR_HEIGHT_PX = 80;
 const PROFILE_LAYOUT_STYLE = {
-  '--uag-profile-sticky-bar-height': `${STICKY_SAVE_BAR_HEIGHT_PX}px`,
+  '--page-uag-profile-sticky-save-bar-height': `${PROFILE_STICKY_SAVE_BAR_HEIGHT_PX}px`,
 } as CSSProperties;
 
-const SectionErrorFallback: React.FC<SectionErrorFallbackProps> = ({ title, description }) => (
+const SectionErrorFallback: React.FC<SectionErrorFallbackProps> = ({
+  title,
+  description,
+  resetErrorBoundary,
+}) => (
   <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
     <p className="font-semibold">{title}</p>
     <p className="mt-1">{description}</p>
+    <button
+      type="button"
+      onClick={resetErrorBoundary}
+      className="mt-3 inline-flex min-h-[44px] items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+    >
+      重試
+    </button>
   </div>
 );
 
@@ -36,7 +47,7 @@ export default function UAGProfilePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isMockMode = searchParams.get('mock') === 'true';
-  const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
+  const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY, true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
 
@@ -100,7 +111,7 @@ export default function UAGProfilePage() {
   return (
     <div
       style={PROFILE_LAYOUT_STYLE}
-      className="min-h-screen bg-bg-base pb-[calc(var(--uag-profile-sticky-bar-height)+env(safe-area-inset-bottom))] text-slate-900 lg:pb-0"
+      className="min-h-screen bg-bg-base pb-[calc(var(--page-uag-profile-sticky-save-bar-height)+env(safe-area-inset-bottom))] text-slate-900 lg:pb-0"
     >
       <div className="mx-auto max-w-5xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -120,12 +131,14 @@ export default function UAGProfilePage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[280px,1fr]">
           <div className="space-y-6">
             <ErrorBoundary
-              fallback={
+              resetKeys={[profile.id, avatarVariant]}
+              fallbackRender={({ resetErrorBoundary }) => (
                 <SectionErrorFallback
                   title="頭像模組載入失敗"
-                  description="請重新整理頁面後再試一次。"
+                  description="請點擊重試按鈕，或重新整理頁面後再試一次。"
+                  resetErrorBoundary={resetErrorBoundary}
                 />
-              }
+              )}
             >
               <AvatarUploader
                 name={profile.name}
@@ -137,24 +150,28 @@ export default function UAGProfilePage() {
             </ErrorBoundary>
 
             <ErrorBoundary
-              fallback={
+              resetKeys={[profile.id, metricsVariant]}
+              fallbackRender={({ resetErrorBoundary }) => (
                 <SectionErrorFallback
                   title="指標模組載入失敗"
-                  description="請重新整理頁面後再試一次。"
+                  description="請點擊重試按鈕，或重新整理頁面後再試一次。"
+                  resetErrorBoundary={resetErrorBoundary}
                 />
-              }
+              )}
             >
               <MetricsDisplay profile={profile} variant={metricsVariant} />
             </ErrorBoundary>
           </div>
 
           <ErrorBoundary
-            fallback={
+            resetKeys={[profile.id]}
+            fallbackRender={({ resetErrorBoundary }) => (
               <SectionErrorFallback
                 title="表單模組載入失敗"
-                description="請重新整理頁面後再試一次。"
+                description="請點擊重試按鈕，或重新整理頁面後再試一次。"
+                resetErrorBoundary={resetErrorBoundary}
               />
-            }
+            )}
           >
             <BasicInfoSection
               profile={profile}
@@ -162,12 +179,13 @@ export default function UAGProfilePage() {
               onSave={updateProfile}
               formId="profile-form"
               onFormStateChange={handleFormStateChange}
+              storageKeyPrefix="uag-profile"
             />
           </ErrorBoundary>
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 min-h-[var(--uag-profile-sticky-bar-height)] border-t border-slate-200 bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-lg lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-50 min-h-[var(--page-uag-profile-sticky-save-bar-height)] border-t border-slate-200 bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-lg lg:hidden">
         <button
           type="submit"
           form="profile-form"

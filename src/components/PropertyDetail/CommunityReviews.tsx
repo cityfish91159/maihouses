@@ -356,7 +356,7 @@ export const CommunityReviews = memo(function CommunityReviews({
             </div>
 
             {!isLoggedIn && (
-              <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent via-bg-card/80 to-bg-card pb-3">
+              <div className="via-bg-card/80 absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent to-bg-card pb-3">
                 <button
                   onClick={handleAuthRedirect}
                   className="flex min-h-[44px] items-center gap-2 rounded-full bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-lg transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
