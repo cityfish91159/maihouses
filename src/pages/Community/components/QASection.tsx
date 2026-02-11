@@ -232,6 +232,12 @@ function VirtualizedQAListInner({
       totalHeight: questions.length * ESTIMATED_CARD_HEIGHT,
     };
   }, [scrollTop, questions.length, maxHeight]);
+  const firstVisibleOffset = visibleItems.length > 0 ? visibleItems[0]?.offsetTop ?? 0 : 0;
+  const lastVisibleOffset = visibleItems.length > 0 ? visibleItems[visibleItems.length - 1]?.offsetTop ?? 0 : 0;
+  const bottomPadding = Math.max(
+    0,
+    totalHeight - (lastVisibleOffset + (visibleItems.length > 0 ? ESTIMATED_CARD_HEIGHT : 0))
+  );
 
   return (
     <div
@@ -243,12 +249,12 @@ function VirtualizedQAListInner({
     >
       <div
         style={{
-          height: `${totalHeight}px`,
-          width: '100%',
-          position: 'relative',
+          paddingTop: `${firstVisibleOffset}px`,
+          paddingBottom: `${bottomPadding}px`,
         }}
+        className="w-full"
       >
-        {visibleItems.map((item, idx) => {
+        {visibleItems.map((item) => {
           const q = questions[item.index];
           if (!q) return null;
           const cardIsAnswering = isAnswering === true && activeQuestionId === q.id;
@@ -257,13 +263,6 @@ function VirtualizedQAListInner({
             <div
               key={q.id}
               data-index={item.index}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${item.offsetTop}px)`,
-              }}
               // P3 修復：最後一項不加底部間距，避免多餘空白
               className={isLastItem ? '' : 'pb-2.5'}
             >

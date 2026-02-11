@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import { Rocket, Sparkles, MousePointerClick, Coins, X, Send } from 'lucide-react';
+import css from './UIUXDemo.module.css';
 
 /**
  * ============================================================================
@@ -56,163 +57,38 @@ import { Rocket, Sparkles, MousePointerClick, Coins, X, Send } from 'lucide-reac
  */
 
 // =============================================================================
-// Styles
-// =============================================================================
-
-const styles = {
-  container: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Noto Sans TC", sans-serif',
-    padding: '32px',
-    maxWidth: '1000px',
-    margin: '0 auto',
-    background: '#f8fafc',
-    minHeight: '100vh',
-  } as React.CSSProperties,
-
-  title: {
-    fontSize: '24px',
-    fontWeight: 900,
-    color: 'var(--ink-100)',
-    marginBottom: '8px',
-  } as React.CSSProperties,
-
-  subtitle: {
-    fontSize: '14px',
-    color: 'var(--ink-300)',
-    marginBottom: '32px',
-    lineHeight: 1.6,
-  } as React.CSSProperties,
-
-  section: {
-    marginBottom: '48px',
-  } as React.CSSProperties,
-
-  sectionTitle: {
-    fontSize: '18px',
-    fontWeight: 800,
-    color: 'var(--ink-100)',
-    marginBottom: '16px',
-    borderLeft: '4px solid var(--uag-brand-light)',
-    paddingLeft: '12px',
-  } as React.CSSProperties,
-
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '24px',
-  } as React.CSSProperties,
-
-  card: {
-    background: '#fff',
-    borderRadius: '16px',
-    padding: '24px',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)',
-  } as React.CSSProperties,
-
-  cardHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '16px',
-    paddingBottom: '12px',
-    borderBottom: '1px solid #e2e8f0',
-  } as React.CSSProperties,
-
-  badgeBefore: {
-    background: '#fef2f2',
-    color: '#dc2626',
-    padding: '4px 10px',
-    borderRadius: '999px',
-    fontSize: '12px',
-    fontWeight: 700,
-  } as React.CSSProperties,
-
-  badgeAfter: {
-    background: '#f0fdf4',
-    color: '#16a34a',
-    padding: '4px 10px',
-    borderRadius: '999px',
-    fontSize: '12px',
-    fontWeight: 700,
-  } as React.CSSProperties,
-
-  sourceBox: {
-    background: '#f1f5f9',
-    padding: '12px',
-    borderRadius: '8px',
-    fontSize: '11px',
-    color: '#475569',
-    marginTop: '16px',
-    fontFamily: 'monospace',
-    lineHeight: 1.6,
-  } as React.CSSProperties,
-
-  problemBox: {
-    padding: '12px',
-    background: '#fef2f2',
-    borderRadius: '8px',
-    fontSize: '12px',
-    marginTop: '16px',
-    border: '1px solid #fecaca',
-  } as React.CSSProperties,
-
-  fixBox: {
-    padding: '12px',
-    background: '#f0fdf4',
-    borderRadius: '8px',
-    fontSize: '12px',
-    marginTop: '16px',
-    border: '1px solid #bbf7d0',
-  } as React.CSSProperties,
-};
-
-// =============================================================================
 // Demo 1: 空狀態 👆 → MousePointer
 // =============================================================================
 
 function EmptyStateDemo() {
   return (
-    <div style={styles.section}>
-      <h2 style={styles.sectionTitle}>1. 空狀態圖標：👆 → Lucide MousePointerClick</h2>
-      <p
-        style={{
-          fontSize: '13px',
-          color: 'var(--ink-300)',
-          marginBottom: '16px',
-        }}
-      >
+    <div className={css.demoSection}>
+      <h2 className={css.demoSectionTitle}>1. 空狀態圖標：👆 → Lucide MousePointerClick</h2>
+      <p className={css.demoLocationText}>
         位置：<code>ActionPanel.tsx:61</code>
       </p>
 
-      <div style={styles.grid}>
+      <div className={css.demoGrid}>
         {/* BEFORE */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.badgeBefore}>BEFORE</span>
+        <div className={css.demoCard}>
+          <div className={css.demoCardHeader}>
+            <span className={css.demoBadgeBefore}>BEFORE</span>
           </div>
 
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '40px 20px',
-              background: '#f8fafc',
-              borderRadius: '12px',
-            }}
-          >
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>👆</div>
-            <div style={{ color: 'var(--ink-300)', fontSize: '13px' }}>
+          <div className={css.demoEmptyBlock}>
+            <div className={css.demoPointerEmoji}>👆</div>
+            <div className={css.demoHintText}>
               請點擊上方雷達泡泡
               <br />
               查看分析與購買
             </div>
           </div>
 
-          <div style={styles.problemBox}>
+          <div className={css.demoProblemBox}>
             <strong>問題：</strong>使用 emoji 👆 作為 UI 圖標
           </div>
 
-          <div style={styles.sourceBox}>
+          <div className={css.demoSourceBox}>
             <strong>❌ 違反 SKILL.md 第 163 行：</strong>
             <br />
             「No emoji icons - Use SVG icons (Heroicons, Lucide)」
@@ -222,36 +98,25 @@ function EmptyStateDemo() {
         </div>
 
         {/* AFTER */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.badgeAfter}>AFTER</span>
+        <div className={css.demoCard}>
+          <div className={css.demoCardHeader}>
+            <span className={css.demoBadgeAfter}>AFTER</span>
           </div>
 
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '40px 20px',
-              background: '#f8fafc',
-              borderRadius: '12px',
-            }}
-          >
-            <MousePointerClick
-              size={40}
-              strokeWidth={1.5}
-              style={{ color: 'var(--ink-400)', marginBottom: '10px' }}
-            />
-            <div style={{ color: 'var(--ink-300)', fontSize: '13px' }}>
+          <div className={css.demoEmptyBlock}>
+            <MousePointerClick size={40} strokeWidth={1.5} className={css.demoPointerIcon} />
+            <div className={css.demoHintText}>
               請點擊上方雷達泡泡
               <br />
               查看分析與購買
             </div>
           </div>
 
-          <div style={styles.fixBox}>
+          <div className={css.demoFixBox}>
             <strong>修正：</strong>使用 Lucide <code>&lt;MousePointerClick /&gt;</code>
           </div>
 
-          <div style={styles.sourceBox}>
+          <div className={css.demoSourceBox}>
             <strong>✅ 遵循 SKILL.md 第 163 行：</strong>
             <br />
             「Use SVG icons (Heroicons, Lucide, Simple Icons)」
@@ -268,45 +133,28 @@ function EmptyStateDemo() {
 
 function ExclusiveBadgeDemo() {
   return (
-    <div style={styles.section}>
-      <h2 style={styles.sectionTitle}>2. 獨家權益標籤：✨ → Lucide Sparkles</h2>
-      <p
-        style={{
-          fontSize: '13px',
-          color: 'var(--ink-300)',
-          marginBottom: '16px',
-        }}
-      >
+    <div className={css.demoSection}>
+      <h2 className={css.demoSectionTitle}>2. 獨家權益標籤：✨ → Lucide Sparkles</h2>
+      <p className={css.demoLocationText}>
         位置：<code>ActionPanel.tsx:134</code>
       </p>
 
-      <div style={styles.grid}>
+      <div className={css.demoGrid}>
         {/* BEFORE */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.badgeBefore}>BEFORE</span>
+        <div className={css.demoCard}>
+          <div className={css.demoCardHeader}>
+            <span className={css.demoBadgeBefore}>BEFORE</span>
           </div>
 
-          <div
-            style={{
-              background: '#fff7ed',
-              color: '#ea580c',
-              fontWeight: 700,
-              fontSize: '12px',
-              textAlign: 'center',
-              padding: '10px',
-              borderRadius: '6px',
-              border: '1px solid #ffedd5',
-            }}
-          >
+          <div className={css.demoExclusiveBadgeBefore}>
             ✨ 此客戶包含獨家訊息聯絡權 ✨
           </div>
 
-          <div style={styles.problemBox}>
+          <div className={css.demoProblemBox}>
             <strong>問題：</strong>使用 emoji ✨ 裝飾文字
           </div>
 
-          <div style={styles.sourceBox}>
+          <div className={css.demoSourceBox}>
             <strong>❌ 違反 SKILL.md 第 163 行：</strong>
             <br />
             「No emoji icons」
@@ -314,37 +162,22 @@ function ExclusiveBadgeDemo() {
         </div>
 
         {/* AFTER */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.badgeAfter}>AFTER</span>
+        <div className={css.demoCard}>
+          <div className={css.demoCardHeader}>
+            <span className={css.demoBadgeAfter}>AFTER</span>
           </div>
 
-          <div
-            style={{
-              background: '#fff7ed',
-              color: '#ea580c',
-              fontWeight: 700,
-              fontSize: '12px',
-              textAlign: 'center',
-              padding: '10px',
-              borderRadius: '6px',
-              border: '1px solid #ffedd5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-            }}
-          >
+          <div className={css.demoExclusiveBadgeAfter}>
             <Sparkles size={14} />
             此客戶包含獨家訊息聯絡權
             <Sparkles size={14} />
           </div>
 
-          <div style={styles.fixBox}>
+          <div className={css.demoFixBox}>
             <strong>修正：</strong>使用 Lucide <code>&lt;Sparkles /&gt;</code>
           </div>
 
-          <div style={styles.sourceBox}>
+          <div className={css.demoSourceBox}>
             <strong>✅ 遵循 SKILL.md 第 163 行：</strong>
             <br />
             「Use SVG icons (Heroicons, Lucide, Simple Icons)」
@@ -360,55 +193,34 @@ function ExclusiveBadgeDemo() {
 // =============================================================================
 
 function BuyButtonDemo() {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
-    <div style={styles.section}>
-      <h2 style={styles.sectionTitle}>3. 購買按鈕：🚀 → Lucide Rocket + Hover 優化</h2>
-      <p
-        style={{
-          fontSize: '13px',
-          color: 'var(--ink-300)',
-          marginBottom: '16px',
-        }}
-      >
+    <div className={css.demoSection}>
+      <h2 className={css.demoSectionTitle}>3. 購買按鈕：🚀 → Lucide Rocket + Hover 優化</h2>
+      <p className={css.demoLocationText}>
         位置：<code>ActionPanel.tsx:144</code>
       </p>
 
-      <div style={styles.grid}>
+      <div className={css.demoGrid}>
         {/* BEFORE */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.badgeBefore}>BEFORE</span>
+        <div className={css.demoCard}>
+          <div className={css.demoCardHeader}>
+            <span className={css.demoBadgeBefore}>BEFORE</span>
           </div>
 
-          <button
-            style={{
-              width: '100%',
-              padding: '16px',
-              border: 'none',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #1749d7, #2563eb)',
-              color: '#fff',
-              fontWeight: 800,
-              fontSize: '16px',
-              cursor: 'pointer',
-              boxShadow: '0 16px 36px rgba(37, 99, 235, 0.45)',
-            }}
-          >
+          <button className={css.demoBuyBtnBefore}>
             🚀 獲取聯絡權限 (LINE/站內信)
           </button>
 
-          <div style={styles.problemBox}>
+          <div className={css.demoProblemBox}>
             <strong>問題：</strong>
-            <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
+            <ul className={css.demoListTight}>
               <li>使用 emoji 🚀</li>
               <li>無 hover 視覺回饋</li>
               <li>無 focus 狀態</li>
             </ul>
           </div>
 
-          <div style={styles.sourceBox}>
+          <div className={css.demoSourceBox}>
             <strong>❌ 違反 SKILL.md：</strong>
             <br />
             第 163 行：「No emoji icons」
@@ -419,45 +231,19 @@ function BuyButtonDemo() {
         </div>
 
         {/* AFTER */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.badgeAfter}>AFTER</span>
+        <div className={css.demoCard}>
+          <div className={css.demoCardHeader}>
+            <span className={css.demoBadgeAfter}>AFTER</span>
           </div>
 
-          <button
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            style={{
-              width: '100%',
-              padding: '16px',
-              border: 'none',
-              borderRadius: '12px',
-              background: isHovered
-                ? 'linear-gradient(135deg, #2563eb, #3b82f6)'
-                : 'linear-gradient(135deg, #1749d7, #2563eb)',
-              color: '#fff',
-              fontWeight: 800,
-              fontSize: '16px',
-              cursor: 'pointer',
-              boxShadow: isHovered
-                ? '0 20px 40px rgba(37, 99, 235, 0.55)'
-                : '0 16px 36px rgba(37, 99, 235, 0.45)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transition: 'all 0.2s ease-out',
-              transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
-              outline: 'none',
-            }}
-          >
+          <button className={css.demoBuyBtnAfter}>
             <Rocket size={18} />
             獲取聯絡權限 (LINE/站內信)
           </button>
 
-          <div style={styles.fixBox}>
+          <div className={css.demoFixBox}>
             <strong>修正：</strong>
-            <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
+            <ul className={css.demoListTight}>
               <li>
                 <code>&lt;Rocket /&gt;</code> 替換 🚀
               </li>
@@ -466,7 +252,7 @@ function BuyButtonDemo() {
             </ul>
           </div>
 
-          <div style={styles.sourceBox}>
+          <div className={css.demoSourceBox}>
             <strong>✅ 遵循 SKILL.md：</strong>
             <br />
             第 163 行：「Use SVG icons (Lucide)」
@@ -495,68 +281,38 @@ function ConfirmButtonDemo() {
   const handleCancel = () => setStep('initial');
 
   return (
-    <div style={styles.section}>
-      <h2 style={styles.sectionTitle}>4. 確認購買按鈕：樣式 + Loading 狀態</h2>
-      <p
-        style={{
-          fontSize: '13px',
-          color: 'var(--ink-300)',
-          marginBottom: '16px',
-        }}
-      >
+    <div className={css.demoSection}>
+      <h2 className={css.demoSectionTitle}>4. 確認購買按鈕：樣式 + Loading 狀態</h2>
+      <p className={css.demoLocationText}>
         位置：<code>ActionPanel.tsx:146-166</code>
       </p>
 
-      <div style={styles.grid}>
+      <div className={css.demoGrid}>
         {/* BEFORE */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.badgeBefore}>BEFORE</span>
+        <div className={css.demoCard}>
+          <div className={css.demoCardHeader}>
+            <span className={css.demoBadgeBefore}>BEFORE</span>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              style={{
-                flex: 1,
-                padding: '16px',
-                border: 'none',
-                borderRadius: '12px',
-                background: '#ef4444',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: '16px',
-                cursor: 'pointer',
-              }}
-            >
+          <div className={css.demoButtonRow}>
+            <button className={css.demoConfirmBeforeDanger}>
               確定花費 3 點?
             </button>
-            <button
-              style={{
-                flex: 1,
-                padding: '16px',
-                border: 'none',
-                borderRadius: '12px',
-                background: '#94a3b8',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: '16px',
-                cursor: 'pointer',
-              }}
-            >
+            <button className={css.demoConfirmBeforeCancel}>
               取消
             </button>
           </div>
 
-          <div style={styles.problemBox}>
+          <div className={css.demoProblemBox}>
             <strong>問題：</strong>
-            <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
+            <ul className={css.demoListTight}>
               <li>無 hover 效果</li>
               <li>無 loading 狀態反饋</li>
               <li>確認按鈕無圖標區分</li>
             </ul>
           </div>
 
-          <div style={styles.sourceBox}>
+          <div className={css.demoSourceBox}>
             <strong>❌ 違反：</strong>
             <br />
             SKILL.md 第 173 行：「Hover feedback」
@@ -568,80 +324,25 @@ function ConfirmButtonDemo() {
         </div>
 
         {/* AFTER */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <span style={styles.badgeAfter}>AFTER</span>
+        <div className={css.demoCard}>
+          <div className={css.demoCardHeader}>
+            <span className={css.demoBadgeAfter}>AFTER</span>
           </div>
 
           {step === 'initial' && (
-            <button
-              onClick={handleBuy}
-              style={{
-                width: '100%',
-                padding: '16px',
-                border: 'none',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #1749d7, #2563eb)',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: '16px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'all 0.2s',
-              }}
-            >
+            <button onClick={handleBuy} className={css.demoConfirmEntryButton}>
               <Rocket size={18} />
               獲取聯絡權限 (LINE/站內信)
             </button>
           )}
 
           {step === 'confirm' && (
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={handleConfirm}
-                style={{
-                  flex: 1,
-                  padding: '16px',
-                  border: 'none',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #dc2626, #ef4444)',
-                  color: '#fff',
-                  fontWeight: 800,
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s',
-                  boxShadow: '0 8px 20px rgba(239, 68, 68, 0.35)',
-                }}
-              >
+            <div className={css.demoButtonRow}>
+              <button onClick={handleConfirm} className={css.demoConfirmDangerButton}>
                 <Coins size={16} />
                 確定花費 3 點
               </button>
-              <button
-                onClick={handleCancel}
-                style={{
-                  flex: 1,
-                  padding: '16px',
-                  border: '1px solid var(--line-soft)',
-                  borderRadius: '12px',
-                  background: '#fff',
-                  color: 'var(--ink-300)',
-                  fontWeight: 700,
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s',
-                }}
-              >
+              <button onClick={handleCancel} className={css.demoConfirmCancelButton}>
                 <X size={16} />
                 取消
               </button>
@@ -649,41 +350,15 @@ function ConfirmButtonDemo() {
           )}
 
           {step === 'loading' && (
-            <button
-              disabled
-              style={{
-                width: '100%',
-                padding: '16px',
-                border: 'none',
-                borderRadius: '12px',
-                background: '#94a3b8',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: '16px',
-                cursor: 'not-allowed',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
-            >
-              <div
-                style={{
-                  width: 18,
-                  height: 18,
-                  border: '2px solid #fff',
-                  borderTopColor: 'transparent',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
-                }}
-              />
+            <button disabled className={css.demoConfirmLoadingButton}>
+              <div className={css.demoSpinner} />
               處理中...
             </button>
           )}
 
-          <div style={styles.fixBox}>
+          <div className={css.demoFixBox}>
             <strong>修正：</strong>
-            <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
+            <ul className={css.demoListTight}>
               <li>
                 確認按鈕添加 <code>&lt;Coins /&gt;</code> 圖標
               </li>
@@ -695,7 +370,7 @@ function ConfirmButtonDemo() {
             </ul>
           </div>
 
-          <div style={styles.sourceBox}>
+          <div className={css.demoSourceBox}>
             <strong>✅ 遵循：</strong>
             <br />
             SKILL.md 第 163 行：「Use SVG icons」
@@ -706,12 +381,6 @@ function ConfirmButtonDemo() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
@@ -722,139 +391,78 @@ function ConfirmButtonDemo() {
 
 function SourceSummary() {
   return (
-    <div
-      style={{
-        ...styles.card,
-        background: 'linear-gradient(135deg, #eff6ff, #eef2ff)',
-        border: '2px solid #3b82f6',
-      }}
-    >
-      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>UI/UX Pro Max 來源總結</h3>
+    <div className={`${css.demoCard} ${css.demoSummaryCard}`}>
+      <h3 className={css.demoSummaryTitle}>UI/UX Pro Max 來源總結</h3>
 
-      <table
-        style={{
-          width: '100%',
-          marginTop: '16px',
-          fontSize: '12px',
-          borderCollapse: 'collapse',
-        }}
-      >
+      <table className={css.demoSummaryTable}>
         <thead>
-          <tr style={{ background: '#dbeafe' }}>
-            <th style={{ padding: '10px', textAlign: 'left' }}>修改項目</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>UI/UX Pro Max 來源</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>位置/搜尋指令</th>
+          <tr className={css.demoSummaryHeadRow}>
+            <th className={css.demoSummaryHeadCell}>修改項目</th>
+            <th className={css.demoSummaryHeadCell}>UI/UX Pro Max 來源</th>
+            <th className={css.demoSummaryHeadCell}>位置/搜尋指令</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>
+            <td className={css.demoSummaryCell}>
               👆 → MousePointerClick
             </td>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>
+            <td className={css.demoSummaryCell}>
               SKILL.md - No emoji icons
             </td>
-            <td
-              style={{
-                padding: '10px',
-                borderBottom: '1px solid #e2e8f0',
-                fontFamily: 'monospace',
-                fontSize: '11px',
-              }}
-            >
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
               SKILL.md 第 163 行
             </td>
           </tr>
           <tr>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>✨ → Sparkles</td>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>
+            <td className={css.demoSummaryCell}>✨ → Sparkles</td>
+            <td className={css.demoSummaryCell}>
               SKILL.md - No emoji icons
             </td>
-            <td
-              style={{
-                padding: '10px',
-                borderBottom: '1px solid #e2e8f0',
-                fontFamily: 'monospace',
-                fontSize: '11px',
-              }}
-            >
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
               SKILL.md 第 163 行
             </td>
           </tr>
           <tr>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>🚀 → Rocket</td>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>
+            <td className={css.demoSummaryCell}>🚀 → Rocket</td>
+            <td className={css.demoSummaryCell}>
               SKILL.md - No emoji icons
             </td>
-            <td
-              style={{
-                padding: '10px',
-                borderBottom: '1px solid #e2e8f0',
-                fontFamily: 'monospace',
-                fontSize: '11px',
-              }}
-            >
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
               SKILL.md 第 163 行
             </td>
           </tr>
           <tr>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>Hover 視覺回饋</td>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>
+            <td className={css.demoSummaryCell}>Hover 視覺回饋</td>
+            <td className={css.demoSummaryCell}>
               SKILL.md - Hover feedback
             </td>
-            <td
-              style={{
-                padding: '10px',
-                borderBottom: '1px solid #e2e8f0',
-                fontFamily: 'monospace',
-                fontSize: '11px',
-              }}
-            >
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
               SKILL.md 第 173 行
             </td>
           </tr>
           <tr>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>Transition 0.2s</td>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>
+            <td className={css.demoSummaryCell}>Transition 0.2s</td>
+            <td className={css.demoSummaryCell}>
               SKILL.md - Smooth transitions
             </td>
-            <td
-              style={{
-                padding: '10px',
-                borderBottom: '1px solid #e2e8f0',
-                fontFamily: 'monospace',
-                fontSize: '11px',
-              }}
-            >
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
               SKILL.md 第 174 行
             </td>
           </tr>
           <tr>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>Loading 狀態</td>
-            <td style={{ padding: '10px', borderBottom: '1px solid #e2e8f0' }}>
+            <td className={css.demoSummaryCell}>Loading 狀態</td>
+            <td className={css.demoSummaryCell}>
               ux-guidelines.csv - Submit Feedback
             </td>
-            <td
-              style={{
-                padding: '10px',
-                borderBottom: '1px solid #e2e8f0',
-                fontFamily: 'monospace',
-                fontSize: '11px',
-              }}
-            >
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
               --domain ux "confirm danger"
             </td>
           </tr>
           <tr>
-            <td style={{ padding: '10px' }}>確認按鈕 Coins 圖標</td>
-            <td style={{ padding: '10px' }}>SKILL.md - Use SVG icons</td>
-            <td
-              style={{
-                padding: '10px',
-                fontFamily: 'monospace',
-                fontSize: '11px',
-              }}
-            >
+            <td className={css.demoSummaryCell}>確認按鈕 Coins 圖標</td>
+            <td className={css.demoSummaryCell}>SKILL.md - Use SVG icons</td>
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
               SKILL.md 第 163 行
             </td>
           </tr>
@@ -870,9 +478,9 @@ function SourceSummary() {
 
 export default function UIUXDemo() {
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>UAG ActionPanel 購買按鈕 UI/UX 優化 Demo</h1>
-      <p style={styles.subtitle}>
+    <div className={css.demoPage}>
+      <h1 className={css.demoPageTitle}>UAG ActionPanel 購買按鈕 UI/UX 優化 Demo</h1>
+      <p className={css.demoPageSubtitle}>
         專注優化 ActionPanel 的 4 個 UI 元素，所有修改皆標註 /ui-ux-pro-max 來源位置
       </p>
 

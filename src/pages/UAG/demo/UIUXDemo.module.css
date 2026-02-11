@@ -1,0 +1,371 @@
+.demoSection {
+  margin-bottom: 48px;
+}
+
+.demoPage {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans TC', sans-serif;
+  padding: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.demoPageTitle {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--ink-100);
+  margin-bottom: 8px;
+}
+
+.demoPageSubtitle {
+  font-size: 14px;
+  color: var(--ink-300);
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.demoSectionTitle {
+  border-left: 4px solid var(--uag-brand-light);
+  color: var(--ink-100);
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  padding-left: 12px;
+}
+
+.demoLocationText {
+  color: var(--ink-300);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.demoGrid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.demoCard {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  padding: 24px;
+}
+
+.demoCardHeader {
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+}
+
+.demoBadgeBefore {
+  background: #fef2f2;
+  border-radius: 999px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+.demoBadgeAfter {
+  background: #f0fdf4;
+  border-radius: 999px;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+.demoEmptyBlock {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.demoPointerEmoji {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.demoPointerIcon {
+  color: var(--ink-400);
+  margin-bottom: 10px;
+}
+
+.demoHintText {
+  color: var(--ink-300);
+  font-size: 13px;
+}
+
+.demoProblemBox {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-top: 16px;
+  padding: 12px;
+}
+
+.demoFixBox {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-top: 16px;
+  padding: 12px;
+}
+
+.demoSourceBox {
+  background: #f1f5f9;
+  border-radius: 8px;
+  color: #475569;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 16px;
+  padding: 12px;
+}
+
+.demoListTight {
+  margin: 8px 0 0 16px;
+  padding: 0;
+}
+
+.demoExclusiveBadgeBefore {
+  background: #fff7ed;
+  border: 1px solid #ffedd5;
+  border-radius: 6px;
+  color: #ea580c;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px;
+  text-align: center;
+}
+
+.demoExclusiveBadgeAfter {
+  align-items: center;
+  background: #fff7ed;
+  border: 1px solid #ffedd5;
+  border-radius: 6px;
+  color: #ea580c;
+  display: flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+  justify-content: center;
+  padding: 10px;
+  text-align: center;
+}
+
+.demoBuyBtnBefore {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1749d7, #2563eb);
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 16px 36px rgba(37, 99, 235, 0.45);
+}
+
+.demoBuyBtnAfter {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1749d7, #2563eb);
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 16px 36px rgba(37, 99, 235, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease-out;
+  transform: translateY(0);
+  outline: none;
+}
+
+.demoBuyBtnAfter:hover {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.55);
+  transform: translateY(-2px);
+}
+
+.demoBuyBtnAfter:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.demoButtonRow {
+  display: flex;
+  gap: 10px;
+}
+
+.demoConfirmBeforeDanger {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #ef4444;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.demoConfirmBeforeCancel {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #94a3b8;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.demoConfirmEntryButton {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1749d7, #2563eb);
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.demoConfirmDangerButton {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35);
+}
+
+.demoConfirmCancelButton {
+  flex: 1;
+  padding: 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink-300);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.demoConfirmLoadingButton {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #94a3b8;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.demoSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: demo-spin 1s linear infinite;
+}
+
+@keyframes demo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.demoSummaryCard {
+  background: linear-gradient(135deg, #eff6ff, #eef2ff);
+  border: 2px solid #3b82f6;
+}
+
+.demoSummaryTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.demoSummaryTable {
+  width: 100%;
+  margin-top: 16px;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+
+.demoSummaryHeadRow {
+  background: #dbeafe;
+}
+
+.demoSummaryHeadCell {
+  padding: 10px;
+  text-align: left;
+}
+
+.demoSummaryCell {
+  padding: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.demoSummaryMono {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.demoSummaryTable tbody tr:last-child .demoSummaryCell {
+  border-bottom: none;
+}
+
+@media (max-width: 900px) {
+  .demoPage {
+    padding: 16px;
+  }
+
+  .demoGrid {
+    grid-template-columns: 1fr;
+  }
+}

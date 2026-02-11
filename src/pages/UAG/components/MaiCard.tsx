@@ -89,14 +89,13 @@ export default function MaiCard({
           <input
             type="file"
             ref={fileInputRef}
-            style={{ display: 'none' }}
+            className={styles['file-input-hidden']}
             accept="image/*"
             onChange={handleFileChange}
           />
           <button
-            className={`${styles['uag-btn']} ${styles['secondary']}`}
+            className={`${styles['uag-btn']} ${styles['secondary']} ${styles['uag-btn-spacing-right']}`}
             onClick={handleImportClick}
-            style={{ marginRight: '8px' }}
           >
             匯入房仲頁面
           </button>
@@ -136,31 +135,13 @@ export default function MaiCard({
                 <img
                   alt="物件主圖"
                   src={imageUrl}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  className={styles['mai-thumb-image']}
                 />
               </div>
               <div className={styles['mai-mini']}>
-                <div
-                  style={{
-                    background: '#f0f4ff',
-                    borderRadius: '8px',
-                    aspectRatio: '3/2',
-                  }}
-                ></div>
-                <div
-                  style={{
-                    background: '#f0f4ff',
-                    borderRadius: '8px',
-                    aspectRatio: '3/2',
-                  }}
-                ></div>
-                <div
-                  style={{
-                    background: '#f0f4ff',
-                    borderRadius: '8px',
-                    aspectRatio: '3/2',
-                  }}
-                ></div>
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={idx} className={styles['mai-mini-placeholder']}></div>
+                ))}
               </div>
             </div>
           </div>

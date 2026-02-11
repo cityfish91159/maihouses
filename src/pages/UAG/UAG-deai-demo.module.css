@@ -139,6 +139,161 @@
   justify-content: space-between;
 }
 
+.deai-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deai-header-logo-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--swiss-white);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.deai-header-logo-text {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--swiss-black);
+}
+
+.deai-header-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deai-header-primary-badge {
+  background: var(--brand-primary);
+  color: var(--swiss-white);
+  border: none;
+}
+
+.deai-header-separator {
+  color: var(--swiss-gray-400);
+}
+
+.deai-header-company {
+  font-size: 13px;
+  color: var(--swiss-gray-500);
+}
+
+.deai-header-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deai-header-user-name {
+  font-size: 13px;
+  color: var(--swiss-gray-500);
+}
+
+.deai-header-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--brand-primary);
+  color: var(--swiss-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.deai-agent-bar {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 8px 24px;
+  background: rgba(var(--brand-primary-rgb), 0.03);
+  border-bottom: 1px solid var(--swiss-gray-200);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.deai-agent-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  color: var(--swiss-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.deai-agent-info {
+  flex: 1;
+}
+
+.deai-agent-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--swiss-black);
+}
+
+.deai-agent-code {
+  font-size: 11px;
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.deai-agent-metrics {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--swiss-gray-500);
+  margin-top: 2px;
+}
+
+.deai-agent-metric-trust {
+  color: #059669;
+}
+
+.deai-agent-metric-value {
+  color: var(--swiss-black);
+}
+
+.deai-main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+}
+
+.deai-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--swiss-gray-500);
+  font-size: 13px;
+}
+
+.deai-empty-icon {
+  margin-bottom: 12px;
+}
+
 /* ====== De-AI Cards ====== */
 .deai-card {
   background: var(--swiss-white);
@@ -650,6 +805,20 @@
   gap: var(--space-md);
   box-shadow: 0 -2px 4px rgba(0, 56, 90, 0.04);
   z-index: var(--z-layer-sticky);
+}
+
+.deai-footer-status {
+  font-size: 12px;
+  color: var(--swiss-gray-500);
+}
+
+.deai-footer-mode {
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.deai-footer-points-value {
+  margin-left: 4px;
 }
 
 /* ====== Utility: No Animation ====== */

@@ -41,6 +41,7 @@
     "gen-context": "node scripts/gen-context.cjs",
     "police": "node scripts/police.cjs",
     "ultimate-gate": "node scripts/ultimate-gate.cjs",
+    "read:snippet": "node scripts/read-snippet.cjs",
     "dev:force": "vite --force",
     "check:utf8": "node scripts/check-utf8.cjs && node scripts/check-mojibake.cjs",
     "prepare": "husky"

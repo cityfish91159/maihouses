@@ -214,70 +214,32 @@ export default function UAGDeAIDemo() {
       <header className={styles['deai-header']}>
         <div className={styles['deai-header-inner']}>
           {/* Logo area */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '6px',
-                background: 'var(--brand-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--swiss-white)',
-                fontWeight: 700,
-                fontSize: '14px',
-              }}
-            >
+          <div className={styles['deai-header-logo']}>
+            <div className={styles['deai-header-logo-mark']}>
               M
             </div>
-            <span
-              style={{
-                fontFamily: 'Lexend, sans-serif',
-                fontWeight: 600,
-                fontSize: '18px',
-                color: '#0A2246',
-              }}
-            >
+            <span className={styles['deai-header-logo-text']}>
               邁房子
             </span>
           </div>
 
           {/* Navigation */}
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <nav className={styles['deai-header-nav']}>
             <span
-              className={styles['deai-badge']}
-              style={{
-                background: 'var(--brand-primary)',
-                color: 'var(--swiss-white)',
-                border: 'none',
-              }}
+              className={`${styles['deai-badge']} ${styles['deai-header-primary-badge']}`}
             >
               UAG 客戶雷達
             </span>
-            <span style={{ color: 'var(--swiss-gray-400)' }}>·</span>
-            <span style={{ fontSize: '13px', color: 'var(--swiss-gray-500)' }}>邁房子</span>
-            <span style={{ color: 'var(--swiss-gray-400)' }}>·</span>
+            <span className={styles['deai-header-separator']}>·</span>
+            <span className={styles['deai-header-company']}>邁房子</span>
+            <span className={styles['deai-header-separator']}>·</span>
             <span className={styles['deai-badge']}>專業版 PRO</span>
           </nav>
 
           {/* User info placeholder */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--swiss-gray-500)' }}>游杰倫</span>
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '6px',
-                background: 'var(--brand-primary)',
-                color: 'var(--swiss-white)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 600,
-                fontSize: '12px',
-              }}
-            >
+          <div className={styles['deai-header-user']}>
+            <span className={styles['deai-header-user-name']}>游杰倫</span>
+            <div className={styles['deai-header-user-avatar']}>
               游
             </div>
           </div>
@@ -285,89 +247,33 @@ export default function UAGDeAIDemo() {
       </header>
 
       {/* Agent Bar */}
-      <div
-        style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          padding: '8px 24px',
-          background: 'rgba(0, 56, 90, 0.03)',
-          borderBottom: '1px solid #E2E8F0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-        }}
-      >
-        <div
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            background: 'var(--brand-primary)',
-            color: 'var(--swiss-white)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '12px',
-            fontWeight: 700,
-          }}
-        >
+      <div className={styles['deai-agent-bar']}>
+        <div className={styles['deai-agent-avatar']}>
           游
         </div>
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#0A2246',
-            }}
-          >
+        <div className={styles['deai-agent-info']}>
+          <div className={styles['deai-agent-name-row']}>
             游杰倫
-            <span
-              style={{
-                fontSize: '11px',
-                color: 'var(--brand-primary)',
-                fontWeight: 600,
-              }}
-            >
+            <span className={styles['deai-agent-code']}>
               #12345
             </span>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              gap: '16px',
-              fontSize: '11px',
-              color: 'var(--swiss-gray-500)',
-              marginTop: '2px',
-            }}
-          >
+          <div className={styles['deai-agent-metrics']}>
             <span>
-              <strong style={{ color: '#059669' }}>92</strong> 信任分
+              <strong className={styles['deai-agent-metric-trust']}>92</strong> 信任分
             </span>
             <span>
-              <strong style={{ color: '#0A2246' }}>45</strong> 帶看
+              <strong className={styles['deai-agent-metric-value']}>45</strong> 帶看
             </span>
             <span>
-              <strong style={{ color: '#0A2246' }}>8</strong> 成交
+              <strong className={styles['deai-agent-metric-value']}>8</strong> 成交
             </span>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <main
-        style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          padding: '24px',
-          display: 'grid',
-          gridTemplateColumns: '1fr 380px',
-          gap: '24px',
-        }}
-      >
+      <main className={styles['deai-main']}>
         {/* Radar Cluster */}
         <RadarClusterDeAI leads={mockLeads} onSelectLead={handleSelectLead} />
 
@@ -434,17 +340,7 @@ export default function UAGDeAIDemo() {
                 </button>
               </>
             ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '200px',
-                  color: 'var(--swiss-gray-500)',
-                  fontSize: '13px',
-                }}
-              >
+              <div className={styles['deai-empty-state']}>
                 {/* SVG icon instead of emoji */}
                 <svg
                   width="48"
@@ -453,7 +349,7 @@ export default function UAGDeAIDemo() {
                   fill="none"
                   stroke="#CBD5E1"
                   strokeWidth="1.5"
-                  style={{ marginBottom: '12px' }}
+                  className={styles['deai-empty-icon']}
                 >
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 16v-4M12 8h.01" />
@@ -467,14 +363,14 @@ export default function UAGDeAIDemo() {
 
       {/* Footer - Swiss Style */}
       <footer className={styles['deai-footer']}>
-        <span style={{ fontSize: '12px', color: 'var(--swiss-gray-500)' }}>
+        <span className={styles['deai-footer-status']}>
           系統模式：
-          <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>Demo</span>
+          <span className={styles['deai-footer-mode']}>Demo</span>
         </span>
         <button className={styles['deai-btn']}>方案設定</button>
         <button className={`${styles['deai-btn']} ${styles['deai-btn--primary']}`}>加值點數</button>
         <span className={styles['deai-badge']}>
-          點數 <strong style={{ marginLeft: '4px' }}>1,280</strong>
+          點數 <strong className={styles['deai-footer-points-value']}>1,280</strong>
         </span>
       </footer>
     </div>

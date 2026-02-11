@@ -330,6 +330,11 @@ export default function UAGDeAIDemoV2() {
 
   const liveLeads = mockLeads.filter((l) => l.status === 'new');
   const purchasedLeads = mockLeads.filter((l) => l.status === 'purchased');
+  const thumbToneClassByColor: Record<string, string | undefined> = {
+    '#3B82F6': styles['deai-v2-thumb-tone-blue'],
+    '#10B981': styles['deai-v2-thumb-tone-green'],
+    '#F59E0B': styles['deai-v2-thumb-tone-amber'],
+  };
 
   // 產生「等級-序號」標籤
   const leadLabels = useMemo(() => {
@@ -383,7 +388,7 @@ export default function UAGDeAIDemoV2() {
 
           {/* User */}
           <div className={styles['deai-v2-logo']}>
-            <span style={{ fontSize: '13px', color: 'var(--ink-300)' }}>游杰倫</span>
+            <span className={styles['deai-v2-user-name']}>游杰倫</span>
             <div className={styles['deai-v2-logo-icon']}>游</div>
           </div>
         </div>
@@ -570,32 +575,29 @@ export default function UAGDeAIDemoV2() {
               <table className={styles['deai-v2-table']}>
                 <thead>
                   <tr>
-                    <th style={{ width: '25%' }}>客戶等級/名稱</th>
-                    <th style={{ width: '35%' }}>保護期倒數</th>
-                    <th style={{ width: '20%' }}>目前狀態</th>
-                    <th style={{ width: '20%' }}>操作</th>
+                    <th className={styles['deai-v2-col-25']}>客戶等級/名稱</th>
+                    <th className={styles['deai-v2-col-35']}>保護期倒數</th>
+                    <th className={styles['deai-v2-col-20']}>目前狀態</th>
+                    <th className={styles['deai-v2-col-20']}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {purchasedLeads.length === 0 ? (
                     <tr>
-                      <td colSpan={4} style={{ textAlign: 'center', padding: '24px' }}>
+                      <td colSpan={4} className={styles['deai-v2-table-empty']}>
                         尚無已購資產，請從上方雷達進攻。
                       </td>
                     </tr>
                   ) : (
                     purchasedLeads.map((lead) => {
                       const { percent, timeDisplay } = getProtectionInfo(lead);
-                      const colorVar = `var(--grade-${lead.grade.toLowerCase()})`;
+                      const toneClass = styles[`deai-v2-tone--${lead.grade.toLowerCase()}`];
 
                       return (
                         <tr key={lead.id}>
                           <td>
                             <div className={styles['deai-v2-table-lead']}>
-                              <span
-                                className={styles['deai-v2-table-grade']}
-                                style={{ background: colorVar }}
-                              >
+                              <span className={`${styles['deai-v2-table-grade']} ${toneClass}`}>
                                 {lead.grade}
                               </span>
                               <div>
@@ -606,7 +608,7 @@ export default function UAGDeAIDemoV2() {
                           </td>
                           <td>
                             <div className={styles['deai-v2-progress-info']}>
-                              <span style={{ color: colorVar }}>
+                              <span className={`${styles['deai-v2-progress-label']} ${toneClass}`}>
                                 {lead.grade === 'S' || lead.grade === 'A'
                                   ? '獨家保護中'
                                   : '去重保護中'}
@@ -615,10 +617,9 @@ export default function UAGDeAIDemoV2() {
                             </div>
                             <div className={styles['deai-v2-progress-bg']}>
                               <div
-                                className={styles['deai-v2-progress-fill']}
+                                className={`${styles['deai-v2-progress-fill']} ${toneClass}`}
                                 style={{
                                   width: `${percent}%`,
-                                  background: colorVar,
                                 }}
                               />
                             </div>
@@ -667,10 +668,9 @@ export default function UAGDeAIDemoV2() {
               </div>
               <Link
                 to="/property/upload"
-                className={styles['deai-v2-btn']}
-                style={{ textDecoration: 'none' }}
+                className={`${styles['deai-v2-btn']} ${styles['deai-v2-btn-link']}`}
               >
-                <Plus size={14} style={{ marginRight: '4px' }} />
+                <Plus size={14} className={styles['deai-v2-btn-icon-left']} />
                 上傳房源
               </Link>
             </div>
@@ -679,8 +679,7 @@ export default function UAGDeAIDemoV2() {
               {mockListings.map((item) => (
                 <article key={item.id} className={styles['deai-v2-listing']}>
                   <div
-                    className={styles['deai-v2-listing-thumb']}
-                    style={{ background: item.thumbColor }}
+                    className={`${styles['deai-v2-listing-thumb']} ${thumbToneClassByColor[item.thumbColor] ?? ''}`}
                   />
                   <div className={styles['deai-v2-listing-info']}>
                     <div className={styles['deai-v2-listing-title']}>{item.title}</div>
@@ -758,8 +757,7 @@ export default function UAGDeAIDemoV2() {
                 {mockListings.slice(0, 2).map((item) => (
                   <button key={item.id} className={styles['deai-v2-report-item']}>
                     <div
-                      className={styles['deai-v2-report-thumb']}
-                      style={{ background: item.thumbColor }}
+                      className={`${styles['deai-v2-report-thumb']} ${thumbToneClassByColor[item.thumbColor] ?? ''}`}
                     >
                       <Home size={16} />
                     </div>
@@ -838,11 +836,10 @@ export default function UAGDeAIDemoV2() {
             <div className={styles['deai-v2-trust-footer']}>
               <Link
                 to="/assure"
-                className={`${styles['deai-v2-btn']} ${styles['deai-v2-btn--primary']}`}
-                style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}
+                className={`${styles['deai-v2-btn']} ${styles['deai-v2-btn--primary']} ${styles['deai-v2-trust-enter']}`}
               >
                 進入 Trust Room
-                <ChevronRight size={14} style={{ marginLeft: '4px' }} />
+                <ChevronRight size={14} className={styles['deai-v2-btn-icon-right']} />
               </Link>
             </div>
 
@@ -875,15 +872,9 @@ export default function UAGDeAIDemoV2() {
 
       {/* ========== Footer ========== */}
       <footer className={styles['deai-v2-footer']}>
-        <span
-          style={{
-            fontSize: '12px',
-            color: 'var(--ink-300)',
-            marginRight: 'auto',
-          }}
-        >
+        <span className={styles['deai-v2-footer-status']}>
           系統模式：
-          <span style={{ color: 'var(--ink-100)', fontWeight: 600 }}>Demo v2</span>
+          <span className={styles['deai-v2-footer-mode']}>Demo v2</span>
         </span>
         <button className={styles['deai-v2-btn']}>方案設定</button>
         <button className={`${styles['deai-v2-btn']} ${styles['deai-v2-btn--primary']}`}>

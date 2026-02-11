@@ -152,6 +152,11 @@
   color: var(--text);
 }
 
+.deai-v2-user-name {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 /* ====== Navigation ====== */
 .deai-v2-nav {
   display: flex;
@@ -669,6 +674,17 @@
   z-index: var(--z-layer-footer);
 }
 
+.deai-v2-footer-status {
+  margin-right: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.deai-v2-footer-mode {
+  color: var(--text);
+  font-weight: 600;
+}
+
 /* ui-ux-pro-max: Flat Design buttons */
 .deai-v2-btn {
   padding: 6px 14px;
@@ -698,6 +714,18 @@
 .deai-v2-btn--primary:hover {
   background: var(--brand-dark);
   border-color: var(--brand-dark);
+}
+
+.deai-v2-btn-link {
+  text-decoration: none;
+}
+
+.deai-v2-btn-icon-left {
+  margin-right: 4px;
+}
+
+.deai-v2-btn-icon-right {
+  margin-left: 4px;
 }
 
 /* Points Badge */
@@ -770,10 +798,27 @@
   font-size: 12px;
 }
 
+.deai-v2-col-25 {
+  width: 25%;
+}
+
+.deai-v2-col-35 {
+  width: 35%;
+}
+
+.deai-v2-col-20 {
+  width: 20%;
+}
+
 .deai-v2-table td {
   padding: 12px;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
+}
+
+.deai-v2-table-empty {
+  text-align: center;
+  padding: 24px;
 }
 
 .deai-v2-table-lead {
@@ -786,6 +831,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
+  background: var(--tone-color, var(--grade-b));
   color: #fff;
   display: flex;
   align-items: center;
@@ -814,6 +860,10 @@
   margin-bottom: 4px;
 }
 
+.deai-v2-progress-label {
+  color: var(--tone-color, var(--text-muted));
+}
+
 .deai-v2-countdown {
   color: var(--text-muted);
   font-family: monospace;
@@ -828,8 +878,29 @@
 
 .deai-v2-progress-fill {
   height: 100%;
+  background: var(--tone-color, var(--grade-b));
   border-radius: 3px;
   transition: width var(--transition);
+}
+
+.deai-v2-tone--s {
+  --tone-color: var(--grade-s);
+}
+
+.deai-v2-tone--a {
+  --tone-color: var(--grade-a);
+}
+
+.deai-v2-tone--b {
+  --tone-color: var(--grade-b);
+}
+
+.deai-v2-tone--c {
+  --tone-color: var(--grade-c);
+}
+
+.deai-v2-tone--f {
+  --tone-color: var(--grade-f);
 }
 
 /* Status Badge */
@@ -879,6 +950,18 @@
   height: 56px;
   border-radius: var(--radius-md);
   flex-shrink: 0;
+}
+
+.deai-v2-thumb-tone-blue {
+  background: #3b82f6;
+}
+
+.deai-v2-thumb-tone-green {
+  background: #10b981;
+}
+
+.deai-v2-thumb-tone-amber {
+  background: #f59e0b;
 }
 
 .deai-v2-listing-info {
@@ -1262,6 +1345,12 @@
 .deai-v2-trust-stat-label {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.deai-v2-trust-enter {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
 }
 
 /* ====== Button Variants ====== */

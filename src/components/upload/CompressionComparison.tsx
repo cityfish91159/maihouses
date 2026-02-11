@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { GripVertical } from 'lucide-react';
 
 interface CompressionComparisonProps {
@@ -17,8 +17,14 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
   onClose,
 }) => {
   const [sliderPosition, setSliderPosition] = useState(50);
+  const comparisonRef = useRef<HTMLDivElement>(null);
   const ratio = Math.round((compressedSize / originalSize) * 100);
   const saving = 100 - ratio;
+
+  useEffect(() => {
+    if (!comparisonRef.current) return;
+    comparisonRef.current.style.setProperty('--slider-pos', `${sliderPosition}%`);
+  }, [sliderPosition]);
 
   const handleDrag = (e: React.MouseEvent | React.TouchEvent) => {
     // 簡單實作：點擊跳轉，拖曳需更多事件處理，先求有點擊回饋
@@ -66,7 +72,10 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
           </div>
         </div>
 
-        <div className="relative aspect-video w-full select-none overflow-hidden bg-black/50">
+        <div
+          ref={comparisonRef}
+          className="relative aspect-video w-full select-none overflow-hidden bg-black/50 [--slider-pos:50%]"
+        >
           {/* 底層：壓縮圖 (Right/After) */}
           <img
             src={compressedUrl}
@@ -79,10 +88,7 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
           </div>
 
           {/* 上層：原始圖 (Left/Before) - 使用 clip-path 切割 */}
-          <div
-            className="absolute inset-0 overflow-hidden"
-            style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
-          >
+          <div className="absolute inset-0 overflow-hidden [clip-path:inset(0_calc(100%-var(--slider-pos))_0_0)]">
             <img
               src={originalUrl}
               alt="Original"
@@ -95,10 +101,7 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
           </div>
 
           {/* Slider Handle */}
-          <div
-            className="absolute inset-y-0 w-1 cursor-ew-resize bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)]"
-            style={{ left: `${sliderPosition}%` }}
-          >
+          <div className="absolute inset-y-0 w-1 cursor-ew-resize bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)] [left:var(--slider-pos)]">
             <div className="absolute top-1/2 -ml-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-800 shadow-lg">
               <GripVertical size={16} />
             </div>
@@ -122,3 +125,4 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
     </div>
   );
 };
+

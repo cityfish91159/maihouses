@@ -529,7 +529,7 @@ export default function ReportGenerator({
         <input
           type="file"
           ref={fileInputRef}
-          style={{ display: 'none' }}
+          className={styles.reportFileInputHidden}
           accept="image/*"
           onChange={handleFileChange}
         />

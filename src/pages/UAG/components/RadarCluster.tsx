@@ -227,7 +227,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
           <div className={styles['uag-card-title']}>UAG 精準導客雷達</div>
           <div className={styles['uag-card-sub']}>S/A 級獨家聯絡權｜B/C/F 級點數兌換</div>
         </div>
-        <div className={styles['uag-actions']} style={{ gap: '4px' }}>
+        <div className={`${styles['uag-actions']} ${styles['uag-actions-tight']}`}>
           {/* Quota display is handled in parent or separate component, but for now static or passed props */}
         </div>
       </div>
@@ -264,21 +264,11 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
         <div className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-inner']}`}></div>
         <div className={styles['uag-cluster-live-badge']}>
           <span className={styles['uag-live-dot']}></span>
-          <span style={{ fontWeight: 700 }}>Live 監控中</span>
+          <span className={styles['uag-live-label']}>Live 監控中</span>
         </div>
 
         {filteredLeads.length === 0 ? (
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
-              color: 'var(--ink-300)',
-              fontSize: '14px',
-            }}
-          >
+          <div className={styles['uag-cluster-empty-state']}>
             目前無符合條件的潛客
           </div>
         ) : (
@@ -325,10 +315,6 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
             >
               <div
                 className={styles['uag-bubble-grade']}
-                style={{
-                  background: `var(--grade-${lead.grade.toLowerCase()})`,
-                  color: '#fff',
-                }}
               >
                 {lead.grade}
               </div>
