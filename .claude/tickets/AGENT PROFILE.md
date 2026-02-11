@@ -88,7 +88,7 @@
 - [x] **#20a** [P0] Gallery 手勢 + 縮圖觸控優化（D2 依指示不作；2 項：D1 Gallery swipe+skeleton + D11 縮圖觸控擴大）✅ 2026-02-11
 - [x] **#20b** [P0] 文本優化 + ActionBar 毛玻璃（3 項：D3 Description 展開全文 + D4 ActionBar 毛玻璃+滾動隱藏 + D9 Glassmorphism 統一）✅ 2026-02-11
 - [x] **#20c** [P1] InfoCard 觸控修復（1 項：D5 按鈕 44px 觸控修復；~~D6 Specs Bento Grid~~ — 不做，加 icon 不算優化）✅ 2026-02-11
-- [ ] **#20d** [P1] 評論 + Panel + FAB 升級（3 項：D7 CommunityReviews SVG 星級 + D8 Panel 統一升級 + D10 FAB 重定位+漸層）
+- [x] **#20d** [P1] 評論 + Panel 升級（2 項：D7 CommunityReviews SVG 星級 + D8 Panel 統一升級；~~D10 FAB 重定位+漸層~~ — 不做）✅ 2026-02-11
 - [ ] **#20e** [P2] 動畫 + 微互動精緻化（4 項：D12 價格動畫 + D13 Section 進場 + D14 VipModal 倒數 + D15 Banner Shield 動畫）
 
 ### 待開發 — UAG Profile 頁 UX 升級（新增 #21 拆分）
@@ -4829,7 +4829,7 @@ cmd /c npm run check:utf8
 
 ---
 
-## #20d [P1] 詳情頁手機版 — 評論 + Panel + FAB 升級（3 項）
+## #20d [P1] 詳情頁手機版 — 評論 + Panel 升級（2 項）
 
 ### 20d-D7. CommunityReviews 星級 SVG + 卡片動效
 
@@ -4857,32 +4857,69 @@ cmd /c npm run check:utf8
 - 輸入框即時驗證：紅色邊框 `border-red-500` + shake 動畫 + 錯誤文字
 - 電話號碼分段顯示：`0912-345-678`
 
-### 20d-D10. 30秒回電 FAB 重定位 + 漸層
+### ~~20d-D10. 30秒回電 FAB 重定位 + 漸層~~ — 不做
 
-**檔案：** `src/pages/propertyDetail/PropertyDetailActionLayer.tsx`
-**規範引用：** ux-guidelines #37（浮動按鈕間距 ≥ 16px）、#3（互動反饋）
-
-**現狀：** `bottom-28` 與 ActionBar 僅 32px 間距、純橘色。
-
-> **注意：** #17 移除此 FAB 後，本項自動完成。若 #17 未執行，則執行以下方案。
-
-**方案（#17 未執行時）：**
-- `bottom-28` → `bottom-36`
-- 背景：`bg-gradient-to-br from-orange-500 to-red-500`
-- 點擊後 spinner + 文字「連線中...」
+> 依指示本輪僅做 D7 + D8，不納入 D10。
 
 ### 檔案清單
 
 | 類型 | 檔案 |
 |------|------|
-| 修改 | `CommunityReviews.tsx`、`LineLinkPanel.tsx`、`CallConfirmPanel.tsx`、`PropertyDetailActionLayer.tsx`（若 #17 未執行） |
+| 修改 | `CommunityReviews.tsx`、`LineLinkPanel.tsx`、`CallConfirmPanel.tsx` |
+| 新增 | `usePanelContentReady.ts` |
+| 測試 | `CommunityReviews.test.tsx`、`CommunityReviews.motion.test.tsx`、`LineLinkPanel.test.tsx`、`CallConfirmPanel.test.tsx` |
 
 ### 驗收標準
 
-- [ ] D7: 星級 SVG icon、卡片 hover 動效、頭像漸層
-- [ ] D8: Panel backdrop blur、skeleton loading、即時驗證
-- [ ] D10: FAB 間距足夠 / 或已被 #17 移除
-- [ ] typecheck + lint 通過
+- [x] D7: 星級 SVG icon、卡片 hover 動效、頭像漸層
+- [x] D8: Panel backdrop blur、skeleton loading、即時驗證
+- [x] 僅交付 D7 + D8（D10 依指示不作）
+- [x] D7/D8 測試 + lint + utf8 通過
+
+### #20d-D7D8 施工紀錄（2026-02-11）
+
+#### 優化循環摘要
+- [x] 第 1 輪實作：完成 D7（CommunityReviews 星級 SVG + 卡片互動 + 頭像漸層 + pill CTA）與 D8（Panel backdrop/skeleton/即時驗證/電話格式）
+- [x] 第 2 輪自審：抽出 `usePanelContentReady`（Panel loading 單一職責）與 `formatPhoneForDisplay`（電話格式單一職責）
+- [x] 第 3 輪驗證：D7/D8 專項測試與 lint、UTF-8 全通過
+
+#### 修改檔案
+1. `src/components/PropertyDetail/CommunityReviews.tsx`
+   - 純文字 `★★★★★` 改為 `ReviewStars`（SVG Star）
+   - 評價卡新增 `hover:shadow-md active:scale-[0.98]`
+   - 頭像改 `bg-gradient-to-br`
+   - 「前往社區牆」改為 pill 按鈕（`rounded-full bg-brand-50 px-4 py-2`）
+
+2. `src/components/PropertyDetail/LineLinkPanel.tsx`
+   - backdrop 改 `bg-black/60 backdrop-blur-sm`
+   - 新增 0.3s skeleton（`line-panel-skeleton`）
+   - Fallback LINE ID 新增即時驗證（紅框 + 錯誤文案 + shake）
+
+3. `src/components/PropertyDetail/CallConfirmPanel.tsx`
+   - backdrop 改 `bg-black/60 backdrop-blur-sm`
+   - 新增 0.3s skeleton（`call-panel-skeleton`）
+   - fallback 電話欄位新增即時驗證（紅框 + 錯誤文案 + shake）
+   - 顯示電話統一格式化為 `0912-345-678`
+
+4. `src/components/PropertyDetail/hooks/usePanelContentReady.ts`（新增）
+   - Panel 內容延遲 ready 狀態統一管理
+
+5. `src/components/PropertyDetail/contactUtils.ts`
+   - 新增 `formatPhoneForDisplay`，集中處理電話顯示格式
+
+6. 測試檔案
+   - `src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx`
+   - `src/components/PropertyDetail/__tests__/CommunityReviews.motion.test.tsx`
+   - `src/components/PropertyDetail/__tests__/LineLinkPanel.test.tsx`
+   - `src/components/PropertyDetail/__tests__/CallConfirmPanel.test.tsx`
+   - 覆蓋 D7/D8 新行為與回歸路徑
+
+#### 驗證命令
+```bash
+cmd /c npm run test -- src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx src/components/PropertyDetail/__tests__/CommunityReviews.motion.test.tsx src/components/PropertyDetail/__tests__/LineLinkPanel.test.tsx src/components/PropertyDetail/__tests__/CallConfirmPanel.test.tsx
+cmd /c npx eslint src/components/PropertyDetail/CommunityReviews.tsx src/components/PropertyDetail/LineLinkPanel.tsx src/components/PropertyDetail/CallConfirmPanel.tsx src/components/PropertyDetail/contactUtils.ts src/components/PropertyDetail/hooks/usePanelContentReady.ts src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx src/components/PropertyDetail/__tests__/CommunityReviews.motion.test.tsx src/components/PropertyDetail/__tests__/LineLinkPanel.test.tsx src/components/PropertyDetail/__tests__/CallConfirmPanel.test.tsx
+cmd /c npm run check:utf8
+```
 
 ---
 

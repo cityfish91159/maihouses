@@ -1,145 +1,122 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { CommunityReviews } from '../CommunityReviews';
 
-// Mock IntersectionObserver
-let mockCallback: IntersectionObserverCallback | null = null;
+class MockIntersectionObserver implements IntersectionObserver {
+  readonly root = null;
+  readonly rootMargin = '';
+  readonly thresholds = [];
+  private callback: IntersectionObserverCallback;
 
-class MockIntersectionObserver {
   constructor(callback: IntersectionObserverCallback) {
-    mockCallback = callback;
-    // 自動觸發 callback，模擬元素進入 viewport
-    setTimeout(() => {
-      if (mockCallback) {
-        mockCallback(
-          [{ isIntersecting: true } as IntersectionObserverEntry],
-          this as unknown as IntersectionObserver
-        );
-      }
-    }, 0);
+    this.callback = callback;
   }
-  observe = vi.fn();
+
+  observe = () => {
+    this.callback(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver
+    );
+  };
+
   disconnect = vi.fn();
   unobserve = vi.fn();
+  takeRecords = vi.fn(() => []);
 }
 
-global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+global.IntersectionObserver = MockIntersectionObserver;
+
+function renderWithRouter(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 describe('CommunityReviews', () => {
-  const mockOnToggleLike = vi.fn();
+  const onToggleLike = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('fetch', vi.fn());
   });
 
-  const renderWithRouter = (ui: React.ReactElement) => {
-    return render(<MemoryRouter>{ui}</MemoryRouter>);
-  };
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
-  it('Demo 模式顯示 mock 評價', async () => {
-    renderWithRouter(
-      <CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={mockOnToggleLike} />
-    );
+  it('renders mock reviews in demo mode', async () => {
+    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
       expect(screen.getByText('社區評價')).toBeInTheDocument();
+      expect(screen.getByText('林***')).toBeInTheDocument();
+      expect(screen.getByText('王***')).toBeInTheDocument();
     });
-
-    // 檢查 mock 資料是否顯示
-    expect(screen.getByText('林***')).toBeInTheDocument();
-    expect(screen.getByText('王***')).toBeInTheDocument();
   });
 
-  it('顯示按讚按鈕', async () => {
-    renderWithRouter(
-      <CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={mockOnToggleLike} />
-    );
+  it('renders SVG star ratings instead of plain text stars', async () => {
+    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
-      const likeButtons = screen.getAllByLabelText(/鼓勵這則評價/);
-      expect(likeButtons.length).toBeGreaterThan(0);
+      const ratings = screen.getAllByLabelText('五星評價');
+      expect(ratings.length).toBeGreaterThanOrEqual(2);
     });
+
+    expect(screen.queryByText('★★★★★')).not.toBeInTheDocument();
   });
 
-  it('已讚狀態顯示正確樣式', async () => {
-    renderWithRouter(
-      <CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={mockOnToggleLike} />
-    );
+  it('applies card motion classes and gradient avatar', async () => {
+    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
 
-    await waitFor(() => {
-      // MOCK_REVIEWS[1] 預設 liked=true, totalLikes=7
-      const likedButton = screen.getByLabelText('鼓勵這則評價（已鼓勵）');
-      expect(likedButton).toHaveClass('bg-brand-50');
-      expect(likedButton).toHaveClass('text-brand-700');
-      expect(likedButton.textContent).toContain('7');
-    });
+    const nameNode = await screen.findByText('林***');
+    const card = nameNode.closest('.rounded-2xl');
+    expect(card).not.toBeNull();
+    expect(card?.className).toContain('hover:shadow-md');
+    expect(card?.className).toContain('active:scale-[0.98]');
+
+    const avatar = nameNode.closest('.min-w-0')?.previousElementSibling;
+    expect(avatar?.className).toContain('bg-gradient-to-br');
   });
 
-  it('未讚狀態顯示正確樣式', async () => {
-    renderWithRouter(
-      <CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={mockOnToggleLike} />
-    );
+  it('renders community wall button as pill style', async () => {
+    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
 
-    await waitFor(() => {
-      // MOCK_REVIEWS[0] 預設 liked=false, totalLikes=3
-      const unlikedButtons = screen.getAllByLabelText(/鼓勵這則評價$/);
-      const firstUnliked = unlikedButtons[0];
-      if (firstUnliked) {
-        expect(firstUnliked).toHaveClass('bg-bg-base');
-        expect(firstUnliked).toHaveClass('text-text-muted');
-      }
-    });
+    const button = await screen.findByRole('button', { name: /前往社區牆/i });
+    expect(button.className).toContain('rounded-full');
+    expect(button.className).toContain('bg-brand-50');
+    expect(button.className).toContain('px-4');
+    expect(button.className).toContain('py-2');
   });
 
-  it('未登入時按讚按鈕 disabled', async () => {
-    renderWithRouter(
-      <CommunityReviews isLoggedIn={false} isDemo={true} onToggleLike={mockOnToggleLike} />
-    );
+  it('disables like buttons when user is not logged in', async () => {
+    renderWithRouter(<CommunityReviews isLoggedIn={false} isDemo={true} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
       const likeButtons = screen.getAllByLabelText(/鼓勵這則評價/);
       likeButtons.forEach((button) => {
         expect(button).toBeDisabled();
-        expect(button).toHaveClass('cursor-not-allowed');
-        expect(button).toHaveClass('opacity-50');
+        expect(button.className).toContain('opacity-50');
       });
     });
   });
 
-  it('Demo 模式按讚觸發本地 toggle', async () => {
+  it('toggles likes locally in demo mode', async () => {
     const user = userEvent.setup();
-    renderWithRouter(
-      <CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={mockOnToggleLike} />
-    );
+    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
 
-    await waitFor(() => {
-      expect(screen.getByText('林***')).toBeInTheDocument();
-    });
+    const firstLikeButton = await screen.findByLabelText('鼓勵這則評價');
+    expect(firstLikeButton).toHaveTextContent('3');
 
-    // 點擊第一個未讚的按鈕
-    const unlikedButton = screen.getAllByLabelText(/鼓勵這則評價$/)[0];
-    if (unlikedButton) {
-      const initialText = unlikedButton.textContent;
-      await user.click(unlikedButton);
+    await user.click(firstLikeButton);
 
-      // 驗證本地 state 更新（讚數 +1）
-      await waitFor(() => {
-        const updatedButton = screen.getAllByLabelText(/鼓勵這則評價/)[0];
-        expect(updatedButton?.textContent).not.toBe(initialText);
-      });
-    }
-
-    // Demo 模式不應該呼叫 onToggleLike
-    expect(mockOnToggleLike).not.toHaveBeenCalled();
+    const updatedLikeButtons = screen.getAllByLabelText(/鼓勵這則評價/);
+    const updatedFirst = updatedLikeButtons[0];
+    expect(updatedFirst).toHaveTextContent('4');
+    expect(onToggleLike).not.toHaveBeenCalled();
   });
 
-  it('正式模式按讚呼叫 onToggleLike', async () => {
+  it('calls onToggleLike in live mode', async () => {
     const user = userEvent.setup();
-
-    // Mock fetch 回傳假資料
-    global.fetch = vi.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         success: true,
@@ -147,71 +124,50 @@ describe('CommunityReviews', () => {
           data: [
             {
               id: 'review-1',
-              content: { pros: ['測試評價'], cons: null },
-              agent: { name: '測試經紀人' },
+              content: { pros: ['採光好'] },
+              agent: { name: '測試房仲' },
             },
           ],
           total: 1,
         },
       }),
     });
+    vi.stubGlobal('fetch', fetchMock);
 
     renderWithRouter(
       <CommunityReviews
         isLoggedIn={true}
         isDemo={false}
-        communityId="test-community-123"
-        onToggleLike={mockOnToggleLike}
+        communityId="community-1"
+        onToggleLike={onToggleLike}
       />
     );
 
-    // 等待評價載入（名字會被 maskName 轉為 "測***"）
     await waitFor(() => {
       expect(screen.getByText('測***')).toBeInTheDocument();
     });
 
-    // 點擊按讚按鈕
-    const likeButton = screen.getAllByLabelText(/鼓勵這則評價/)[0];
-    if (likeButton) {
-      await user.click(likeButton);
+    const likeButton = screen.getByLabelText('鼓勵這則評價');
+    await user.click(likeButton);
 
-      // 驗證 onToggleLike 被呼叫
-      await waitFor(() => {
-        expect(mockOnToggleLike).toHaveBeenCalledTimes(1);
-      });
-    }
+    expect(onToggleLike).toHaveBeenCalledWith('review-1');
   });
 
-  it('未登入顯示註冊提示按鈕', async () => {
-    renderWithRouter(
-      <CommunityReviews isLoggedIn={false} isDemo={true} onToggleLike={mockOnToggleLike} />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/註冊查看/)).toBeInTheDocument();
-    });
-  });
-
-  it('顯示前往社區牆按鈕', async () => {
-    renderWithRouter(
-      <CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={mockOnToggleLike} />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('前往社區牆')).toBeInTheDocument();
-    });
-  });
-
-  it('按讚按鈕符合 A11y 觸控目標標準', async () => {
-    renderWithRouter(
-      <CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={mockOnToggleLike} />
-    );
+  it('keeps like button touch target >=44px', async () => {
+    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
       const likeButtons = screen.getAllByLabelText(/鼓勵這則評價/);
       likeButtons.forEach((button) => {
-        expect(button).toHaveClass('min-h-[44px]');
+        expect(button.className).toContain('min-h-[44px]');
       });
     });
+  });
+
+  it('shows locked CTA for logged-out users', async () => {
+    renderWithRouter(<CommunityReviews isLoggedIn={false} isDemo={true} onToggleLike={onToggleLike} />);
+
+    const cta = await screen.findByRole('button', { name: /註冊查看全部|註冊查看更多評價/ });
+    expect(within(cta).getByText(/註冊/)).toBeInTheDocument();
   });
 });

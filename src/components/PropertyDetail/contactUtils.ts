@@ -22,3 +22,17 @@ export const isValidPhone = (value: string): boolean => {
   const digitsOnly = normalized.startsWith('+') ? normalized.slice(1) : normalized;
   return digitsOnly.length >= PHONE_DIGITS_MIN && digitsOnly.length <= PHONE_DIGITS_MAX;
 };
+
+/**
+ * Format phone number for display. For Taiwan mobile numbers, show 0912-345-678.
+ */
+export const formatPhoneForDisplay = (value: string): string => {
+  const normalized = sanitizePhoneInput(value.trim());
+  const digitsOnly = normalized.startsWith('+') ? normalized.slice(1) : normalized;
+
+  if (/^09\d{8}$/.test(digitsOnly)) {
+    return `${digitsOnly.slice(0, 4)}-${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7)}`;
+  }
+
+  return normalized || value.trim();
+};

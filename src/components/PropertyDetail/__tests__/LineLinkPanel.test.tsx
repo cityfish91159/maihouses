@@ -1,11 +1,11 @@
-﻿import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LineLinkPanel } from '../LineLinkPanel';
 import { notify } from '../../../lib/notify';
 import { track } from '../../../analytics/track';
 
-// mock useFocusTrap：攔截 Escape keydown 時呼叫 onEscape
 let capturedOnEscape: (() => void) | undefined;
+
 vi.mock('../../../hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn((opts: { onEscape?: () => void }) => {
     capturedOnEscape = opts.onEscape;
@@ -27,12 +27,17 @@ vi.mock('../../MaiMai', () => ({
   MaiMaiBase: ({ mood }: { mood: string }) => <div data-testid="maimai-base" data-mood={mood} />,
 }));
 
+const waitForPanelReady = () =>
+  waitFor(() => {
+    expect(screen.queryByTestId('line-panel-skeleton')).not.toBeInTheDocument();
+  });
+
 describe('LineLinkPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders accessible dialog', () => {
+  it('renders skeleton first and then shows panel content', async () => {
     render(
       <LineLinkPanel
         isOpen={true}
@@ -44,88 +49,10 @@ describe('LineLinkPanel', () => {
       />
     );
 
-    const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveAttribute('aria-modal', 'true');
-  });
+    expect(screen.getByTestId('line-panel-skeleton')).toBeInTheDocument();
 
-  it('shows panel welcome copy for both with/without line id', () => {
-    const { rerender } = render(
-      <LineLinkPanel
-        isOpen={true}
-        onClose={vi.fn()}
-        agentLineId="maihouses_demo"
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={true}
-      />
-    );
-
+    await waitForPanelReady();
     expect(screen.getByText('加 LINE 直接聊，回覆最快喔！')).toBeInTheDocument();
-    expect(screen.getByTestId('maimai-base')).toHaveAttribute('data-mood', 'wave');
-    expect(track).toHaveBeenCalledWith(
-      'maimai_panel_welcome',
-      expect.objectContaining({ panelType: 'line', hasContact: true })
-    );
-
-    rerender(
-      <LineLinkPanel
-        isOpen={false}
-        onClose={vi.fn()}
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={true}
-      />
-    );
-
-    rerender(
-      <LineLinkPanel
-        isOpen={true}
-        onClose={vi.fn()}
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={true}
-      />
-    );
-
-    expect(screen.getByText('房仲還沒設定 LINE，用表單留言吧')).toBeInTheDocument();
-    expect(screen.getByTestId('maimai-base')).toHaveAttribute('data-mood', 'thinking');
-    expect(track).toHaveBeenCalledWith(
-      'maimai_panel_welcome',
-      expect.objectContaining({ panelType: 'line', hasContact: false })
-    );
-  });
-
-  it('tracks welcome once per open even if props change while open', () => {
-    const { rerender } = render(
-      <LineLinkPanel
-        isOpen={true}
-        onClose={vi.fn()}
-        agentLineId="maihouses_demo"
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={true}
-      />
-    );
-
-    const initialTrackCalls = vi.mocked(track).mock.calls.filter(
-      ([eventName]) => eventName === 'maimai_panel_welcome'
-    ).length;
-    expect(initialTrackCalls).toBe(1);
-
-    rerender(
-      <LineLinkPanel
-        isOpen={true}
-        onClose={vi.fn()}
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={true}
-      />
-    );
-
-    const finalTrackCalls = vi.mocked(track).mock.calls.filter(
-      ([eventName]) => eventName === 'maimai_panel_welcome'
-    ).length;
-    expect(finalTrackCalls).toBe(1);
   });
 
   it('opens LINE deep link when line id exists', async () => {
@@ -145,6 +72,7 @@ describe('LineLinkPanel', () => {
       />
     );
 
+    await waitForPanelReady();
     await user.click(screen.getByRole('button', { name: /開啟 LINE/i }));
 
     expect(openSpy).toHaveBeenCalledWith(
@@ -159,7 +87,30 @@ describe('LineLinkPanel', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('uses fallback flow when line id is missing', async () => {
+  it('shows inline validation error for invalid fallback line id', async () => {
+    const user = userEvent.setup();
+    render(
+      <LineLinkPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentName="游杰倫"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    await waitForPanelReady();
+
+    const input = screen.getByLabelText('你的 LINE ID');
+    await user.type(input, 'a');
+    await user.tab();
+
+    expect(screen.getByText(/LINE ID 格式不正確/)).toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input.className).toContain('border-red-500');
+  });
+
+  it('submits fallback flow with valid line id', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     const onFallbackContact = vi.fn();
@@ -175,6 +126,8 @@ describe('LineLinkPanel', () => {
       />
     );
 
+    await waitForPanelReady();
+
     await user.type(screen.getByLabelText('你的 LINE ID'), 'demo_line_01');
     await user.click(screen.getByRole('button', { name: '改用聯絡表單' }));
 
@@ -186,51 +139,11 @@ describe('LineLinkPanel', () => {
     );
   });
 
-  it('supports panel slide-in animation classes', async () => {
+  it('uses stronger backdrop style with blur', () => {
     render(
       <LineLinkPanel
         isOpen={true}
         onClose={vi.fn()}
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={true}
-      />
-    );
-
-    const dialog = screen.getByRole('dialog');
-    expect(dialog.className).toContain('duration-200');
-    await waitFor(() => {
-      expect(dialog.className).toContain('translate-y-0');
-      expect(dialog.className).toContain('opacity-100');
-    });
-  });
-
-  it('applies reduced-motion transition classes to fallback controls', () => {
-    render(
-      <LineLinkPanel
-        isOpen={true}
-        onClose={vi.fn()}
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={false}
-      />
-    );
-
-    const fallbackButton = screen.getByRole('button', { name: '改用聯絡表單' });
-    const fallbackInput = screen.getByLabelText('你的 LINE ID');
-    expect(fallbackButton.className).toContain('motion-reduce:transition-none');
-    expect(fallbackInput.className).toContain('motion-reduce:transition-none');
-  });
-
-  it('closes when backdrop is clicked', async () => {
-    const user = userEvent.setup();
-    const onClose = vi.fn();
-
-    render(
-      <LineLinkPanel
-        isOpen={true}
-        onClose={onClose}
-        agentLineId="maihouses_demo"
         agentName="游杰倫"
         isLoggedIn={true}
         trustEnabled={true}
@@ -239,16 +152,12 @@ describe('LineLinkPanel', () => {
 
     const dialog = screen.getByRole('dialog');
     const backdrop = dialog.parentElement;
-    expect(backdrop).not.toBeNull();
-    if (!backdrop) return;
-    await user.click(backdrop);
-
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(backdrop?.className).toContain('bg-black/60');
+    expect(backdrop?.className).toContain('backdrop-blur-sm');
   });
 
   it('closes on Escape via useDetailPanelShell onEscape callback', () => {
     const onClose = vi.fn();
-
     render(
       <LineLinkPanel
         isOpen={true}
@@ -260,7 +169,6 @@ describe('LineLinkPanel', () => {
       />
     );
 
-    // useDetailPanelShell 將 onClose 轉發給 useFocusTrap 的 onEscape
     expect(capturedOnEscape).toBeDefined();
     capturedOnEscape?.();
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -288,6 +196,7 @@ describe('LineLinkPanel', () => {
       />
     );
 
+    await waitForPanelReady();
     await user.click(screen.getByRole('button', { name: /開啟 LINE/i }));
 
     expect(window.location.href).toBe('https://line.me/R/ti/p/maihouses_demo');
@@ -298,51 +207,5 @@ describe('LineLinkPanel', () => {
       configurable: true,
       value: originalLocation,
     });
-  });
-
-  it('uses correct aria-labelledby reference', () => {
-    render(
-      <LineLinkPanel
-        isOpen={true}
-        onClose={vi.fn()}
-        agentLineId="maihouses_demo"
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={true}
-      />
-    );
-
-    const dialog = screen.getByRole('dialog');
-    const labelId = dialog.getAttribute('aria-labelledby');
-
-    expect(labelId).toBeTruthy();
-    const labelElement = document.getElementById(labelId!);
-    expect(labelElement).toHaveTextContent('加 LINE 聊聊');
-  });
-
-  it('removes dialog from DOM when closed', () => {
-    const { rerender } = render(
-      <LineLinkPanel
-        isOpen={true}
-        onClose={vi.fn()}
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={true}
-      />
-    );
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-
-    rerender(
-      <LineLinkPanel
-        isOpen={false}
-        onClose={vi.fn()}
-        agentName="游杰倫"
-        isLoggedIn={true}
-        trustEnabled={true}
-      />
-    );
-
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

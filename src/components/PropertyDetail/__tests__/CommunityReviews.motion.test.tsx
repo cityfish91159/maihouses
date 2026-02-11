@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { CommunityReviews } from '../CommunityReviews';
 
 describe('CommunityReviews motion a11y', () => {
-  it('骨架 loading 動畫應帶 reduced-motion 保護', () => {
+  it('skeleton loading animation includes reduced-motion protection', () => {
     const { container } = render(
       <MemoryRouter>
         <CommunityReviews isLoggedIn={false} />

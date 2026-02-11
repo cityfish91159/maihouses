@@ -1,6 +1,6 @@
-﻿import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, Lock, ChevronRight, MessageSquare, ThumbsUp } from 'lucide-react';
+import { ChevronRight, Lock, MessageSquare, Star, ThumbsUp } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
@@ -16,7 +16,6 @@ interface ReviewPreview {
   initial: string;
   name: string;
   residentLabel: string;
-  stars: string;
   content: string;
   avatarClass: string;
   propertyId: string;
@@ -44,28 +43,31 @@ interface CommunityWallResponse {
   };
 }
 
-const AVATAR_CLASSES = ['bg-brand-700', 'bg-brand-light', 'bg-green-500'] as const;
+const STAR_COUNT = 5;
+const AVATAR_CLASSES = [
+  'bg-gradient-to-br from-brand-500 to-brand-700',
+  'bg-gradient-to-br from-brand-light to-brand-600',
+  'bg-gradient-to-br from-emerald-400 to-emerald-600',
+] as const;
+
 const LOCKED_PREVIEW_PLACEHOLDER: ReviewPreview = {
   initial: '住',
   name: '住戶',
   residentLabel: '社區住戶',
-  stars: '★★★★★',
   content: '登入後可查看完整住戶評價與社區回饋內容。',
-  avatarClass: 'bg-green-500',
+  avatarClass: 'bg-gradient-to-br from-emerald-400 to-emerald-600',
   propertyId: '',
   liked: false,
   totalLikes: 0,
 };
 
-// Mock 評價資料（isDemo 且無 communityId 時使用）
 const MOCK_REVIEWS: ReviewPreview[] = [
   {
     initial: '林',
     name: '林***',
     residentLabel: '信義區住戶',
-    stars: '★★★★★',
     content: '透過平台不僅看到了真實的成交行情，還能直接與經紀人溝通，整體體驗非常順暢。',
-    avatarClass: 'bg-brand-700',
+    avatarClass: 'bg-gradient-to-br from-brand-500 to-brand-700',
     propertyId: 'MH-100001',
     liked: false,
     totalLikes: 3,
@@ -74,9 +76,8 @@ const MOCK_REVIEWS: ReviewPreview[] = [
     initial: '王',
     name: '王***',
     residentLabel: '住戶評價',
-    stars: '★★★★★',
     content: '社區管理很用心，公設維護良好，住戶素質也不錯，住起來很安心。',
-    avatarClass: 'bg-brand-light',
+    avatarClass: 'bg-gradient-to-br from-brand-light to-brand-600',
     propertyId: 'MH-100002',
     liked: true,
     totalLikes: 7,
@@ -85,14 +86,27 @@ const MOCK_REVIEWS: ReviewPreview[] = [
     initial: '住',
     name: '住戶',
     residentLabel: '社區住戶',
-    stars: '★★★★★',
     content: '樓下就有便利商店和公車站，生活機能很方便，唯一小缺點是假日停車位比較緊張。',
-    avatarClass: 'bg-green-500',
+    avatarClass: 'bg-gradient-to-br from-emerald-400 to-emerald-600',
     propertyId: 'MH-100003',
     liked: false,
     totalLikes: 2,
   },
 ];
+
+function ReviewStars({ className }: { className?: string }) {
+  return (
+    <div className={cn('inline-flex items-center gap-0.5', className)} aria-label="五星評價">
+      {Array.from({ length: STAR_COUNT }, (_, index) => (
+        <Star
+          key={index}
+          size={12}
+          className={cn('fill-current', index < 3 ? 'text-yellow-400' : 'text-amber-500')}
+        />
+      ))}
+    </div>
+  );
+}
 
 const maskName = (name: string): string => {
   const trimmed = name.trim();
@@ -124,9 +138,8 @@ const toPreview = (item: CommunityReviewItem, index: number): ReviewPreview | nu
     initial: name.charAt(0) || '住',
     name,
     residentLabel: propertyTitle ? `${propertyTitle}住戶` : '住戶評價',
-    stars: '★★★★★',
     content,
-    avatarClass: AVATAR_CLASSES[index % AVATAR_CLASSES.length] ?? 'bg-brand-700',
+    avatarClass: AVATAR_CLASSES[index % AVATAR_CLASSES.length] ?? AVATAR_CLASSES[0],
     propertyId: item.id || '',
     liked: false,
     totalLikes: 0,
@@ -224,12 +237,15 @@ export const CommunityReviews = memo(function CommunityReviews({
   const handleToggleLike = useCallback(
     (propertyId: string) => {
       if (isDemo) {
-        // Mock: 本地 toggle，不發 API
         setReviewPreviews((prev) =>
-          prev.map((r) =>
-            r.propertyId === propertyId
-              ? { ...r, liked: !r.liked, totalLikes: r.liked ? r.totalLikes - 1 : r.totalLikes + 1 }
-              : r
+          prev.map((review) =>
+            review.propertyId === propertyId
+              ? {
+                  ...review,
+                  liked: !review.liked,
+                  totalLikes: review.liked ? review.totalLikes - 1 : review.totalLikes + 1,
+                }
+              : review
           )
         );
         return;
@@ -245,7 +261,7 @@ export const CommunityReviews = memo(function CommunityReviews({
         <>
           <div className="mb-4 flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-lg font-bold text-ink-900">
-              <Star size={18} className="text-yellow-500" fill="currentColor" />
+              <Star size={18} className="fill-current text-amber-500" />
               社區評價
             </h3>
             <span className="rounded-full bg-bg-base px-2 py-1 text-sm text-text-muted">
@@ -258,10 +274,13 @@ export const CommunityReviews = memo(function CommunityReviews({
               publicReviews.map((review) => (
                 <div
                   key={`${review.name}-${review.content.slice(0, 12)}`}
-                  className="flex gap-3 rounded-2xl bg-bg-base p-3"
+                  className="flex gap-3 rounded-2xl bg-bg-base p-3 transition-all duration-200 hover:shadow-md active:scale-[0.98] motion-reduce:transform-none"
                 >
                   <div
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${review.avatarClass}`}
+                    className={cn(
+                      'flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white',
+                      review.avatarClass
+                    )}
                   >
                     {review.initial}
                   </div>
@@ -269,7 +288,7 @@ export const CommunityReviews = memo(function CommunityReviews({
                     <div className="mb-1 flex items-center gap-2">
                       <span className="text-sm font-bold text-ink-900">{review.name}</span>
                       <span className="text-sm text-text-muted">{review.residentLabel}</span>
-                      <span className="text-xs text-yellow-500">{review.stars}</span>
+                      <ReviewStars className="shrink-0" />
                     </div>
                     <p className="text-sm leading-relaxed text-ink-600">{review.content}</p>
                     <div className="mt-2 flex items-center gap-1">
@@ -277,11 +296,13 @@ export const CommunityReviews = memo(function CommunityReviews({
                         onClick={() => handleToggleLike(review.propertyId)}
                         disabled={!isLoggedIn}
                         aria-label={`鼓勵這則評價${review.liked ? '（已鼓勵）' : ''}`}
-                        className={`inline-flex min-h-[44px] items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+                        className={cn(
+                          'inline-flex min-h-[44px] items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
                           review.liked
                             ? 'bg-brand-50 font-medium text-brand-700'
-                            : 'bg-bg-base text-text-muted hover:bg-brand-50 hover:text-brand-600'
-                        } ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                            : 'bg-bg-base text-text-muted hover:bg-brand-50 hover:text-brand-600',
+                          !isLoggedIn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                        )}
                       >
                         <ThumbsUp size={12} />
                         <span>{review.totalLikes > 0 ? review.totalLikes : '實用'}</span>
@@ -298,11 +319,12 @@ export const CommunityReviews = memo(function CommunityReviews({
           </div>
 
           <div className="relative mt-3 overflow-hidden rounded-2xl">
-            <div
-              className={`flex gap-3 bg-bg-base p-3 ${!isLoggedIn ? 'select-none blur-sm' : ''}`}
-            >
+            <div className={cn('flex gap-3 bg-bg-base p-3', !isLoggedIn && 'select-none blur-sm')}>
               <div
-                className={`flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${lockedReview.avatarClass}`}
+                className={cn(
+                  'flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white',
+                  lockedReview.avatarClass
+                )}
               >
                 {lockedReview.initial}
               </div>
@@ -310,9 +332,7 @@ export const CommunityReviews = memo(function CommunityReviews({
                 <div className="mb-1 flex items-center gap-2">
                   <span className="text-sm font-bold text-ink-900">{lockedReview.name}</span>
                   <span className="text-sm text-text-muted">{lockedReview.residentLabel}</span>
-                  {isLoggedIn && (
-                    <span className="text-xs text-yellow-500">{lockedReview.stars}</span>
-                  )}
+                  {isLoggedIn && <ReviewStars className="shrink-0" />}
                 </div>
                 <p className="text-sm text-ink-600">
                   {isLoggedIn
@@ -343,7 +363,7 @@ export const CommunityReviews = memo(function CommunityReviews({
             </p>
             <button
               onClick={handleCommunityWall}
-              className="flex min-h-[44px] items-center gap-1 rounded text-sm font-bold text-brand-700 hover:underline focus:ring-2 focus:ring-brand-500"
+              className="inline-flex min-h-[44px] items-center gap-1 rounded-full bg-brand-50 px-4 py-2 text-sm font-bold text-brand-700 transition-colors hover:bg-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
             >
               前往社區牆
               <ChevronRight size={12} />
@@ -351,7 +371,7 @@ export const CommunityReviews = memo(function CommunityReviews({
           </div>
         </>
       ) : (
-        <div className={cn('h-96 rounded-xl bg-gray-100', motionA11y.pulse)}></div>
+        <div className={cn('h-96 rounded-xl bg-gray-100', motionA11y.pulse)} />
       )}
     </div>
   );

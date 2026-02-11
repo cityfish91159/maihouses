@@ -1,16 +1,17 @@
-﻿import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { notify } from '../../lib/notify';
 import { track } from '../../analytics/track';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
-import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER, LINE_ID_PATTERN } from './constants';
+import { LINE_ID_PATTERN } from './constants';
 import { MaiMaiBase } from '../MaiMai';
 import { normalizeAgentName } from './agentName';
 import { useMaiMaiA11yProps } from '../../hooks/useMaiMaiA11yProps';
 import { usePanelWelcomeTrack } from './usePanelWelcomeTrack';
 import { useDetailPanelShell } from './useDetailPanelShell';
+import { usePanelContentReady } from './hooks/usePanelContentReady';
 
 interface LineLinkPanelProps {
   isOpen: boolean;
@@ -21,6 +22,15 @@ interface LineLinkPanelProps {
   trustEnabled: boolean;
   onTrustAction?: (checked: boolean) => Promise<void>;
   onFallbackContact?: (trustChecked: boolean) => void;
+}
+
+const LINE_ID_ERROR_DETAIL = '可使用英數、底線、點、連字號（3-64 字元）。';
+
+function validateLineIdInput(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return '請輸入 LINE ID';
+  if (!LINE_ID_PATTERN.test(trimmed)) return `LINE ID 格式不正確，${LINE_ID_ERROR_DETAIL}`;
+  return null;
 }
 
 export function LineLinkPanel({
@@ -36,29 +46,28 @@ export function LineLinkPanel({
   const [trustChecked, setTrustChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fallbackLineId, setFallbackLineId] = useState('');
+  const [fallbackLineIdTouched, setFallbackLineIdTouched] = useState(false);
+  const [fallbackLineIdError, setFallbackLineIdError] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const firstButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const fallbackInputId = useId();
-
-  const lineBrandVars = {
-    '--line-brand-green': LINE_BRAND_GREEN,
-    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
-  } as CSSProperties;
+  const fallbackErrorId = useId();
 
   const maiMaiA11yProps = useMaiMaiA11yProps();
   const safeAgentName = useMemo(() => normalizeAgentName(agentName), [agentName]);
+  const isContentReady = usePanelContentReady(isOpen, 300);
 
-  // LINE ID: trim 後驗證 pattern，不合法視同無 lineId
   const trimmedLineId = agentLineId?.trim() ?? '';
   const hasLineId = LINE_ID_PATTERN.test(trimmedLineId);
 
-  // isOpen 變 false 時重置狀態
   useEffect(() => {
     if (isOpen) return;
     setTrustChecked(false);
     setIsSubmitting(false);
     setFallbackLineId('');
+    setFallbackLineIdTouched(false);
+    setFallbackLineIdError(null);
   }, [isOpen]);
 
   const panelReady = useDetailPanelShell({
@@ -86,7 +95,6 @@ export function LineLinkPanel({
     try {
       await runTrustAction();
 
-      // LINE deep link 不需要 @ 前綴
       const bareId = trimmedLineId.replace(/^@/, '');
       const lineUrl = `https://line.me/R/ti/p/${encodeURIComponent(bareId)}`;
       const newWindow = window.open(lineUrl, '_blank', 'noopener,noreferrer');
@@ -102,13 +110,16 @@ export function LineLinkPanel({
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, trimmedLineId, onClose, runTrustAction]);
+  }, [isSubmitting, onClose, runTrustAction, trimmedLineId]);
 
   const handleFallback = useCallback(async () => {
     if (isSubmitting) return;
-    const normalizedInputLineId = fallbackLineId.trim();
-    if (!LINE_ID_PATTERN.test(normalizedInputLineId)) {
-      notify.warning('請先輸入有效 LINE ID', '可使用英數、底線、點、連字號（3-64 字元）。');
+
+    setFallbackLineIdTouched(true);
+    const validationError = validateLineIdInput(fallbackLineId);
+    setFallbackLineIdError(validationError);
+    if (validationError) {
+      notify.warning('請先輸入有效 LINE ID', LINE_ID_ERROR_DETAIL);
       return;
     }
 
@@ -128,8 +139,8 @@ export function LineLinkPanel({
   }, [fallbackLineId, isSubmitting, onClose, onFallbackContact, runTrustAction, trustChecked]);
 
   const handleBackdropClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.target === event.currentTarget) {
         onClose();
       }
     },
@@ -141,7 +152,7 @@ export function LineLinkPanel({
   return (
     <div
       role="presentation"
-      className="fixed inset-0 z-modal flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-modal flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
       onClick={handleBackdropClick}
     >
       <div
@@ -149,7 +160,6 @@ export function LineLinkPanel({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        style={lineBrandVars}
         className={cn(
           'w-full max-w-md rounded-2xl bg-bg-card shadow-2xl',
           'transform-gpu duration-200 ease-out',
@@ -158,8 +168,7 @@ export function LineLinkPanel({
           panelReady ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0 sm:translate-y-2'
         )}
       >
-        {/* Header - LINE 品牌漸層 */}
-        <div className="bg-gradient-to-r from-[var(--line-brand-green)] to-[var(--line-brand-green-hover)] p-4 text-white">
+        <div className="bg-gradient-to-r from-[#06C755] to-[#05B04A] p-4 text-white">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 id={titleId} className="text-lg font-bold">
@@ -185,76 +194,103 @@ export function LineLinkPanel({
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-4">
-          <div className="animate-in fade-in bg-brand-50/60 mb-4 flex items-center gap-3 rounded-xl p-3 duration-200 motion-reduce:transition-none">
-            <MaiMaiBase mood={hasLineId ? 'wave' : 'thinking'} size="xs" {...maiMaiA11yProps} />
-            <p className="text-sm text-ink-900">
-              {hasLineId
-                ? '加 LINE 直接聊，回覆最快喔！'
-                : '房仲還沒設定 LINE，用表單留言吧'}
-            </p>
-          </div>
-
-          {hasLineId ? (
-            <div className="rounded-xl border border-border bg-bg-base p-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-ink-900">
-                <MessageCircle size={18} className="text-[var(--line-brand-green)]" />
-                LINE ID: @{trimmedLineId}
-              </div>
-              <button
-                onClick={handleLineOpen}
-                disabled={isSubmitting}
-                className={cn(
-                  'flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold text-white hover:bg-[var(--line-brand-green-hover)] disabled:cursor-not-allowed disabled:opacity-60',
-                  motionA11y.transitionColors
-                )}
-              >
-                <MessageCircle size={18} />
-                開啟 LINE
-              </button>
+          {!isContentReady ? (
+            <div
+              data-testid="line-panel-skeleton"
+              className={cn('space-y-3 rounded-xl bg-bg-base p-3', motionA11y.pulse)}
+            >
+              <div className="h-4 w-1/2 rounded bg-slate-200" />
+              <div className="h-11 w-full rounded-xl bg-slate-200" />
+              <div className="h-11 w-full rounded-xl bg-slate-200" />
             </div>
           ) : (
-            <div className="rounded-xl border border-border bg-bg-base p-4">
-              <p className="text-sm text-text-muted">
-                你仍可先送出聯絡需求，系統會通知經紀人主動與你聯繫。
-              </p>
-              <label
-                htmlFor={fallbackInputId}
-                className="mt-3 block text-sm font-medium text-ink-900"
-              >
-                你的 LINE ID
-              </label>
-              <input
-                id={fallbackInputId}
-                type="text"
-                value={fallbackLineId}
-                onChange={(e) => setFallbackLineId(e.target.value)}
-                placeholder="例：maihouses_demo"
-                className={cn(
-                  'focus:ring-brand-200 mt-1 min-h-[44px] w-full rounded-xl border border-border bg-bg-card px-3 text-sm text-ink-900 outline-none placeholder:text-text-muted focus:border-brand-500 focus:ring-2',
-                  motionA11y.transitionColors
-                )}
-              />
-              <button
-                onClick={handleFallback}
-                disabled={isSubmitting}
-                className={cn(
-                  'mt-3 min-h-[44px] w-full cursor-pointer rounded-xl bg-brand-700 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60',
-                  motionA11y.transitionColors
-                )}
-              >
-                改用聯絡表單
-              </button>
-            </div>
-          )}
+            <>
+              <div className="animate-in fade-in bg-brand-50/60 mb-4 flex items-center gap-3 rounded-xl p-3 duration-200 motion-reduce:transition-none">
+                <MaiMaiBase mood={hasLineId ? 'wave' : 'thinking'} size="xs" {...maiMaiA11yProps} />
+                <p className="text-sm text-ink-900">
+                  {hasLineId ? '加 LINE 直接聊，回覆最快喔！' : '房仲還沒設定 LINE，用表單留言吧'}
+                </p>
+              </div>
 
-          <TrustAssureHint
-            isLoggedIn={isLoggedIn}
-            trustEnabled={trustEnabled}
-            checked={trustChecked}
-            onCheckedChange={setTrustChecked}
-          />
+              {hasLineId ? (
+                <div className="rounded-xl border border-border bg-bg-base p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-ink-900">
+                    <MessageCircle size={18} className="text-[#06C755]" />
+                    LINE ID: @{trimmedLineId}
+                  </div>
+                  <button
+                    onClick={handleLineOpen}
+                    disabled={isSubmitting}
+                    className={cn(
+                      'flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white hover:bg-[#05B04A] disabled:cursor-not-allowed disabled:opacity-60',
+                      motionA11y.transitionColors
+                    )}
+                  >
+                    <MessageCircle size={18} />
+                    開啟 LINE
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-border bg-bg-base p-4">
+                  <p className="text-sm text-text-muted">
+                    你仍可先送出聯絡需求，系統會通知經紀人主動與你聯繫。
+                  </p>
+                  <label htmlFor={fallbackInputId} className="mt-3 block text-sm font-medium text-ink-900">
+                    你的 LINE ID
+                  </label>
+                  <input
+                    id={fallbackInputId}
+                    type="text"
+                    value={fallbackLineId}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setFallbackLineId(nextValue);
+                      if (fallbackLineIdTouched) {
+                        setFallbackLineIdError(validateLineIdInput(nextValue));
+                      }
+                    }}
+                    onBlur={() => {
+                      setFallbackLineIdTouched(true);
+                      setFallbackLineIdError(validateLineIdInput(fallbackLineId));
+                    }}
+                    placeholder="例：maihouses_demo"
+                    aria-invalid={Boolean(fallbackLineIdError)}
+                    aria-describedby={fallbackLineIdError ? fallbackErrorId : undefined}
+                    className={cn(
+                      'mt-1 min-h-[44px] w-full rounded-xl border bg-bg-card px-3 text-sm text-ink-900 outline-none placeholder:text-text-muted focus:ring-2',
+                      fallbackLineIdError
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200 motion-safe:animate-shake'
+                        : 'border-border focus:border-brand-500 focus:ring-brand-200',
+                      motionA11y.transitionColors
+                    )}
+                  />
+                  {fallbackLineIdError && (
+                    <p id={fallbackErrorId} className="mt-1 text-sm text-red-600">
+                      {fallbackLineIdError}
+                    </p>
+                  )}
+                  <button
+                    onClick={handleFallback}
+                    disabled={isSubmitting}
+                    className={cn(
+                      'mt-3 min-h-[44px] w-full cursor-pointer rounded-xl bg-brand-700 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60',
+                      motionA11y.transitionColors
+                    )}
+                  >
+                    改用聯絡表單
+                  </button>
+                </div>
+              )}
+
+              <TrustAssureHint
+                isLoggedIn={isLoggedIn}
+                trustEnabled={trustEnabled}
+                checked={trustChecked}
+                onCheckedChange={setTrustChecked}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>
