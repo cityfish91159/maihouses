@@ -1268,10 +1268,72 @@
 }
 
 /* ====== Asset Monitor Table ====== */
+.asset-monitor-scroll {
+  overflow-x: auto;
+}
 .monitor-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+}
+.monitor-col-25 {
+  width: 25%;
+}
+.monitor-col-35 {
+  width: 35%;
+}
+.monitor-col-20 {
+  width: 20%;
+}
+.monitor-empty-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--ink-400);
+}
+.lead-identity-row {
+  display: flex;
+  align-items: center;
+}
+.lead-grade-pill {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--bg-card);
+  margin-right: 8px;
+}
+.lead-grade-s {
+  background: var(--grade-s);
+}
+.lead-grade-a {
+  background: var(--grade-a);
+}
+.lead-grade-b {
+  background: var(--grade-b);
+}
+.lead-grade-c {
+  background: var(--grade-c);
+}
+.lead-grade-f {
+  background: var(--grade-f);
+}
+.lead-name {
+  font-weight: 800;
+  color: var(--ink-100);
+}
+.lead-prop {
+  font-size: 11px;
+  color: var(--ink-300);
+}
+.protect-meta-row {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  display: flex;
+  justify-content: space-between;
 }
 .monitor-table th {
   text-align: left;

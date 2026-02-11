@@ -79,6 +79,10 @@
   color: var(--text-tertiary);
 }
 
+.legacy-property-page .legacy-clickable {
+  cursor: pointer;
+}
+
 /* HEADER */
 .legacy-property-page .legacy-header {
   position: sticky;
@@ -453,10 +457,43 @@
   margin-bottom: 0.375rem;
 }
 
+.legacy-property-page .property-title-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  width: 100%;
+}
+
 .legacy-property-page .property-location {
   font-size: 0.8125rem;
   /* 13px */
   color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.legacy-property-page .property-tags-row {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 0.625rem;
+}
+
+.legacy-property-page .capsule-chip {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-weight: 500;
+}
+
+.legacy-property-page .tiny-text-highlight {
+  font-size: 0.75rem;
+  color: #e63946;
+  font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
@@ -562,6 +599,12 @@
   /* 14px */
 }
 
+.legacy-property-page .property-review-lock-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .legacy-property-page .property-more-reviews .register-btn {
   padding: 0.25rem 0.75rem;
   font-size: 0.75rem;
@@ -657,6 +700,18 @@
   background: rgba(239, 68, 68, 0.05);
 }
 
+.legacy-property-page .horizontal-cta-btn {
+  padding: 0.375rem;
+  min-height: 2.5rem;
+  font-size: 0.8125rem;
+}
+
+.legacy-property-page .horizontal-heart-btn {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+}
+
 /* ===== 下方列表區 ===== */
 .legacy-property-page .listing-section {
   margin: 2rem 0;
@@ -740,6 +795,16 @@
 
 .legacy-property-page .horizontal-title-row strong {
   font-weight: 600;
+}
+
+.legacy-property-page .horizontal-title-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  font-weight: 700;
 }
 
 .legacy-property-page .horizontal-tag {

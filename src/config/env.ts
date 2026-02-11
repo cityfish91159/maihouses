@@ -81,12 +81,50 @@ const showFriendlyErrorPage = (title: string, message: string): void => {
     const safeHomeHref = escapeHtml(homeHref);
 
     document.body.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;">
-        <div style="text-align:center;max-width:400px;padding:2rem;">
-          <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
-          <h1 style="font-size:1.25rem;font-weight:600;color:#1e293b;margin-bottom:0.5rem;">${safeTitle}</h1>
-          <p style="color:#475569;margin-bottom:1.5rem;">${safeMessage}</p>
-          <a href="${safeHomeHref}" style="display:inline-block;padding:0.75rem 1.5rem;background:#3b82f6;color:white;border-radius:0.5rem;text-decoration:none;font-weight:500;">回到首頁</a>
+      <style>
+        .env-error-page {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          font-family: system-ui, -apple-system, sans-serif;
+          background: #f8fafc;
+        }
+        .env-error-card {
+          text-align: center;
+          max-width: 400px;
+          padding: 2rem;
+        }
+        .env-error-icon {
+          font-size: 3rem;
+          margin-bottom: 1rem;
+        }
+        .env-error-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #1e293b;
+          margin-bottom: 0.5rem;
+        }
+        .env-error-message {
+          color: #475569;
+          margin-bottom: 1.5rem;
+        }
+        .env-error-link {
+          display: inline-block;
+          padding: 0.75rem 1.5rem;
+          background: #3b82f6;
+          color: #fff;
+          border-radius: 0.5rem;
+          text-decoration: none;
+          font-weight: 500;
+        }
+      </style>
+      <div class="env-error-page">
+        <div class="env-error-card">
+          <div class="env-error-icon">⚠️</div>
+          <h1 class="env-error-title">${safeTitle}</h1>
+          <p class="env-error-message">${safeMessage}</p>
+          <a href="${safeHomeHref}" class="env-error-link">回到首頁</a>
         </div>
       </div>
     `;

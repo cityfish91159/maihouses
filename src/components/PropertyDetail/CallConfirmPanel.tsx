@@ -6,6 +6,7 @@ import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
 import { formatPhoneForDisplay, isValidPhone, sanitizePhoneInput } from './contactUtils';
+import { PANEL_SKELETON_DELAY_MS } from './constants';
 import { MaiMaiBase } from '../MaiMai';
 import { normalizeAgentName } from './agentName';
 import { useMaiMaiA11yProps } from '../../hooks/useMaiMaiA11yProps';
@@ -59,7 +60,7 @@ export function CallConfirmPanel({
   const displayedPhone = useMemo(() => formatPhoneForDisplay(normalizedPhone), [normalizedPhone]);
   const safeAgentName = useMemo(() => normalizeAgentName(agentName), [agentName]);
   const maiMaiA11yProps = useMaiMaiA11yProps();
-  const isContentReady = usePanelContentReady(isOpen, 300);
+  const isContentReady = usePanelContentReady(isOpen);
 
   useEffect(() => {
     if (isOpen) return;
@@ -83,53 +84,58 @@ export function CallConfirmPanel({
     hasContact: hasPhone,
   });
 
-  const handlePrimaryAction = useCallback(async () => {
+  const handleDirectCall = useCallback(async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
-      if (hasPhone) {
-        const sanitized = sanitizePhoneInput(normalizedPhone);
-        const isValid = isValidPhone(normalizedPhone);
-
-        if (!isValid) {
-          notify.warning('電話格式有誤', '請改用聯絡表單留言給經紀人');
-          onClose();
-          onFallbackContact?.(trustChecked);
-          return;
-        }
-
-        if (onTrustAction) {
-          await onTrustAction(trustChecked);
-        }
-
-        const isMobile = /iPhone|Android|Mobile/i.test(navigator.userAgent);
-
-        if (isMobile) {
-          window.location.href = `tel:${sanitized}`;
-          void track('call_dial_attempt', { has_phone: true, mode: 'tel' });
-        } else {
-          try {
-            await navigator.clipboard.writeText(displayedPhone);
-            notify.info('已複製電話號碼', displayedPhone);
-          } catch {
-            notify.info('請使用手機撥打', displayedPhone);
-          }
-          void track('call_dial_attempt', { has_phone: true, mode: 'clipboard' });
-        }
-
+      const sanitized = sanitizePhoneInput(normalizedPhone);
+      if (!isValidPhone(normalizedPhone)) {
+        notify.warning('電話格式有誤', '請改用聯絡表單留言給經紀人');
         onClose();
+        onFallbackContact?.(trustChecked);
         return;
       }
 
-      setFallbackPhoneTouched(true);
-      const validationError = validateFallbackPhone(fallbackPhone);
-      setFallbackPhoneError(validationError);
-      if (validationError) {
-        notify.warning('電話格式有誤', FALLBACK_PHONE_ERROR_MESSAGE);
-        return;
+      if (onTrustAction) {
+        await onTrustAction(trustChecked);
       }
 
+      const isMobile = /iPhone|Android|Mobile/i.test(navigator.userAgent);
+      if (isMobile) {
+        window.location.href = `tel:${sanitized}`;
+        void track('call_dial_attempt', { has_phone: true, mode: 'tel' });
+      } else {
+        try {
+          await navigator.clipboard.writeText(displayedPhone);
+          notify.info('已複製電話號碼', displayedPhone);
+        } catch {
+          notify.info('請使用手機撥打', displayedPhone);
+        }
+        void track('call_dial_attempt', { has_phone: true, mode: 'clipboard' });
+      }
+
+      onClose();
+    } catch {
+      notify.warning('操作未完成', '請稍後再試');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [displayedPhone, isSubmitting, normalizedPhone, onClose, onFallbackContact, onTrustAction, trustChecked]);
+
+  const handleFallbackSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+
+    setFallbackPhoneTouched(true);
+    const validationError = validateFallbackPhone(fallbackPhone);
+    setFallbackPhoneError(validationError);
+    if (validationError) {
+      notify.warning('電話格式有誤', FALLBACK_PHONE_ERROR_MESSAGE);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
       void track('call_dial_attempt', { has_phone: false });
       onClose();
       onFallbackContact?.(trustChecked);
@@ -138,17 +144,7 @@ export function CallConfirmPanel({
     } finally {
       setIsSubmitting(false);
     }
-  }, [
-    displayedPhone,
-    fallbackPhone,
-    hasPhone,
-    isSubmitting,
-    normalizedPhone,
-    onClose,
-    onFallbackContact,
-    onTrustAction,
-    trustChecked,
-  ]);
+  }, [fallbackPhone, isSubmitting, onClose, onFallbackContact, trustChecked]);
 
   const handleBackdropClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -228,7 +224,7 @@ export function CallConfirmPanel({
                   <p className="text-sm text-text-muted">電話號碼</p>
                   <p className="mt-1 text-lg font-bold text-ink-900">{displayedPhone}</p>
                   <button
-                    onClick={handlePrimaryAction}
+                    onClick={handleDirectCall}
                     disabled={isSubmitting}
                     className={cn(
                       'mt-3 flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60',
@@ -279,7 +275,7 @@ export function CallConfirmPanel({
                     </p>
                   )}
                   <button
-                    onClick={handlePrimaryAction}
+                    onClick={handleFallbackSubmit}
                     disabled={isSubmitting}
                     className={cn(
                       'mt-3 min-h-[44px] w-full cursor-pointer rounded-xl bg-brand-700 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60',

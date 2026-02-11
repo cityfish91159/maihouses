@@ -89,7 +89,7 @@
 - [x] **#20b** [P0] 文本優化 + ActionBar 毛玻璃（3 項：D3 Description 展開全文 + D4 ActionBar 毛玻璃+滾動隱藏 + D9 Glassmorphism 統一）✅ 2026-02-11
 - [x] **#20c** [P1] InfoCard 觸控修復（1 項：D5 按鈕 44px 觸控修復；~~D6 Specs Bento Grid~~ — 不做，加 icon 不算優化）✅ 2026-02-11
 - [x] **#20d** [P1] 評論 + Panel 升級（2 項：D7 CommunityReviews SVG 星級 + D8 Panel 統一升級；~~D10 FAB 重定位+漸層~~ — 不做）✅ 2026-02-11
-- [ ] **#20e** [P2] 動畫 + 微互動精緻化（4 項：D12 價格動畫 + D13 Section 進場 + D14 VipModal 倒數 + D15 Banner Shield 動畫）
+- [x] **#20e** ~~[P2] 動畫 + 微互動精緻化~~ — 整票不做。D12 價格動畫已有/其餘違反 ux-guidelines #7 #12；D14 倒數鎖關閉=反人類 UX；D15 bounce on icons=規範明確 Don't
 
 ### 待開發 — UAG Profile 頁 UX 升級（新增 #21 拆分）
 
@@ -4923,7 +4923,7 @@ cmd /c npm run check:utf8
 
 ---
 
-## #20e [P2] 詳情頁手機版 — 動畫 + 微互動精緻化（4 項）
+## ~~#20e [P2] 詳情頁手機版 — 動畫 + 微互動精緻化~~ — 整票不做（違反 ui-ux-pro-max ux-guidelines #7 #12）
 
 ### 20e-D12. 價格 + 社會證明 Micro-Interactions
 
@@ -5236,7 +5236,7 @@ const hiddenCount = allSkills.length - 6;
 #20b 文本 + ActionBar 毛玻璃（3 項，依賴 #2 ✅）
 #20c InfoCard + Specs 升級（2 項，獨立）
 #20d 評論 + Panel + FAB（3 項，#17 完成後 D10 自動解決）
-#20e 動畫 + 微互動（4 項，建議最後做）
+~~#20e 動畫 + 微互動~~ — 整票不做（違反 ux-guidelines）
 
 --- UAG Profile 頁 UX 升級（新增 #21 拆分）---
 
@@ -5283,7 +5283,7 @@ const hiddenCount = allSkills.length - 6;
 | 29 | #20b 文本 + ActionBar 毛玻璃 | 3 | P0 | 7 |
 | 30 | #20c InfoCard + Specs 升級 | 2 | P1 | 2 |
 | 31 | #20d 評論 + Panel + FAB | 3 | P1 | 4 |
-| 32 | #20e 動畫 + 微互動 | 4 | P2 | 6 |
+| 32 | ~~#20e 動畫 + 微互動~~ | ~~4~~ | ~~P2~~ | 不做 |
 | 33 | #21a Profile 手機版佈局重構 | 5 | P0 | 4 |
 | 34 | #21b Profile 桌面版 + 通用品質 | 5 | P1 | 5 |
 

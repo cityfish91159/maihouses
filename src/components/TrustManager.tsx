@@ -49,31 +49,16 @@ const TrustTransactionSchema = z
 
 const TrustTransactionArraySchema = z.array(TrustTransactionSchema);
 
-const COLORS = {
-  primary: '#1749D7',
-  primaryLight: '#EBF0FF',
-  success: '#10B981',
-  successLight: '#D1FAE5',
-  gray: '#6B7280',
-  grayLight: '#F3F4F6',
-  white: '#FFFFFF',
-  dark: '#0A2246',
-  red: '#EF4444',
-  redLight: '#FEE2E2',
-};
-
 interface TrustManagerProps {
   defaultCaseName?: string;
   showList?: boolean;
   linkPath?: string;
-  style?: React.CSSProperties;
 }
 
 export default function TrustManager({
   defaultCaseName = '',
   showList = true,
   linkPath = ROUTES.TRUST,
-  style,
 }: TrustManagerProps) {
   const [loading, setLoading] = useState(false);
   const [cases, setCases] = useState<TrustTransaction[]>([]);
@@ -265,24 +250,12 @@ export default function TrustManager({
 
   if (!currentUserId && !loading) {
     return (
-      <div
-        style={{
-          ...styles.container,
-          ...style,
-          textAlign: 'center',
-          padding: '40px 20px',
-        }}
-      >
-        <h3 style={styles.title}>請先登入</h3>
-        <p style={{ ...styles.subtitle, marginBottom: 20 }}>您需要登入才能管理案件</p>
+      <div className="border-brand/20 mt-8 rounded-2xl border bg-bg-soft p-10 text-center font-sans">
+        <h3 className="m-0 text-lg font-bold text-ink-900">請先登入</h3>
+        <p className="mb-5 mt-0.5 text-sm text-ink-600">您需要登入才能管理案件</p>
         <a
           href="/maihouses/auth.html?mode=login"
-          style={{
-            ...styles.createButton,
-            background: COLORS.primary,
-            textDecoration: 'none',
-            display: 'inline-block',
-          }}
+          className="inline-block cursor-pointer rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white no-underline"
         >
           前往登入
         </a>
@@ -291,24 +264,23 @@ export default function TrustManager({
   }
 
   return (
-    <div style={{ ...styles.container, ...style }}>
-      <div style={styles.header}>
+    <div className="border-brand/20 mt-8 rounded-2xl border bg-bg-soft font-sans">
+      <div className="flex items-center justify-between px-6 py-5">
         <div>
-          <h3 style={styles.title}>安心流程管理</h3>
-          <p style={styles.subtitle}>建立專屬連結，追蹤交易進度</p>
+          <h3 className="m-0 text-lg font-bold text-ink-900">安心流程管理</h3>
+          <p className="mb-0 mt-0.5 text-sm text-ink-600">建立專屬連結，追蹤交易進度</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          style={{
-            ...styles.createButton,
-            background: showForm ? COLORS.gray : COLORS.primary,
-          }}
+          className={`cursor-pointer rounded-xl border-none px-5 py-2.5 text-sm font-semibold text-white ${
+            showForm ? 'bg-slate-500' : 'bg-brand'
+          }`}
         >
           {showForm ? '取消' : '＋ 新增案件'}
         </button>
       </div>
       {showForm && (
-        <div style={styles.formContainer}>
+        <div className="flex gap-3 px-6 pb-5">
           <input
             id="trust-case-name"
             name="caseName"
@@ -316,26 +288,33 @@ export default function TrustManager({
             placeholder="輸入案件名稱"
             value={newCaseName}
             onChange={(e) => setNewCaseName(e.target.value)}
-            style={styles.input}
+            className="flex-1 rounded-xl border border-gray-300 px-4 py-3"
           />
-          <button onClick={createCase} disabled={loading} style={styles.submitButton}>
+          <button
+            onClick={createCase}
+            disabled={loading}
+            className="cursor-pointer rounded-xl border-none bg-green-600 px-6 py-3 font-semibold text-white"
+          >
             {loading ? '...' : '建立'}
           </button>
         </div>
       )}
       {showList && (
-        <div style={styles.listContainer}>
+        <div className="px-4 pb-4">
           {listLoading ? (
             <p>載入中...</p>
           ) : cases.length === 0 ? (
-            <p style={styles.emptyText}>暫無案件</p>
+            <p className="text-center text-ink-600">暫無案件</p>
           ) : (
             cases.map((tx) => {
               const isExpanded = expandedId === tx.id;
               return (
-                <div key={tx.id} style={styles.caseItem}>
+                <div
+                  key={tx.id}
+                  className="mb-2 rounded-xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+                >
                   <div
-                    style={styles.caseHeader}
+                    className="flex cursor-pointer items-center justify-between px-4 py-3.5"
                     role="button"
                     tabIndex={0}
                     onClick={() => setExpandedId(isExpanded ? null : tx.id)}
@@ -346,16 +325,16 @@ export default function TrustManager({
                       }
                     }}
                   >
-                    <div style={styles.caseInfo}>
-                      <span style={styles.caseName}>{tx.case_name}</span>
+                    <div className="flex-1">
+                      <span className="font-semibold">{tx.case_name}</span>
                     </div>
-                    <div style={styles.caseActions}>
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           copyLink(tx);
                         }}
-                        style={styles.iconButton}
+                        className="cursor-pointer rounded-md border-none bg-gray-100 px-2.5 py-1.5"
                       >
                         📋
                       </button>
@@ -363,35 +342,42 @@ export default function TrustManager({
                     </div>
                   </div>
                   {isExpanded && (
-                    <div style={styles.caseContent}>
+                    <div className="border-t border-gray-100 px-4 pb-4">
                       {tx.steps_data
                         .slice()
                         .sort((a, b) => a.step - b.step)
                         .map((step) => (
-                          <label key={step.step} style={styles.stepRow}>
+                          <label
+                            key={step.step}
+                            className="flex cursor-pointer items-center gap-2.5 border-b border-gray-100 py-2.5"
+                          >
                             <input
                               type="checkbox"
                               checked={step.done}
                               disabled={updatingStep === `${tx.id}-${step.step}`}
                               onChange={() => toggleStepDone(tx, step.step)}
-                              style={styles.checkbox}
+                              className="size-[18px] cursor-pointer accent-brand"
                             />
                             <span
-                              style={{
-                                ...styles.stepText,
-                                textDecoration: step.done ? 'line-through' : 'none',
-                              }}
+                              className={`flex-1 text-sm ${step.done ? 'line-through' : ''}`}
                             >
                               {STEP_NAMES[step.step]}
                             </span>
-                            {step.confirmed && <span style={styles.confirmedTag}>已確認</span>}
+                            {step.confirmed && (
+                              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] text-green-600">
+                                已確認
+                              </span>
+                            )}
                           </label>
                         ))}
-                      <div style={styles.caseFooter}>
-                        <span style={styles.caseDate}>
+                      <div className="flex items-center justify-between pt-3">
+                        <span className="text-xs text-ink-600">
                           {new Date(tx.created_at).toLocaleDateString()}
                         </span>
-                        <button onClick={() => deleteCase(tx)} style={styles.deleteButton}>
+                        <button
+                          onClick={() => deleteCase(tx)}
+                          className="cursor-pointer rounded-md border-none bg-red-100 px-4 py-1.5 text-xs text-red-500"
+                        >
                           刪除
                         </button>
                       </div>
@@ -406,113 +392,3 @@ export default function TrustManager({
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    background: COLORS.primaryLight,
-    border: `1px solid ${COLORS.primary}20`,
-    borderRadius: 16,
-    marginTop: 32,
-    fontFamily: 'sans-serif',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '20px 24px',
-  },
-  title: { margin: 0, fontSize: 18, fontWeight: 700, color: COLORS.dark },
-  subtitle: { margin: '2px 0 0', fontSize: 13, color: COLORS.gray },
-  createButton: {
-    padding: '10px 20px',
-    fontSize: 14,
-    fontWeight: 600,
-    color: COLORS.white,
-    border: 'none',
-    borderRadius: 10,
-    cursor: 'pointer',
-  },
-  formContainer: { padding: '0 24px 20px', display: 'flex', gap: 12 },
-  input: {
-    flex: 1,
-    padding: '12px 16px',
-    borderRadius: 10,
-    border: `1px solid ${COLORS.grayLight}`,
-  },
-  submitButton: {
-    padding: '12px 24px',
-    fontWeight: 600,
-    color: COLORS.white,
-    background: COLORS.success,
-    border: 'none',
-    borderRadius: 10,
-    cursor: 'pointer',
-  },
-  listContainer: { padding: '0 16px 16px' },
-  emptyText: { color: COLORS.gray, textAlign: 'center' },
-  caseItem: {
-    background: COLORS.white,
-    borderRadius: 12,
-    marginBottom: 8,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-  },
-  caseHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '14px 16px',
-    cursor: 'pointer',
-    alignItems: 'center',
-  },
-  caseInfo: { flex: 1 },
-  caseName: { fontWeight: 600 },
-  caseActions: { display: 'flex', gap: 8, alignItems: 'center' },
-  iconButton: {
-    padding: '6px 10px',
-    background: COLORS.grayLight,
-    border: 'none',
-    borderRadius: 6,
-    cursor: 'pointer',
-  },
-  caseContent: {
-    padding: '0 16px 16px',
-    borderTop: `1px solid ${COLORS.grayLight}`,
-  },
-  stepRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    padding: '10px 0',
-    borderBottom: `1px solid ${COLORS.grayLight}`,
-    cursor: 'pointer',
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    cursor: 'pointer',
-    accentColor: COLORS.primary,
-  },
-  stepText: { flex: 1, fontSize: 14 },
-  confirmedTag: {
-    fontSize: 11,
-    color: COLORS.success,
-    background: COLORS.successLight,
-    padding: '2px 8px',
-    borderRadius: 10,
-  },
-  caseFooter: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    paddingTop: 12,
-    alignItems: 'center',
-  },
-  caseDate: { fontSize: 12, color: COLORS.gray },
-  deleteButton: {
-    padding: '6px 16px',
-    fontSize: 12,
-    color: COLORS.red,
-    background: COLORS.redLight,
-    border: 'none',
-    borderRadius: 6,
-    cursor: 'pointer',
-  },
-};

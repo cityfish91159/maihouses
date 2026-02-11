@@ -52,10 +52,9 @@ export default function HeroAssure() {
 
         {/* Connecting Line (Mobile) - 高度根據展開狀態調整 */}
         <div
-          className="absolute left-7 top-0 -z-0 w-0.5 bg-border-light transition-all duration-300 md:hidden"
-          style={{
-            height: isExpanded ? `calc(100% - 3rem)` : `calc(${MOBILE_VISIBLE_STEPS} * 3.5rem)`,
-          }}
+          className={`absolute left-7 top-0 -z-0 w-0.5 bg-border-light transition-all duration-300 md:hidden ${
+            isExpanded ? 'h-[calc(100%-3rem)]' : 'h-28'
+          }`}
         />
 
         {/* Desktop: 顯示全部 6 步驟 */}

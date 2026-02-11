@@ -39,43 +39,26 @@ export const PoliteRewrite: React.FC<{ onAdopt?: (text: string) => void }> = ({ 
   };
 
   return (
-    <div
-      style={{
-        border: '1px solid #eee',
-        borderRadius: 12,
-        padding: 12,
-        background: '#fff',
-      }}
-    >
-      <div style={{ fontWeight: 600, marginBottom: 6 }}>禮貌改寫小幫手</div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-        <label>
+    <div className="rounded-xl border border-[#eee] bg-white p-3">
+      <div className="mb-1.5 font-semibold">禮貌改寫小幫手</div>
+      <div className="mb-2 flex flex-wrap gap-2">
+        <label className="inline-flex items-center">
           對象
           <select
             value={audience}
             onChange={(e) => setAudience(e.target.value as 'owner' | 'agent')}
-            style={{
-              marginLeft: 6,
-              padding: 6,
-              borderRadius: 8,
-              border: '1px solid #ddd',
-            }}
+            className="ml-1.5 rounded-lg border border-[#ddd] p-1.5"
           >
             <option value="agent">仲介</option>
             <option value="owner">屋主</option>
           </select>
         </label>
-        <label>
+        <label className="inline-flex items-center">
           目的
           <select
             value={intent}
             onChange={(e) => setIntent(e.target.value as 'view' | 'detail' | 'pet' | 'price')}
-            style={{
-              marginLeft: 6,
-              padding: 6,
-              borderRadius: 8,
-              border: '1px solid #ddd',
-            }}
+            className="ml-1.5 rounded-lg border border-[#ddd] p-1.5"
           >
             <option value="detail">詢問細節</option>
             <option value="view">預約看房</option>
@@ -89,79 +72,44 @@ export const PoliteRewrite: React.FC<{ onAdopt?: (text: string) => void }> = ({ 
         placeholder="貼上你想發的訊息（我會根據對象/目的幫你潤飾）"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        style={{
-          width: '100%',
-          padding: 8,
-          borderRadius: 8,
-          border: '1px solid #ddd',
-        }}
+        className="w-full rounded-lg border border-[#ddd] p-2"
       />
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+      <div className="mt-2 flex gap-2">
         <button
           onClick={handleRewrite}
           disabled={loading}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            background: '#1749D7',
-            color: '#fff',
-            border: '1px solid #1749D7',
-          }}
+          className="rounded-lg border border-[#1749D7] bg-[#1749D7] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? '生成中…' : '禮貌改寫'}
         </button>
       </div>
       {(v1 || v2) && (
-        <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
+        <div className="mt-2.5 grid gap-2">
           {v1 && (
-            <div
-              style={{
-                border: '1px solid #E6ECFF',
-                borderRadius: 8,
-                padding: 8,
-              }}
-            >
-              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>版本一</div>
-              <div style={{ marginBottom: 6 }}>{v1}</div>
+            <div className="rounded-lg border border-[#E6ECFF] p-2">
+              <div className="mb-1 text-xs text-[#6b7280]">版本一</div>
+              <div className="mb-1.5">{v1}</div>
               <button
                 onClick={() => adopt(v1)}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 8,
-                  border: '1px solid #1749D7',
-                  background: '#fff',
-                  color: '#1749D7',
-                }}
+                className="rounded-lg border border-[#1749D7] bg-white px-2.5 py-1.5 text-[#1749D7]"
               >
                 採用（複製/送出）
               </button>
             </div>
           )}
           {v2 && (
-            <div
-              style={{
-                border: '1px solid #E6ECFF',
-                borderRadius: 8,
-                padding: 8,
-              }}
-            >
-              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>版本二</div>
-              <div style={{ marginBottom: 6 }}>{v2}</div>
+            <div className="rounded-lg border border-[#E6ECFF] p-2">
+              <div className="mb-1 text-xs text-[#6b7280]">版本二</div>
+              <div className="mb-1.5">{v2}</div>
               <button
                 onClick={() => adopt(v2)}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 8,
-                  border: '1px solid #1749D7',
-                  background: '#fff',
-                  color: '#1749D7',
-                }}
+                className="rounded-lg border border-[#1749D7] bg-white px-2.5 py-1.5 text-[#1749D7]"
               >
                 採用（複製/送出）
               </button>
             </div>
           )}
-          {sent && <div style={{ color: '#16a34a' }}>已準備好訊息，祝溝通順利 🤞</div>}
+          {sent && <div className="text-[#16a34a]">已準備好訊息，祝溝通順利 🤞</div>}
         </div>
       )}
     </div>

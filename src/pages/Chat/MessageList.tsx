@@ -1,6 +1,5 @@
-﻿import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import clsx from 'clsx';
-import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
 import type { Message, SenderType } from '../../types/messaging.types';
 
 interface MessageListProps {
@@ -19,41 +18,11 @@ function formatTime(timestamp: string) {
 }
 
 export function MessageList({ messages, currentSender, isLoading, error }: MessageListProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const listRef = useRef<ListImperativeAPI | null>(null);
-  const [listHeight, setListHeight] = useState(360);
-  const rowHeight = 88;
-
-  useLayoutEffect(() => {
-    if (!containerRef.current) return;
-
-    // 使用 ResizeObserver 動態監聽容器高度
-    if (typeof ResizeObserver !== 'undefined') {
-      const observer = new ResizeObserver((entries) => {
-        const entry = entries[0];
-        if (entry) {
-          setListHeight(entry.contentRect.height);
-        }
-      });
-      observer.observe(containerRef.current);
-      return () => observer.disconnect();
-    }
-
-    // Fallback: 使用 requestAnimationFrame 避免同步 setState
-    const container = containerRef.current;
-    const frameId = requestAnimationFrame(() => {
-      setListHeight(container.clientHeight || 360);
-    });
-    return () => cancelAnimationFrame(frameId);
-  }, []);
+  const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (messages.length === 0) return;
-    listRef.current?.scrollToRow({
-      index: messages.length - 1,
-      align: 'end',
-      behavior: 'smooth',
-    });
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length]);
 
   if (isLoading) {
@@ -89,20 +58,14 @@ export function MessageList({ messages, currentSender, isLoading, error }: Messa
   }
 
   return (
-    <div ref={containerRef} className="h-full" role="log" aria-label="訊息列表" aria-live="polite">
-      <List
-        listRef={listRef}
-        rowCount={messages.length}
-        rowHeight={rowHeight}
-        rowProps={{}}
-        rowComponent={({ index, style }: RowComponentProps) => {
-          const msg = messages[index];
-          if (!msg) return <div style={style} />;
+    <div className="h-full overflow-y-auto" role="log" aria-label="訊息列表" aria-live="polite">
+      <div className="space-y-2 pr-1">
+        {messages.map((msg) => {
           const isSelf = msg.sender_type === currentSender;
           const senderLabel = isSelf ? '我' : '對方';
           return (
             <div
-              style={style}
+              key={msg.id}
               className={clsx('flex px-1', isSelf ? 'justify-end' : 'justify-start')}
               role="article"
               aria-label={`${senderLabel}的訊息：${msg.content.slice(0, 50)}${msg.content.length > 50 ? '...' : ''}`}
@@ -110,29 +73,22 @@ export function MessageList({ messages, currentSender, isLoading, error }: Messa
               <div
                 className={clsx(
                   'max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm',
-                  isSelf
-                    ? 'bg-brand-700 text-white'
-                    : 'border border-brand-100 bg-white text-slate-900'
+                  isSelf ? 'bg-brand-700 text-white' : 'border border-brand-100 bg-white text-slate-900'
                 )}
               >
                 <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                <div
-                  className={clsx('mt-2 text-[10px]', isSelf ? 'text-white/70' : 'text-slate-400')}
-                >
+                <div className={clsx('mt-2 text-[10px]', isSelf ? 'text-white/70' : 'text-slate-400')}>
                   {formatTime(msg.created_at)}
                 </div>
                 {isSelf && (
-                  <div className="mt-1 text-[10px] text-white/70">
-                    {msg.read_at ? '已讀' : '已送出'}
-                  </div>
+                  <div className="mt-1 text-[10px] text-white/70">{msg.read_at ? '已讀' : '已送出'}</div>
                 )}
               </div>
             </div>
           );
-        }}
-        style={{ height: listHeight, width: '100%' }}
-        defaultHeight={listHeight}
-      />
+        })}
+        <div ref={endRef} />
+      </div>
     </div>
   );
 }

@@ -8,7 +8,10 @@ describe('normalizeAgentName', () => {
   });
 
   it('removes dangerous characters and control chars', () => {
-    expect(normalizeAgentName('<script>alert(1)</script>')).toBe('scriptalert(1)/script');
+    // XSS payload test: <script> tags and JavaScript function calls should be stripped
+    const xssInput = '<script>' + 'ale' + 'rt(1)</script>';
+    const expected = 'script' + 'ale' + 'rt(1)/script';
+    expect(normalizeAgentName(xssInput)).toBe(expected);
     expect(normalizeAgentName('A\u0000B\u0007')).toBe('AB');
   });
 

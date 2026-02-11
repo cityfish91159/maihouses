@@ -1,8 +1,7 @@
-import { memo, type CSSProperties } from 'react';
+import { memo } from 'react';
 import { Phone, MessageCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
-import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 
 interface MobileCTAProps {
   onLineClick: () => void;
@@ -38,14 +37,9 @@ export const MobileCTA = memo(function MobileCTA({
   trustEnabled,
   isActionLocked,
 }: MobileCTAProps) {
-  const lineBrandVars = {
-    '--line-brand-green': LINE_BRAND_GREEN,
-    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
-  } as CSSProperties;
-
   return (
     <div className="mb-6 lg:hidden">
-      <div style={lineBrandVars} className="rounded-2xl p-4 glass-card">
+      <div className="rounded-2xl p-4 glass-card">
         <div className="flex gap-3">
           {/* 加 LINE 聊聊 - 主 CTA */}
           <button
@@ -53,7 +47,7 @@ export const MobileCTA = memo(function MobileCTA({
             aria-label="加 LINE 聊聊"
             disabled={isActionLocked}
             className={cn(
-              'flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 text-base font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-[var(--line-brand-green-hover)] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:active:scale-100',
+              'flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-line py-3 text-base font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-line-hover focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:active:scale-100',
               motionA11y.transitionAll
             )}
           >

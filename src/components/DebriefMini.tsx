@@ -42,65 +42,46 @@ export const DebriefMini: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        border: '1px solid #eee',
-        borderRadius: 12,
-        padding: 12,
-        background: '#fff',
-      }}
-    >
-      <div style={{ fontWeight: 600, marginBottom: 6 }}>看屋後三問（Mini Debrief）</div>
-      <div style={{ display: 'grid', gap: 8 }}>
+    <div className="rounded-xl border border-[#eee] bg-white p-3">
+      <div className="mb-1.5 font-semibold">看屋後三問（Mini Debrief）</div>
+      <div className="grid gap-2">
         <input
           value={like}
           onChange={(e) => setLike(e.target.value)}
           placeholder="第一直覺如何？（例：採光很好）"
-          style={{ padding: 8, borderRadius: 8, border: '1px solid #ddd' }}
+          className="rounded-lg border border-[#ddd] p-2"
         />
         <input
           value={pain}
           onChange={(e) => setPain(e.target.value)}
           placeholder="哪裡卡卡的？（例：廚房太小）"
-          style={{ padding: 8, borderRadius: 8, border: '1px solid #ddd' }}
+          className="rounded-lg border border-[#ddd] p-2"
         />
         <input
           value={next}
           onChange={(e) => setNext(e.target.value)}
           placeholder="下一步想做什麼？（例：再看一間對比）"
-          style={{ padding: 8, borderRadius: 8, border: '1px solid #ddd' }}
+          className="rounded-lg border border-[#ddd] p-2"
         />
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+      <div className="mt-2 flex gap-2">
         <button
           onClick={handleGen}
           disabled={loading}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            background: '#1749D7',
-            color: '#fff',
-            border: '1px solid #1749D7',
-          }}
+          className="rounded-lg border border-[#1749D7] bg-[#1749D7] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? '整理中…' : '生成 Must/Nice/Avoid + #tags'}
         </button>
         {out && (
           <button
             onClick={handleSave}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 8,
-              border: '1px solid #1749D7',
-              background: '#fff',
-              color: '#1749D7',
-            }}
+            className="rounded-lg border border-[#1749D7] bg-white px-3 py-2 text-[#1749D7]"
           >
             存到便條
           </button>
         )}
       </div>
-      {out && <div style={{ marginTop: 10, whiteSpace: 'pre-wrap', color: '#0a2246' }}>{out}</div>}
+      {out && <div className="mt-2.5 whitespace-pre-wrap text-[#0a2246]">{out}</div>}
     </div>
   );
 };

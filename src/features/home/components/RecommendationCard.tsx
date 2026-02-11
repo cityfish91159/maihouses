@@ -8,11 +8,9 @@ interface RecommendationCardProps {
 export const RecommendationCard = memo(({ property }: RecommendationCardProps) => {
   return (
     <article className="rounded-xl border border-border-light bg-white p-3 transition-all hover:-translate-y-1 hover:border-brand hover:shadow-lg">
-      <div
-        className="mb-2 h-28 rounded-md bg-cover bg-center"
-        style={{ backgroundImage: `url(${property.cover})` }}
-        aria-hidden="true"
-      />
+      <div className="mb-2 h-28 overflow-hidden rounded-md">
+        <img src={property.cover} alt="" aria-hidden="true" className="size-full object-cover" />
+      </div>
       <div className="mb-1 line-clamp-1 text-sm font-semibold text-text-primary">
         {property.title}
       </div>

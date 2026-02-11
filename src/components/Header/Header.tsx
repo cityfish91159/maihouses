@@ -216,10 +216,9 @@ export default function Header() {
               >
                 <MaiMaiBase
                   mood="header"
-                  className="size-full"
+                  className="size-full [--maimai-body-fill:#F6F9FF]"
                   animated={false}
                   showEffects={false}
-                  style={{ '--maimai-body-fill': '#F6F9FF' } as React.CSSProperties}
                 />
               </button>
             </div>

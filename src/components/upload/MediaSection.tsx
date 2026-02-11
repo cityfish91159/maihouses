@@ -188,10 +188,14 @@ export const MediaSection: React.FC = () => {
                   aria-label="圖片壓縮進度"
                   className="h-1.5 w-full overflow-hidden rounded-full bg-blue-200"
                 >
-                  <div
-                    className="h-full bg-blue-500 transition-all duration-200 ease-out"
-                    style={{ width: `${compressionProgress}%` }}
-                  />
+                  <div className="grid-cols-20 grid h-full gap-px">
+                    {Array.from({ length: 20 }, (_, idx) => (
+                      <span
+                        key={idx}
+                        className={idx < Math.round(compressionProgress / 5) ? 'bg-blue-500' : 'bg-transparent'}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

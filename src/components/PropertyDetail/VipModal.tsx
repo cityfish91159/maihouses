@@ -1,9 +1,8 @@
-﻿import { memo, useCallback, useId, useRef, type CSSProperties } from 'react';
+import { memo, useCallback, useId, useRef } from 'react';
 import { Flame, CheckCircle, MessageCircle, Phone, X } from 'lucide-react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { cn } from '../../lib/utils';
 import { motionA11y, withMotionSafety } from '../../lib/motionA11y';
-import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 
 interface VipModalProps {
   isOpen: boolean;
@@ -37,11 +36,6 @@ export const VipModal = memo(function VipModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
 
-  const lineBrandVars = {
-    '--line-brand-green': LINE_BRAND_GREEN,
-    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
-  } as CSSProperties;
-
   useFocusTrap({
     containerRef: modalRef,
     initialFocusRef: closeButtonRef,
@@ -62,8 +56,7 @@ export const VipModal = memo(function VipModal({
 
   return (
     <div
-      style={lineBrandVars}
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-4 sm:items-center"
+      className="fixed inset-0 z-modal flex items-end justify-center bg-black/60 p-4 sm:items-center"
       onClick={handleBackdropClick}
       role="presentation"
     >
@@ -125,7 +118,7 @@ export const VipModal = memo(function VipModal({
             }}
             aria-label="立即加 LINE 諮詢"
             className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-[var(--line-brand-green-hover)] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:active:scale-100',
+              'flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-line py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-line-hover focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:active:scale-100',
               motionA11y.transitionAll
             )}
           >
@@ -141,7 +134,7 @@ export const VipModal = memo(function VipModal({
             }}
             aria-label="致電諮詢"
             className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 duration-200 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:active:scale-100',
+              'flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 duration-200 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:active:scale-100',
               motionA11y.transitionAll
             )}
           >
@@ -152,7 +145,7 @@ export const VipModal = memo(function VipModal({
           <button
             onClick={onClose}
             className={cn(
-              'w-full py-2 text-sm text-slate-400 hover:text-slate-600',
+              'min-h-[44px] w-full py-2 text-sm text-slate-400 hover:text-slate-600',
               motionA11y.transitionColors
             )}
           >

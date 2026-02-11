@@ -67,8 +67,7 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
           <text
             x="165"
             y="75"
-            className="animate-ping text-xl"
-            style={{ animationDelay: '0.3s' }}
+            className="animate-ping text-xl [animation-delay:300ms]"
             fill="#FF6B9D"
           >
             ♥

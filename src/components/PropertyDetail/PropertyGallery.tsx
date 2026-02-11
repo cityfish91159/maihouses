@@ -1,7 +1,8 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Home } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
+import { useSwipeNavigation } from './hooks/useSwipeNavigation';
 
 interface PropertyGalleryProps {
   images: string[];
@@ -25,12 +26,6 @@ export const PropertyGallery = memo(function PropertyGallery({
   const [showHintAnimation, setShowHintAnimation] = useState(true);
   const [loadedImageSrc, setLoadedImageSrc] = useState<string | null>(null);
 
-  const touchStartXRef = useRef<number | null>(null);
-  const touchCurrentXRef = useRef<number | null>(null);
-  const touchStartYRef = useRef<number | null>(null);
-  const lastSwipeAtRef = useRef(0);
-  const lastSwipeDirectionRef = useRef<'next' | 'prev' | null>(null);
-
   const imageCount = images?.length ?? 0;
   const activeImageIndex = imageCount > 0 ? Math.min(currentImageIndex, imageCount - 1) : 0;
   const displayImage = images?.[activeImageIndex] || fallbackImage;
@@ -48,10 +43,11 @@ export const PropertyGallery = memo(function PropertyGallery({
 
   const handleThumbnailClick = useCallback(
     (index: number) => {
+      if (index === activeImageIndex) return;
       setCurrentImageIndex(index);
       onPhotoClick();
     },
-    [onPhotoClick]
+    [activeImageIndex, onPhotoClick]
   );
 
   const handleImageLoad = useCallback(() => {
@@ -83,88 +79,30 @@ export const PropertyGallery = memo(function PropertyGallery({
     (direction: 'next' | 'prev') => {
       if (imageCount <= 1) return false;
 
-      let hasNavigated = false;
+      const nextIndex =
+        direction === 'next'
+          ? Math.min(activeImageIndex + 1, imageCount - 1)
+          : Math.max(activeImageIndex - 1, 0);
 
-      setCurrentImageIndex((prevIndex) => {
-        const normalizedPrevIndex = Math.min(prevIndex, imageCount - 1);
-        const nextIndex =
-          direction === 'next'
-            ? Math.min(normalizedPrevIndex + 1, imageCount - 1)
-            : Math.max(normalizedPrevIndex - 1, 0);
+      if (nextIndex === activeImageIndex) {
+        return false;
+      }
 
-        if (nextIndex !== normalizedPrevIndex) {
-          hasNavigated = true;
-          onPhotoClick();
-        }
-
-        return nextIndex;
-      });
-
-      return hasNavigated;
+      setCurrentImageIndex(nextIndex);
+      onPhotoClick();
+      return true;
     },
-    [imageCount, onPhotoClick]
+    [activeImageIndex, imageCount, onPhotoClick]
   );
 
-  const handleTouchStart = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
-    const startTouch = event.touches[0];
-    if (!startTouch) return;
-
-    touchStartXRef.current = startTouch.clientX;
-    touchCurrentXRef.current = startTouch.clientX;
-    touchStartYRef.current = startTouch.clientY;
-  }, []);
-
-  const handleTouchMove = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
-    const currentTouch = event.touches[0];
-    if (!currentTouch) return;
-
-    const startX = touchStartXRef.current;
-    const startY = touchStartYRef.current;
-    const currentX = currentTouch.clientX;
-    const currentY = currentTouch.clientY;
-
-    if (typeof startX === 'number' && typeof startY === 'number') {
-      const deltaX = Math.abs(currentX - startX);
-      const deltaY = Math.abs(currentY - startY);
-
-      if (deltaX > SWIPE_INTENT_THRESHOLD && deltaX > deltaY) {
-        event.preventDefault();
-      }
-    }
-
-    touchCurrentXRef.current = currentX;
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (touchStartXRef.current === null || touchCurrentXRef.current === null) {
-      touchStartXRef.current = null;
-      touchCurrentXRef.current = null;
-      touchStartYRef.current = null;
-      return;
-    }
-
-    const deltaX = touchCurrentXRef.current - touchStartXRef.current;
-    const now = Date.now();
-
-    touchStartXRef.current = null;
-    touchCurrentXRef.current = null;
-    touchStartYRef.current = null;
-
-    if (Math.abs(deltaX) <= SWIPE_THRESHOLD) return;
-
-    const swipeDirection = deltaX < 0 ? 'next' : 'prev';
-    const isRapidSameDirectionSwipe =
-      now - lastSwipeAtRef.current < SWIPE_COOLDOWN_MS &&
-      lastSwipeDirectionRef.current === swipeDirection;
-
-    if (isRapidSameDirectionSwipe) return;
-
-    const hasNavigated = navigateBySwipe(swipeDirection);
-    if (hasNavigated) {
-      lastSwipeAtRef.current = now;
-      lastSwipeDirectionRef.current = swipeDirection;
-    }
-  }, [navigateBySwipe]);
+  const { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd } =
+    useSwipeNavigation({
+      enabled: imageCount > 1,
+      swipeThreshold: SWIPE_THRESHOLD,
+      swipeIntentThreshold: SWIPE_INTENT_THRESHOLD,
+      swipeCooldownMs: SWIPE_COOLDOWN_MS,
+      onNavigate: navigateBySwipe,
+    });
 
   return (
     <div className="mb-4">
@@ -256,7 +194,7 @@ export const PropertyGallery = memo(function PropertyGallery({
               key={`${image}-${index}`}
               type="button"
               onClick={() => handleThumbnailClick(index)}
-              aria-label={`切換到第 ${index + 1} 張照片${index === activeImageIndex ? '（目前選中）' : ''}`}
+              aria-label={`切換到第 ${index + 1} 張照片${index === activeImageIndex ? '（目前顯示中）' : ''}`}
               aria-pressed={index === activeImageIndex}
               className={cn(
                 'h-16 w-24 shrink-0 snap-center overflow-hidden rounded-lg border-2',
@@ -268,7 +206,7 @@ export const PropertyGallery = memo(function PropertyGallery({
             >
               <img
                 src={image}
-                alt={`照片 ${index + 1}`}
+                alt={`第 ${index + 1} 張縮圖`}
                 onError={handleThumbnailError}
                 className="size-full object-cover"
                 loading="lazy"

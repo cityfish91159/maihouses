@@ -1,10 +1,9 @@
-import { memo, useMemo, useState, type CSSProperties } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Eye, Flame, Heart, MapPin, Users } from 'lucide-react';
 import type { PropertyData } from '../../services/propertyService';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { LineShareAction } from '../social/LineShareAction';
-import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 import { useAnimatedNumber } from './hooks/useAnimatedNumber';
 
 interface PropertyInfoCardProps {
@@ -22,6 +21,8 @@ interface PropertyInfoCardProps {
   trustEnabled: boolean;
 }
 
+const VIEWER_COUNT_ANIMATION_DURATION_MS = 700;
+
 export const PropertyInfoCard = memo(function PropertyInfoCard({
   property,
   isFavorite,
@@ -33,12 +34,9 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
   trustEnabled,
 }: PropertyInfoCardProps) {
   const [isAddressExpanded, setIsAddressExpanded] = useState(false);
-  const animatedCurrentViewers = useAnimatedNumber(socialProof.currentViewers, { durationMs: 700 });
-
-  const lineBrandVars = {
-    '--line-brand-green': LINE_BRAND_GREEN,
-    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
-  } as CSSProperties;
+  const animatedCurrentViewers = useAnimatedNumber(socialProof.currentViewers, {
+    durationMs: VIEWER_COUNT_ANIMATION_DURATION_MS,
+  });
 
   const shareUrl = useMemo(
     () =>
@@ -54,7 +52,7 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
   );
 
   return (
-    <div style={lineBrandVars} className="rounded-2xl p-4 glass-card sm:p-5">
+    <div className="rounded-2xl p-4 glass-card sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <h1 className="line-clamp-2 text-2xl font-bold leading-tight text-slate-900">{property.title}</h1>
 
@@ -63,7 +61,7 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
             url={shareUrl}
             title={`【邁房子推薦】${property.title} | 總價 ${property.price} 萬`}
             onShareClick={onLineShare}
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-[var(--line-brand-green)] p-2.5 text-white transition-all hover:bg-[var(--line-brand-green-hover)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-line p-2.5 text-white transition-all hover:bg-line-hover hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             showIcon={true}
             btnText=""
           />

@@ -83,6 +83,11 @@
             text: '#64748b',
           },
         },
+        // LINE 品牌色 - 官方指定色，不可替換
+        line: {
+          DEFAULT: '#06C755',
+          hover: '#05B04A',
+        },
         // MaiHouses Brand Alias - 語意化品牌色（消除 text-maihouses-dark 等警告）
         maihouses: {
           dark: 'var(--brand)', // #00385a
@@ -278,7 +283,12 @@
     function ({ addUtilities }) {
       addUtilities({
         '.glass-card': {
-          '@apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg': {},
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)', // Safari 支援
+          borderWidth: '1px',
+          borderColor: 'rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         },
       });
     },

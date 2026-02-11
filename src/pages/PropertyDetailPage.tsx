@@ -36,7 +36,6 @@ import {
   PropertyDescription,
   CommunityReviews,
   MobileActionBar,
-  MobileCTA,
   VipModal,
   LineLinkPanel,
   CallConfirmPanel,
@@ -748,15 +747,6 @@ export const PropertyDetailPage: React.FC = () => {
             title={property.title}
             onPhotoClick={handlePhotoClick}
             fallbackImage={FALLBACK_IMAGE}
-          />
-
-          {/* 優化方案 1: 使用拆分的 MobileCTA 組件（#2 雙按鈕） */}
-          <MobileCTA
-            onLineClick={handleMobileLineClick}
-            onCallClick={handleMobileCallClick}
-            socialProof={socialProof}
-            trustEnabled={isTrustEnabled}
-            isActionLocked={isActionLocked}
           />
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

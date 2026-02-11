@@ -22,6 +22,9 @@ export function useScrollDirection(threshold = 10): 'up' | 'down' {
   const lastY = useRef(0);
 
   useEffect(() => {
+    // 初始化：同步當前滾動位置，避免首次觸發時誤判
+    lastY.current = window.scrollY;
+
     const handler = () => {
       const y = window.scrollY;
       if (Math.abs(y - lastY.current) > threshold) {

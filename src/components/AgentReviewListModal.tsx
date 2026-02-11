@@ -84,6 +84,7 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
   const renderStarBar = (star: 5 | 4 | 3 | 2 | 1) => {
     const count = reviewData?.distribution[String(star) as '5' | '4' | '3' | '2' | '1'] || 0;
     const percentage = reviewData && reviewData.total > 0 ? (count / reviewData.total) * 100 : 0;
+    const filledSegments = Math.round(percentage / 5);
 
     return (
       <div key={star} className="flex items-center gap-2 text-xs">
@@ -97,7 +98,14 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
           ))}
         </div>
         <div className="h-2 flex-1 overflow-hidden rounded-full bg-bg-base">
-          <div className="h-full bg-amber-400 transition-all" style={{ width: `${percentage}%` }} />
+          <div className="grid-cols-20 grid h-full gap-px">
+            {Array.from({ length: 20 }, (_, idx) => (
+              <span
+                key={idx}
+                className={idx < filledSegments ? 'bg-amber-400' : 'bg-transparent'}
+              />
+            ))}
+          </div>
         </div>
         <div className="w-16 text-right text-text-muted">
           {count} ({percentage.toFixed(0)}%)
@@ -107,19 +115,20 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
   };
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Modal backdrop click-to-close pattern
-    <div
-      className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="review-list-modal-title"
-    >
+    <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+        aria-label="關閉評價列表"
+        tabIndex={-1}
+      />
       <div
         ref={dialogRef}
-        className="relative h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-list-modal-title"
+        className="relative z-10 h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
       >
         <div className="sticky top-0 z-10 flex items-center border-b border-border bg-white px-6 py-4">
           <button

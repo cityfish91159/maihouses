@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
 import { track } from '../../analytics/track';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
-import { LINE_ID_PATTERN } from './constants';
+import { LINE_ID_PATTERN, PANEL_SKELETON_DELAY_MS } from './constants';
 import { MaiMaiBase } from '../MaiMai';
 import { normalizeAgentName } from './agentName';
 import { useMaiMaiA11yProps } from '../../hooks/useMaiMaiA11yProps';
@@ -56,7 +57,7 @@ export function LineLinkPanel({
 
   const maiMaiA11yProps = useMaiMaiA11yProps();
   const safeAgentName = useMemo(() => normalizeAgentName(agentName), [agentName]);
-  const isContentReady = usePanelContentReady(isOpen, 300);
+  const isContentReady = usePanelContentReady(isOpen);
 
   const trimmedLineId = agentLineId?.trim() ?? '';
   const hasLineId = LINE_ID_PATTERN.test(trimmedLineId);
@@ -85,7 +86,12 @@ export function LineLinkPanel({
 
   const runTrustAction = useCallback(async () => {
     if (!onTrustAction) return;
-    await onTrustAction(trustChecked);
+    try {
+      await onTrustAction(trustChecked);
+    } catch (error) {
+      logger.warn('[LineLinkPanel] runTrustAction failed', { error, trustChecked });
+      throw error;
+    }
   }, [onTrustAction, trustChecked]);
 
   const handleLineOpen = useCallback(async () => {
@@ -168,7 +174,7 @@ export function LineLinkPanel({
           panelReady ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0 sm:translate-y-2'
         )}
       >
-        <div className="bg-gradient-to-r from-[#06C755] to-[#05B04A] p-4 text-white">
+        <div className="bg-gradient-to-r from-line to-line-hover p-4 text-white">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 id={titleId} className="text-lg font-bold">
@@ -216,14 +222,14 @@ export function LineLinkPanel({
               {hasLineId ? (
                 <div className="rounded-xl border border-border bg-bg-base p-4">
                   <div className="mb-3 flex items-center gap-2 text-sm font-medium text-ink-900">
-                    <MessageCircle size={18} className="text-[#06C755]" />
+                    <MessageCircle size={18} className="text-line" />
                     LINE ID: @{trimmedLineId}
                   </div>
                   <button
                     onClick={handleLineOpen}
                     disabled={isSubmitting}
                     className={cn(
-                      'flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white hover:bg-[#05B04A] disabled:cursor-not-allowed disabled:opacity-60',
+                      'flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-line py-3 font-bold text-white hover:bg-line-hover disabled:cursor-not-allowed disabled:opacity-60',
                       motionA11y.transitionColors
                     )}
                   >

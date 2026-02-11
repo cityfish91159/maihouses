@@ -27,22 +27,34 @@ const baseSocialProof = {
   isHot: true,
 };
 
-function renderPropertyInfoCard(options?: {
-  trustEnabled?: boolean;
-  socialProof?: typeof baseSocialProof;
-}) {
-  return render(
+function renderPropertyInfoCard(
+  options: {
+    trustEnabled?: boolean;
+    socialProof?: typeof baseSocialProof;
+    isFavorite?: boolean;
+    onFavoriteToggle?: () => void;
+    onLineShare?: () => void;
+    onMapClick?: () => void;
+  } = {}
+) {
+  const onFavoriteToggle = options.onFavoriteToggle ?? vi.fn();
+  const onLineShare = options.onLineShare ?? vi.fn();
+  const onMapClick = options.onMapClick ?? vi.fn();
+
+  render(
     <PropertyInfoCard
       property={baseProperty}
-      isFavorite={false}
-      onFavoriteToggle={vi.fn()}
-      onLineShare={vi.fn()}
-      onMapClick={vi.fn()}
+      isFavorite={options.isFavorite ?? false}
+      onFavoriteToggle={onFavoriteToggle}
+      onLineShare={onLineShare}
+      onMapClick={onMapClick}
       capsuleTags={['近捷運', '採光佳']}
-      socialProof={options?.socialProof ?? baseSocialProof}
-      trustEnabled={options?.trustEnabled ?? true}
+      socialProof={options.socialProof ?? baseSocialProof}
+      trustEnabled={options.trustEnabled ?? true}
     />
   );
+
+  return { onFavoriteToggle, onLineShare, onMapClick };
 }
 
 describe('PropertyInfoCard D5', () => {
@@ -63,6 +75,18 @@ describe('PropertyInfoCard D5', () => {
 
     expect(screen.getByText('熱門物件')).toBeInTheDocument();
     expect(screen.getByText('本物件 4 組客戶已賞屋')).toBeInTheDocument();
+  });
+
+  it('hides trust-cases text when trustCasesCount is 0', () => {
+    renderPropertyInfoCard({
+      trustEnabled: true,
+      socialProof: {
+        ...baseSocialProof,
+        trustCasesCount: 0,
+      },
+    });
+
+    expect(screen.queryByText(/本物件 \d+ 組客戶已賞屋/)).not.toBeInTheDocument();
   });
 
   it('uses two-line clamp for long title', () => {
@@ -103,13 +127,47 @@ describe('PropertyInfoCard D5', () => {
     expect(mapLink.className).toContain('min-h-[44px]');
   });
 
+  it('calls onFavoriteToggle when favorite button is clicked', () => {
+    const onFavoriteToggle = vi.fn();
+    renderPropertyInfoCard({ onFavoriteToggle });
+
+    fireEvent.click(screen.getByTestId('favorite-button'));
+
+    expect(onFavoriteToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onMapClick when map link is clicked', () => {
+    const onMapClick = vi.fn();
+    renderPropertyInfoCard({ onMapClick });
+
+    fireEvent.click(screen.getByTestId('map-link'));
+
+    expect(onMapClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onLineShare when line share button is clicked', () => {
+    const onLineShare = vi.fn();
+    const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    renderPropertyInfoCard({ onLineShare });
+
+    const actionGroup = screen.getByTestId('property-info-actions');
+    const buttons = within(actionGroup).getAllByRole('button');
+    fireEvent.click(buttons[0]!);
+
+    expect(onLineShare).toHaveBeenCalledTimes(1);
+    windowOpenSpy.mockRestore();
+  });
+
   it('animates current viewers number and settles at target value', async () => {
     renderPropertyInfoCard();
 
     expect(screen.getByTestId('current-viewers-count')).toHaveTextContent('0');
 
-    await waitFor(() => {
-      expect(screen.getByTestId('current-viewers-count')).toHaveTextContent('12');
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('current-viewers-count')).toHaveTextContent('12');
+      },
+      { timeout: 2000 }
+    );
   });
 });

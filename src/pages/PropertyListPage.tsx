@@ -74,7 +74,7 @@ async function preloadImages(data: PropertyPageData): Promise<void> {
 // Legacy Header Component (Inline for strict structure matching)
 const LegacyHeader = () => (
   <header className="legacy-header">
-    <a href="/maihouses/" className="logo-container" style={{ textDecoration: 'none' }}>
+    <a href="/maihouses/" className="logo-container no-underline">
       <div className="logo-icon-box">
         <svg
           className="logo-icon-svg"
@@ -97,7 +97,7 @@ const LegacyHeader = () => (
         </div>
       </div>
     </a>
-    <a href="/maihouses/auth.html" className="auth-btn" style={{ textDecoration: 'none' }}>
+    <a href="/maihouses/auth.html" className="auth-btn no-underline">
       登入/註冊
     </a>
   </header>
@@ -274,25 +274,11 @@ export default function PropertyListPage() {
                 <LegacyHorizontalCard key={item.id || index} data={item} />
               ))
             ) : (
-              <div
-                className="empty-state"
-                style={{
-                  gridColumn: '1 / -1',
-                  textAlign: 'center',
-                  padding: '3rem 1rem',
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    color: '#5b6b7b',
-                    marginBottom: '0.5rem',
-                  }}
-                >
+              <div className="empty-state col-[1/-1] p-12 text-center">
+                <p className="mb-2 text-lg font-semibold text-[#5b6b7b]">
                   找不到符合「{urlQuery}」的房源
                 </p>
-                <p style={{ fontSize: '0.875rem', color: '#8b9cad' }}>
+                <p className="text-sm text-[#8b9cad]">
                   試試其他關鍵字，例如：林口、捷運、學區
                 </p>
               </div>

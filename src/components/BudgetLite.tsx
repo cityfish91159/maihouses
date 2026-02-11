@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Events, track } from '../analytics/track';
 
 function calcMonthlyPayment(principal: number, annualRate: number, years: number) {
@@ -42,34 +42,16 @@ export const BudgetLite: React.FC = () => {
   })();
 
   return (
-    <div
-      style={{
-        border: '1px solid #eee',
-        borderRadius: 12,
-        padding: 12,
-        background: '#fff',
-      }}
-    >
-      <div style={{ fontWeight: 600, marginBottom: 8 }}>預算規劃（Lite）</div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5,1fr)',
-          gap: 8,
-        }}
-      >
+    <div className="rounded-xl border border-gray-200 bg-white p-3">
+      <div className="mb-2 font-semibold">預算規劃（Lite）</div>
+      <div className="grid grid-cols-5 gap-2">
         <label>
           總價(萬)
           <input
             type="number"
             value={total}
             onChange={(e) => setTotal(Number(e.target.value))}
-            style={{
-              width: '100%',
-              padding: 6,
-              borderRadius: 8,
-              border: '1px solid #ddd',
-            }}
+            className="w-full rounded-lg border border-gray-300 p-1.5"
           />
         </label>
         <label>
@@ -78,12 +60,7 @@ export const BudgetLite: React.FC = () => {
             type="number"
             value={down}
             onChange={(e) => setDown(Number(e.target.value))}
-            style={{
-              width: '100%',
-              padding: 6,
-              borderRadius: 8,
-              border: '1px solid #ddd',
-            }}
+            className="w-full rounded-lg border border-gray-300 p-1.5"
           />
         </label>
         <label>
@@ -92,12 +69,7 @@ export const BudgetLite: React.FC = () => {
             type="number"
             value={rate}
             onChange={(e) => setRate(Number(e.target.value))}
-            style={{
-              width: '100%',
-              padding: 6,
-              borderRadius: 8,
-              border: '1px solid #ddd',
-            }}
+            className="w-full rounded-lg border border-gray-300 p-1.5"
           />
         </label>
         <label>
@@ -106,12 +78,7 @@ export const BudgetLite: React.FC = () => {
             type="number"
             value={years}
             onChange={(e) => setYears(Number(e.target.value))}
-            style={{
-              width: '100%',
-              padding: 6,
-              borderRadius: 8,
-              border: '1px solid #ddd',
-            }}
+            className="w-full rounded-lg border border-gray-300 p-1.5"
           />
         </label>
         <label>
@@ -123,16 +90,11 @@ export const BudgetLite: React.FC = () => {
               const v = Number(e.target.value);
               setIncome(Number.isFinite(v) ? v : '');
             }}
-            style={{
-              width: '100%',
-              padding: 6,
-              borderRadius: 8,
-              border: '1px solid #ddd',
-            }}
+            className="w-full rounded-lg border border-gray-300 p-1.5"
           />
         </label>
       </div>
-      <div style={{ marginTop: 10, fontSize: 14, color: '#0a2246' }}>
+      <div className="mt-2.5 text-sm text-ink-900">
         概算（僅供參考）：月付約 <b>{monthly.toLocaleString()}</b> 元；貸款本金約{' '}
         <b>{principal.toFixed(0)}</b> 萬。
         {burden !== null && (
@@ -141,17 +103,10 @@ export const BudgetLite: React.FC = () => {
           </>
         )}
       </div>
-      <div style={{ marginTop: 8, color: '#6b7280' }}>{warmTip}</div>
+      <div className="mt-2 text-gray-500">{warmTip}</div>
       <button
         onClick={onCopy}
-        style={{
-          marginTop: 8,
-          padding: '6px 10px',
-          borderRadius: 8,
-          border: '1px solid #1749D7',
-          background: '#fff',
-          color: '#1749D7',
-        }}
+        className="mt-2 rounded-lg border border-[#1749D7] bg-white px-2.5 py-1.5 text-[#1749D7]"
       >
         複製概算模板
       </button>

@@ -1,4 +1,9 @@
-import { PHONE_DIGITS_MAX, PHONE_DIGITS_MIN } from './constants';
+import {
+  PHONE_DIGITS_MAX,
+  PHONE_DIGITS_MIN,
+  TAIWAN_MOBILE_PATTERN,
+  TW_MOBILE_FORMAT,
+} from './constants';
 
 /**
  * 清理電話號碼輸入，只保留數字和加號
@@ -30,8 +35,9 @@ export const formatPhoneForDisplay = (value: string): string => {
   const normalized = sanitizePhoneInput(value.trim());
   const digitsOnly = normalized.startsWith('+') ? normalized.slice(1) : normalized;
 
-  if (/^09\d{8}$/.test(digitsOnly)) {
-    return `${digitsOnly.slice(0, 4)}-${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7)}`;
+  if (TAIWAN_MOBILE_PATTERN.test(digitsOnly)) {
+    const { AREA_CODE_END, PREFIX_END } = TW_MOBILE_FORMAT;
+    return `${digitsOnly.slice(0, AREA_CODE_END)}-${digitsOnly.slice(AREA_CODE_END, PREFIX_END)}-${digitsOnly.slice(PREFIX_END)}`;
   }
 
   return normalized || value.trim();

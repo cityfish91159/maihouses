@@ -1,9 +1,10 @@
-import { memo, type CSSProperties } from 'react';
+import { memo } from 'react';
 import { MessageCircle, Phone, Shield, Eye, Flame, Users } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
-import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
+
+const DEFAULT_SOCIAL_PROOF = { currentViewers: 0, trustCasesCount: 0, isHot: false } as const;
 
 interface MobileActionBarProps {
   onLineClick: () => void;
@@ -40,7 +41,7 @@ interface MobileActionBarProps {
 export const MobileActionBar = memo(function MobileActionBar({
   onLineClick,
   onCallClick,
-  socialProof = { currentViewers: 0, trustCasesCount: 0, isHot: false },
+  socialProof = DEFAULT_SOCIAL_PROOF,
   trustEnabled,
   isVerified = false,
   isActionLocked = false,
@@ -48,14 +49,8 @@ export const MobileActionBar = memo(function MobileActionBar({
   const scrollDirection = useScrollDirection(10);
   const isVisible = scrollDirection === 'up';
 
-  const lineBrandVars = {
-    '--line-brand-green': LINE_BRAND_GREEN,
-    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
-  } as CSSProperties;
-
   return (
     <div
-      style={lineBrandVars}
       className={cn(
         'pb-safe fixed inset-x-0 bottom-0 z-overlay border-t border-white/20 bg-white/95 p-3 backdrop-blur-xl transition-transform duration-300 ease-out lg:hidden',
         !isVisible && 'translate-y-full motion-reduce:translate-y-0'
@@ -98,7 +93,7 @@ export const MobileActionBar = memo(function MobileActionBar({
           aria-label="加 LINE 聊聊"
           disabled={isActionLocked}
           className={cn(
-            'flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-[var(--line-brand-green-hover)] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:active:scale-100',
+            'flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-line py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-line-hover focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:active:scale-100',
             motionA11y.transitionAll
           )}
         >

@@ -26,15 +26,8 @@ export const NoteWithEcho: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        border: '1px solid #eee',
-        borderRadius: 12,
-        padding: 12,
-        background: '#fff',
-      }}
-    >
-      <div style={{ fontWeight: 600, marginBottom: 6 }}>收藏備註（感受）</div>
+    <div className="rounded-xl border border-[#eee] bg-white p-3">
+      <div className="mb-1.5 font-semibold">收藏備註（感受）</div>
       <textarea
         rows={3}
         placeholder="寫下這間帶給你的感覺…"
@@ -42,31 +35,18 @@ export const NoteWithEcho: React.FC = () => {
         onChange={(e) => setText(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={{
-          width: '100%',
-          padding: 8,
-          borderRadius: 8,
-          border: '1px solid #ddd',
-        }}
+        className="w-full rounded-lg border border-[#ddd] p-2"
       />
-      {focused && (
-        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>慢慢寫，我在。</div>
-      )}
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+      {focused && <div className="mt-1 text-xs text-[#6b7280]">慢慢寫，我在。</div>}
+      <div className="mt-2 flex gap-2">
         <button
           onClick={handleSave}
           disabled={loading}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 8,
-            background: '#1749D7',
-            color: '#fff',
-            border: '1px solid #1749D7',
-          }}
+          className="rounded-lg border border-[#1749D7] bg-[#1749D7] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? '生成中…' : '存入便條（含回聲）'}
         </button>
-        {echo && <span style={{ color: '#6b7280' }}>AI 回聲：{echo}</span>}
+        {echo && <span className="text-[#6b7280]">AI 回聲：{echo}</span>}
       </div>
     </div>
   );

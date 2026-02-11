@@ -1,4 +1,3 @@
-﻿import clsx from 'clsx';
 
 interface ChatHeaderProps {
   isLoading?: boolean;
@@ -71,13 +70,11 @@ export function ChatHeader({
       <div className="rounded-2xl border border-brand-100 bg-white p-4 shadow-sm">
         <p className="mb-3 text-xs font-bold text-brand-500">物件資訊</p>
         <div className="flex items-center gap-3">
-          <div
-            className={clsx(
-              'h-16 w-20 overflow-hidden rounded-xl border border-brand-100 bg-slate-50',
-              propertyImage && 'bg-cover bg-center'
-            )}
-            style={propertyImage ? { backgroundImage: `url(${propertyImage})` } : undefined}
-          />
+          <div className="h-16 w-20 overflow-hidden rounded-xl border border-brand-100 bg-slate-50">
+            {propertyImage ? (
+              <img src={propertyImage} alt="" aria-hidden="true" className="size-full object-cover" />
+            ) : null}
+          </div>
           <div>
             <p className="text-base font-bold text-slate-900">{propertyTitle || '未提供物件'}</p>
             <p className="text-xs text-slate-500">{propertySubtitle || '尚無地址資訊'}</p>

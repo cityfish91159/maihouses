@@ -41,7 +41,7 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
   };
 
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
+    <div className="flex gap-2">
       <input
         ref={inputRef}
         type="text"
@@ -50,12 +50,7 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={isActive() ? '安靜模式：只聊天,不推內容' : '輸入訊息…'}
-        style={{
-          flex: 1,
-          padding: '10px 12px',
-          borderRadius: 10,
-          border: '1px solid #ddd',
-        }}
+        className="flex-1 rounded-[10px] border border-[#ddd] px-3 py-2.5"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -65,13 +60,7 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
       />
       <button
         onClick={handleSend}
-        style={{
-          padding: '8px 12px',
-          borderRadius: 10,
-          background: '#1749D7',
-          color: '#fff',
-          border: '1px solid #1749D7',
-        }}
+        className="rounded-[10px] border border-[#1749D7] bg-[#1749D7] px-3 py-2 text-white"
       >
         發送
       </button>

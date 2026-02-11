@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo, useId, type CSSProperties } from 'react';
+import React, { useState, useMemo, memo, useId } from 'react';
 import {
   Shield,
   ThumbsUp,
@@ -11,7 +11,6 @@ import {
 import { Agent } from '../lib/types';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAgentProfile } from '../services/agentService';
-import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './PropertyDetail/constants';
 
 interface AgentTrustCardProps {
   agent: Agent;
@@ -65,11 +64,6 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   const platformCode =
     safeInternalCode === null ? 'MH-未設定' : `MH-${String(safeInternalCode).padStart(5, '0')}`;
 
-  const lineBrandVars = {
-    '--line-brand-green': LINE_BRAND_GREEN,
-    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
-  } as CSSProperties;
-
   const agentMetrics = useMemo(() => {
     if (isDemo) {
       return {
@@ -102,7 +96,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   ]);
 
   return (
-    <div style={lineBrandVars} className="rounded-xl border border-border bg-bg-card p-4 shadow-sm">
+    <div className="rounded-xl border border-border bg-bg-card p-4 shadow-sm">
       <div className="flex items-start gap-4">
         <div className="relative">
           {/* #19 avatar fallback 改用 Lucide UserCircle */}
@@ -278,7 +272,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
           onClick={onLineClick}
           aria-label="加 LINE 聊聊"
           data-testid="agent-card-line-button"
-          className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-2.5 text-sm font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[var(--line-brand-green-hover)] focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-2.5 text-sm font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[#05B04A] focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           <MessageCircle size={18} />加 LINE 聊聊
         </button>

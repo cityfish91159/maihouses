@@ -770,8 +770,7 @@ export function MaiMaiBase({
         viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_HEIGHT}`}
         key={activeMood}
         data-mood={activeMood}
-        className={`size-full text-[var(--brand)] drop-shadow-sm ${T_TRANSFORM} ${getAnimationClass()} animate-fadeIn`}
-        style={{ animationDuration: '180ms' }}
+        className={`size-full text-[var(--brand)] drop-shadow-sm ${T_TRANSFORM} ${getAnimationClass()} animate-fadeIn [animation-duration:180ms]`}
       >
         {/* 特效 */}
         {showEffects && <Effects mood={activeMood} />}

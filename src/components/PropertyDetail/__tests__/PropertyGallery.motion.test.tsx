@@ -119,13 +119,37 @@ describe('PropertyGallery motion and swipe', () => {
     expect(onPhotoClick).toHaveBeenCalledTimes(2);
   });
 
-  it('does not switch when swipe distance is below threshold', () => {
+  it('does not switch when horizontal distance equals threshold', () => {
     const { mainImage, touchSurface, onPhotoClick } = setupGallery([
       'https://example.com/p1.jpg',
       'https://example.com/p2.jpg',
     ]);
 
     swipe(touchSurface, 200, 150);
+
+    expect(mainImage.src).toContain('/p1.jpg');
+    expect(onPhotoClick).not.toHaveBeenCalled();
+  });
+
+  it('does not switch on mostly vertical gesture even when horizontal delta is large', () => {
+    const { mainImage, touchSurface, onPhotoClick } = setupGallery([
+      'https://example.com/p1.jpg',
+      'https://example.com/p2.jpg',
+    ]);
+
+    swipe(touchSurface, 220, 140, 120, 260);
+
+    expect(mainImage.src).toContain('/p1.jpg');
+    expect(onPhotoClick).not.toHaveBeenCalled();
+  });
+
+  it('does not switch when swipe distance is below threshold', () => {
+    const { mainImage, touchSurface, onPhotoClick } = setupGallery([
+      'https://example.com/p1.jpg',
+      'https://example.com/p2.jpg',
+    ]);
+
+    swipe(touchSurface, 200, 160);
 
     expect(mainImage.src).toContain('/p1.jpg');
     expect(onPhotoClick).not.toHaveBeenCalled();
@@ -180,6 +204,36 @@ describe('PropertyGallery motion and swipe', () => {
     expect(onPhotoClick).not.toHaveBeenCalled();
   });
 
+  it('shows skeleton again when switching to another image', () => {
+    const { mainImage } = setupGallery(['https://example.com/p1.jpg', 'https://example.com/p2.jpg']);
+
+    fireEvent.load(mainImage);
+    expect(screen.queryByTestId('gallery-main-skeleton')).not.toBeInTheDocument();
+
+    const nextButton = screen.getByRole('button', { name: '下一張照片' });
+    fireEvent.click(nextButton);
+
+    expect(mainImage.src).toContain('/p2.jpg');
+    expect(screen.getByTestId('gallery-main-skeleton')).toBeInTheDocument();
+  });
+
+  it('falls back to fallback image when main image fails', () => {
+    const { mainImage } = setupGallery(['https://example.com/broken-image.jpg']);
+
+    fireEvent.error(mainImage);
+    expect(mainImage.src).toBe(fallbackImage);
+  });
+
+  it('hides skeleton when fallback image also fails to load', () => {
+    const { mainImage } = setupGallery(['https://example.com/broken-image.jpg']);
+
+    fireEvent.error(mainImage);
+    expect(screen.getByTestId('gallery-main-skeleton')).toBeInTheDocument();
+
+    fireEvent.error(mainImage);
+    expect(screen.queryByTestId('gallery-main-skeleton')).not.toBeInTheDocument();
+  });
+
   it('debounces rapid consecutive swipes', () => {
     let currentNow = 1000;
     const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => currentNow);
@@ -203,5 +257,40 @@ describe('PropertyGallery motion and swipe', () => {
 
     expect(onPhotoClick).toHaveBeenCalledTimes(2);
     nowSpy.mockRestore();
+  });
+
+  it('keeps thumbnails interactive and triggers callback when selecting a thumbnail', () => {
+    const onPhotoClick = vi.fn();
+    const { container, mainImage } = setupGallery(
+      ['https://example.com/p1.jpg', 'https://example.com/p2.jpg', 'https://example.com/p3.jpg'],
+      onPhotoClick
+    );
+
+    fireEvent.load(mainImage);
+    const thumbnailButtons = container.querySelectorAll('button[aria-pressed]');
+    expect(thumbnailButtons).toHaveLength(3);
+
+    fireEvent.click(thumbnailButtons[2] as HTMLButtonElement);
+
+    expect(mainImage.src).toContain('/p3.jpg');
+    expect(onPhotoClick).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('gallery-main-skeleton')).toBeInTheDocument();
+  });
+
+  it('does not trigger callback when clicking current thumbnail', () => {
+    const onPhotoClick = vi.fn();
+    const { container, mainImage } = setupGallery(
+      ['https://example.com/p1.jpg', 'https://example.com/p2.jpg'],
+      onPhotoClick
+    );
+
+    fireEvent.load(mainImage);
+    const thumbnailButtons = container.querySelectorAll('button[aria-pressed]');
+    expect(thumbnailButtons).toHaveLength(2);
+
+    fireEvent.click(thumbnailButtons[0] as HTMLButtonElement);
+
+    expect(onPhotoClick).not.toHaveBeenCalled();
+    expect(mainImage.src).toContain('/p1.jpg');
   });
 });

@@ -45,49 +45,20 @@ export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
   };
 
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        position: 'relative',
-      }}
-    >
+    <span className="relative inline-flex items-center">
       <button
         aria-label="白話解釋"
         onClick={toggle}
-        style={{
-          marginLeft: 6,
-          width: 18,
-          height: 18,
-          borderRadius: 999,
-          border: '1px solid #C9D5FF',
-          background: '#F5F8FF',
-          color: '#1749D7',
-          fontSize: 12,
-          cursor: 'pointer',
-        }}
+        className="ml-1.5 size-[18px] cursor-pointer rounded-full border border-[#C9D5FF] bg-[#F5F8FF] text-xs text-[#1749D7]"
       >
         ?
       </button>
       {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '120%',
-            left: 0,
-            background: '#fff',
-            border: '1px solid #E6ECFF',
-            borderRadius: 8,
-            padding: 10,
-            width: 280,
-            boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
-            zIndex: 50,
-          }}
-        >
-          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+        <div className="absolute left-0 top-[120%] z-50 w-[280px] rounded-lg border border-[#E6ECFF] bg-white p-2.5 shadow-[0_10px_24px_rgba(0,0,0,0.08)]">
+          <div className="mb-1.5 text-xs text-[#6b7280]">
             白話解釋（僅供參考，非法律意見）
           </div>
-          <div style={{ whiteSpace: 'pre-wrap' }}>{loading ? '生成中…' : ans}</div>
+          <div className="whitespace-pre-wrap">{loading ? '生成中…' : ans}</div>
         </div>
       )}
     </span>

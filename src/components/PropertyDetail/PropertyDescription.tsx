@@ -3,8 +3,22 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { motionA11y } from '../../lib/motionA11y';
 import { cn } from '../../lib/utils';
 
+/**
+ * 展開按鈕顯示閾值（字元數）
+ *
+ * @remarks
+ * 經驗值：4 行 line-clamp 約可顯示 240 字（中文約 60 字/行）
+ * 實際顯示行數取決於容器寬度和字體大小
+ */
+const EXPANSION_THRESHOLD = 240;
+
 interface PropertyDescriptionProps {
   description: string;
+  /**
+   * 展開按鈕顯示閾值（字元數）
+   * @default 240
+   */
+  expansionThreshold?: number;
 }
 
 /**
@@ -21,6 +35,7 @@ interface PropertyDescriptionProps {
  */
 export const PropertyDescription = memo(function PropertyDescription({
   description,
+  expansionThreshold = EXPANSION_THRESHOLD,
 }: PropertyDescriptionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -28,8 +43,8 @@ export const PropertyDescription = memo(function PropertyDescription({
     setIsExpanded((prev) => !prev);
   }, []);
 
-  // 計算是否需要展開按鈕（超過 4 行約 240 字）
-  const needsExpansion = description.length > 240;
+  // 計算是否需要展開按鈕
+  const needsExpansion = (description?.length ?? 0) > expansionThreshold;
 
   return (
     <div className="prose prose-slate max-w-none">
@@ -46,7 +61,7 @@ export const PropertyDescription = memo(function PropertyDescription({
         {/* Gradient fade-out（僅在未展開且需要展開時顯示） */}
         {!isExpanded && needsExpansion && (
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-bg-card to-transparent"
             aria-hidden="true"
           />
         )}

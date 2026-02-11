@@ -51,7 +51,6 @@ export const CommentInput = memo(
             disabled={disabled || isSubmitting}
             rows={1}
             className="min-h-[42px] w-full resize-none overflow-hidden rounded-[20px] border border-transparent bg-gray-50 px-4 py-2.5 text-[14px] text-gray-800 outline-none ring-0 transition-all hover:bg-gray-100 focus:border-indigo-500/30 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-            style={{ height: 'auto', minHeight: '42px' }}
           />
           <div className="absolute right-2 top-1.5 flex items-center gap-1">
             {content.trim() && (

@@ -19,14 +19,13 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
   return (
     <div className="property-card">
       <div
-        className="property-media"
+        className="property-media legacy-clickable"
         onClick={handleNavigate}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') handleNavigate();
         }}
         role="button"
         tabIndex={0}
-        style={{ cursor: 'pointer' }}
       >
         <img src={data.image} alt={data.title} />
         <div className="property-badge">{data.badge}</div>
@@ -38,38 +37,17 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
             type="button"
             onClick={handleNavigate}
             className="property-title-btn"
-            style={{
-              cursor: 'pointer',
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              font: 'inherit',
-              color: 'inherit',
-              textAlign: 'inherit',
-              width: '100%',
-            }}
           >
             {data.title}
           </button>
         </h3>
         <div className="property-location">{data.location}</div>
 
-        <div
-          className="property-tags-row"
-          style={{ display: 'flex', gap: '0.375rem', marginBottom: '0.625rem' }}
-        >
+        <div className="property-tags-row">
           {(data.tags || []).slice(0, 3).map((tag: string, i: number) => (
             <span
               key={i}
               className={`capsule-chip ${variant !== 'main' ? 'capsule-chip-sm' : ''}`}
-              style={{
-                fontSize: '0.75rem',
-                padding: '0.125rem 0.5rem',
-                borderRadius: '999px',
-                background: 'var(--primary-light)',
-                color: 'var(--primary-dark)',
-                fontWeight: 500,
-              }}
             >
               {tag}
             </span>
@@ -77,15 +55,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
         </div>
 
         {variant === 'main' && data.highlights && (
-          <div
-            className="tiny-text tiny-text-highlight"
-            style={{
-              fontSize: '0.75rem',
-              color: '#E63946',
-              fontWeight: 600,
-              marginBottom: '0.5rem',
-            }}
-          >
+          <div className="tiny-text tiny-text-highlight">
             {data.highlights}
           </div>
         )}
@@ -119,14 +89,13 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
             </div>
 
             <div
-              className="property-more-reviews"
+              className="property-more-reviews legacy-clickable"
               onClick={handleNavigate}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') handleNavigate();
               }}
               role="button"
               tabIndex={0}
-              style={{ cursor: 'pointer' }}
             >
               <span className="lock-icon">🔒</span>
               <span>查看其他 {data.lockCount} 則住戶真實評價</span>
@@ -161,16 +130,15 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
             </div>
 
             <div
-              className="property-more-reviews"
+              className="property-more-reviews legacy-clickable"
               onClick={handleNavigate}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') handleNavigate();
               }}
               role="button"
               tabIndex={0}
-              style={{ cursor: 'pointer' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div className="property-review-lock-meta">
                 <span className="lock-icon">🔒</span>
                 <span>{data.lockCount} 則評價</span>
               </div>

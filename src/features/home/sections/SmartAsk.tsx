@@ -194,10 +194,7 @@ export default function SmartAsk() {
       <div className="bg-brand-100/30 pointer-events-none absolute -right-24 -top-24 size-80 rounded-full mix-blend-multiply blur-3xl"></div>
       <div className="bg-brand-700/5 pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full mix-blend-multiply blur-3xl"></div>
       <div
-        className="pointer-events-none absolute inset-0 z-0 [background-size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]"
-        style={{
-          backgroundImage: `linear-gradient(to right, rgba(var(--brand-primary-rgb), 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(var(--brand-primary-rgb), 0.03) 1px, transparent 1px)`,
-        }}
+        className="pointer-events-none absolute inset-0 z-0 [background-image:linear-gradient(to_right,rgba(var(--brand-primary-rgb),0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(var(--brand-primary-rgb),0.03)_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]"
       ></div>
 
       {/* Decorative Top Bar */}

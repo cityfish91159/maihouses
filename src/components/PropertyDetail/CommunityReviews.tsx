@@ -4,6 +4,11 @@ import { ChevronRight, Lock, MessageSquare, Star, ThumbsUp } from 'lucide-react'
 import { logger } from '../../lib/logger';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
+import {
+  INTERSECTION_THRESHOLD,
+  MOCK_TOTAL_REVIEWS,
+  REVIEW_KEY_PREVIEW_LENGTH,
+} from './constants';
 
 interface CommunityReviewsProps {
   isLoggedIn: boolean;
@@ -44,6 +49,8 @@ interface CommunityWallResponse {
 }
 
 const STAR_COUNT = 5;
+const FILLED_STAR_COUNT = 4;
+const LOCKED_CONTENT_PREVIEW_LENGTH = 36;
 const AVATAR_CLASSES = [
   'bg-gradient-to-br from-brand-500 to-brand-700',
   'bg-gradient-to-br from-brand-light to-brand-600',
@@ -96,12 +103,16 @@ const MOCK_REVIEWS: ReviewPreview[] = [
 
 function ReviewStars({ className }: { className?: string }) {
   return (
-    <div className={cn('inline-flex items-center gap-0.5', className)} aria-label="五星評價">
+    <div className={cn('inline-flex items-center gap-0.5', className)} aria-label={`${FILLED_STAR_COUNT} 星評價`}>
       {Array.from({ length: STAR_COUNT }, (_, index) => (
         <Star
           key={index}
           size={12}
-          className={cn('fill-current', index < 3 ? 'text-yellow-400' : 'text-amber-500')}
+          className={cn(
+            index < FILLED_STAR_COUNT
+              ? 'fill-current text-amber-500'
+              : 'text-slate-300'
+          )}
         />
       ))}
     </div>
@@ -155,7 +166,9 @@ export const CommunityReviews = memo(function CommunityReviews({
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const useMockData = isDemo && !communityId;
-  const [totalReviews, setTotalReviews] = useState<number | null>(() => (useMockData ? 12 : null));
+  const [totalReviews, setTotalReviews] = useState<number | null>(() =>
+    useMockData ? MOCK_TOTAL_REVIEWS : null
+  );
   const [reviewPreviews, setReviewPreviews] = useState<ReviewPreview[]>(() =>
     useMockData ? MOCK_REVIEWS : []
   );
@@ -169,7 +182,7 @@ export const CommunityReviews = memo(function CommunityReviews({
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: INTERSECTION_THRESHOLD }
     );
 
     if (ref.current) {
@@ -273,7 +286,7 @@ export const CommunityReviews = memo(function CommunityReviews({
             {publicReviews.length > 0 ? (
               publicReviews.map((review) => (
                 <div
-                  key={`${review.name}-${review.content.slice(0, 12)}`}
+                  key={`${review.name}-${review.content.slice(0, REVIEW_KEY_PREVIEW_LENGTH)}`}
                   className="flex gap-3 rounded-2xl bg-bg-base p-3 transition-all duration-200 hover:shadow-md active:scale-[0.98] motion-reduce:transform-none"
                 >
                   <div
@@ -337,13 +350,13 @@ export const CommunityReviews = memo(function CommunityReviews({
                 <p className="text-sm text-ink-600">
                   {isLoggedIn
                     ? lockedReview.content
-                    : `${lockedReview.content.slice(0, 36).trimEnd()}...`}
+                    : `${lockedReview.content.slice(0, LOCKED_CONTENT_PREVIEW_LENGTH).trimEnd()}...`}
                 </p>
               </div>
             </div>
 
             {!isLoggedIn && (
-              <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent via-white/80 to-white pb-3">
+              <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent via-bg-card/80 to-bg-card pb-3">
                 <button
                   onClick={handleAuthRedirect}
                   className="flex min-h-[44px] items-center gap-2 rounded-full bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-lg transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"

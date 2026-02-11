@@ -21,14 +21,13 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
     <div className="horizontal-card">
       <div className="horizontal-left">
         <div
-          className="horizontal-thumb"
+          className="horizontal-thumb legacy-clickable"
           onClick={handleNavigate}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') handleNavigate();
           }}
           role="button"
           tabIndex={0}
-          style={{ cursor: 'pointer' }}
         >
           <img src={data.image} alt={data.title} loading="lazy" />
         </div>
@@ -39,15 +38,6 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
                 type="button"
                 onClick={handleNavigate}
                 className="horizontal-title-btn"
-                style={{
-                  cursor: 'pointer',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  fontWeight: 'bold',
-                }}
               >
                 {data.title}
               </button>
@@ -88,20 +78,12 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
 
         <div className="property-cta">
           <button
-            className="btn-primary"
+            className="btn-primary horizontal-cta-btn"
             onClick={handleNavigate}
-            style={{
-              padding: '0.375rem',
-              minHeight: '2.5rem',
-              fontSize: '0.8125rem',
-            }}
           >
             查看詳情
           </button>
-          <button
-            className="heart-btn"
-            style={{ width: '2.5rem', height: '2.5rem', minWidth: '2.5rem' }}
-          >
+          <button className="heart-btn horizontal-heart-btn">
             ♥
           </button>
         </div>

@@ -26,27 +26,20 @@ export default function AssetMonitor({ leads, onSendMessage, onViewChat }: Asset
           <button className={styles['uag-btn']}>匯出報表</button>
         </div>
       </div>
-      <div style={{ overflowX: 'auto' }}>
+      <div className={styles['asset-monitor-scroll']}>
         <table className={styles['monitor-table']}>
           <thead>
             <tr>
-              <th style={{ width: '25%' }}>客戶等級/名稱</th>
-              <th style={{ width: '35%' }}>保護期倒數</th>
-              <th style={{ width: '20%' }}>目前狀態</th>
-              <th style={{ width: '20%' }}>操作</th>
+              <th className={styles['monitor-col-25']}>客戶等級/名稱</th>
+              <th className={styles['monitor-col-35']}>保護期倒數</th>
+              <th className={styles['monitor-col-20']}>目前狀態</th>
+              <th className={styles['monitor-col-20']}>操作</th>
             </tr>
           </thead>
           <tbody id="asset-list">
             {boughtLeads.length === 0 ? (
               <tr>
-                <td
-                  colSpan={4}
-                  style={{
-                    textAlign: 'center',
-                    padding: '20px',
-                    color: 'var(--ink-400)',
-                  }}
-                >
+                <td colSpan={4} className={styles['monitor-empty-state']}>
                   尚無已購資產，請從上方雷達進攻。
                 </td>
               </tr>
@@ -55,55 +48,27 @@ export default function AssetMonitor({ leads, onSendMessage, onViewChat }: Asset
                 const { percent, timeDisplay } = calculateProtectionInfo(lead);
                 const colorVar = `var(--grade-${lead.grade.toLowerCase()})`;
                 const protectText = getProtectionText(lead);
+                const gradeClass =
+                  styles[`lead-grade-${lead.grade.toLowerCase()}`] ?? styles['lead-grade-f'];
 
                 return (
                   <tr key={lead.id}>
                     <td data-label="客戶等級/名稱">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div className={styles['lead-identity-row']}>
                         {/* 工單 6: 等級徽章圓角優化 */}
                         {/* 規則: html-tailwind.csv Row 38 - Card structure */}
                         {/* Code: rounded-lg (8px) 風格，避免圓形 AI 感 */}
-                        <span
-                          style={{
-                            display: 'inline-grid',
-                            placeItems: 'center',
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '6px', // 從 50% 改為 6px
-                            fontSize: '11px',
-                            fontWeight: 900,
-                            color: 'var(--bg-card)',
-                            marginRight: '8px',
-                            background: colorVar,
-                          }}
-                        >
+                        <span className={`${styles['lead-grade-pill']} ${gradeClass}`}>
                           {lead.grade}
                         </span>
                         <div>
-                          <div style={{ fontWeight: 800, color: 'var(--ink-100)' }}>
-                            {lead.name}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: '11px',
-                              color: 'var(--ink-300)',
-                            }}
-                          >
-                            {lead.prop}
-                          </div>
+                          <div className={styles['lead-name']}>{lead.name}</div>
+                          <div className={styles['lead-prop']}>{lead.prop}</div>
                         </div>
                       </div>
                     </td>
                     <td data-label="保護期倒數">
-                      <div
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          marginBottom: '2px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                        }}
-                      >
+                      <div className={styles['protect-meta-row']}>
                         <span style={{ color: colorVar }}>{protectText}</span>
                         <span className={styles['t-countdown']}>{timeDisplay}</span>
                       </div>

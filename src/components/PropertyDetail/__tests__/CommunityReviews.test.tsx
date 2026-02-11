@@ -57,7 +57,7 @@ describe('CommunityReviews', () => {
     renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
-      const ratings = screen.getAllByLabelText('五星評價');
+      const ratings = screen.getAllByLabelText('4 星評價');
       expect(ratings.length).toBeGreaterThanOrEqual(2);
     });
 
