@@ -1,35 +1,68 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { AvatarUploader } from './AvatarUploader';
 import { MetricsDisplay } from './MetricsDisplay';
 import { BasicInfoSection } from './BasicInfoSection';
 import { useAgentProfile } from './hooks/useAgentProfile';
 
+interface FormStateInfo {
+  hasUnsavedChanges: boolean;
+  isSubmitDisabled: boolean;
+}
+
+interface SectionErrorFallbackProps {
+  title: string;
+  description: string;
+}
+
+const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)';
+const STICKY_SAVE_BAR_HEIGHT_PX = 80;
+const PROFILE_LAYOUT_STYLE = {
+  '--uag-profile-sticky-bar-height': `${STICKY_SAVE_BAR_HEIGHT_PX}px`,
+} as CSSProperties;
+
+const SectionErrorFallback: React.FC<SectionErrorFallbackProps> = ({ title, description }) => (
+  <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
+    <p className="font-semibold">{title}</p>
+    <p className="mt-1">{description}</p>
+  </div>
+);
+
 export default function UAGProfilePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isMockMode = searchParams.get('mock') === 'true';
+  const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
 
-  // 返回 UAG：保留 mock 參數，且使用 router 內部路徑避免 basename 重複。
-  const handleBackToUAG = () => {
+  const handleBackToUAG = useCallback(() => {
     const targetUrl = isMockMode ? '/uag?mock=true' : '/uag';
     navigate(targetUrl);
-  };
+  }, [isMockMode, navigate]);
 
   const { profile, isLoading, error, updateProfile, isUpdating, uploadAvatar, isUploadingAvatar } =
     useAgentProfile();
 
-  const handleFormStateChange = (state: { hasUnsavedChanges: boolean; isSubmitDisabled: boolean }) => {
+  const handleFormStateChange = useCallback((state: FormStateInfo) => {
     setHasUnsavedChanges(state.hasUnsavedChanges);
     setIsSubmitDisabled(state.isSubmitDisabled);
-  };
+  }, []);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div
+        className="min-h-screen bg-slate-50"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label="個人資料載入中"
+      >
+        <span className="sr-only">個人資料載入中</span>
         <div className="mx-auto max-w-5xl p-6">
           <div className="h-6 w-40 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
           <div className="mt-6 grid gap-6 lg:grid-cols-[280px,1fr]">
@@ -61,8 +94,14 @@ export default function UAGProfilePage() {
     );
   }
 
+  const avatarVariant = isDesktop ? 'card' : 'compact';
+  const metricsVariant = isDesktop ? 'card' : 'compact';
+
   return (
-    <div className="min-h-screen bg-bg-base pb-[80px] text-slate-900 lg:pb-0">
+    <div
+      style={PROFILE_LAYOUT_STYLE}
+      className="min-h-screen bg-bg-base pb-[calc(var(--uag-profile-sticky-bar-height)+env(safe-area-inset-bottom))] text-slate-900 lg:pb-0"
+    >
       <div className="mx-auto max-w-5xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -79,53 +118,72 @@ export default function UAGProfilePage() {
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[280px,1fr]">
-          {/* Desktop: 卡片版,手機: compact 版 */}
           <div className="space-y-6">
-            <div className="hidden lg:block">
+            <ErrorBoundary
+              fallback={
+                <SectionErrorFallback
+                  title="頭像模組載入失敗"
+                  description="請重新整理頁面後再試一次。"
+                />
+              }
+            >
               <AvatarUploader
                 name={profile.name}
                 avatarUrl={profile.avatarUrl}
                 isUploading={isUploadingAvatar}
                 onUpload={uploadAvatar}
-                variant="card"
+                variant={avatarVariant}
               />
-            </div>
-            <div className="lg:hidden">
-              <AvatarUploader
-                name={profile.name}
-                avatarUrl={profile.avatarUrl}
-                isUploading={isUploadingAvatar}
-                onUpload={uploadAvatar}
-                variant="compact"
-              />
-            </div>
-            <div className="hidden lg:block">
-              <MetricsDisplay profile={profile} variant="default" />
-            </div>
-            <div className="lg:hidden">
-              <MetricsDisplay profile={profile} variant="compact" />
-            </div>
+            </ErrorBoundary>
+
+            <ErrorBoundary
+              fallback={
+                <SectionErrorFallback
+                  title="指標模組載入失敗"
+                  description="請重新整理頁面後再試一次。"
+                />
+              }
+            >
+              <MetricsDisplay profile={profile} variant={metricsVariant} />
+            </ErrorBoundary>
           </div>
 
-          <BasicInfoSection
-            profile={profile}
-            isSaving={isUpdating}
-            onSave={updateProfile}
-            formId="profile-form"
-            onFormStateChange={handleFormStateChange}
-          />
+          <ErrorBoundary
+            fallback={
+              <SectionErrorFallback
+                title="表單模組載入失敗"
+                description="請重新整理頁面後再試一次。"
+              />
+            }
+          >
+            <BasicInfoSection
+              profile={profile}
+              isSaving={isUpdating}
+              onSave={updateProfile}
+              formId="profile-form"
+              onFormStateChange={handleFormStateChange}
+            />
+          </ErrorBoundary>
         </div>
       </div>
 
-      {/* Sticky Save Bar (手機版) */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white px-4 py-3 shadow-lg lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-50 min-h-[var(--uag-profile-sticky-bar-height)] border-t border-slate-200 bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-lg lg:hidden">
         <button
           type="submit"
           form="profile-form"
-          className="min-h-[44px] w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
           disabled={isSubmitDisabled}
         >
-          {isUpdating ? '儲存中...' : hasUnsavedChanges ? '儲存變更' : '尚未修改'}
+          {isUpdating ? (
+            <>
+              <Loader2 size={16} className="animate-spin motion-reduce:animate-none" />
+              儲存中...
+            </>
+          ) : hasUnsavedChanges ? (
+            '儲存變更'
+          ) : (
+            '尚未修改'
+          )}
         </button>
       </div>
     </div>

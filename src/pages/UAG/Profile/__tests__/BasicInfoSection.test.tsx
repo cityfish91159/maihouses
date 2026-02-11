@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { BasicInfoSection } from '../BasicInfoSection';
 import type { AgentProfileMe } from '../../../../types/agent.types';
 
+const PROFILE_TAB_STORAGE_KEY = 'uag-profile-active-tab';
+
 function createProfile(overrides: Partial<AgentProfileMe> = {}): AgentProfileMe {
   return {
     id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
@@ -36,6 +38,10 @@ function createProfile(overrides: Partial<AgentProfileMe> = {}): AgentProfileMe 
 }
 
 describe('BasicInfoSection (#15)', () => {
+  beforeEach(() => {
+    window.localStorage.removeItem(PROFILE_TAB_STORAGE_KEY);
+  });
+
   it('keeps empty company input when profile.company is null', () => {
     render(
       <BasicInfoSection
@@ -183,5 +189,49 @@ describe('BasicInfoSection (#15)', () => {
 
     await user.type(bioInput, 'hello');
     expect(screen.getByText('5/500')).toBeInTheDocument();
+  });
+
+  it('adds noValidate to form to avoid browser native validation popup', () => {
+    const { container } = render(
+      <BasicInfoSection profile={createProfile()} isSaving={false} onSave={vi.fn()} />
+    );
+
+    expect(container.querySelector('form')).toHaveAttribute('novalidate');
+  });
+
+  it('shows phone format validation error on blur', async () => {
+    const user = userEvent.setup();
+
+    render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={vi.fn()} />);
+
+    const phoneInput = screen.getByLabelText('手機號碼');
+    await user.clear(phoneInput);
+    await user.type(phoneInput, 'abc');
+    await user.tab();
+
+    expect(screen.getByText('請輸入正確手機號碼（09 開頭，共 10 碼）。')).toBeInTheDocument();
+  });
+
+  it('shows LINE ID validation error on blur', async () => {
+    const user = userEvent.setup();
+
+    render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={vi.fn()} />);
+
+    const lineInput = screen.getByLabelText('LINE ID');
+    await user.clear(lineInput);
+    await user.type(lineInput, 'line id!');
+    await user.tab();
+
+    expect(screen.getByText('LINE ID 僅可包含英數、底線、點、@、減號。')).toBeInTheDocument();
+  });
+
+  it('persists selected tab in localStorage', async () => {
+    const user = userEvent.setup();
+
+    render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: '專長證照' }));
+
+    expect(window.localStorage.getItem(PROFILE_TAB_STORAGE_KEY)).toBe('expertise');
   });
 });

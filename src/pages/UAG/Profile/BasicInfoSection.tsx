@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
-import { User, Award } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AlertCircle, Award, Loader2, User } from 'lucide-react';
 import type { AgentProfileMe, UpdateAgentProfilePayload } from '../../../types/agent.types';
 
 const SPECIALTY_OPTIONS = [
@@ -21,6 +21,9 @@ const SPECIALTY_OPTIONS = [
 ];
 
 const CERTIFICATION_OPTIONS = ['不動產營業員', '不動產經紀人', '地政士', '估價師'];
+const PROFILE_TAB_STORAGE_KEY = 'uag-profile-active-tab';
+const PHONE_PATTERN = /^09\d{8}$/;
+const LINE_ID_PATTERN = /^[a-z0-9_.@-]+$/i;
 
 type ProfileTab = 'basic' | 'expertise';
 
@@ -37,11 +40,6 @@ interface BasicInfoSectionProps {
   onFormStateChange?: (state: FormStateInfo) => void;
 }
 
-const toDateInputValue = (value: string | null) => (value ? value.slice(0, 10) : '');
-
-const toggleSelection = (items: string[], option: string) =>
-  items.includes(option) ? items.filter((item) => item !== option) : [...items, option];
-
 interface ProfileFormValues {
   name: string;
   company: string;
@@ -53,6 +51,34 @@ interface ProfileFormValues {
   licenseNumber: string;
   joinedAt: string;
 }
+
+const toDateInputValue = (value: string | null) => (value ? value.slice(0, 10) : '');
+
+const toggleSelection = (items: string[], option: string) =>
+  items.includes(option) ? items.filter((item) => item !== option) : [...items, option];
+
+const isProfileTab = (value: string | null): value is ProfileTab =>
+  value === 'basic' || value === 'expertise';
+
+const getInitialProfileTab = (): ProfileTab => {
+  if (typeof window === 'undefined') return 'basic';
+  const storedValue = window.localStorage.getItem(PROFILE_TAB_STORAGE_KEY);
+  return isProfileTab(storedValue) ? storedValue : 'basic';
+};
+
+const validateName = (value: string) => (value.trim() ? '' : '請輸入姓名。');
+
+const validatePhone = (value: string) => {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return '';
+  return PHONE_PATTERN.test(trimmedValue) ? '' : '請輸入正確手機號碼（09 開頭，共 10 碼）。';
+};
+
+const validateLineId = (value: string) => {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return '';
+  return LINE_ID_PATTERN.test(trimmedValue) ? '' : 'LINE ID 僅可包含英數、底線、點、@、減號。';
+};
 
 function buildProfilePayload(values: ProfileFormValues): UpdateAgentProfilePayload {
   const payload: UpdateAgentProfilePayload = {
@@ -73,10 +99,13 @@ function buildProfilePayload(values: ProfileFormValues): UpdateAgentProfilePaylo
   return payload;
 }
 
-/**
- * 內部表單組件
- * 以 profile 欄位建立初始快照，用於比對是否有未儲存變更
- */
+const FieldError: React.FC<{ id: string; message: string }> = ({ id, message }) => (
+  <p id={id} role="alert" className="mt-1 inline-flex items-start gap-1.5 text-sm text-red-600">
+    <AlertCircle size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
+    <span>{message}</span>
+  </p>
+);
+
 const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({
   profile,
   isSaving,
@@ -84,9 +113,12 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({
   formId,
   onFormStateChange,
 }) => {
-  const [activeTab, setActiveTab] = useState<ProfileTab>('basic');
+  const [activeTab, setActiveTab] = useState<ProfileTab>(getInitialProfileTab);
+  const [nameError, setNameError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [lineIdError, setLineIdError] = useState('');
   const today = new Date().toISOString().slice(0, 10);
-  // 依賴明確列出欄位，避免僅靠物件引用造成初始值快取不更新。
+
   const initialValues = useMemo<ProfileFormValues>(
     () => ({
       name: profile.name,
@@ -144,21 +176,48 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({
     [payload, initialPayload]
   );
 
-  const isSubmitDisabled = isSaving || !hasUnsavedChanges;
+  const hasValidationErrors = useMemo(() => {
+    return Boolean(validateName(name) || validatePhone(phone) || validateLineId(lineId));
+  }, [name, phone, lineId]);
+
+  const isSubmitDisabled = isSaving || !hasUnsavedChanges || hasValidationErrors;
 
   useEffect(() => {
     onFormStateChange?.({ hasUnsavedChanges, isSubmitDisabled });
   }, [hasUnsavedChanges, isSubmitDisabled, onFormStateChange]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(PROFILE_TAB_STORAGE_KEY, activeTab);
+  }, [activeTab]);
+
+  const validateFields = () => {
+    const nextNameError = validateName(name);
+    const nextPhoneError = validatePhone(phone);
+    const nextLineIdError = validateLineId(lineId);
+
+    setNameError(nextNameError);
+    setPhoneError(nextPhoneError);
+    setLineIdError(nextLineIdError);
+
+    return !nextNameError && !nextPhoneError && !nextLineIdError;
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (isSubmitDisabled) return;
+    if (!validateFields()) return;
     await onSave(payload);
+  };
+
+  const handleTabChange = (tab: ProfileTab) => {
+    setActiveTab(tab);
   };
 
   return (
     <form
       id={formId}
+      noValidate
       onSubmit={handleSubmit}
       className="space-y-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6"
     >
@@ -169,34 +228,38 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({
         </div>
         <button
           type="submit"
-          className="hidden min-h-[44px] w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto lg:inline-flex"
+          className="hidden min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto lg:inline-flex"
           disabled={isSubmitDisabled}
         >
-          {isSaving ? '儲存中...' : hasUnsavedChanges ? '儲存變更' : '尚未修改'}
+          {isSaving ? (
+            <>
+              <Loader2 size={16} className="animate-spin motion-reduce:animate-none" />
+              儲存中...
+            </>
+          ) : hasUnsavedChanges ? (
+            '儲存變更'
+          ) : (
+            '尚未修改'
+          )}
         </button>
       </div>
 
-      {/* Tab Bar */}
       <div className="border-b border-slate-200">
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setActiveTab('basic')}
+            onClick={() => handleTabChange('basic')}
             className={`relative flex min-h-[44px] items-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-200 motion-reduce:transition-none ${
-              activeTab === 'basic'
-                ? 'text-slate-900'
-                : 'text-slate-500 hover:text-slate-700'
+              activeTab === 'basic' ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             <User size={16} />
             基本資料
-            {activeTab === 'basic' && (
-              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-slate-900" />
-            )}
+            {activeTab === 'basic' && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-slate-900" />}
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('expertise')}
+            onClick={() => handleTabChange('expertise')}
             className={`relative flex min-h-[44px] items-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-200 motion-reduce:transition-none ${
               activeTab === 'expertise'
                 ? 'text-slate-900'
@@ -212,191 +275,244 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({
         </div>
       </div>
 
-      {/* Tab 1: 基本資料 */}
       {activeTab === 'basic' && (
         <>
-          <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <label htmlFor="agent-name" className="text-sm font-medium text-slate-700">
-            姓名
-          </label>
-          <input
-            id="agent-name"
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
-            placeholder="輸入姓名"
-            required
-            aria-required="true"
-          />
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="agent-company" className="text-sm font-medium text-slate-700">
-            公司
-          </label>
-          <input
-            id="agent-company"
-            type="text"
-            value={company}
-            onChange={(event) => setCompany(event.target.value)}
-            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
-            placeholder="公司/分店名稱"
-            autoComplete="organization"
-            enterKeyHint="done"
-            maxLength={100}
-            aria-label="公司名稱"
-            aria-describedby="agent-company-help agent-company-count"
-          />
-          <div className="flex items-center justify-between gap-3">
-            <p id="agent-company-help" className="text-sm text-slate-500">
-              將顯示在房源頁與名片卡。
-            </p>
-            <p id="agent-company-count" className="shrink-0 text-sm text-slate-500">
-              {(company ?? '').length}/100
-            </p>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="agent-phone" className="text-sm font-medium text-slate-700">
-            手機
-          </label>
-          <input
-            id="agent-phone"
-            type="tel"
-            inputMode="tel"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
-            placeholder="0912345678"
-            aria-label="手機號碼"
-          />
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="agent-line-id" className="text-sm font-medium text-slate-700">
-            LINE ID
-          </label>
-          <input
-            id="agent-line-id"
-            type="text"
-            inputMode="text"
-            value={lineId}
-            onChange={(event) => setLineId(event.target.value)}
-            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
-            placeholder="line-id"
-            aria-label="LINE ID"
-          />
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="agent-joined-at" className="text-sm font-medium text-slate-700">
-            加入日期
-          </label>
-          <input
-            id="agent-joined-at"
-            type="date"
-            value={joinedAt}
-            max={today}
-            onChange={(event) => setJoinedAt(event.target.value)}
-            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
-            aria-label="加入日期"
-          />
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="agent-license" className="text-sm font-medium text-slate-700">
-            經紀人證照字號
-          </label>
-          <input
-            id="agent-license"
-            type="text"
-            value={licenseNumber}
-            onChange={(event) => setLicenseNumber(event.target.value)}
-            className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
-            placeholder="例：(113)北市經紀字第004521號"
-            aria-label="經紀人證照字號"
-          />
-          <p className="text-[10px] text-slate-400">填寫後可在詳情頁顯示認證資訊</p>
-        </div>
-      </div>
+          <div className="space-y-6">
+            <section className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-700">個人資訊</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label htmlFor="agent-name" className="text-sm font-medium text-slate-700">
+                    姓名
+                  </label>
+                  <input
+                    id="agent-name"
+                    type="text"
+                    value={name}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setName(nextValue);
+                      if (nameError) {
+                        setNameError(validateName(nextValue));
+                      }
+                    }}
+                    onBlur={() => setNameError(validateName(name))}
+                    className={`min-h-[44px] w-full rounded-xl border px-3 py-2 text-sm outline-none transition-colors ${
+                      nameError
+                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-1'
+                        : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1'
+                    }`}
+                    placeholder="輸入姓名"
+                    required
+                    aria-required="true"
+                    aria-invalid={Boolean(nameError)}
+                    aria-describedby={nameError ? 'agent-name-error' : undefined}
+                  />
+                  {nameError ? <FieldError id="agent-name-error" message={nameError} /> : null}
+                </div>
 
-      <div className="space-y-2">
-        <label htmlFor="agent-bio" className="text-sm font-medium text-slate-700">
-          自我介紹
-        </label>
-        <textarea
-          id="agent-bio"
-          value={bio}
-          onChange={(event) => setBio(event.target.value)}
-          className="min-h-[120px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
-          placeholder="用 2-3 句話介紹自己"
-          maxLength={500}
-          aria-label="自我介紹"
-          aria-describedby="agent-bio-count"
-        />
-        <p id="agent-bio-count" className="text-sm text-slate-500">
-          {bio.length}/500
-        </p>
-      </div>
+                <div className="space-y-2">
+                  <label htmlFor="agent-company" className="text-sm font-medium text-slate-700">
+                    公司
+                  </label>
+                  <input
+                    id="agent-company"
+                    type="text"
+                    value={company}
+                    onChange={(event) => setCompany(event.target.value)}
+                    className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+                    placeholder="公司/分店名稱"
+                    autoComplete="organization"
+                    enterKeyHint="done"
+                    maxLength={100}
+                    aria-label="公司名稱"
+                    aria-describedby="agent-company-help agent-company-count"
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <p id="agent-company-help" className="text-sm text-slate-500">
+                      將顯示在房源頁與名片卡。
+                    </p>
+                    <p id="agent-company-count" className="shrink-0 text-sm text-slate-500">
+                      {(company ?? '').length}/100
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-700">聯絡方式</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label htmlFor="agent-phone" className="text-sm font-medium text-slate-700">
+                    手機
+                  </label>
+                  <input
+                    id="agent-phone"
+                    type="tel"
+                    inputMode="tel"
+                    value={phone}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setPhone(nextValue);
+                      if (phoneError) {
+                        setPhoneError(validatePhone(nextValue));
+                      }
+                    }}
+                    onBlur={() => setPhoneError(validatePhone(phone))}
+                    className={`min-h-[44px] w-full rounded-xl border px-3 py-2 text-sm outline-none transition-colors ${
+                      phoneError
+                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-1'
+                        : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1'
+                    }`}
+                    placeholder="09xxxxxxxx"
+                    pattern="09[0-9]{8}"
+                    aria-label="手機號碼"
+                    aria-invalid={Boolean(phoneError)}
+                    aria-describedby={phoneError ? 'agent-phone-error' : undefined}
+                  />
+                  {phoneError ? <FieldError id="agent-phone-error" message={phoneError} /> : null}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="agent-line-id" className="text-sm font-medium text-slate-700">
+                    LINE ID
+                  </label>
+                  <input
+                    id="agent-line-id"
+                    type="text"
+                    inputMode="text"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={lineId}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setLineId(nextValue);
+                      if (lineIdError) {
+                        setLineIdError(validateLineId(nextValue));
+                      }
+                    }}
+                    onBlur={() => setLineIdError(validateLineId(lineId))}
+                    className={`min-h-[44px] w-full rounded-xl border px-3 py-2 text-sm outline-none transition-colors ${
+                      lineIdError
+                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-1'
+                        : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1'
+                    }`}
+                    placeholder="line-id"
+                    aria-label="LINE ID"
+                    aria-invalid={Boolean(lineIdError)}
+                    aria-describedby={lineIdError ? 'agent-line-id-error' : undefined}
+                  />
+                  {lineIdError ? <FieldError id="agent-line-id-error" message={lineIdError} /> : null}
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="agent-joined-at" className="text-sm font-medium text-slate-700">
+                    加入日期
+                  </label>
+                  <input
+                    id="agent-joined-at"
+                    type="date"
+                    value={joinedAt}
+                    max={today}
+                    onChange={(event) => setJoinedAt(event.target.value)}
+                    className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+                    aria-label="加入日期"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="agent-license" className="text-sm font-medium text-slate-700">
+                    經紀人證照字號
+                  </label>
+                  <input
+                    id="agent-license"
+                    type="text"
+                    value={licenseNumber}
+                    onChange={(event) => setLicenseNumber(event.target.value)}
+                    className="min-h-[44px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+                    placeholder="例：(113)北市經紀字第004521號"
+                    aria-label="經紀人證照字號"
+                  />
+                  <p className="text-[10px] text-slate-400">填寫後可在詳情頁顯示認證資訊</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-700">自我介紹</h3>
+              <textarea
+                id="agent-bio"
+                value={bio}
+                onChange={(event) => setBio(event.target.value)}
+                className="min-h-[120px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+                placeholder="用 2-3 句話介紹自己"
+                maxLength={500}
+                aria-label="自我介紹"
+                aria-describedby="agent-bio-count"
+              />
+              <p id="agent-bio-count" className="text-sm text-slate-500">
+                {bio.length}/500
+              </p>
+            </section>
+          </div>
         </>
       )}
 
-      {/* Tab 2: 專長證照 */}
       {activeTab === 'expertise' && (
         <>
-      <div>
-        <p className="mb-2 text-sm font-medium text-slate-700">專長領域</p>
-        <div className="flex flex-wrap gap-3">
-          {SPECIALTY_OPTIONS.map((option) => {
-            const selected = specialties.includes(option);
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setSpecialties((prev) => toggleSelection(prev, option))}
-                className={`min-h-[44px] rounded-full border px-4 py-2 text-sm font-medium transition ${
-                  selected
-                    ? 'border-slate-900 bg-slate-900 text-white'
-                    : 'border-slate-200 text-slate-600 hover:border-slate-400'
-                }`}
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+          <div>
+            <p className="mb-2 text-sm font-medium text-slate-700">專長領域</p>
+            <div className="flex flex-wrap gap-3">
+              {SPECIALTY_OPTIONS.map((option) => {
+                const selected = specialties.includes(option);
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setSpecialties((prev) => toggleSelection(prev, option))}
+                    className={`min-h-[44px] rounded-full border px-4 py-2 text-sm font-medium transition ${
+                      selected
+                        ? 'border-slate-900 bg-slate-900 text-white'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-400'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-      <div>
-        <p className="mb-2 text-sm font-medium text-slate-700">證照</p>
-        <div className="flex flex-wrap gap-3">
-          {CERTIFICATION_OPTIONS.map((option) => {
-            const selected = certifications.includes(option);
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setCertifications((prev) => toggleSelection(prev, option))}
-                className={`min-h-[44px] rounded-full border px-4 py-2 text-sm font-medium transition ${
-                  selected
-                    ? 'border-emerald-600 bg-emerald-600 text-white'
-                    : 'border-slate-200 text-slate-600 hover:border-slate-400'
-                }`}
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+          <div>
+            <p className="mb-2 text-sm font-medium text-slate-700">證照</p>
+            <div className="flex flex-wrap gap-3">
+              {CERTIFICATION_OPTIONS.map((option) => {
+                const selected = certifications.includes(option);
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setCertifications((prev) => toggleSelection(prev, option))}
+                    className={`min-h-[44px] rounded-full border px-4 py-2 text-sm font-medium transition ${
+                      selected
+                        ? 'border-emerald-600 bg-emerald-600 text-white'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-400'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </>
       )}
     </form>
   );
 };
 
-/**
- * BasicInfoSection 外層包裝
- * 以 agent id 作為 key，切換不同 agent 時重置表單狀態
- */
 export const BasicInfoSection: React.FC<BasicInfoSectionProps> = (props) => {
   return <BasicInfoForm key={props.profile.id} {...props} />;
 };
