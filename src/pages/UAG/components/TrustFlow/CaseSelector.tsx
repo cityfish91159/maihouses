@@ -7,7 +7,7 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
 import type { TrustCase } from './types';
-import { formatRelativeTime, getStatusBadge } from './utils';
+import { formatRelativeTime } from './utils';
 import { getBuyerDisplayName } from '../../../../lib/trustPrivacy';
 
 interface CaseSelectorProps {
@@ -26,82 +26,52 @@ export function CaseSelector({
   if (cases.length === 0) return null;
 
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+    <div className="mb-1 flex flex-wrap gap-2">
       {cases.map((c) => {
         const isActive = c.id === selectedCaseId;
-        const statusBadge = getStatusBadge(c.status);
         const buyerDisplay = getBuyerDisplayName(c, 'agent');
+        const statusBadgeClass = (() => {
+          switch (c.status) {
+            case 'active':
+              return 'bg-green-100 text-green-600';
+            case 'dormant':
+            case 'pending':
+              return 'bg-amber-100 text-amber-600';
+            case 'completed':
+              return 'bg-blue-100 text-blue-600';
+            case 'expired':
+              return 'bg-red-100 text-red-600';
+            case 'closed':
+            default:
+              return 'bg-gray-100 text-gray-500';
+          }
+        })();
+
         return (
           <button
             key={c.id}
             onClick={() => onSelectCase(c.id)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 8,
-              border: isActive ? '2px solid #1749d7' : '1px solid #e2e8f0',
-              background: isActive ? '#eef2ff' : '#fff',
-              cursor: 'pointer',
-              textAlign: 'left',
-              minWidth: 140,
-              transition: 'all 0.2s',
-            }}
+            className={`min-w-[140px] cursor-pointer rounded-lg px-3 py-2 text-left transition-all duration-200 ${
+              isActive ? 'border-2 border-brand bg-indigo-50' : 'border border-slate-200 bg-white'
+            }`}
           >
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: isActive ? '#1749d7' : '#334155',
-                marginBottom: 2,
-              }}
-            >
+            <div className={`mb-0.5 text-xs font-bold ${isActive ? 'text-brand' : 'text-slate-700'}`}>
               {buyerDisplay.name}
             </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: 'var(--ink-300)',
-                marginBottom: 4,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: 120,
-              }}
-            >
+            <div className="text-ink-300 mb-1 max-w-[120px] truncate whitespace-nowrap text-[11px]">
               {c.propertyTitle}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span
-                style={{
-                  fontSize: 10,
-                  padding: '2px 6px',
-                  borderRadius: 4,
-                  background: statusBadge.bg,
-                  color: statusBadge.color,
-                  fontWeight: 600,
-                }}
-              >
+            <div className="flex items-center gap-1.5">
+              <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${statusBadgeClass}`}>
                 M{c.currentStep}
               </span>
-              <span style={{ fontSize: 10, color: '#94a3b8' }}>
-                {formatRelativeTime(c.lastUpdate)}
-              </span>
+              <span className="text-[10px] text-slate-400">{formatRelativeTime(c.lastUpdate)}</span>
             </div>
           </button>
         );
       })}
       <button
-        style={{
-          padding: '8px 12px',
-          borderRadius: 8,
-          border: '1px dashed #cbd5e1',
-          background: '#f8fafc',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minWidth: 60,
-          color: 'var(--ink-300)',
-        }}
+        className="text-ink-300 flex min-w-[60px] cursor-pointer items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2"
         onClick={onCreateNew}
       >
         <Plus size={16} />

@@ -22,22 +22,17 @@ export function EventTimeline({ selectedCase }: EventTimelineProps) {
     return (
       <div
         key={event.id}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '80px 1fr 80px',
-          padding: '10px 12px',
-          borderBottom: idx < recentEvents.length - 1 ? '1px solid #e2e8f0' : 'none',
-          background: isCurrent ? '#fefce8' : 'transparent',
-          alignItems: 'start',
-        }}
+        className={`grid grid-cols-[80px_1fr_80px] items-start px-3 py-2.5 ${
+          idx < recentEvents.length - 1 ? 'border-b border-slate-200' : ''
+        } ${isCurrent ? 'bg-amber-50' : 'bg-transparent'}`}
       >
-        <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>{formatTime(event.timestamp)}</div>
+        <div className="text-ink-300 text-[11px]">{formatTime(event.timestamp)}</div>
         <div>
-          <div style={{ fontSize: 12, color: 'var(--ink)' }}>
+          <div className="text-ink text-xs">
             <b>
               {event.stepName} {event.action}
             </b>
-            <span style={{ color: 'var(--ink-300)' }}>
+            <span className="text-ink-300">
               ｜
               {event.actor === 'agent'
                 ? '房仲'
@@ -47,13 +42,7 @@ export function EventTimeline({ selectedCase }: EventTimelineProps) {
             </span>
           </div>
           {event.detail && (
-            <div
-              style={{
-                fontSize: 11,
-                color: 'var(--ink-300)',
-                marginTop: 2,
-              }}
-            >
+            <div className="text-ink-300 mt-0.5 text-[11px]">
               {event.detail}
             </div>
           )}
@@ -61,15 +50,11 @@ export function EventTimeline({ selectedCase }: EventTimelineProps) {
         <div>
           {event.hash && (
             <span
-              style={{
-                fontSize: 10,
-                padding: '3px 8px',
-                borderRadius: 4,
-                background: isCurrent ? '#fef3c7' : '#f1f5f9',
-                color: isCurrent ? 'var(--grade-s)' : 'var(--ink-300)',
-                border: isCurrent ? '1px solid #fcd34d' : '1px solid #e2e8f0',
-                fontFamily: 'monospace',
-              }}
+              className={`rounded border px-2 py-[3px] font-mono text-[10px] ${
+                isCurrent
+                  ? 'border-amber-300 bg-amber-100 text-[var(--grade-s)]'
+                  : 'text-ink-300 border-slate-200 bg-slate-100'
+              }`}
             >
               {event.hash}
             </span>
@@ -80,20 +65,9 @@ export function EventTimeline({ selectedCase }: EventTimelineProps) {
   };
 
   return (
-    <div style={{ background: '#f8fafc', borderRadius: 8, overflow: 'hidden' }}>
+    <div className="overflow-hidden rounded-lg bg-slate-50">
       {/* Header */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '80px 1fr 80px',
-          padding: '8px 12px',
-          fontSize: 11,
-          fontWeight: 600,
-          color: 'var(--ink-300)',
-          background: '#f1f5f9',
-          borderBottom: '1px solid #e2e8f0',
-        }}
-      >
+      <div className="text-ink-300 grid grid-cols-[80px_1fr_80px] border-b border-slate-200 bg-slate-100 px-3 py-2 text-[11px] font-semibold">
         <div>時間</div>
         <div>事件與參與者</div>
         <div>留痕</div>
@@ -106,16 +80,7 @@ export function EventTimeline({ selectedCase }: EventTimelineProps) {
       {selectedCase.events.length > 3 && (
         <button
           onClick={() => setExpandedEvents(!expandedEvents)}
-          style={{
-            width: '100%',
-            padding: '8px',
-            fontSize: 11,
-            color: '#1749d7',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: 600,
-          }}
+          className="w-full cursor-pointer border-none bg-transparent p-2 text-[11px] font-semibold text-brand"
         >
           {expandedEvents ? '收起' : `查看全部 ${selectedCase.events.length} 筆紀錄`}
         </button>

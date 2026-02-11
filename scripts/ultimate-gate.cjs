@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const { spawnSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -463,6 +463,7 @@ console.log(
 );
 
 deepScan();
+runStep('Mojibake Check', 'node', ['scripts/check-mojibake.cjs']);
 checkInlineStylePolicyGlobal();
 checkInlineStylePolicyChanged();
 

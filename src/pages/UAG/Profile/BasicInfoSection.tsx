@@ -1,4 +1,5 @@
-﻿import React, { useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
+import { User, Award } from 'lucide-react';
 import type { AgentProfileMe, UpdateAgentProfilePayload } from '../../../types/agent.types';
 
 const SPECIALTY_OPTIONS = [
@@ -21,10 +22,19 @@ const SPECIALTY_OPTIONS = [
 
 const CERTIFICATION_OPTIONS = ['不動產營業員', '不動產經紀人', '地政士', '估價師'];
 
+type ProfileTab = 'basic' | 'expertise';
+
+interface FormStateInfo {
+  hasUnsavedChanges: boolean;
+  isSubmitDisabled: boolean;
+}
+
 interface BasicInfoSectionProps {
   profile: AgentProfileMe;
   isSaving: boolean;
   onSave: (payload: UpdateAgentProfilePayload) => Promise<void>;
+  formId?: string;
+  onFormStateChange?: (state: FormStateInfo) => void;
 }
 
 const toDateInputValue = (value: string | null) => (value ? value.slice(0, 10) : '');
@@ -67,7 +77,14 @@ function buildProfilePayload(values: ProfileFormValues): UpdateAgentProfilePaylo
  * 內部表單組件
  * 以 profile 欄位建立初始快照，用於比對是否有未儲存變更
  */
-const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onSave }) => {
+const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({
+  profile,
+  isSaving,
+  onSave,
+  formId,
+  onFormStateChange,
+}) => {
+  const [activeTab, setActiveTab] = useState<ProfileTab>('basic');
   const today = new Date().toISOString().slice(0, 10);
   // 依賴明確列出欄位，避免僅靠物件引用造成初始值快取不更新。
   const initialValues = useMemo<ProfileFormValues>(
@@ -129,6 +146,10 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
 
   const isSubmitDisabled = isSaving || !hasUnsavedChanges;
 
+  useEffect(() => {
+    onFormStateChange?.({ hasUnsavedChanges, isSubmitDisabled });
+  }, [hasUnsavedChanges, isSubmitDisabled, onFormStateChange]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (isSubmitDisabled) return;
@@ -137,6 +158,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
 
   return (
     <form
+      id={formId}
       onSubmit={handleSubmit}
       className="space-y-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6"
     >
@@ -147,14 +169,53 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
         </div>
         <button
           type="submit"
-          className="min-h-[44px] w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
+          className="hidden min-h-[44px] w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto lg:inline-flex"
           disabled={isSubmitDisabled}
         >
           {isSaving ? '儲存中...' : hasUnsavedChanges ? '儲存變更' : '尚未修改'}
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Tab Bar */}
+      <div className="border-b border-slate-200">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('basic')}
+            className={`relative flex min-h-[44px] items-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-200 motion-reduce:transition-none ${
+              activeTab === 'basic'
+                ? 'text-slate-900'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <User size={16} />
+            基本資料
+            {activeTab === 'basic' && (
+              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-slate-900" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('expertise')}
+            className={`relative flex min-h-[44px] items-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-200 motion-reduce:transition-none ${
+              activeTab === 'expertise'
+                ? 'text-slate-900'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Award size={16} />
+            專長證照
+            {activeTab === 'expertise' && (
+              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-slate-900" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Tab 1: 基本資料 */}
+      {activeTab === 'basic' && (
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <label htmlFor="agent-name" className="text-sm font-medium text-slate-700">
             姓名
@@ -275,7 +336,12 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
           {bio.length}/500
         </p>
       </div>
+        </>
+      )}
 
+      {/* Tab 2: 專長證照 */}
+      {activeTab === 'expertise' && (
+        <>
       <div>
         <p className="mb-2 text-sm font-medium text-slate-700">專長領域</p>
         <div className="flex flex-wrap gap-3">
@@ -321,6 +387,8 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
           })}
         </div>
       </div>
+        </>
+      )}
     </form>
   );
 };

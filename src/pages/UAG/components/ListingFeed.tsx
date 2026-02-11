@@ -331,8 +331,9 @@ export default function ListingFeed({
               />
               <div
                 id="char-count"
-                className={styles['modal-char-count']}
-                style={{ color: isOverLimit ? 'var(--uag-danger)' : undefined }}
+                className={`${styles['modal-char-count']} ${
+                  isOverLimit ? styles['modal-char-count-over-limit'] : ''
+                }`}
               >
                 {remainingChars} / {MAX_POST_CONTENT_LENGTH}
               </div>

@@ -22,7 +22,7 @@ const StatItem = ({
 }) => (
   <div className={styles['ap-stat']}>
     <span>{label}</span>
-    <b style={highlight ? { color: 'var(--uag-brand)' } : {}}>{value}</b>
+    <b className={highlight ? styles['ap-stat-highlight'] : undefined}>{value}</b>
   </div>
 );
 
@@ -44,23 +44,9 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
       return (
         <section className={styles['k-span-6']} id="action-panel-container" ref={ref}>
           <div className={styles['uag-action-panel']} id="action-panel">
-            <div
-              style={{
-                height: '100%',
-                minHeight: '200px',
-                display: 'grid',
-                placeItems: 'center',
-                color: 'var(--ink-300)',
-                textAlign: 'center',
-                padding: '40px 20px',
-              }}
-            >
+            <div className={styles['ap-empty-state']}>
               <div>
-                <MousePointerClick
-                  size={40}
-                  strokeWidth={1.5}
-                  style={{ color: 'var(--ink-300)', marginBottom: '10px' }}
-                />
+                <MousePointerClick size={40} strokeWidth={1.5} className={styles['ap-empty-icon']} />
                 <div>
                   請點擊上方雷達泡泡
                   <br />
@@ -118,23 +104,7 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
 
             <div className={styles['action-zone']}>
               {isExclusive && (
-                <div
-                  style={{
-                    background: 'var(--notif-warning-bg)',
-                    color: 'var(--notif-warning-text)',
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    textAlign: 'center',
-                    padding: '6px',
-                    borderRadius: '4px',
-                    border: '1px solid var(--notif-warning-bg)',
-                    marginBottom: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                  }}
-                >
+                <div className={styles['ap-exclusive-banner']}>
                   <Sparkles size={14} />
                   此客戶包含獨家訊息聯絡權
                   <Sparkles size={14} />
@@ -157,7 +127,7 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
                   )}
                 </button>
               ) : (
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className={styles['ap-confirm-actions']}>
                   <button
                     className={`${styles['btn-attack']} ${styles['btn-confirm']}`}
                     onClick={handleConfirm}
@@ -186,14 +156,7 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
                 </div>
               )}
 
-              <div
-                style={{
-                  textAlign: 'center',
-                  fontSize: '11px',
-                  color: '#94a3b8',
-                  marginTop: '8px',
-                }}
-              >
+              <div className={styles['ap-privacy-note']}>
                 符合個資法規範：僅能以 LINE/站內信聯繫
                 <br />
                 系統將透過 LINE 通知客戶

@@ -46,10 +46,13 @@ export default function AssetMonitor({ leads, onSendMessage, onViewChat }: Asset
             ) : (
               boughtLeads.map((lead) => {
                 const { percent, timeDisplay } = calculateProtectionInfo(lead);
-                const colorVar = `var(--grade-${lead.grade.toLowerCase()})`;
+                const gradeKey = lead.grade.toLowerCase();
                 const protectText = getProtectionText(lead);
                 const gradeClass =
-                  styles[`lead-grade-${lead.grade.toLowerCase()}`] ?? styles['lead-grade-f'];
+                  styles[`lead-grade-${gradeKey}`] ?? styles['lead-grade-f'];
+                const protectTextClass = styles[`protect-text-${gradeKey}`] ?? styles['protect-text-f'];
+                const progressFillClass = styles[`progress-fill-${gradeKey}`] ?? styles['progress-fill-f'];
+                const filledSegmentCount = Math.max(0, Math.min(20, Math.round(percent / 5)));
 
                 return (
                   <tr key={lead.id}>
@@ -69,27 +72,47 @@ export default function AssetMonitor({ leads, onSendMessage, onViewChat }: Asset
                     </td>
                     <td data-label="保護期倒數">
                       <div className={styles['protect-meta-row']}>
-                        <span style={{ color: colorVar }}>{protectText}</span>
+                        <span className={protectTextClass}>{protectText}</span>
                         <span className={styles['t-countdown']}>{timeDisplay}</span>
                       </div>
                       <div className={styles['progress-bg']}>
-                        <div
-                          className={styles['progress-fill']}
-                          style={{ width: `${percent}%`, background: colorVar }}
-                        ></div>
+                        <div className={styles['progress-segments']}>
+                          {Array.from({ length: 20 }, (_, idx) => (
+                            <span
+                              key={`${lead.id}-seg-${idx}`}
+                              className={`${styles['progress-segment']} ${
+                                idx < filledSegmentCount
+                                  ? `${styles['progress-segment-filled']} ${progressFillClass}`
+                                  : ''
+                              }`}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </td>
                     <td data-label="目前狀態">
                       {(() => {
                         const display = getNotificationDisplay(lead.notification_status);
+                        const notificationBadgeClass = (() => {
+                          switch (lead.notification_status) {
+                            case 'sent':
+                              return styles['notif-badge-sent'];
+                            case 'pending':
+                              return styles['notif-badge-pending'];
+                            case 'failed':
+                            case 'unreachable':
+                              return styles['notif-badge-error'];
+                            case 'no_line':
+                            case 'skipped':
+                              return styles['notif-badge-muted'];
+                            default:
+                              return styles['notif-badge-muted'];
+                          }
+                        })();
+
                         return (
                           <span
-                            className={styles['uag-badge']}
-                            style={{
-                              background: display.bgColor,
-                              color: display.textColor,
-                              border: 'none',
-                            }}
+                            className={`${styles['uag-badge']} ${styles['notif-badge']} ${notificationBadgeClass}`}
                           >
                             {display.text}
                           </span>

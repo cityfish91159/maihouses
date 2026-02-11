@@ -155,9 +155,7 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
           <div className={styles['uag-card-title']}>安心流程管理</div>
           <div className={styles['uag-card-sub']}>
             六階段・交易留痕
-            {useMock && (
-              <span style={{ marginLeft: 8, color: '#f59e0b', fontSize: 11 }}>● Mock</span>
-            )}
+            {useMock && <span className="ml-2 text-[11px] text-amber-500">● Mock</span>}
           </div>
         </div>
         <div className={styles['uag-actions']}>
@@ -166,7 +164,7 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
             onClick={toggleMode}
             title={useMock ? '切換到真實模式' : '切換到模擬模式'}
           >
-            <Zap size={14} style={{ marginRight: 4 }} />
+            <Zap size={14} className="mr-1" />
             {useMock ? 'Mock' : 'Live'}
           </button>
           <button className={styles['uag-btn']} onClick={loadCases} disabled={loading}>
@@ -191,20 +189,14 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
 
       {/* Empty State */}
       {!selectedCase && !loading && (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '32px 16px',
-            color: 'var(--ink-300)',
-          }}
-        >
-          <AlertCircle size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
-          <div style={{ fontSize: 13, marginBottom: 8 }}>目前沒有進行中的案件</div>
+        <div className="text-ink-300 px-4 py-8 text-center">
+          <AlertCircle size={32} className="mx-auto mb-2 opacity-50" />
+          <div className="mb-2 text-[13px]">目前沒有進行中的案件</div>
           <button
             className={`${styles['uag-btn']} ${styles['primary']}`}
             onClick={() => setIsCreateModalOpen(true)}
           >
-            <Plus size={14} style={{ marginRight: 4 }} />
+            <Plus size={14} className="mr-1" />
             建立新案件
           </button>
         </div>
@@ -212,40 +204,18 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
 
       {/* Loading State */}
       {loading && (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '24px',
-            color: 'var(--ink-300)',
-          }}
-        >
-          <RefreshCw size={20} className="animate-spin" style={{ margin: '0 auto 8px' }} />
-          <div style={{ fontSize: 12 }}>載入中...</div>
+        <div className="text-ink-300 p-6 text-center">
+          <RefreshCw size={20} className="mx-auto mb-2 animate-spin" />
+          <div className="text-xs">載入中...</div>
         </div>
       )}
 
       {/* Action Footer */}
       {selectedCase && (
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            paddingTop: 8,
-            borderTop: '1px solid #e2e8f0',
-          }}
-        >
+        <div className="flex gap-2 border-t border-slate-200 pt-2">
           <Link
             to={`/assure?case=${selectedCase.id}`}
-            className={`${styles['uag-btn']} ${styles['primary']}`}
-            style={{
-              flex: 1,
-              textAlign: 'center',
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-            }}
+            className={`${styles['uag-btn']} ${styles['primary']} flex flex-1 items-center justify-center gap-1.5 text-center no-underline`}
           >
             進入 Trust Room
             <ChevronRight size={14} />
@@ -255,30 +225,22 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
 
       {/* Summary Stats */}
       {cases.length > 0 && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 8,
-            padding: '12px 0 0',
-            borderTop: '1px solid #e2e8f0',
-          }}
-        >
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#1749d7' }}>{cases.length}</div>
-            <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>進行中案件</div>
+        <div className="grid grid-cols-3 gap-2 border-t border-slate-200 pt-3">
+          <div className="text-center">
+            <div className="text-[20px] font-bold text-brand">{cases.length}</div>
+            <div className="text-ink-300 text-[11px]">進行中案件</div>
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#16a34a' }}>
+          <div className="text-center">
+            <div className="text-[20px] font-bold text-green-600">
               {cases.filter((c) => c.currentStep >= 3).length}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>已出價</div>
+            <div className="text-ink-300 text-[11px]">已出價</div>
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#f59e0b' }}>
+          <div className="text-center">
+            <div className="text-[20px] font-bold text-amber-500">
               {cases.filter((c) => c.status === 'pending').length || 0}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>待處理</div>
+            <div className="text-ink-300 text-[11px]">待處理</div>
           </div>
         </div>
       )}

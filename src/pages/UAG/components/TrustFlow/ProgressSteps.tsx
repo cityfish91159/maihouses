@@ -14,14 +14,7 @@ interface ProgressStepsProps {
 
 export function ProgressSteps({ currentStep }: ProgressStepsProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 0,
-        marginBottom: 8,
-      }}
-    >
+    <div className="mb-2 flex items-center">
       {STEPS.map((step, idx) => {
         const isPast = step.key < currentStep;
         const isCurrent = step.key === currentStep;
@@ -29,42 +22,28 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
 
         return (
           <React.Fragment key={step.key}>
-            <div style={{ flex: 1, textAlign: 'center' }}>
+            <div className="flex-1 text-center">
               <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  margin: '0 auto 4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: isPast ? '#16a34a' : isCurrent ? '#1749d7' : '#e5e7eb',
-                  color: isPast || isCurrent ? '#fff' : '#6b7280',
-                  transition: 'all 0.3s',
-                }}
+                className={`mx-auto mb-1 flex size-8 items-center justify-center rounded-full transition-all duration-300 ${
+                  isPast
+                    ? 'bg-green-600 text-white'
+                    : isCurrent
+                      ? 'bg-brand text-white'
+                      : 'bg-gray-200 text-gray-500'
+                }`}
               >
                 {isPast ? <Check size={16} /> : <Icon size={14} />}
               </div>
               <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: isCurrent ? 700 : 500,
-                  color: isPast ? '#16a34a' : isCurrent ? '#1749d7' : '#94a3b8',
-                }}
+                className={`text-[11px] ${
+                  isCurrent ? 'font-bold' : 'font-medium'
+                } ${isPast ? 'text-green-600' : isCurrent ? 'text-brand' : 'text-slate-400'}`}
               >
                 {step.name}
               </div>
             </div>
             {idx < STEPS.length - 1 && (
-              <div
-                style={{
-                  flex: 0.5,
-                  height: 2,
-                  background: isPast ? '#16a34a' : '#e5e7eb',
-                  marginBottom: 20,
-                }}
-              />
+              <div className={`mb-5 h-0.5 flex-[0.5] ${isPast ? 'bg-green-600' : 'bg-gray-200'}`} />
             )}
           </React.Fragment>
         );
