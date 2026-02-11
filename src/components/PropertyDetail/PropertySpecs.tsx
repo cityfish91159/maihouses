@@ -18,10 +18,11 @@ interface PropertySpecsProps {
  *
  * @remarks
  * 使用 React.memo 優化,規格資料變化才重新渲染
+ * #20b-D9: 套用 Glassmorphism 設計語言（glass-card）
  */
 export const PropertySpecs = memo(function PropertySpecs({ property }: PropertySpecsProps) {
   return (
-    <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 rounded-2xl p-4 glass-card sm:grid-cols-4">
       <div className="flex flex-col">
         <span className="text-xs text-slate-400">建案坪數</span>
         <span className="text-sm font-bold text-slate-800">

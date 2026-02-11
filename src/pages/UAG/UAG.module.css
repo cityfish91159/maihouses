@@ -941,12 +941,10 @@
 .uag-bubble[data-grade='S'] {
   background: var(--grade-s-bg);
   border-color: var(--grade-s);
-  animation: float var(--float) ease-in-out infinite, s-pulse 2s ease-in-out infinite;
 }
 .uag-bubble[data-grade='A'] {
   background: var(--grade-a-bg);
   border-color: var(--grade-a);
-  animation: float var(--float) ease-in-out infinite, a-pulse 3s ease-in-out infinite;
 }
 .uag-bubble[data-grade='B'] {
   background: var(--grade-b-bg);
@@ -1088,39 +1086,8 @@
   }
 }
 
-/* R5: S 級金色脈衝光暈 */
-@keyframes s-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 16px rgba(251, 191, 36, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
-  }
-}
-
-/* R5: A 級藍色脈衝光暈 */
-@keyframes a-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 14px rgba(59, 130, 246, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
-}
-
 /* prefers-reduced-motion：停用脈衝動畫 + tooltip 動畫 */
 @media (prefers-reduced-motion: reduce) {
-  .uag-bubble[data-grade='S'],
-  .uag-bubble[data-grade='A'] {
-    animation: none;
-  }
-
   .uag-bubble[data-selected='true'],
   .uag-cluster[data-has-selection='true'] .uag-bubble:not([data-selected='true']) {
     transition: none;

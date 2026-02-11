@@ -17,7 +17,7 @@ interface MobileCTAProps {
 }
 
 /**
- * 行動端首屏 CTA 組件（#2 雙按鈕重構）
+ * 行動端首屏 CTA 組件（#2 雙按鈕重構 + #20b-D9 Glassmorphism）
  *
  * 功能:
  * - 加 LINE 聊聊按鈕（主 CTA）
@@ -29,6 +29,7 @@ interface MobileCTAProps {
  * 使用 React.memo 優化
  * 僅在行動端顯示,位於圖片下方
  * 觸控目標 >= 44px (ux-guidelines #22)
+ * #20b-D9: 套用 Glassmorphism 設計語言（glass-card）
  */
 export const MobileCTA = memo(function MobileCTA({
   onLineClick,
@@ -44,10 +45,7 @@ export const MobileCTA = memo(function MobileCTA({
 
   return (
     <div className="mb-6 lg:hidden">
-      <div
-        style={lineBrandVars}
-        className="rounded-2xl border border-slate-100 bg-white p-4 shadow-lg"
-      >
+      <div style={lineBrandVars} className="rounded-2xl p-4 glass-card">
         <div className="flex gap-3">
           {/* 加 LINE 聊聊 - 主 CTA */}
           <button

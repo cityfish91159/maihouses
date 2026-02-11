@@ -273,5 +273,14 @@
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // #20b-D9: Glassmorphism 統一設計語言
+    function ({ addUtilities }) {
+      addUtilities({
+        '.glass-card': {
+          '@apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg': {},
+        },
+      });
+    },
+  ],
 };
