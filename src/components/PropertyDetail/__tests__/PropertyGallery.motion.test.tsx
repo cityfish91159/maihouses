@@ -41,6 +41,39 @@ function setupGallery(images: string[], onPhotoClick = vi.fn()) {
 }
 
 describe('PropertyGallery motion and swipe', () => {
+  it('uses pan-y touch surface so vertical page scroll stays available', () => {
+    setupGallery(['https://example.com/p1.jpg', 'https://example.com/p2.jpg']);
+
+    const touchSurface = screen.getByTestId('gallery-touch-surface');
+    expect(touchSurface.className).toContain('touch-pan-y');
+  });
+
+  it('shows skeleton before image load and hides skeleton after load', () => {
+    const { mainImage } = setupGallery(['https://example.com/p1.jpg', 'https://example.com/p2.jpg']);
+
+    expect(screen.getByTestId('gallery-main-skeleton')).toBeInTheDocument();
+
+    fireEvent.load(mainImage);
+    expect(screen.queryByTestId('gallery-main-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('uses 64x96 thumbnails with horizontal scroll snap', () => {
+    const { container } = setupGallery([
+      'https://example.com/p1.jpg',
+      'https://example.com/p2.jpg',
+      'https://example.com/p3.jpg',
+    ]);
+
+    const thumbnailRail = container.querySelector('div.snap-x.snap-mandatory');
+    expect(thumbnailRail).not.toBeNull();
+
+    const thumbnailButtons = container.querySelectorAll('button[aria-pressed]');
+    expect(thumbnailButtons).toHaveLength(3);
+    expect(thumbnailButtons[0]?.className).toContain('h-16');
+    expect(thumbnailButtons[0]?.className).toContain('w-24');
+    expect(thumbnailButtons[0]?.className).toContain('snap-center');
+  });
+
   it('applies reduced-motion transition classes to image and thumbnails', () => {
     const { container } = setupGallery([
       'https://example.com/p1.jpg',

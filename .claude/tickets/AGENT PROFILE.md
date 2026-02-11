@@ -85,8 +85,8 @@
 
 ### 待開發 — 詳情頁手機版現代化（新增 #20 拆分）
 
-- [ ] **#20a** [P0] Gallery 手勢 + 經紀人 Bottom Sheet（3 項：D1 Gallery swipe+skeleton + D2 AgentBottomSheet + D11 縮圖觸控擴大）
-- [ ] **#20b** [P0] 文本優化 + ActionBar 毛玻璃（3 項：D3 Description 展開全文 + D4 ActionBar 毛玻璃+滾動隱藏 + D9 Glassmorphism 統一）
+- [x] **#20a** [P0] Gallery 手勢 + 縮圖觸控優化（D2 依指示不作；2 項：D1 Gallery swipe+skeleton + D11 縮圖觸控擴大）✅ 2026-02-11
+- [x] **#20b** [P0] 文本優化 + ActionBar 毛玻璃（3 項：D3 Description 展開全文 + D4 ActionBar 毛玻璃+滾動隱藏 + D9 Glassmorphism 統一）✅ 2026-02-11
 - [ ] **#20c** [P1] InfoCard + Specs 視覺升級（2 項：D5 InfoCard 資訊重組 + D6 Specs Bento Grid）
 - [ ] **#20d** [P1] 評論 + Panel + FAB 升級（3 項：D7 CommunityReviews SVG 星級 + D8 Panel 統一升級 + D10 FAB 重定位+漸層）
 - [ ] **#20e** [P2] 動畫 + 微互動精緻化（4 項：D12 價格動畫 + D13 Section 進場 + D14 VipModal 倒數 + D15 Banner Shield 動畫）
@@ -4511,7 +4511,7 @@ npm run check:utf8
 
 ---
 
-## #20a [P0] 詳情頁手機版 — Gallery 手勢 + 經紀人 Bottom Sheet（3 項）
+## #20a [P0] 詳情頁手機版 — Gallery 手勢 + 縮圖觸控優化（D2 排除）
 
 ### 來源
 
@@ -4574,6 +4574,8 @@ interface AgentBottomSheetProps {
 }
 ```
 
+> 本項依產品指示「D2 不用作」，本次 #20a 實作範圍明確排除 D2，不新增 Bottom Sheet。
+
 ### 20a-D11. Gallery 縮圖觸控擴大 + Scroll Snap
 
 **檔案：** `src/components/PropertyDetail/PropertyGallery.tsx`
@@ -4590,16 +4592,44 @@ interface AgentBottomSheetProps {
 
 | 類型 | 檔案 |
 |------|------|
-| 新增 | `src/components/PropertyDetail/AgentBottomSheet.tsx` |
-| 修改 | `PropertyGallery.tsx`、`MobileActionBar.tsx`、`PropertyDetail/index.ts` |
+| 修改 | `src/components/PropertyDetail/PropertyGallery.tsx` |
+| 修改 | `src/components/PropertyDetail/__tests__/PropertyGallery.motion.test.tsx` |
 
 ### 驗收標準
 
-- [ ] D1: Gallery 可左右滑動切換圖片，載入時顯示 skeleton
-- [ ] D2: 手機版可看到經紀人頭像 pill，點擊彈出 Bottom Sheet
-- [ ] D11: 縮圖 64×96px，scroll snap 對齊
-- [ ] 桌面版不受影響（`lg:hidden` 隔離）
-- [ ] typecheck + lint 通過
+- [x] D1: Gallery 可左右滑動切換圖片，載入時顯示 skeleton
+- [x] D2: 依需求排除（不在本次實作範圍）
+- [x] D11: 縮圖 64×96px，scroll snap 對齊
+- [x] 桌面版不受影響（僅調整 Gallery，不新增 MobileActionBar/BottomSheet 結構）
+- [x] typecheck + lint 通過
+
+### #20a 施工紀錄（2026-02-11）
+
+#### 優化循環摘要
+- [x] 第 1 輪實作：完成 `D1`（swipe + skeleton）與 `D11`（64x96 + scroll snap），並清理 `PropertyGallery.tsx` 亂碼字串
+- [x] 第 2 輪 strict-audit：發現並修正 `react-hooks/set-state-in-effect` 2 項 lint 缺陷
+- [x] 第 3 輪驗證：關聯測試、typecheck、lint、UTF-8 檢查全部通過
+
+#### 修改檔案
+1. `src/components/PropertyDetail/PropertyGallery.tsx`
+   - 手勢區改為 `touch-pan-y`，保留垂直滾動，水平滑動超過 50px 才切圖
+   - 新增主圖 skeleton（`gallery-main-skeleton`）並在圖片載入完成後隱藏
+   - 縮圖尺寸改為 `h-16 w-24`（64×96），加入 `snap-x snap-mandatory` 與 `snap-center`
+   - 修正檔內既有亂碼文字（按鈕 `aria-label`、縮圖 `alt`）
+   - 強化邊界：當 `images` 長度變更時使用安全索引 `activeImageIndex`
+
+2. `src/components/PropertyDetail/__tests__/PropertyGallery.motion.test.tsx`
+   - 新增 `touch-pan-y` 測試
+   - 新增 skeleton 顯示/隱藏測試（`fireEvent.load`）
+   - 新增縮圖 64×96 與 scroll snap class 測試
+
+#### 驗證命令
+```bash
+cmd /c npm run test -- src/components/PropertyDetail/__tests__/PropertyGallery.motion.test.tsx src/pages/__tests__/PropertyDetailPage.optimization.test.tsx
+cmd /c npx eslint src/components/PropertyDetail/PropertyGallery.tsx src/components/PropertyDetail/__tests__/PropertyGallery.motion.test.tsx
+cmd /c npm run typecheck
+cmd /c npm run check:utf8
+```
 
 ---
 
@@ -4672,10 +4702,62 @@ function useScrollDirection(threshold = 10): 'up' | 'down' {
 
 ### 驗收標準
 
-- [ ] D3: 描述預設 4 行 + gradient fade + 展開/收起按鈕
-- [ ] D4: ActionBar 毛玻璃效果，上滑隱藏下滑顯示，icon 14px
-- [ ] D9: 三個組件統一使用 glass-card 風格
-- [ ] typecheck + lint 通過
+- [x] D3: 描述預設 4 行 + gradient fade + 展開/收起按鈕
+- [x] D4: ActionBar 毛玻璃效果，上滑隱藏下滑顯示，icon 14px
+- [x] D9: 三個組件統一使用 glass-card 風格
+- [x] typecheck + lint 通過
+
+### #20b 施工紀錄（2026-02-11）
+
+#### 優化循環摘要
+- [x] 第 1 輪實作：完成 D3（PropertyDescription 展開全文）、D4（MobileActionBar 毛玻璃+滾動隱藏）、D9（Glassmorphism 統一設計語言）
+- [x] 第 2 輪驗證：typecheck、ESLint（3 warnings 自動修復）、PropertyDetail 測試全部通過（89 個測試）
+
+#### 修改檔案
+1. `src/components/PropertyDetail/PropertyDescription.tsx`
+   - 新增展開/收起狀態管理（`useState<boolean>`）
+   - 預設顯示 4 行（`line-clamp-4`），超過 240 字才顯示展開按鈕
+   - 底部 gradient fade-out（`bg-gradient-to-t from-white to-transparent h-8`）
+   - 展開/收起按鈕使用 Lucide `ChevronDown`/`ChevronUp` icon
+   - 按鈕符合觸控目標 `min-h-[44px]`（ux-guidelines #22）
+
+2. `src/hooks/useScrollDirection.ts`（新增）
+   - 偵測滾動方向的 Hook（`'up' | 'down'`）
+   - 使用 `passive: true` 提升滾動效能
+   - 閾值機制（預設 10px）避免微小滾動觸發狀態更新
+
+3. `src/components/PropertyDetail/MobileActionBar.tsx`
+   - 新增 `useScrollDirection` hook，控制顯示/隱藏
+   - 背景改為 `bg-white/95 backdrop-blur-xl border-t border-white/20`（Glassmorphism）
+   - 社會證明 icon 從 12px 升級至 14px（符合 ux-guidelines #14）
+   - 滾動隱藏：`translate-y-full` + `transition-transform duration-300 ease-out`
+   - `motion-reduce:translate-y-0` 支援 `prefers-reduced-motion`（ux-guidelines #82）
+
+4. `tailwind.config.cjs`
+   - 新增 `.glass-card` utility plugin：`bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg`
+
+5. `src/components/PropertyDetail/PropertySpecs.tsx`
+   - 套用 `.glass-card`，移除 `border-slate-100 bg-white shadow-sm`
+
+6. `src/components/PropertyDetail/MobileCTA.tsx`
+   - 套用 `.glass-card`，移除 `border-slate-100 bg-white shadow-lg`
+
+#### 驗證命令
+```bash
+npx tsc --noEmit
+npx eslint --fix src/components/PropertyDetail/PropertyDescription.tsx src/components/PropertyDetail/MobileActionBar.tsx src/components/PropertyDetail/PropertySpecs.tsx src/components/PropertyDetail/MobileCTA.tsx
+npx vitest run src/components/PropertyDetail/
+```
+
+#### UI/UX 規範符合性
+- ✅ products.csv #38 Real Estate（Glassmorphism + Minimalism）
+- ✅ ux-guidelines #44（長文本可折疊）
+- ✅ ux-guidelines #9（漸進揭露）
+- ✅ ux-guidelines #36（固定元素可自動隱藏）
+- ✅ ux-guidelines #14（icon 尺寸 14px）
+- ✅ ux-guidelines #22（觸控目標 ≥44px）
+- ✅ ux-guidelines #82（prefers-reduced-motion）
+- ✅ styles.csv #1 Glassmorphism（backdrop-blur-xl, bg-white/80）
 
 ---
 

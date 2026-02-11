@@ -10,20 +10,11 @@ interface PropertyGalleryProps {
   fallbackImage: string;
 }
 
-const SWIPE_THRESHOLD = 80;
-const SWIPE_INTENT_THRESHOLD = 20; // 提高到 20px 避免誤判垂直滾動為水平滑動
+const SWIPE_THRESHOLD = 50;
+const SWIPE_INTENT_THRESHOLD = 20;
 const SWIPE_COOLDOWN_MS = 250;
-const HINT_ANIMATION_DURATION_MS = 5000; // 提示動畫播放 5 秒後停止
+const HINT_ANIMATION_DURATION_MS = 5000;
 
-/**
- * 房源圖片輪播組件
- *
- * 功能:
- * - 主圖顯示
- * - 縮圖選擇器
- * - 圖片錯誤處理
- * - 手機左右滑動切圖
- */
 export const PropertyGallery = memo(function PropertyGallery({
   images,
   title,
@@ -32,14 +23,19 @@ export const PropertyGallery = memo(function PropertyGallery({
 }: PropertyGalleryProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showHintAnimation, setShowHintAnimation] = useState(true);
+  const [loadedImageSrc, setLoadedImageSrc] = useState<string | null>(null);
+
   const touchStartXRef = useRef<number | null>(null);
   const touchCurrentXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const lastSwipeAtRef = useRef(0);
   const lastSwipeDirectionRef = useRef<'next' | 'prev' | null>(null);
-  const imageCount = images?.length ?? 0;
 
-  // 提示動畫播放 5 秒後自動停止
+  const imageCount = images?.length ?? 0;
+  const activeImageIndex = imageCount > 0 ? Math.min(currentImageIndex, imageCount - 1) : 0;
+  const displayImage = images?.[activeImageIndex] || fallbackImage;
+  const isImageLoading = loadedImageSrc !== displayImage;
+
   useEffect(() => {
     if (imageCount <= 1) return;
 
@@ -58,10 +54,26 @@ export const PropertyGallery = memo(function PropertyGallery({
     [onPhotoClick]
   );
 
-  const handleImageError = useCallback(
-    (e: React.SyntheticEvent<HTMLImageElement>) => {
-      if (e.currentTarget.src !== fallbackImage) {
-        e.currentTarget.src = fallbackImage;
+  const handleImageLoad = useCallback(() => {
+    setLoadedImageSrc(displayImage);
+  }, [displayImage]);
+
+  const handleMainImageError = useCallback(
+    (event: React.SyntheticEvent<HTMLImageElement>) => {
+      if (event.currentTarget.src !== fallbackImage) {
+        event.currentTarget.src = fallbackImage;
+        return;
+      }
+
+      setLoadedImageSrc(displayImage);
+    },
+    [displayImage, fallbackImage]
+  );
+
+  const handleThumbnailError = useCallback(
+    (event: React.SyntheticEvent<HTMLImageElement>) => {
+      if (event.currentTarget.src !== fallbackImage) {
+        event.currentTarget.src = fallbackImage;
       }
     },
     [fallbackImage]
@@ -72,13 +84,15 @@ export const PropertyGallery = memo(function PropertyGallery({
       if (imageCount <= 1) return false;
 
       let hasNavigated = false;
+
       setCurrentImageIndex((prevIndex) => {
+        const normalizedPrevIndex = Math.min(prevIndex, imageCount - 1);
         const nextIndex =
           direction === 'next'
-            ? Math.min(prevIndex + 1, imageCount - 1)
-            : Math.max(prevIndex - 1, 0);
+            ? Math.min(normalizedPrevIndex + 1, imageCount - 1)
+            : Math.max(normalizedPrevIndex - 1, 0);
 
-        if (nextIndex !== prevIndex) {
+        if (nextIndex !== normalizedPrevIndex) {
           hasNavigated = true;
           onPhotoClick();
         }
@@ -91,16 +105,17 @@ export const PropertyGallery = memo(function PropertyGallery({
     [imageCount, onPhotoClick]
   );
 
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    const startTouch = e.touches[0];
+  const handleTouchStart = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
+    const startTouch = event.touches[0];
     if (!startTouch) return;
+
     touchStartXRef.current = startTouch.clientX;
     touchCurrentXRef.current = startTouch.clientX;
     touchStartYRef.current = startTouch.clientY;
   }, []);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    const currentTouch = e.touches[0];
+  const handleTouchMove = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
+    const currentTouch = event.touches[0];
     if (!currentTouch) return;
 
     const startX = touchStartXRef.current;
@@ -113,7 +128,7 @@ export const PropertyGallery = memo(function PropertyGallery({
       const deltaY = Math.abs(currentY - startY);
 
       if (deltaX > SWIPE_INTENT_THRESHOLD && deltaX > deltaY) {
-        e.preventDefault();
+        event.preventDefault();
       }
     }
 
@@ -130,11 +145,12 @@ export const PropertyGallery = memo(function PropertyGallery({
 
     const deltaX = touchCurrentXRef.current - touchStartXRef.current;
     const now = Date.now();
+
     touchStartXRef.current = null;
     touchCurrentXRef.current = null;
     touchStartYRef.current = null;
 
-    if (Math.abs(deltaX) < SWIPE_THRESHOLD) return;
+    if (Math.abs(deltaX) <= SWIPE_THRESHOLD) return;
 
     const swipeDirection = deltaX < 0 ? 'next' : 'prev';
     const isRapidSameDirectionSwipe =
@@ -150,20 +166,28 @@ export const PropertyGallery = memo(function PropertyGallery({
     }
   }, [navigateBySwipe]);
 
-  const displayImage = images?.[currentImageIndex] || fallbackImage;
-
   return (
     <div className="mb-4">
       <div
-        className="group relative aspect-video touch-pan-x overflow-hidden rounded-2xl bg-slate-200"
+        className="group relative aspect-video touch-pan-y overflow-hidden rounded-2xl bg-slate-200"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        data-testid="gallery-touch-surface"
       >
+        {isImageLoading && (
+          <div
+            data-testid="gallery-main-skeleton"
+            aria-hidden="true"
+            className="absolute inset-0 z-[1] animate-pulse rounded-2xl bg-slate-200"
+          />
+        )}
+
         <img
           src={displayImage}
           alt={title}
-          onError={handleImageError}
+          onLoad={handleImageLoad}
+          onError={handleMainImageError}
           className={cn(
             'size-full object-cover duration-700 group-hover:scale-105',
             motionA11y.transitionTransform
@@ -171,16 +195,17 @@ export const PropertyGallery = memo(function PropertyGallery({
           loading="eager"
           decoding="async"
         />
+
         {imageCount > 1 && (
           <>
             <button
               type="button"
               aria-label="上一張照片"
               onClick={() => navigateBySwipe('prev')}
-              disabled={currentImageIndex === 0}
+              disabled={activeImageIndex === 0}
               className={cn(
                 'absolute left-3 top-1/2 z-10 grid min-h-[44px] min-w-[44px] -translate-y-1/2 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md',
-                currentImageIndex === 0
+                activeImageIndex === 0
                   ? 'cursor-not-allowed opacity-35'
                   : 'opacity-80 hover:opacity-100 active:scale-95',
                 motionA11y.transitionAll
@@ -188,14 +213,15 @@ export const PropertyGallery = memo(function PropertyGallery({
             >
               <ChevronLeft size={18} />
             </button>
+
             <button
               type="button"
               aria-label="下一張照片"
               onClick={() => navigateBySwipe('next')}
-              disabled={currentImageIndex === imageCount - 1}
+              disabled={activeImageIndex === imageCount - 1}
               className={cn(
                 'absolute right-3 top-1/2 z-10 grid min-h-[44px] min-w-[44px] -translate-y-1/2 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md',
-                currentImageIndex === imageCount - 1
+                activeImageIndex === imageCount - 1
                   ? 'cursor-not-allowed opacity-35'
                   : 'opacity-80 hover:opacity-100 active:scale-95',
                 motionA11y.transitionAll
@@ -204,7 +230,7 @@ export const PropertyGallery = memo(function PropertyGallery({
               <ChevronRight
                 size={18}
                 className={cn(
-                  currentImageIndex === 0 &&
+                  activeImageIndex === 0 &&
                     showHintAnimation &&
                     'animate-hint-swipe motion-reduce:animate-none'
                 )}
@@ -212,37 +238,38 @@ export const PropertyGallery = memo(function PropertyGallery({
             </button>
           </>
         )}
+
         {imageCount > 0 && (
           <div className="absolute bottom-4 right-4 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1.5 text-sm text-white backdrop-blur-md">
             <Home size={14} />
             <span>
-              {currentImageIndex + 1} / {imageCount}
+              {activeImageIndex + 1} / {imageCount}
             </span>
           </div>
         )}
       </div>
 
       {images && images.length > 1 && (
-        <div className="scrollbar-hide -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-2">
-          {images.map((img, i) => (
+        <div className="scrollbar-hide -mx-4 mt-3 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2">
+          {images.map((image, index) => (
             <button
-              key={i}
+              key={`${image}-${index}`}
               type="button"
-              onClick={() => handleThumbnailClick(i)}
-              aria-label={`切換到第 ${i + 1} 張照片${i === currentImageIndex ? '（目前選中）' : ''}`}
-              aria-pressed={i === currentImageIndex}
+              onClick={() => handleThumbnailClick(index)}
+              aria-label={`切換到第 ${index + 1} 張照片${index === activeImageIndex ? '（目前選中）' : ''}`}
+              aria-pressed={index === activeImageIndex}
               className={cn(
-                'h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2',
-                i === currentImageIndex
+                'h-16 w-24 shrink-0 snap-center overflow-hidden rounded-lg border-2',
+                index === activeImageIndex
                   ? 'ring-brand-700/20 border-brand-700 ring-2'
                   : 'border-transparent opacity-70 hover:opacity-100',
                 motionA11y.transitionAll
               )}
             >
               <img
-                src={img}
-                alt={`照片 ${i + 1}`}
-                onError={handleImageError}
+                src={image}
+                alt={`照片 ${index + 1}`}
+                onError={handleThumbnailError}
                 className="size-full object-cover"
                 loading="lazy"
                 decoding="async"
