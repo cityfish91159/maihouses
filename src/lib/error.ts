@@ -13,6 +13,65 @@
  * ```
  */
 
+const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
+const ERROR_MESSAGE_KEYS = ['message', 'msg', 'error'] as const;
+
+type ErrorRecord = Record<string, unknown>;
+
+function isErrorRecord(value: unknown): value is ErrorRecord {
+  return typeof value === 'object' && value !== null;
+}
+
+function normalizeMessage(value: string): string {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : UNKNOWN_ERROR_MESSAGE;
+}
+
+function getMessageFromRecord(record: ErrorRecord, visited: WeakSet<object>): string | null {
+  if (visited.has(record)) {
+    return null;
+  }
+
+  visited.add(record);
+
+  for (const key of ERROR_MESSAGE_KEYS) {
+    const candidate = record[key];
+
+    if (typeof candidate === 'string') {
+      const normalized = candidate.trim();
+      if (normalized.length > 0) {
+        return normalized;
+      }
+      continue;
+    }
+
+    if (!isErrorRecord(candidate)) {
+      continue;
+    }
+
+    const nestedMessage = getMessageFromRecord(candidate, visited);
+    if (nestedMessage) {
+      return nestedMessage;
+    }
+  }
+
+  return null;
+}
+
+function serializeUnknownError(error: unknown): string {
+  try {
+    const serialized = JSON.stringify(error);
+    if (typeof serialized === 'string' && serialized.length > 0) {
+      return serialized;
+    }
+  } catch {
+    // Circular reference or unsupported value, fallback to String(error)
+  }
+
+  const fallback = String(error);
+  return fallback.length > 0 ? fallback : UNKNOWN_ERROR_MESSAGE;
+}
+
 /**
  * 從未知型別的錯誤物件中提取訊息字串
  *
@@ -21,38 +80,23 @@
  */
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    return error.message;
+    return normalizeMessage(error.message);
   }
 
   if (typeof error === 'string') {
-    return error;
+    return normalizeMessage(error);
   }
 
-  if (typeof error === 'object' && error !== null) {
-    // 嘗試提取常見的錯誤格式
-    const err = error as { message?: unknown; msg?: unknown; error?: unknown };
-
-    if (typeof err.message === 'string') {
-      return err.message;
-    }
-
-    if (typeof err.msg === 'string') {
-      return err.msg;
-    }
-
-    if (typeof err.error === 'string') {
-      return err.error;
-    }
-
-    // 如果是 object 但無法提取訊息,嘗試 JSON 序列化
-    try {
-      return JSON.stringify(error);
-    } catch {
-      return String(error);
-    }
+  if (!isErrorRecord(error)) {
+    return UNKNOWN_ERROR_MESSAGE;
   }
 
-  return 'Unknown error';
+  const messageFromRecord = getMessageFromRecord(error, new WeakSet<object>());
+  if (messageFromRecord) {
+    return normalizeMessage(messageFromRecord);
+  }
+
+  return normalizeMessage(serializeUnknownError(error));
 }
 
 /**
