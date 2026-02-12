@@ -28,6 +28,44 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(obj)).toBe(JSON.stringify(obj));
   });
 
+  it('應該過濾敏感欄位', () => {
+    const obj = {
+      password: 'pass-123',
+      token: 'token-123',
+      secret: 'secret-123',
+      apiKey: 'api-key-123',
+      profile: {
+        safe: 'ok',
+        refresh_token: 'nested-token',
+      },
+    };
+
+    expect(getErrorMessage(obj)).toBe(
+      JSON.stringify({
+        password: '[REDACTED]',
+        token: '[REDACTED]',
+        secret: '[REDACTED]',
+        apiKey: '[REDACTED]',
+        profile: {
+          safe: 'ok',
+          refresh_token: '[REDACTED]',
+        },
+      })
+    );
+  });
+
+  it('應該處理循環引用並保留過濾結果', () => {
+    const obj: Record<string, unknown> = { password: 'pass-123' };
+    obj.self = obj;
+
+    expect(getErrorMessage(obj)).toBe(
+      JSON.stringify({
+        password: '[REDACTED]',
+        self: '[Circular]',
+      })
+    );
+  });
+
   it('應該返回 "Unknown error" 對於 null', () => {
     expect(getErrorMessage(null)).toBe('Unknown error');
   });

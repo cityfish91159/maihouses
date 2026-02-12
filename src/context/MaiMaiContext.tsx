@@ -46,10 +46,6 @@ function isValidMood(mood: unknown): mood is MaiMaiMood {
   return typeof mood === 'string' && VALID_MOODS.has(mood as never);
 }
 
-function normalizeError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(getErrorMessage(error));
-}
-
 export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 從 localStorage 初始化 mood
   const [mood, setMoodState] = useState<MaiMaiMood>(() => {
@@ -67,7 +63,10 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       try {
         const parsed = JSON.parse(stored);
         return Array.isArray(parsed) ? parsed.slice(-MAX_MESSAGES) : [];
-      } catch {
+      } catch (e) {
+        logger.warn('[MaiMaiContext] Failed to parse stored messages', {
+          error: getErrorMessage(e),
+        });
         return [];
       }
     }
@@ -80,7 +79,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       safeLocalStorage.setItem(STORAGE_KEY_MOOD, newMood);
     } catch (e) {
-      logger.warn('[MaiMaiContext] Failed to save mood', { error: normalizeError(e) });
+      logger.warn('[MaiMaiContext] Failed to save mood', { error: getErrorMessage(e) });
     }
   }, []);
 
@@ -94,7 +93,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       try {
         safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(updated));
       } catch (e) {
-        logger.warn('[MaiMaiContext] Failed to save messages', { error: normalizeError(e) });
+        logger.warn('[MaiMaiContext] Failed to save messages', { error: getErrorMessage(e) });
       }
       return updated;
     });
@@ -106,7 +105,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify([]));
     } catch (e) {
-      logger.warn('[MaiMaiContext] Failed to reset messages', { error: normalizeError(e) });
+      logger.warn('[MaiMaiContext] Failed to reset messages', { error: getErrorMessage(e) });
     }
   }, []);
 

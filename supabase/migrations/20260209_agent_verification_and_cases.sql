@@ -32,27 +32,42 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
+  TRUST_CASE_STATUS_CLOSED CONSTANT TEXT := 'closed';
+  UUID_PATTERN CONSTANT TEXT := '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+  v_agent_id_text TEXT;
+  v_agent_id UUID;
   v_updated_count INTEGER;
 BEGIN
-  -- Validate agent_id exists
+  -- Fail fast: missing agent_id
   IF NEW.agent_id IS NULL THEN
     RAISE WARNING '[fn_increment_completed_cases] agent_id is NULL for trust_cases.id=%', NEW.id;
     RETURN NEW;
   END IF;
 
-  -- Only increment when status changes to 'closed'
-  IF NEW.status = 'closed'
-     AND (OLD.status IS DISTINCT FROM 'closed') THEN
+  -- Early return when status is not transitioning into closed
+  IF NEW.status IS DISTINCT FROM TRUST_CASE_STATUS_CLOSED
+     OR OLD.status = TRUST_CASE_STATUS_CLOSED THEN
+    RETURN NEW;
+  END IF;
 
-    UPDATE public.agents
-    SET completed_cases = COALESCE(completed_cases, 0) + 1
-    WHERE id = NEW.agent_id::uuid;
+  v_agent_id_text := NEW.agent_id::text;
 
-    GET DIAGNOSTICS v_updated_count = ROW_COUNT;
+  -- Fail fast: invalid UUID format
+  IF v_agent_id_text !~* UUID_PATTERN THEN
+    RAISE WARNING '[fn_increment_completed_cases] Invalid agent_id format: % (trust_cases.id=%)', NEW.agent_id, NEW.id;
+    RETURN NEW;
+  END IF;
 
-    IF v_updated_count = 0 THEN
-      RAISE WARNING '[fn_increment_completed_cases] Agent not found for agent_id=% (trust_cases.id=%)', NEW.agent_id, NEW.id;
-    END IF;
+  v_agent_id := v_agent_id_text::uuid;
+
+  UPDATE public.agents
+  SET completed_cases = COALESCE(completed_cases, 0) + 1
+  WHERE id = v_agent_id;
+
+  GET DIAGNOSTICS v_updated_count = ROW_COUNT;
+
+  IF v_updated_count = 0 THEN
+    RAISE WARNING '[fn_increment_completed_cases] Agent not found for agent_id=% (trust_cases.id=%)', NEW.agent_id, NEW.id;
   END IF;
 
   RETURN NEW;

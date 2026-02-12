@@ -83,6 +83,57 @@ describe('notify', () => {
     );
   });
 
+  it('warns when actionLabel is provided without onAction', () => {
+    notify.info('Invalid action config', undefined, { actionLabel: 'Click me' });
+
+    expect(mockLoggerWarn).toHaveBeenCalledWith('[notify] actionLabel provided without onAction', {
+      actionLabel: 'Click me',
+    });
+    expect(mockInfo).toHaveBeenCalledWith(
+      'Invalid action config',
+      expect.not.objectContaining({ action: expect.anything() })
+    );
+  });
+
+  it('prefers action object when both action and legacy fields exist', () => {
+    const modernOnClick = vi.fn();
+    const legacyOnAction = vi.fn();
+
+    notify.info('Priority check', undefined, {
+      action: { label: 'Modern action', onClick: modernOnClick },
+      actionLabel: 'Legacy action',
+      onAction: legacyOnAction,
+    });
+
+    expect(mockInfo).toHaveBeenCalledWith(
+      'Priority check',
+      expect.objectContaining({
+        action: expect.objectContaining({
+          label: 'Modern action',
+          onClick: modernOnClick,
+        }),
+      })
+    );
+  });
+
+  it('accepts empty action callback function', () => {
+    const emptyOnClick = () => undefined;
+
+    notify.info('Empty callback', undefined, {
+      action: { label: 'No-op', onClick: emptyOnClick },
+    });
+
+    expect(mockInfo).toHaveBeenCalledWith(
+      'Empty callback',
+      expect.objectContaining({
+        action: expect.objectContaining({
+          label: 'No-op',
+          onClick: emptyOnClick,
+        }),
+      })
+    );
+  });
+
   it('uses default durations for success and info', () => {
     notify.success('Saved');
     notify.info('Heads up');
@@ -128,9 +179,9 @@ describe('notify', () => {
     notify.dev();
 
     expect(mockInfo).toHaveBeenCalledWith(
-      'In progress',
+      '開發中',
       expect.objectContaining({
-        description: 'Feature under development',
+        description: '此功能開發中',
         duration: 2200,
       })
     );
@@ -154,5 +205,13 @@ describe('notify', () => {
       error: 'toast crash',
       title: 'Will crash',
     });
+  });
+
+  it('returns numeric toast id when sonner returns number', () => {
+    mockSuccess.mockReturnValueOnce(77);
+
+    const result = notify.success('Numeric id');
+
+    expect(result).toBe(77);
   });
 });

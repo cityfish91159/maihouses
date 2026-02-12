@@ -107,7 +107,7 @@ describe('MaiMaiContext', () => {
         expect(result.current.mood).toBe('shy');
         expect(loggerModule.logger.warn).toHaveBeenCalledWith(
           '[MaiMaiContext] Failed to save mood',
-          expect.objectContaining({ error: expect.any(Error) })
+          expect.objectContaining({ error: 'QuotaExceeded' })
         );
       });
     });
@@ -186,6 +186,10 @@ describe('MaiMaiContext', () => {
         const { result } = renderHook(() => useMaiMai(), { wrapper });
 
         expect(result.current.messages).toEqual([]);
+        expect(loggerModule.logger.warn).toHaveBeenCalledWith(
+          '[MaiMaiContext] Failed to parse stored messages',
+          expect.objectContaining({ error: expect.any(String) })
+        );
       });
 
       it('handles storage errors gracefully when adding messages', () => {
@@ -204,7 +208,7 @@ describe('MaiMaiContext', () => {
         expect(result.current.messages).toContain('Important Message');
         expect(loggerModule.logger.warn).toHaveBeenCalledWith(
           '[MaiMaiContext] Failed to save messages',
-          expect.objectContaining({ error: expect.any(Error) })
+          expect.objectContaining({ error: 'QuotaExceeded' })
         );
       });
     });

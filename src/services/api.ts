@@ -1,6 +1,7 @@
 ﻿import { v4 as uuidv4 } from 'uuid';
 import { getConfig } from '../app/config';
 import { postLLM } from './ai';
+import { getErrorMessage, safeAsync, safeSync, UNKNOWN_ERROR_MESSAGE } from '../lib/error';
 import { logger } from '../lib/logger';
 import type {
   ApiResponse,
@@ -14,6 +15,32 @@ import type {
 
 let sessionId = uuidv4();
 export const getSessionId = () => sessionId;
+
+const REQUEST_TIMEOUT_MS = 8000;
+const API_REQUEST_FAILED_MESSAGE = 'API 請求失敗';
+const API_RESPONSE_PARSE_FAILED_MESSAGE = 'API 回應解析失敗';
+const NETWORK_ERROR_FALLBACK_MESSAGE = 'Network error';
+const AI_UNAVAILABLE_MESSAGE = 'AI 暫時無法使用';
+
+function normalizeUserHeaders(headers: RequestInit['headers']): Record<string, string> {
+  if (!headers) return {};
+
+  if (headers instanceof Headers) {
+    const normalized: Record<string, string> = {};
+    for (const [k, v] of headers) {
+      normalized[k] = v;
+    }
+    return normalized;
+  }
+
+  if (Array.isArray(headers)) return Object.fromEntries(headers);
+  return headers;
+}
+
+function resolveNetworkErrorMessage(error: unknown): string {
+  const message = getErrorMessage(error);
+  return message === UNKNOWN_ERROR_MESSAGE ? NETWORK_ERROR_FALLBACK_MESSAGE : message;
+}
 
 export async function apiFetch<T = unknown>(
   endpoint: string,
@@ -32,19 +59,15 @@ export async function apiFetch<T = unknown>(
     'Accept-Language': 'zh-Hant-TW',
   };
 
-  const userHeaders: Record<string, string> = (() => {
-    const h = options.headers;
-    if (!h) return {};
-    if (h instanceof Headers) {
-      const o: Record<string, string> = {};
-      for (const [k, v] of h) {
-        o[k] = v;
-      }
-      return o;
-    }
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
-  })();
+  const userHeadersResult = safeSync(() => normalizeUserHeaders(options.headers));
+  const userHeaders = userHeadersResult.ok ? userHeadersResult.data : {};
+
+  if (!userHeadersResult.ok) {
+    logger.warn('[apiFetch] Failed to normalize user headers', {
+      endpoint,
+      error: userHeadersResult.error,
+    });
+  }
 
   if (method === 'POST' && !userHeaders['Idempotency-Key'] && !userHeaders['idempotency-key']) {
     userHeaders['Idempotency-Key'] = uuidv4();
@@ -58,7 +81,7 @@ export async function apiFetch<T = unknown>(
   }
 
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 8000);
+  const id = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
     const res = await fetch(url, {
@@ -69,11 +92,21 @@ export async function apiFetch<T = unknown>(
     if (!res.ok) {
       return {
         ok: false,
-        error: { code: 'API_ERROR', message: 'API 請求失敗' },
+        error: { code: 'API_ERROR', message: API_REQUEST_FAILED_MESSAGE },
       };
     }
-    const data = await res.json();
-    return { ok: true, data };
+    const parseResult = await safeAsync(() => res.json());
+    if (!parseResult.ok) {
+      logger.warn('[apiFetch] Failed to parse response JSON', {
+        endpoint,
+        error: parseResult.error,
+      });
+      return {
+        ok: false,
+        error: { code: 'API_ERROR', message: API_RESPONSE_PARSE_FAILED_MESSAGE },
+      };
+    }
+    return { ok: true, data: parseResult.data };
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError')
       return {
@@ -84,7 +117,7 @@ export async function apiFetch<T = unknown>(
       ok: false,
       error: {
         code: 'NETWORK_ERROR',
-        message: e instanceof Error ? e.message : 'Network error',
+        message: resolveNetworkErrorMessage(e),
       },
     };
   } finally {
@@ -117,22 +150,23 @@ export const aiAsk = async (
   req: AiAskReq,
   onChunk?: (chunk: string) => void
 ): Promise<ApiResponse<AiAskRes>> => {
-  try {
-    const messages = req.messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
-    const result = await postLLM(messages, onChunk);
-    const aiResult: AiAskRes = { answers: [result], recommends: [] };
-    return { ok: true, data: aiResult };
-  } catch (error) {
-    logger.error('AI Ask failed', { error });
+  const messages = req.messages.map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
+
+  const askResult = await safeAsync(() => postLLM(messages, onChunk));
+  if (!askResult.ok) {
+    logger.error('AI Ask failed', { error: askResult.error });
     return {
       ok: false,
       error: {
         code: 'AI_ERROR',
-        message: error instanceof Error ? error.message : 'AI 暫時無法使用',
+        message: askResult.error === UNKNOWN_ERROR_MESSAGE ? AI_UNAVAILABLE_MESSAGE : askResult.error,
       },
     };
   }
+
+  const aiResult: AiAskRes = { answers: [askResult.data], recommends: [] };
+  return { ok: true, data: aiResult };
 };

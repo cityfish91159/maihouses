@@ -64,7 +64,11 @@ async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
       const parsed = JSON.parse(cache);
       if (isValidConfig(parsed)) return parsed;
     }
-  } catch {}
+  } catch (err) {
+    logger.warn('[config] Failed to read cached config, fallback to remote config', {
+      error: getErrorMessage(err),
+    });
+  }
 
   // 2) remote app.config.json
   const baseUrl = import.meta.env.BASE_URL || '/';
@@ -144,7 +148,11 @@ export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
 
     try {
       safeLocalStorage.setItem(LS, JSON.stringify(merged));
-    } catch {}
+    } catch (err) {
+      logger.warn('[config] Failed to persist merged config to localStorage', {
+        error: getErrorMessage(err),
+      });
+    }
 
     return merged;
   } catch (err) {

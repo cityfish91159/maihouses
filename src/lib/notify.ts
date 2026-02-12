@@ -4,10 +4,10 @@ import { getErrorMessage } from './error';
 import { logger } from './logger';
 
 /**
- * Thin wrapper around `sonner` with project-wide defaults.
- * - Keeps a single options contract (`NotifyOptions`)
- * - Preserves legacy `actionLabel/onAction`
- * - Adds defensive logging when toast rendering throws
+ * Sonner 通知封裝
+ * - 提供專案統一預設值
+ * - 保留舊版 actionLabel/onAction 相容
+ * - 內建防禦式錯誤記錄，避免 toast 異常中斷流程
  */
 export type NotifyAction = {
   label: string;
@@ -19,25 +19,23 @@ export type NotifyOptions = {
   description?: string;
   duration?: number;
   action?: NotifyAction;
+  /** @deprecated 請改用 `action` */
   actionLabel?: string;
+  /** @deprecated 請改用 `action` */
   onAction?: () => void;
   dismissible?: boolean;
 };
 
-export type ToastOptions = {
-  id?: string | number;
-  description?: string;
-  duration?: number;
-  dismissible?: boolean;
-  action?: NotifyAction;
-};
+export type ToastOptions = Omit<NotifyOptions, 'actionLabel' | 'onAction'>;
 
 const DEFAULT_DISMISSIBLE = true;
 const DEFAULT_DEV_DURATION = 2200;
-const DEFAULT_DEV_TITLE = 'In progress';
-const DEFAULT_DEV_MESSAGE = 'Feature under development';
+const DEFAULT_DEV_TITLE = '開發中';
+const DEFAULT_DEV_MESSAGE = '此功能開發中';
 const MODULE_TAG = '[notify]';
 const FALLBACK_TOAST_ID = -1;
+const WARN_MISSING_ACTION_HANDLER = `${MODULE_TAG} actionLabel provided without onAction`;
+const WARN_MISSING_ACTION_LABEL = `${MODULE_TAG} onAction provided without actionLabel`;
 
 function resolveDescription(options: NotifyOptions, description?: string): string | undefined {
   return description ?? options.description;
@@ -46,6 +44,16 @@ function resolveDescription(options: NotifyOptions, description?: string): strin
 function resolveAction(options: NotifyOptions): NotifyAction | undefined {
   if (options.action) {
     return options.action;
+  }
+
+  if (options.actionLabel && !options.onAction) {
+    logger.warn(WARN_MISSING_ACTION_HANDLER, { actionLabel: options.actionLabel });
+    return undefined;
+  }
+
+  if (!options.actionLabel && options.onAction) {
+    logger.warn(WARN_MISSING_ACTION_LABEL);
+    return undefined;
   }
 
   if (options.actionLabel && options.onAction) {
@@ -84,7 +92,7 @@ function mapOptions(
 
 type ToastCallResult = string | number;
 
-function safeToast(call: () => ToastCallResult, message: string, title?: string): ToastCallResult {
+function safeToast(call: () => ToastCallResult, message: string, title: string): ToastCallResult {
   try {
     return call();
   } catch (error) {

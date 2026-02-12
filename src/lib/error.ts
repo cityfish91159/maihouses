@@ -15,11 +15,43 @@
 
 export const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
 const ERROR_MESSAGE_KEYS = ['message', 'msg', 'error'] as const;
+const SENSITIVE_KEYS = ['password', 'token', 'secret', 'apiKey'] as const;
+const REDACTED_VALUE = '[REDACTED]';
+const CIRCULAR_REFERENCE_VALUE = '[Circular]';
+const TRUNCATED_VALUE = '[Truncated]';
+const SERIALIZATION_MAX_DEPTH = 8;
 
 type ErrorRecord = Record<string, unknown>;
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+
+// 標準化鍵名：移除分隔符並轉小寫，支援模糊匹配
+// 例如 refresh_token / refreshToken / refresh-token 會對齊為 refreshtoken
+function normalizeSensitiveKey(key: string): string {
+  return key.replace(/[_-]/g, '').toLowerCase();
+}
+
+const SENSITIVE_KEY_SET = new Set<string>(
+  SENSITIVE_KEYS.map((key) => normalizeSensitiveKey(key))
+);
 
 function isErrorRecord(value: unknown): value is ErrorRecord {
   return typeof value === 'object' && value !== null;
+}
+
+function isSensitiveKey(key: string): boolean {
+  const normalized = normalizeSensitiveKey(key);
+  if (SENSITIVE_KEY_SET.has(normalized)) {
+    return true;
+  }
+
+  for (const sensitiveKey of SENSITIVE_KEY_SET) {
+    if (normalized.includes(sensitiveKey)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function normalizeMessage(value: string): string {
@@ -58,9 +90,64 @@ function getMessageFromRecord(record: ErrorRecord, visited: WeakSet<object>): st
   return null;
 }
 
+function sanitizeForSerialization(
+  value: unknown,
+  visited: WeakSet<object>,
+  depth = 0
+): JsonValue {
+  if (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+
+  if (depth >= SERIALIZATION_MAX_DEPTH) {
+    return TRUNCATED_VALUE;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (!isErrorRecord(value)) {
+    return String(value);
+  }
+
+  if (visited.has(value)) {
+    return CIRCULAR_REFERENCE_VALUE;
+  }
+  visited.add(value);
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeForSerialization(item, visited, depth + 1));
+  }
+
+  const sanitized: { [key: string]: JsonValue } = {};
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    if (isSensitiveKey(key)) {
+      sanitized[key] = REDACTED_VALUE;
+      continue;
+    }
+
+    sanitized[key] = sanitizeForSerialization(nestedValue, visited, depth + 1);
+  }
+
+  return sanitized;
+}
+
 function serializeUnknownError(error: unknown): string {
+  const sanitized = sanitizeForSerialization(error, new WeakSet<object>());
+
   try {
-    const serialized = JSON.stringify(error);
+    const serialized = JSON.stringify(sanitized);
     if (typeof serialized === 'string' && serialized.length > 0) {
       return serialized;
     }

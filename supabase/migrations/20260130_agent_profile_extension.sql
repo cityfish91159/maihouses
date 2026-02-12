@@ -114,7 +114,7 @@ BEGIN
   -- Service rating bonus (max +20)
   v_score := v_score + LEAST(
     SERVICE_RATING_BONUS_MAX,
-    COALESCE(v_agent.service_rating, 0)::INTEGER * SERVICE_RATING_MULTIPLIER
+    ROUND(COALESCE(v_agent.service_rating, 0) * SERVICE_RATING_MULTIPLIER)::INTEGER
   );
 
   -- Completed cases bonus (max +10)
