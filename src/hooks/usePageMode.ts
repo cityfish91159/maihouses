@@ -1,8 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from './useAuth';
 import {
   clearDemoMode,
   isDemoMode,
+  reloadPage,
   resolvePageMode,
   subscribeDemoModeStorageSync,
   type PageMode,
@@ -11,7 +12,7 @@ import {
 export function usePageMode(): PageMode {
   const { isAuthenticated } = useAuth();
 
-  const mode = useMemo(() => resolvePageMode(isAuthenticated), [isAuthenticated]);
+  const mode = resolvePageMode(isAuthenticated);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -23,7 +24,7 @@ export function usePageMode(): PageMode {
 
   useEffect(() => {
     return subscribeDemoModeStorageSync(() => {
-      window.location.reload();
+      reloadPage();
     });
   }, []);
 

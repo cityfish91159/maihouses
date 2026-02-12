@@ -1,5 +1,6 @@
-﻿import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { track } from '../analytics/track';
+import { getErrorMessage } from '../lib/error';
 import { logger } from '../lib/logger';
 import { safeLocalStorage } from '../lib/safeStorage';
 import { isDemoMode } from '../lib/pageMode';
@@ -21,6 +22,19 @@ export interface PropertyTrackerActions {
 }
 
 const UAG_TRACK_ENDPOINT = '/api/uag/track';
+const DEFAULT_GRADE_RANK = 1;
+const UAG_GRADE_RANK = {
+  S: 5,
+  A: 4,
+  B: 3,
+  C: 2,
+  F: 1,
+} as const;
+
+const getGradeRank = (grade: unknown): number => {
+  if (typeof grade !== 'string') return DEFAULT_GRADE_RANK;
+  return UAG_GRADE_RANK[grade as keyof typeof UAG_GRADE_RANK] ?? DEFAULT_GRADE_RANK;
+};
 
 /**
  * UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
@@ -90,7 +104,9 @@ export const usePropertyTracker = (
       return sid;
     } catch (error) {
       // Safari 無痕模式或禁用 localStorage
-      logger.warn('[UAG] localStorage unavailable, using fallback', { error });
+      logger.warn('[UAG] localStorage unavailable, using fallback', {
+        error: getErrorMessage(error),
+      });
       return `u_${Math.random().toString(36).substring(2, 11)}`;
     }
   }, []);
@@ -163,15 +179,8 @@ export const usePropertyTracker = (
 
         // 檢查是否升級到 S 級
         if (data.success && data.grade) {
-          const gradeRank: Record<string, number> = {
-            S: 5,
-            A: 4,
-            B: 3,
-            C: 2,
-            F: 1,
-          };
-          const newRank = gradeRank[data.grade] || 1;
-          const oldRank = gradeRank[currentGrade.current] || 1;
+          const newRank = getGradeRank(data.grade);
+          const oldRank = getGradeRank(currentGrade.current);
 
           if (newRank > oldRank) {
             currentGrade.current = data.grade;
@@ -184,7 +193,7 @@ export const usePropertyTracker = (
       } catch (e) {
         // 失敗時 fallback 到 beacon
         logger.error('[UAG] Track event failed, fallback to beacon', {
-          error: e,
+          error: getErrorMessage(e),
           payload,
           eventType,
         });
@@ -272,7 +281,7 @@ export const usePropertyTracker = (
           sendEvent('click_line'),
         ]);
       } catch (error) {
-        logger.error('[UAG] Track LINE click failed:', { error });
+        logger.error('[UAG] Track LINE click failed:', { error: getErrorMessage(error) });
         toast.warning('追蹤失敗', {
           description: '您的操作已記錄,但追蹤系統暫時異常',
           duration: TOAST_DURATION.WARNING,
@@ -293,7 +302,7 @@ export const usePropertyTracker = (
           sendEvent('click_call'),
         ]);
       } catch (error) {
-        logger.error('[UAG] Track call click failed:', { error });
+        logger.error('[UAG] Track call click failed:', { error: getErrorMessage(error) });
         toast.warning('追蹤失敗', {
           description: '您的操作已記錄,但追蹤系統暫時異常',
           duration: TOAST_DURATION.WARNING,
@@ -313,7 +322,7 @@ export const usePropertyTracker = (
           sendEvent('click_map'),
         ]);
       } catch (error) {
-        logger.error('[UAG] Track map click failed:', { error });
+        logger.error('[UAG] Track map click failed:', { error: getErrorMessage(error) });
         toast.warning('追蹤失敗', {
           description: '您的操作已記錄,但追蹤系統暫時異常',
           duration: TOAST_DURATION.WARNING,

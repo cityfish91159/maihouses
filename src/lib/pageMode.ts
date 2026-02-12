@@ -25,7 +25,12 @@ const parseDemoTimestamp = (raw: string | null): number | null => {
 };
 
 export function readDemoTimestamp(): number | null {
-  const timestamp = parseDemoTimestamp(safeLocalStorage.getItem(DEMO_STORAGE_KEY));
+  const raw = safeLocalStorage.getItem(DEMO_STORAGE_KEY);
+  if (raw === null) {
+    return null;
+  }
+
+  const timestamp = parseDemoTimestamp(raw);
   if (timestamp !== null) {
     return timestamp;
   }
@@ -90,4 +95,9 @@ export function subscribeDemoModeStorageSync(onSync: () => void): () => void {
     }
     window.removeEventListener('storage', handler);
   };
+}
+
+export function reloadPage(): void {
+  if (typeof window === 'undefined') return;
+  window.location.reload();
 }

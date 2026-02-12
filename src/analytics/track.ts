@@ -1,4 +1,4 @@
-﻿import { logger } from '../lib/logger';
+import { logger } from '../lib/logger';
 import { getErrorMessage } from '../lib/error';
 import { isDemoMode } from '../lib/pageMode';
 
@@ -7,12 +7,21 @@ export async function track(event: string, payload?: Record<string, unknown>) {
   if (isDemoMode()) return;
 
   try {
-    await fetch('/api/analytics', {
+    const response = await fetch('/api/analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ event, ...payload }),
       keepalive: true,
     });
+
+    if (!response.ok) {
+      logger.warn('[Analytics] Track request failed', {
+        status: response.status,
+        event,
+      });
+      return;
+    }
+
     logger.debug('[track]', { event, payload: payload || {} });
   } catch (err) {
     logger.error('[Analytics] Track failed', { error: getErrorMessage(err) });

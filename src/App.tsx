@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -9,6 +9,7 @@ import { trackEvent } from './services/analytics';
 import { getErrorMessage } from './lib/error';
 import { logger } from './lib/logger';
 import { isDemoMode } from './lib/pageMode';
+import { notify } from './lib/notify';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import Wall from './pages/Community/Wall';
@@ -42,10 +43,15 @@ import { useDemoTimer } from './hooks/useDemoTimer';
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error: unknown) => {
-      if (!isDemoMode()) return;
-      logger.warn('[Demo] Unexpected API error', {
-        error: getErrorMessage(error),
-      });
+      const message = getErrorMessage(error);
+
+      if (isDemoMode()) {
+        logger.warn('[Demo] Unexpected API error', { error: message });
+        return;
+      }
+
+      logger.error('[Query] Unexpected API error', { error: message });
+      notify.error('載入失敗', message === 'Unknown error' ? '請稍後再試' : message);
     },
   }),
   defaultOptions: {

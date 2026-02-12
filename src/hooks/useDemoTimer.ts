@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { notify } from '../lib/notify';
 import {
@@ -6,25 +6,31 @@ import {
   DEMO_WARN_BEFORE_MS,
   getDemoRemainingMinutes,
   getDemoTimeRemaining,
+  reloadPage,
 } from '../lib/pageMode';
 import { usePageMode } from './usePageMode';
 
-const handleDemoExpire = (queryClient: ReturnType<typeof useQueryClient>) => {
-  clearDemoMode();
-  queryClient.clear();
-  window.location.reload();
-};
-
 export function useDemoTimer(): void {
   const queryClient = useQueryClient();
+  const queryClientRef = useRef(queryClient);
   const mode = usePageMode();
+
+  useEffect(() => {
+    queryClientRef.current = queryClient;
+  }, [queryClient]);
 
   useEffect(() => {
     if (mode !== 'demo') return;
 
+    const handleDemoExpire = () => {
+      clearDemoMode();
+      queryClientRef.current.clear();
+      reloadPage();
+    };
+
     const remaining = getDemoTimeRemaining();
     if (remaining <= 0) {
-      handleDemoExpire(queryClient);
+      handleDemoExpire();
       return;
     }
 
@@ -35,12 +41,12 @@ export function useDemoTimer(): void {
     }, warnDelay);
 
     const expireTimer = setTimeout(() => {
-      handleDemoExpire(queryClient);
+      handleDemoExpire();
     }, remaining);
 
     return () => {
       clearTimeout(warnTimer);
       clearTimeout(expireTimer);
     };
-  }, [mode, queryClient]);
+  }, [mode]);
 }
