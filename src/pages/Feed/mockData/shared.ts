@@ -6,6 +6,7 @@
  */
 
 import { STRINGS } from '../../../constants/strings';
+import { MOCK_AGENT_IDENTITIES } from '../../../constants/mockData';
 import { UserProfile } from '../../../types/feed';
 
 // ============ Time Utilities ============
@@ -28,7 +29,7 @@ export const mockTimestampDaysAgo = (days: number): string => mockTimestamp(days
 export const MOCK_COMMUNITIES = {
   HUIYU: {
     id: STRINGS.FEED.DEFAULT_COMMUNITY_ID,
-    name: '惠宇上晴',
+    name: MOCK_AGENT_IDENTITIES.defaultCommunityName,
   },
   FARGLORY: {
     id: 'community-2',
@@ -47,8 +48,8 @@ export const MOCK_AUTHORS = {
   WANG_MS: { name: '王太太', floor: '5F', type: 'resident' as const },
   ZHANG_MR: { name: '張先生', floor: '10F', type: 'resident' as const },
   // Agents
-  YOU_AGENT: { name: '游杰倫', type: 'agent' as const },
-  LIN_AGENT: { name: '林經理', type: 'agent' as const },
+  YOU_AGENT: { name: MOCK_AGENT_IDENTITIES.primaryAgentName, type: 'agent' as const },
+  LIN_AGENT: { name: MOCK_AGENT_IDENTITIES.secondaryAgentName, type: 'agent' as const },
   // Members
   TEST_USER: { name: '測試用戶', type: 'member' as const },
 } as const;

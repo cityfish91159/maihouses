@@ -18,6 +18,111 @@
 
 ---
 
+## Epic 拆分索引
+
+- `PROFILE`：`.claude/tickets/PROFILE.md`
+- `DETAIL`：`.claude/tickets/DETAIL.md`
+- `UAG`：`.claude/tickets/UAG.md`
+
+## 子工單 Checklist（Master）
+
+### Profile
+- [x] 7-A
+- [x] 7-B
+- [x] 7-C
+- [x] 16-A
+- [x] 16-B
+- [x] 16-C
+- [ ] 21a-P1
+- [ ] 21a-P2
+- [ ] 21a-P3
+- [ ] 21a-P4
+- [ ] 21a-P5
+- [x] 21b-P6
+- [x] 21b-P7
+- [x] 21b-P8
+- [x] 21b-P9
+
+### Detail
+- [x] 11-A
+- [x] 11-B
+- [x] 11-C
+- [x] 11-D
+- [x] 11-E
+- [x] 18-A
+- [x] 18-B
+- [x] 18-C
+- [x] 9a-D3
+- [x] 9a-D4
+- [x] 9a-D6
+- [x] 9a-D7
+- [x] 9a-D8
+- [x] 9b-D5
+- [x] 9b-D9
+- [x] 9b-D10
+- [x] 9b-D11
+- [x] 9b-C3
+- [x] 20a-D1
+- [x] 20a-D11
+- [x] 20b-D3
+- [x] 20b-D4
+- [x] 20b-D9
+- [x] 20c-D5
+- [x] 20d-D7
+- [x] 20d-D8
+
+### UAG
+- [x] 12-A
+- [x] 12-B
+- [x] 13-A
+- [x] 13-B
+- [x] 13-C
+- [x] 13-D
+- [x] 13-E
+- [x] 13-F
+- [x] 13-G
+- [x] 13-H
+- [x] 13-I
+- [x] 14-A
+- [x] 14-B
+- [x] 14-C
+- [x] 14-D
+- [x] 14-E
+- [x] 14-F
+- [x] 14-G
+- [x] 15-A
+- [x] 15-B
+- [x] 15-C
+- [x] 15-D
+- [x] 15-E
+- [x] 15-F
+- [x] 17-A
+- [x] 17-B
+- [x] 17-C
+- [x] 17-D
+- [x] 17-E
+- [x] 17-F
+- [x] 9c-U1
+- [x] 9c-U2
+- [x] 9c-U3
+- [x] 9c-U4
+- [x] 9c-U5
+- [x] 9d-U6
+- [x] 9d-U10
+- [x] 9d-U12
+- [x] 19a-R1
+- [x] 19a-R2
+- [x] 19a-R3
+- [x] 19a-R4
+- [x] 19a-R5
+- [x] 19b-R6
+- [x] 19b-R7
+- [x] 19b-R8
+- [ ] 19c-M1
+- [ ] 19c-M6
+- [x] 19d-M5
+- [x] 19e-M8
+
 ## 實作進度總覽
 
 > **設計原則：每個工單 ≤ 5 項施工內容**，確保 AI 能一次性完成不跳步。
@@ -5561,3 +5666,4 @@ feat(uag-profile): close #21b desktop quality upgrades
 - API endpoint `/api/community/review-like` 已在 #14a 完成
 - DB trigger `fn_recalc_encouragement_count` 已在 #14a 完成
 - 按讚成功後自動刷新 `agent-profile` query，無需手動更新 cache
+

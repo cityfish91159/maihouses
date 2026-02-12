@@ -1,18 +1,24 @@
 ﻿// api/replicate-generate.js
+import { secureEndpoint } from './lib/endpointSecurity';
+import { logger } from './lib/logger';
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed. Use POST' });
+  if (
+    !secureEndpoint(req, res, {
+      endpointName: 'replicate-generate',
+      allowedMethods: ['POST'],
+      requireSystemKey: process.env.ENFORCE_HIGH_COST_SYSTEM_KEY === 'true',
+      rateLimit: {
+        maxRequests: 8,
+        windowMs: 60_000,
+        maxEnvVar: 'RATE_LIMIT_REPLICATE_GENERATE_MAX',
+        windowEnvVar: 'RATE_LIMIT_REPLICATE_GENERATE_WINDOW_MS',
+      },
+    })
+  ) {
+    return;
   }
 
   try {
@@ -45,7 +51,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Missing REPLICATE_DEPLOYMENT (server)' });
     }
 
-    console.log('Creating prediction with deployment:', deploymentPath);
+    logger.info('[replicate-generate] Create request', { deploymentPath });
 
     // 1) 建立預測
     const createUrl = `https://api.replicate.com/v1/deployments/${deploymentPath}/predictions`;
@@ -62,11 +68,11 @@ export default async function handler(req, res) {
 
     const created = await createRes.json();
     if (!createRes.ok) {
-      console.error('Create prediction failed:', created);
+      logger.error('[replicate-generate] Create prediction failed', { detail: created });
       return res.status(500).json({ error: 'create_failed', detail: created });
     }
 
-    console.log('Prediction created:', created.id);
+    logger.info('[replicate-generate] Prediction created', { predictionId: created.id });
 
     // 2) 輪詢直到完成（最長 90 秒）
     const id = created.id;
@@ -84,11 +90,15 @@ export default async function handler(req, res) {
       const pollData = await pollRes.json();
       status = pollData.status;
       last = pollData;
-      console.log('Polling status:', status);
+      logger.debug('[replicate-generate] Polling status', { predictionId: id, status });
     }
 
     if (status !== 'succeeded') {
-      console.error('Prediction failed:', status, last);
+      logger.error('[replicate-generate] Prediction failed', {
+        predictionId: id,
+        status,
+        detail: last,
+      });
       return res.status(500).json({
         error: 'prediction_not_succeeded',
         status,
@@ -96,7 +106,7 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('Prediction succeeded:', last.output);
+    logger.info('[replicate-generate] Prediction succeeded', { predictionId: id });
 
     // 成功：回傳輸出（多為圖片 URL 陣列）
     return res.status(200).json({
@@ -106,10 +116,12 @@ export default async function handler(req, res) {
       metrics: last.metrics || null,
     });
   } catch (error) {
-    console.error('Server error:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error('[replicate-generate] Server error', { message });
     return res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
+      message,
     });
   }
 }
+

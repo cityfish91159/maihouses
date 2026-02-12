@@ -1,32 +1,40 @@
-﻿import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
+import { enforceCors } from './lib/cors';
 
-// 通用回應工具：同時支援 Vercel 傳統 res.json 與 Web Response（保留但使用 req,res）
-const reply = (res, body, status = 200) => {
-  if (res && typeof res.status === 'function') {
-    return res.status(status).json(body);
-  }
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
-};
+function getHeaderValue(headerValue) {
+  if (typeof headerValue === 'string') return headerValue;
+  if (Array.isArray(headerValue) && headerValue.length > 0) return headerValue[0];
+  return '';
+}
 
 export default async function handler(req, res) {
-  // CORS（與 openai-proxy 一致）
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (!enforceCors(req, res)) return;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+  if (process.env.ENABLE_TEST_APIS !== 'true') {
+    return res.status(403).json({
+      ok: false,
+      error: 'Test endpoint is disabled',
+      hint: 'Set ENABLE_TEST_APIS=true only in controlled environments',
+    });
   }
 
-  // 健康檢查（GET ?ping=1）
+  const systemApiKey = process.env.SYSTEM_API_KEY;
+  if (!systemApiKey) {
+    return res.status(503).json({
+      ok: false,
+      error: 'SYSTEM_API_KEY not configured',
+    });
+  }
+
+  const requestSystemKey = getHeaderValue(req.headers['x-system-key']);
+  if (requestSystemKey !== systemApiKey) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+
   if (req.method === 'GET' && req.query?.ping === '1') {
     return res.status(200).json({ ok: true, mode: 'ping' });
   }
 
-  // 檢查環境變數
   const hasUrl = !!process.env.CLOUDINARY_URL;
   const name = process.env.CLOUDINARY_CLOUD_NAME;
   const key = process.env.CLOUDINARY_API_KEY;
@@ -47,7 +55,6 @@ export default async function handler(req, res) {
     });
   }
 
-  // 設定 Cloudinary
   if (hasUrl) {
     cloudinary.config({ secure: true });
   } else {
@@ -61,7 +68,6 @@ export default async function handler(req, res) {
 
   try {
     const cfg = cloudinary.config();
-    // 不使用 upload_preset，直接伺服器端上傳
     const r = await cloudinary.uploader.upload(
       'https://res.cloudinary.com/demo/image/upload/sample.jpg',
       { folder: 'raw' }
@@ -74,9 +80,10 @@ export default async function handler(req, res) {
       cloud_name: cfg.cloud_name,
     });
   } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
     return res.status(500).json({
       ok: false,
-      error: String(e.message || e),
+      error: message,
       have: {
         CLOUDINARY_URL: !!process.env.CLOUDINARY_URL,
         CLOUDINARY_CLOUD_NAME: !!process.env.CLOUDINARY_CLOUD_NAME,

@@ -1,6 +1,6 @@
 ﻿import { useQuery } from '@tanstack/react-query';
 import type { AgentProfile } from '../types/uag.types';
-import { MOCK_AGENT_PROFILE } from '../mockData';
+import { MOCK_AGENT_PROFILE } from '../../../constants/mockData';
 import { useUAGModeStore } from '../../../stores/uagModeStore';
 import { fetchAgentMe } from '../../../services/agentService';
 

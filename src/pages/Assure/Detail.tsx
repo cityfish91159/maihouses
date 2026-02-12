@@ -5,6 +5,7 @@ import { getAgentDisplayInfo } from '../../lib/trustPrivacy';
 import { DataCollectionModal } from '../../components/TrustRoom/DataCollectionModal';
 import { toast } from 'sonner';
 import { logger } from '../../lib/logger';
+import { safeLocalStorage } from '../../lib/safeStorage';
 import { calcProgressWidthClass } from '../../constants/progress';
 import { StepCard } from '../../components/Assure/StepCard';
 import { StepContent } from '../../components/Assure/StepContent';
@@ -191,7 +192,7 @@ export default function AssureDetail() {
     setShowDataModal(false);
   };
 
-  const lastAgentId = localStorage.getItem('uag_last_aid');
+  const lastAgentId = safeLocalStorage.getItem('uag_last_aid');
 
   // --- RENDERING ---
 

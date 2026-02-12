@@ -90,9 +90,16 @@ DECLARE
   v_score INTEGER := 60;
   v_agent agents%ROWTYPE;
 BEGIN
+  -- Validate input
+  IF p_agent_id IS NULL THEN
+    RAISE WARNING '[fn_calculate_trust_score] agent_id is NULL, returning default score 60';
+    RETURN 60;
+  END IF;
+
   SELECT * INTO v_agent FROM public.agents WHERE id = p_agent_id;
 
   IF NOT FOUND THEN
+    RAISE WARNING '[fn_calculate_trust_score] Agent not found for id=%, returning default score 60', p_agent_id;
     RETURN 60;
   END IF;
 
@@ -106,6 +113,10 @@ BEGIN
   v_score := v_score + LEAST(10, COALESCE(v_agent.encouragement_count, 0) / 20);
 
   RETURN LEAST(100, v_score);
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING '[fn_calculate_trust_score] Error for agent_id=%: % (SQLSTATE: %)', p_agent_id, SQLERRM, SQLSTATE;
+    RETURN 60; -- 發生錯誤時返回預設分數
 END;
 $$;
 

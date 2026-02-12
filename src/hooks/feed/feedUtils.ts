@@ -27,7 +27,7 @@ import { supabase } from '../../lib/supabase';
 import { logger } from '../../lib/logger';
 import { safeLocalStorage } from '../../lib/safeStorage';
 import { getCommunityName } from '../../constants';
-import { MOCK_SALE_ITEMS } from '../../services/mock/feed';
+import { MOCK_SALE_ITEMS } from '../../constants/mockData';
 import { STRINGS } from '../../constants/strings';
 import type { FeedPost, UnifiedFeedData, SidebarData, HotPost, SaleItem } from '../../types/feed';
 

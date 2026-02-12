@@ -4,6 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { HEADER_MODES } from '../../constants/header';
 import { parseConnectToken, isTokenExpired } from '../../lib/connectTokenCrypto';
+import { logger } from '../../lib/logger';
+import { safeLocalStorage } from '../../lib/safeStorage';
 
 // ============================================================================
 // Type Definitions
@@ -27,10 +29,9 @@ const SESSION_STORAGE_KEY = 'uag_session';
  */
 function setConsumerSession(sessionId: string): void {
   try {
-    localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+    safeLocalStorage.setItem(SESSION_STORAGE_KEY, sessionId);
   } catch {
-    // localStorage 不可用時忽略
-    console.warn('localStorage not available');
+    logger.warn('[ConnectPage] Storage unavailable while setting session', { sessionId });
   }
 }
 

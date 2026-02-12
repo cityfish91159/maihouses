@@ -6,6 +6,7 @@
 
 import type { MockData } from './types';
 import { mockTimestampMinutesAgo } from '../../lib/time';
+import { MOCK_AGENT_IDENTITIES, MOCK_PROPERTY_TITLES } from '../../constants/mockData';
 
 const publicPosts = [
   {
@@ -21,10 +22,10 @@ const publicPosts = [
   },
   {
     id: 2,
-    author: '游杰倫',
+    author: MOCK_AGENT_IDENTITIES.primaryAgentName,
     type: 'agent' as const,
     time: mockTimestampMinutesAgo(1440),
-    title: '🏡 惠宇上晴 12F｜雙陽台視野戶',
+    title: `🏡 ${MOCK_PROPERTY_TITLES.huiyu12F}｜雙陽台視野戶`,
     content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。',
     views: 89,
     likes: 0,
@@ -54,10 +55,10 @@ const publicPosts = [
   },
   {
     id: 5,
-    author: '林經理',
+    author: MOCK_AGENT_IDENTITIES.secondaryAgentName,
     type: 'agent' as const,
     time: mockTimestampMinutesAgo(8 * 24 * 60),
-    title: '🏡 惠宇上晴 8F｜三房車位',
+    title: `🏡 ${MOCK_PROPERTY_TITLES.huiyu8F}｜三房車位`,
     content: '屋況極新，前屋主自住保養好',
     views: 156,
     likes: 0,
@@ -106,7 +107,7 @@ const privatePosts = [
 const reviews = [
   {
     id: 1,
-    author: '游杰倫',
+    author: MOCK_AGENT_IDENTITIES.primaryAgentName,
     company: '21世紀',
     visits: 12,
     deals: 3,
@@ -164,7 +165,7 @@ const questions = [
         content: 'B2 比較容易有位，B1 要碰運氣。',
       },
       {
-        author: '游杰倫',
+        author: MOCK_AGENT_IDENTITIES.primaryAgentName,
         type: 'agent' as const,
         content: '這社區車位配比是 1:1.2，算充裕的。',
         expert: true,
@@ -213,7 +214,7 @@ const questions = [
 
 export const MOCK_DATA: MockData = {
   communityInfo: {
-    name: '惠宇上晴',
+    name: MOCK_AGENT_IDENTITIES.defaultCommunityName,
     year: 2018,
     units: 280,
     managementFee: 85,

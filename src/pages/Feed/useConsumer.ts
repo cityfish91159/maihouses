@@ -16,7 +16,7 @@ import { STRINGS } from '../../constants/strings';
 import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/feed';
 import type { Role } from '../../types/community';
 import type { ConversationListItem } from '../../types/messaging.types';
-import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../services/mock/feed';
+import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../constants/mockData';
 // P7-Audit-C6: Use shared mock data
 import { getConsumerFeedData } from './mockData';
 import { safeLocalStorage } from '../../lib/safeStorage';

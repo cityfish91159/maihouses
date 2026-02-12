@@ -1,14 +1,8 @@
 ﻿// api/openai-proxy.js
-export default async function handler(req, res) {
-  // 設定 CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+import { enforceCors } from './lib/cors';
 
-  // 處理 preflight request
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+export default async function handler(req, res) {
+  if (!enforceCors(req, res)) return;
 
   // 只允許 POST
   if (req.method !== 'POST') {

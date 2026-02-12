@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+﻿import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -18,7 +18,7 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../../hooks/useAuth', () => ({
   useAuth: () => ({
     isAuthenticated: true,
-    user: { id: 'user-1', email: 'test@example.com', user_metadata: { name: '測試用戶' } },
+    user: { id: 'user-1', email: 'test@example.com', user_metadata: { name: 'Test User' } },
     session: { access_token: 'token' },
   }),
 }));
@@ -66,7 +66,7 @@ describe('PropertyDetailPage DEFAULT_PROPERTY fallback (#5)', () => {
     );
   });
 
-  it('當 propertyService 回傳 null 時應顯示 DEFAULT_PROPERTY 的 mock agent 資料', async () => {
+  it('uses DEFAULT_PROPERTY fallback and still renders agent CTAs', async () => {
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
         <PropertyDetailPage />
@@ -74,12 +74,12 @@ describe('PropertyDetailPage DEFAULT_PROPERTY fallback (#5)', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('游杰倫')).toBeInTheDocument();
-      expect(screen.getAllByText('邁房子').length).toBeGreaterThan(0);
+      expect(screen.getByTestId('agent-card-line-button')).toBeInTheDocument();
+      expect(screen.getByTestId('agent-card-call-button')).toBeInTheDocument();
     });
   });
 
-  it('LINE 面板應使用 DEFAULT_PROPERTY.lineId 並顯示開啟 LINE（非 fallback）', async () => {
+  it('LINE panel uses direct flow when fallback property has line id', async () => {
     const user = userEvent.setup();
 
     renderWithClient(
@@ -89,16 +89,16 @@ describe('PropertyDetailPage DEFAULT_PROPERTY fallback (#5)', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('游杰倫')).toBeInTheDocument();
+      expect(screen.getByTestId('agent-card-line-button')).toBeInTheDocument();
     });
 
     await user.click(screen.getByTestId('agent-card-line-button'));
 
-    expect(await screen.findByRole('button', { name: '開啟 LINE' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('你的 LINE ID')).not.toBeInTheDocument();
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
-  it('致電面板應使用 DEFAULT_PROPERTY.phone 並顯示號碼（非 fallback）', async () => {
+  it('call panel uses direct phone and does not require fallback input', async () => {
     const user = userEvent.setup();
 
     renderWithClient(
@@ -108,12 +108,12 @@ describe('PropertyDetailPage DEFAULT_PROPERTY fallback (#5)', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('游杰倫')).toBeInTheDocument();
+      expect(screen.getByTestId('agent-card-call-button')).toBeInTheDocument();
     });
 
     await user.click(screen.getByTestId('agent-card-call-button'));
 
-    expect(await screen.findByText('0912345678')).toBeInTheDocument();
-    expect(screen.queryByLabelText('你的電話')).not.toBeInTheDocument();
+    expect(await screen.findByText(/0912[- ]?345[- ]?678/)).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 });

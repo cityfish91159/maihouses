@@ -31,15 +31,35 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  v_updated_count INTEGER;
 BEGIN
+  -- Validate agent_id exists
+  IF NEW.agent_id IS NULL THEN
+    RAISE WARNING '[fn_increment_completed_cases] agent_id is NULL for trust_cases.id=%', NEW.id;
+    RETURN NEW;
+  END IF;
+
+  -- Only increment when status changes to 'closed'
   IF NEW.status = 'closed'
      AND (OLD.status IS DISTINCT FROM 'closed') THEN
+
     UPDATE public.agents
     SET completed_cases = COALESCE(completed_cases, 0) + 1
     WHERE id = NEW.agent_id::uuid;
+
+    GET DIAGNOSTICS v_updated_count = ROW_COUNT;
+
+    IF v_updated_count = 0 THEN
+      RAISE WARNING '[fn_increment_completed_cases] Agent not found for agent_id=% (trust_cases.id=%)', NEW.agent_id, NEW.id;
+    END IF;
   END IF;
 
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING '[fn_increment_completed_cases] Error: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
+    RETURN NEW; -- 不阻斷交易,但記錄錯誤
 END;
 $$;
 

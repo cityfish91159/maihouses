@@ -408,6 +408,37 @@ describe('UAGService', () => {
   });
 
   // ==========================================================================
+  // fetchPropertyViewStats 測試
+  // ==========================================================================
+
+  describe('fetchPropertyViewStats', () => {
+    it('RPC 回傳非陣列資料時應安全降級為空陣列', async () => {
+      const mockRpc = vi.fn().mockResolvedValue({
+        data: { unexpected: true },
+        error: null,
+      });
+      vi.mocked(supabase).rpc = mockRpc as any;
+
+      const result = await UAGService.fetchPropertyViewStats(mockUserId);
+
+      expect(result).toEqual([]);
+      expect(mockRpc).toHaveBeenCalledWith('get_property_stats_optimized', {
+        p_agent_id: mockUserId,
+      });
+    });
+
+    it('agentId 空白時應 fail fast 並返回空陣列', async () => {
+      const mockRpc = vi.fn();
+      vi.mocked(supabase).rpc = mockRpc as any;
+
+      const result = await UAGService.fetchPropertyViewStats('   ');
+
+      expect(result).toEqual([]);
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+  });
+
+  // ==========================================================================
   // purchaseLead 測試
   // ==========================================================================
 
@@ -563,6 +594,27 @@ describe('UAGService', () => {
       // Assert
       expect(result.success).toBe(true);
       expect(result.used_quota).toBe(true);
+    });
+
+    it('cost 為負數時應 fail fast 並避免呼叫 RPC', async () => {
+      const mockRpc = vi.fn();
+      vi.mocked(supabase).rpc = mockRpc as any;
+
+      const result = await UAGService.purchaseLead(mockUserId, leadId, -1, grade);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Invalid cost');
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it('userId 空字串時應 fail fast 並拋錯', async () => {
+      const mockRpc = vi.fn();
+      vi.mocked(supabase).rpc = mockRpc as any;
+
+      await expect(UAGService.purchaseLead('', leadId, cost, grade)).rejects.toThrow(
+        'userId is required'
+      );
+      expect(mockRpc).not.toHaveBeenCalled();
     });
   });
 

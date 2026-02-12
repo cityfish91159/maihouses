@@ -9,6 +9,7 @@ import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { logger } from '../lib/logger';
+import { enforceCors } from '../lib/cors';
 
 // ============================================
 // Types
@@ -157,25 +158,7 @@ export const __postTestHelpers = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // P2: CORS 安全 - 限制允許的 Origin
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') ?? [
-    'http://localhost:5173',
-    'https://pchome-online.github.io',
-  ];
-  const origin = req.headers.origin;
-
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (allowedOrigins.includes('*')) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (!enforceCors(req, res)) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

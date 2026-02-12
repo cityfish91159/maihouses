@@ -252,14 +252,13 @@ describe('API handler - Integration Tests', () => {
 
       await handler(req, res);
 
-      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*');
       expect(res.setHeader).toHaveBeenCalledWith(
         'Access-Control-Allow-Methods',
-        'GET, POST, OPTIONS'
+        'GET, POST, PUT, PATCH, DELETE, OPTIONS'
       );
       expect(res.setHeader).toHaveBeenCalledWith(
         'Access-Control-Allow-Headers',
-        'Content-Type, Authorization'
+        'Content-Type, Authorization, x-system-key'
       );
       expect(res.end).toHaveBeenCalled();
     });
@@ -370,9 +369,10 @@ describe('API handler - Integration Tests', () => {
       expect(json).toBeDefined();
     });
 
-    it('應設定正確的 CORS headers', async () => {
+    it('應為白名單 origin 設定 Access-Control-Allow-Origin', async () => {
       const req = createMockRequest({
         query: { communityId: COMMUNITY_ID, type: 'reviews' },
+        headers: { origin: 'https://maihouses.com' },
       });
       const { res } = createMockResponse();
 
@@ -384,7 +384,10 @@ describe('API handler - Integration Tests', () => {
 
       await handler(req, res);
 
-      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*');
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        'https://maihouses.com'
+      );
     });
   });
 });

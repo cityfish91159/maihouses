@@ -1,19 +1,25 @@
 ﻿// api/x-raymike.js
 // X-Ray Mike 模型接口 - 用於圖片透視處理
+import { secureEndpoint } from './lib/endpointSecurity';
+import { logger } from './lib/logger';
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed. Use POST' });
+  if (
+    !secureEndpoint(req, res, {
+      endpointName: 'x-raymike',
+      allowedMethods: ['POST'],
+      requireSystemKey: process.env.ENFORCE_HIGH_COST_SYSTEM_KEY === 'true',
+      rateLimit: {
+        maxRequests: 6,
+        windowMs: 60_000,
+        maxEnvVar: 'RATE_LIMIT_X_RAYMIKE_MAX',
+        windowEnvVar: 'RATE_LIMIT_X_RAYMIKE_WINDOW_MS',
+      },
+    })
+  ) {
+    return;
   }
 
   try {
@@ -32,7 +38,7 @@ export default async function handler(req, res) {
     // 使用模型路徑或 deployment
     const modelPath = version || 'cityfish91159/x-raymike';
 
-    console.log('Creating X-Ray prediction with model:', modelPath);
+    logger.info('[x-raymike] Create request', { modelPath });
 
     // 1) 建立預測
     const createUrl = modelPath.includes('/')
@@ -56,7 +62,7 @@ export default async function handler(req, res) {
 
     const created = await createRes.json();
     if (!createRes.ok) {
-      console.error('Create prediction failed:', created);
+      logger.error('[x-raymike] Create prediction failed', { detail: created });
       return res.status(500).json({
         error: 'create_failed',
         detail: created,
@@ -64,7 +70,7 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('X-Ray prediction created:', created.id);
+    logger.info('[x-raymike] Prediction created', { predictionId: created.id });
 
     // 2) 輪詢直到完成（最長 120 秒，因為圖像處理可能較慢）
     const id = created.id;
@@ -82,15 +88,19 @@ export default async function handler(req, res) {
       const pollData = await pollRes.json();
       status = pollData.status;
       last = pollData;
-      console.log(
-        'X-Ray polling status:',
+      logger.debug('[x-raymike] Polling status', {
+        predictionId: id,
         status,
-        last.progress ? `(${Math.round(last.progress * 100)}%)` : ''
-      );
+        progress: typeof last.progress === 'number' ? Math.round(last.progress * 100) : null,
+      });
     }
 
     if (status !== 'succeeded') {
-      console.error('X-Ray prediction failed:', status, last);
+      logger.error('[x-raymike] Prediction failed', {
+        predictionId: id,
+        status,
+        detail: last,
+      });
       return res.status(500).json({
         error: 'prediction_not_succeeded',
         status,
@@ -99,7 +109,7 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('X-Ray prediction succeeded:', last.output);
+    logger.info('[x-raymike] Prediction succeeded', { predictionId: id });
 
     // 成功：回傳輸出（通常是處理後的圖片 URL）
     return res.status(200).json({
@@ -110,11 +120,14 @@ export default async function handler(req, res) {
       logs: last.logs || null,
     });
   } catch (error) {
-    console.error('X-Ray Mike API error:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error('[x-raymike] API error', { message });
     return res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message,
+      stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined,
     });
   }
 }
+
+

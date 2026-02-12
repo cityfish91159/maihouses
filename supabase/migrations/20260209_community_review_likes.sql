@@ -54,14 +54,27 @@ DECLARE
   v_property_id UUID;
   v_agent_id UUID;
   v_total_likes INTEGER;
+  v_updated_count INTEGER;
 BEGIN
   v_property_id := COALESCE(NEW.property_id, OLD.property_id);
+
+  -- Validate property_id exists
+  IF v_property_id IS NULL THEN
+    RAISE WARNING '[fn_recalc_encouragement_count] property_id is NULL';
+    RETURN COALESCE(NEW, OLD);
+  END IF;
 
   SELECT agent_id INTO v_agent_id
   FROM public.properties
   WHERE id = v_property_id;
 
+  IF NOT FOUND THEN
+    RAISE WARNING '[fn_recalc_encouragement_count] Property not found for id=%', v_property_id;
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
   IF v_agent_id IS NULL THEN
+    RAISE WARNING '[fn_recalc_encouragement_count] agent_id is NULL for property_id=%', v_property_id;
     RETURN COALESCE(NEW, OLD);
   END IF;
 
@@ -74,7 +87,17 @@ BEGIN
   SET encouragement_count = COALESCE(v_total_likes, 0)
   WHERE id = v_agent_id;
 
+  GET DIAGNOSTICS v_updated_count = ROW_COUNT;
+
+  IF v_updated_count = 0 THEN
+    RAISE WARNING '[fn_recalc_encouragement_count] Agent not found for id=%', v_agent_id;
+  END IF;
+
   RETURN COALESCE(NEW, OLD);
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING '[fn_recalc_encouragement_count] Error: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
+    RETURN COALESCE(NEW, OLD); -- 不阻斷交易,但記錄錯誤
 END;
 $$;
 

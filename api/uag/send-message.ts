@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { verifyAgentAuth, sendAuthError, isDevEnvironment } from '../lib/auth';
 import { encryptConnectToken, ConnectTokenPayload } from '../lib/crypto';
 import { withSentryHandler, captureError, addBreadcrumb, setUserContext } from '../lib/sentry';
+import { enforceCors } from '../lib/cors';
 import { logger } from '../lib/logger';
 
 // [NASA TypeScript Safety] Request Body Schema
@@ -227,15 +228,7 @@ function validateRequest(body: unknown): SendMessageRequest | null {
 // ============================================================================
 
 async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelResponse> {
-  // CORS 設定
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  // 處理 preflight request
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (!enforceCors(req, res)) return res;
 
   // 只允許 POST
   if (req.method !== 'POST') {

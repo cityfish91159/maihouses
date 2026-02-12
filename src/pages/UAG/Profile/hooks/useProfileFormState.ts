@@ -52,13 +52,11 @@ const buildInitialFormValues = (profile: AgentProfileMe): ProfileFormValues => (
 });
 
 export function useProfileFormState(profile: AgentProfileMe) {
-  const initialValues = useMemo(() => buildInitialFormValues(profile), [profile]);
-
-  const [values, setValues] = useState<ProfileFormValues>(initialValues);
+  const [values, setValues] = useState<ProfileFormValues>(() => buildInitialFormValues(profile));
 
   useEffect(() => {
-    setValues(initialValues);
-  }, [initialValues]);
+    setValues(buildInitialFormValues(profile));
+  }, [profile]);
 
   const setField = useCallback(<K extends keyof ProfileFormValues>(field: K, value: ProfileFormValues[K]) => {
     setValues((prev) => ({
@@ -85,7 +83,7 @@ export function useProfileFormState(profile: AgentProfileMe) {
   );
 
   const payload = useMemo(() => buildProfilePayload(values), [values]);
-  const initialPayload = useMemo(() => buildProfilePayload(initialValues), [initialValues]);
+  const initialPayload = useMemo(() => buildProfilePayload(buildInitialFormValues(profile)), [profile]);
 
   const hasUnsavedChanges = useMemo(
     () => JSON.stringify(payload) !== JSON.stringify(initialPayload),

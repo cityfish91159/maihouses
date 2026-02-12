@@ -301,11 +301,14 @@ describe('Handler Integration Tests', () => {
       const { default: handler } = await import('../post');
       await handler(req, res);
 
-      // P2: CORS 設定驗證 - 無 origin 時不設定 Access-Control-Allow-Origin
-      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      // 共用 CORS: 無 origin 時不設定 Access-Control-Allow-Origin，但會設定通用 methods/headers
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+      );
       expect(res.setHeader).toHaveBeenCalledWith(
         'Access-Control-Allow-Headers',
-        'Content-Type, Authorization'
+        'Content-Type, Authorization, x-system-key'
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.end).toHaveBeenCalled();
@@ -327,7 +330,7 @@ describe('Handler Integration Tests', () => {
       );
     });
 
-    it('should NOT set CORS header for disallowed origin', async () => {
+    it('should reject disallowed origin', async () => {
       const req = createMockRequest({
         method: 'OPTIONS',
         headers: { origin: 'https://malicious-site.com' },
@@ -337,7 +340,10 @@ describe('Handler Integration Tests', () => {
       const { default: handler } = await import('../post');
       await handler(req, res);
 
-      // 不設定 Access-Control-Allow-Origin（只有 Methods 和 Headers）
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Origin not allowed' });
+
+      // 不設定 Access-Control-Allow-Origin
       const setHeaderCalls = (res.setHeader as ReturnType<typeof vi.fn>).mock.calls;
       const allowOriginCall = setHeaderCalls.find(
         (call: unknown[]) => call[0] === 'Access-Control-Allow-Origin'

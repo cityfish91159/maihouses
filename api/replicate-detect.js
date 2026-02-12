@@ -1,18 +1,24 @@
 ﻿// api/replicate-detect.js
+import { secureEndpoint } from './lib/endpointSecurity';
+import { logger } from './lib/logger';
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Use POST' });
+  if (
+    !secureEndpoint(req, res, {
+      endpointName: 'replicate-detect',
+      allowedMethods: ['POST'],
+      requireSystemKey: process.env.ENFORCE_HIGH_COST_SYSTEM_KEY === 'true',
+      rateLimit: {
+        maxRequests: 12,
+        windowMs: 60_000,
+        maxEnvVar: 'RATE_LIMIT_REPLICATE_DETECT_MAX',
+        windowEnvVar: 'RATE_LIMIT_REPLICATE_DETECT_WINDOW_MS',
+      },
+    })
+  ) {
+    return;
   }
 
   try {
@@ -60,14 +66,11 @@ export default async function handler(req, res) {
     const config = modeConfigs[mode] || modeConfigs.general;
     const inputLabels = labels || (mode === 'curtain' ? ['curtain', 'fabric fold'] : ['object']);
 
-    console.log(
-      'Detecting with mode:',
+    logger.info('[replicate-detect] Detection request', {
       mode,
-      'labels:',
-      inputLabels,
-      'deployment:',
-      deploymentPath
-    );
+      labels: inputLabels,
+      deploymentPath,
+    });
 
     // 建立 prediction
     const createUrl = `https://api.replicate.com/v1/deployments/${deploymentPath}/predictions`;
@@ -89,11 +92,11 @@ export default async function handler(req, res) {
 
     const created = await createRes.json();
     if (!createRes.ok) {
-      console.error('Create failed:', created);
+      logger.error('[replicate-detect] Create prediction failed', { detail: created });
       return res.status(500).json({ error: 'create_failed', detail: created });
     }
 
-    console.log('Prediction created:', created.id);
+    logger.info('[replicate-detect] Prediction created', { predictionId: created.id });
 
     // 輪詢
     const id = created.id;
@@ -110,11 +113,15 @@ export default async function handler(req, res) {
       const pollData = await pollRes.json();
       status = pollData.status;
       last = pollData;
-      console.log('Polling status:', status);
+      logger.debug('[replicate-detect] Polling status', { predictionId: id, status });
     }
 
     if (status !== 'succeeded') {
-      console.error('Prediction failed:', status, last);
+      logger.error('[replicate-detect] Prediction failed', {
+        predictionId: id,
+        status,
+        detail: last,
+      });
       return res.status(500).json({
         error: 'prediction_not_succeeded',
         status,
@@ -122,7 +129,7 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('Detection succeeded');
+    logger.info('[replicate-detect] Detection succeeded', { predictionId: id });
 
     // 回傳原始輸出
     return res.status(200).json({
@@ -133,10 +140,12 @@ export default async function handler(req, res) {
       metrics: last.metrics || null,
     });
   } catch (error) {
-    console.error('Server error:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error('[replicate-detect] Server error', { message });
     return res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
+      message,
     });
   }
 }
+

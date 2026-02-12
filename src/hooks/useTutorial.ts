@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { useMaiMai } from '../context/MaiMaiContext';
 import { safeLocalStorage } from '../lib/safeStorage';
+import { logger } from '../lib/logger';
 import { TUTORIAL_CONFIG } from '../constants/tutorial';
 import debounce from 'lodash.debounce';
 
@@ -60,7 +61,7 @@ export function useTutorial() {
         setMood(mood);
         addMessage(message);
       } catch (error) {
-        console.error('[useTutorial] Failed to update MaiMai state', error);
+        logger.error('[useTutorial] Failed to update MaiMai state', { error });
       }
     },
     [setMood, addMessage]

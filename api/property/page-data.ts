@@ -20,6 +20,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { logger } from '../lib/logger';
+import { enforceCors } from '../lib/cors';
 // D22/D23 修正：移除 fs 和 path import，改用 JSON import
 import seedJson from '../../public/data/seed-property-page.json';
 import {
@@ -424,20 +425,13 @@ function adaptToListingCard(
 // ============================================
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // D29: CORS 改用環境變數，支援動態設定
-  const defaultOrigins = [
-    'https://maihouses.vercel.app',
-    'https://cityfish91159.github.io',
-    'http://localhost:5173',
-    'http://localhost:4173',
-  ];
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-    : defaultOrigins;
+  if (!enforceCors(req, res)) return;
 
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
+  if (req.method !== 'GET') {
+    return res.status(405).json({
+      success: false,
+      error: 'Method not allowed',
+    });
   }
 
   // Cache: 60秒 CDN 快取 + 5分鐘 stale-while-revalidate

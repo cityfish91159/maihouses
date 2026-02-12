@@ -8,6 +8,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { withSentryHandler, captureError, addBreadcrumb } from '../lib/sentry';
+import { enforceCors } from '../lib/cors';
 import { logger } from '../lib/logger';
 import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
 
@@ -79,21 +80,12 @@ function isTrackRequest(value: unknown): value is TrackRequest {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function setCorsHeaders(res: VercelResponse): void {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-}
-
 // ============================================================================
 // Handler
 // ============================================================================
 
 async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelResponse> {
-  // CORS Headers
-  setCorsHeaders(res);
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (!enforceCors(req, res)) return res;
   if (req.method !== 'POST') {
     return res.status(405).json(errorResponse('METHOD_NOT_ALLOWED', '僅支援 POST 請求'));
   }

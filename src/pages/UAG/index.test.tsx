@@ -85,7 +85,7 @@ describe('UAGPage', () => {
 
     expect(await screen.findByText('UAG 精準導客雷達')).toBeInTheDocument();
     expect(screen.getByText(/請點擊上方雷達泡泡/)).toBeInTheDocument();
-    expect(screen.getByText('點數')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /匯出報表/ })).toBeInTheDocument();
   });
 
   it('allows selecting and purchasing a lead', { timeout: 20000 }, async () => {

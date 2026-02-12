@@ -86,7 +86,7 @@ export const getAgentSafetyTracePosts = (): SafetyTracePost[] =>
 // ============ Combined Data for useFeedData ============
 
 import type { UnifiedFeedData, SidebarData } from '../../../types/feed';
-import { MOCK_SALE_ITEMS } from '../../../services/mock/feed';
+import { MOCK_SALE_ITEMS } from '../../../constants/mockData';
 
 /**
  * Derive sidebar data from posts

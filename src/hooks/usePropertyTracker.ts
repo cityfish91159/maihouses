@@ -1,6 +1,7 @@
 ﻿import { useState, useRef, useEffect, useCallback } from 'react';
 import { track } from '../analytics/track';
 import { logger } from '../lib/logger';
+import { safeLocalStorage } from '../lib/safeStorage';
 import { toast } from 'sonner';
 import { TOAST_DURATION } from '../constants/toast';
 
@@ -78,10 +79,10 @@ export const usePropertyTracker = (
   // 取得或建立 session_id
   const getSessionId = useCallback(() => {
     try {
-      let sid = localStorage.getItem('uag_session');
+      let sid = safeLocalStorage.getItem('uag_session');
       if (!sid) {
         sid = `u_${Math.random().toString(36).substring(2, 11)}`;
-        localStorage.setItem('uag_session', sid);
+        safeLocalStorage.setItem('uag_session', sid);
       }
       return sid;
     } catch (error) {
@@ -313,3 +314,4 @@ export const usePropertyTracker = (
     },
   };
 };
+

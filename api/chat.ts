@@ -1,5 +1,6 @@
 ﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
+import { secureEndpoint } from './lib/endpointSecurity';
 import { logger } from './lib/logger';
 
 // Zod Schema for request validation
@@ -16,19 +17,20 @@ const ChatRequestSchema = z.object({
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 設定 CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // 處理 preflight request
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  // 只允許 POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (
+    !secureEndpoint(req, res, {
+      endpointName: 'chat',
+      allowedMethods: ['POST'],
+      requireSystemKey: process.env.ENFORCE_HIGH_COST_SYSTEM_KEY === 'true',
+      rateLimit: {
+        maxRequests: 40,
+        windowMs: 60_000,
+        maxEnvVar: 'RATE_LIMIT_CHAT_MAX',
+        windowEnvVar: 'RATE_LIMIT_CHAT_WINDOW_MS',
+      },
+    })
+  ) {
+    return;
   }
 
   // 檢查環境變數

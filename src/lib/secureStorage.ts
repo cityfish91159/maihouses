@@ -24,6 +24,7 @@
 
 import CryptoJS from 'crypto-js';
 import { logger } from './logger';
+import { safeLocalStorage } from './safeStorage';
 
 // ============================================================================
 // Constants
@@ -156,7 +157,7 @@ export const secureStorage: SecureStorage = {
     try {
       const encrypted = encrypt(value);
       const storageKey = STORAGE_PREFIX + key;
-      localStorage.setItem(storageKey, encrypted);
+      safeLocalStorage.setItem(storageKey, encrypted);
 
       logger.debug('[secureStorage] Item stored', { key });
       return true;
@@ -172,7 +173,7 @@ export const secureStorage: SecureStorage = {
   getItem(key: string): string | null {
     try {
       const storageKey = STORAGE_PREFIX + key;
-      const encrypted = localStorage.getItem(storageKey);
+      const encrypted = safeLocalStorage.getItem(storageKey);
 
       if (!encrypted) {
         return null;
@@ -192,7 +193,7 @@ export const secureStorage: SecureStorage = {
   removeItem(key: string): void {
     try {
       const storageKey = STORAGE_PREFIX + key;
-      localStorage.removeItem(storageKey);
+      safeLocalStorage.removeItem(storageKey);
       logger.debug('[secureStorage] Item removed', { key });
     } catch (error) {
       logger.error('[secureStorage] Failed to remove item', {
@@ -207,14 +208,14 @@ export const secureStorage: SecureStorage = {
       // 只清除加密的資料（有前綴的）
       const keysToRemove: string[] = [];
 
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
+      for (let i = 0; i < safeLocalStorage.length; i++) {
+        const key = safeLocalStorage.key(i);
         if (key?.startsWith(STORAGE_PREFIX)) {
           keysToRemove.push(key);
         }
       }
 
-      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      keysToRemove.forEach((key) => safeLocalStorage.removeItem(key));
       logger.debug('[secureStorage] All encrypted items cleared', {
         count: keysToRemove.length,
       });
@@ -245,7 +246,7 @@ export const secureStorage: SecureStorage = {
  */
 export function migrateLegacyData(oldKey: string, newKey?: string): boolean {
   try {
-    const oldValue = localStorage.getItem(oldKey);
+    const oldValue = safeLocalStorage.getItem(oldKey);
 
     if (!oldValue) {
       return false;
@@ -255,7 +256,7 @@ export function migrateLegacyData(oldKey: string, newKey?: string): boolean {
     const success = secureStorage.setItem(targetKey, oldValue);
 
     if (success) {
-      localStorage.removeItem(oldKey);
+      safeLocalStorage.removeItem(oldKey);
       logger.info('[secureStorage] Legacy data migrated', {
         oldKey,
         newKey: targetKey,
@@ -272,3 +273,4 @@ export function migrateLegacyData(oldKey: string, newKey?: string): boolean {
     return false;
   }
 }
+

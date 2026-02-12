@@ -1,4 +1,5 @@
 ﻿import { useState, useCallback } from 'react';
+import { safeLocalStorage } from '../lib/safeStorage';
 
 /**
  * useConsumerSession - 管理匿名消費者的 session
@@ -19,11 +20,7 @@ const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 天
  */
 function getSessionId(): string | null {
   if (typeof window === 'undefined') return null;
-  try {
-    return localStorage.getItem(SESSION_KEY);
-  } catch {
-    return null;
-  }
+  return safeLocalStorage.getItem(SESSION_KEY);
 }
 
 /**
@@ -31,12 +28,8 @@ function getSessionId(): string | null {
  */
 function getSessionCreatedAt(): number | null {
   if (typeof window === 'undefined') return null;
-  try {
-    const ts = localStorage.getItem(SESSION_CREATED_KEY);
-    return ts ? parseInt(ts, 10) : null;
-  } catch {
-    return null;
-  }
+  const ts = safeLocalStorage.getItem(SESSION_CREATED_KEY);
+  return ts ? parseInt(ts, 10) : null;
 }
 
 /**
@@ -56,14 +49,10 @@ function isSessionExpired(): boolean {
  */
 function setSession(sessionId: string): void {
   if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(SESSION_KEY, sessionId);
-    // 只有在沒有建立時間時才設置（避免覆蓋）
-    if (!localStorage.getItem(SESSION_CREATED_KEY)) {
-      localStorage.setItem(SESSION_CREATED_KEY, String(Date.now()));
-    }
-  } catch {
-    // localStorage 不可用時忽略
+  safeLocalStorage.setItem(SESSION_KEY, sessionId);
+  // 只有在沒有建立時間時才設置（避免覆蓋）
+  if (!safeLocalStorage.getItem(SESSION_CREATED_KEY)) {
+    safeLocalStorage.setItem(SESSION_CREATED_KEY, String(Date.now()));
   }
 }
 
@@ -72,12 +61,8 @@ function setSession(sessionId: string): void {
  */
 function clearSession(): void {
   if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(SESSION_CREATED_KEY);
-  } catch {
-    // localStorage 不可用時忽略
-  }
+  safeLocalStorage.removeItem(SESSION_KEY);
+  safeLocalStorage.removeItem(SESSION_CREATED_KEY);
 }
 
 export interface ConsumerSessionResult {

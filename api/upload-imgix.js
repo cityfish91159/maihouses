@@ -2,16 +2,11 @@
 // 上傳圖片到 imgix (透過 S3 或 返回 base64)
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { enforceCors } from './lib/cors';
+import { logger } from './lib/logger';
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (!enforceCors(req, res)) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Use POST' });
@@ -73,7 +68,9 @@ export default async function handler(req, res) {
           method: 's3',
         });
       } catch (s3Error) {
-        console.error('S3 upload error:', s3Error);
+        logger.error('[upload-imgix] S3 upload failed', {
+          message: s3Error instanceof Error ? s3Error.message : String(s3Error),
+        });
         // S3 失敗時降級到 base64
       }
     }
@@ -87,10 +84,13 @@ export default async function handler(req, res) {
       warning: '建議設定 S3 以獲得更好的效能和穩定性',
     });
   } catch (err) {
-    console.error('Upload error:', err);
+    logger.error('[upload-imgix] Upload failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
     return res.status(500).json({
       error: 'Upload failed',
-      details: err.message,
+      details: err instanceof Error ? err.message : String(err),
     });
   }
 }
+

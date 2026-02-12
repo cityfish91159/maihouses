@@ -4,6 +4,7 @@
  * 使用 Web Crypto API 解密後端加密的 Connect Token
  * 向後兼容：同時支援舊版 base64url 格式和新版 AES-256-GCM 加密格式
  */
+import { logger } from './logger';
 
 // ============================================================================
 // Constants
@@ -59,21 +60,22 @@ interface ParseResult {
  */
 function logTokenParsing(result: ParseResult, durationMs: number, tokenLength: number): void {
   const isProduction = import.meta.env.PROD;
+  const context = {
+    success: result.success,
+    format: result.format,
+    durationMs: Number(durationMs.toFixed(2)),
+    tokenLength,
+    error: result.error,
+  };
 
   // 開發環境詳細日誌
   if (!isProduction) {
-    console.debug('[ConnectToken]', {
-      success: result.success,
-      format: result.format,
-      durationMs: durationMs.toFixed(2),
-      tokenLength,
-      error: result.error,
-    });
+    logger.debug('[ConnectToken] Parse result', context);
   }
 
   // 生產環境只記錄失敗情況（簡化版）
   if (isProduction && !result.success) {
-    console.warn('[ConnectToken] Parse failed:', {
+    logger.warn('[ConnectToken] Parse failed', {
       format: result.format,
       error: result.error,
       tokenLength,

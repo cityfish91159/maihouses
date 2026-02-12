@@ -76,6 +76,32 @@ const PurchaseLeadResultSchema = z.object({
 
 export type PurchaseLeadResult = z.infer<typeof PurchaseLeadResultSchema>;
 
+const LatestPropertyRowSchema = z.object({
+  session_id: z.string().min(1),
+  property_id: z.string().nullable(),
+});
+
+const PropertyStatsRowSchema = z.object({
+  property_id: z.string().min(1),
+  view_count: z.coerce.number().int().min(0),
+  unique_sessions: z.coerce.number().int().min(0),
+  total_duration: z.coerce.number().min(0),
+  line_clicks: z.coerce.number().int().min(0),
+  call_clicks: z.coerce.number().int().min(0),
+});
+
+const UagEventLookupRowSchema = z.object({
+  session_id: z.string(),
+  property_id: z.string().nullable(),
+});
+
+const UagEventRowSchema = z.object({
+  property_id: z.string().nullable(),
+  session_id: z.string(),
+  duration: z.number().nullable(),
+  actions: z.record(z.string(), z.number()).nullable(),
+});
+
 // Helper function for remaining hours calculation
 const calculateRemainingHours = (
   purchasedAt: number | string | undefined | null,
@@ -89,6 +115,36 @@ const calculateRemainingHours = (
 
   return Math.max(0, Math.min(totalHours, totalHours - elapsedHours));
 };
+
+function ensureRequiredId(value: string, label: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error(`${label} is required`);
+  }
+  return trimmed;
+}
+
+function parseRpcRows<T extends z.ZodTypeAny>(
+  rpcName: string,
+  schema: T,
+  rawRows: unknown
+): z.infer<T>[] {
+  if (!Array.isArray(rawRows)) {
+    logger.warn('[UAGService] RPC returned non-array payload', { rpcName });
+    return [];
+  }
+
+  const parseResult = z.array(schema).safeParse(rawRows);
+  if (!parseResult.success) {
+    logger.warn('[UAGService] RPC payload validation failed', {
+      rpcName,
+      error: parseResult.error.message,
+    });
+    return [];
+  }
+
+  return parseResult.data;
+}
 
 interface SupabaseUserData {
   points: number;
@@ -332,14 +388,16 @@ export class UAGService {
    * 問題 #3-4 修復：排除已購買的 session + 正確設置 status
    */
   static async fetchAppData(userId: string): Promise<AppData> {
+    const validatedUserId = ensureRequiredId(userId, 'userId');
+
     // 1. 並行查詢：用戶資料、sessions、已購買記錄、listings（含 community_id）
     const [userRes, sessionsRes, purchasedRes, listingsRes] = await Promise.all([
-      supabase.from('users').select('points, quota_s, quota_a').eq('id', userId).single(),
+      supabase.from('users').select('points, quota_s, quota_a').eq('id', validatedUserId).single(),
       // 正確數據源：uag_sessions（匿名瀏覽行為），不是 leads（真實個資）
       supabase
         .from('uag_sessions')
         .select('session_id, agent_id, grade, total_duration, property_count, last_active, summary')
-        .eq('agent_id', userId)
+        .eq('agent_id', validatedUserId)
         .in('grade', ['S', 'A', 'B', 'C', 'F'])
         .order('last_active', { ascending: false })
         .limit(50),
@@ -349,13 +407,13 @@ export class UAGService {
         .from('uag_lead_purchases')
         // 修6: 關聯 conversation_id
         .select('session_id, id, created_at, notification_status, conversations(id)')
-        .eq('agent_id', userId),
+        .eq('agent_id', validatedUserId),
       // UAG-20: 改查 properties 表（listings 表不存在）
       // FEED-01 Phase 8 Bug 1: 加入 community_id 用於過濾 feed
       supabase
         .from('properties')
         .select('public_id, title, images, features, created_at, community_id')
-        .eq('agent_id', userId)
+        .eq('agent_id', validatedUserId)
         .order('created_at', { ascending: false }),
     ]);
 
@@ -458,8 +516,14 @@ export class UAGService {
       );
 
       if (!rpcError && latestProperties) {
+        const parsedLatestProperties = parseRpcRows(
+          'get_latest_property_per_session',
+          LatestPropertyRowSchema,
+          latestProperties
+        );
+
         // RPC 成功，直接使用結果
-        for (const item of latestProperties) {
+        for (const item of parsedLatestProperties) {
           if (item.property_id) {
             propertyMap.set(item.session_id, item.property_id);
           }
@@ -470,18 +534,23 @@ export class UAGService {
           error: rpcError?.message,
         });
 
-        const { data: events } = await supabase
+        const { data: events, error: eventsError } = await supabase
           .from('uag_events')
           .select('session_id, property_id')
           .in('session_id', sessionIds)
           .order('created_at', { ascending: false });
 
+        if (eventsError) {
+          logger.warn('[UAGService] Fallback uag_events query failed', {
+            error: eventsError.message,
+          });
+        }
+
         // 每個 session 取第一個（最近的）property_id
-        if (events) {
-          for (const evt of events) {
-            if (!propertyMap.has(evt.session_id) && evt.property_id) {
-              propertyMap.set(evt.session_id, evt.property_id);
-            }
+        const parsedEvents = parseRpcRows('uag_events:fallback', UagEventLookupRowSchema, events);
+        for (const evt of parsedEvents) {
+          if (!propertyMap.has(evt.session_id) && evt.property_id) {
+            propertyMap.set(evt.session_id, evt.property_id);
           }
         }
       }
@@ -556,9 +625,11 @@ export class UAGService {
   // 獲取某房仲所有房源的瀏覽統計
   static async fetchPropertyViewStats(agentId: string): Promise<PropertyViewStats[]> {
     try {
+      const validatedAgentId = ensureRequiredId(agentId, 'agentId');
+
       // UAG-10: 使用優化版 RPC (SQL 層聚合，10-100 倍效能提升)
       const { data, error } = await supabase.rpc('get_property_stats_optimized', {
-        p_agent_id: agentId,
+        p_agent_id: validatedAgentId,
       });
 
       if (error) {
@@ -569,22 +640,22 @@ export class UAGService {
         const { data: legacyData, error: legacyError } = await supabase.rpc(
           'get_agent_property_stats',
           {
-            p_agent_id: agentId,
+            p_agent_id: validatedAgentId,
           }
         );
 
         if (!legacyError && legacyData) {
-          return legacyData;
+          return parseRpcRows('get_agent_property_stats', PropertyStatsRowSchema, legacyData);
         }
 
         // Fallback 2: 直接查詢（效能最差，僅作為最後手段）
         logger.warn('[UAGService] Legacy RPC also failed, using fallback', {
           error: legacyError?.message,
         });
-        return await UAGService.fetchPropertyViewStatsFallback(agentId);
+        return await UAGService.fetchPropertyViewStatsFallback(validatedAgentId);
       }
 
-      return data || [];
+      return parseRpcRows('get_property_stats_optimized', PropertyStatsRowSchema, data);
     } catch (e) {
       logger.error('[UAGService] fetchPropertyViewStats error', {
         error: e instanceof Error ? e.message : 'Unknown',
@@ -597,15 +668,21 @@ export class UAGService {
   private static async fetchPropertyViewStatsFallback(
     agentId: string
   ): Promise<PropertyViewStats[]> {
+    const validatedAgentId = ensureRequiredId(agentId, 'agentId');
+
     // 先取得該房仲的所有房源 public_id
     const { data: properties, error: propError } = await supabase
       .from('properties')
       .select('public_id')
-      .eq('agent_id', agentId);
+      .eq('agent_id', validatedAgentId);
 
     if (propError || !properties?.length) return [];
 
-    const publicIds = properties.map((p) => p.public_id);
+    const publicIds = properties
+      .map((p) => p.public_id)
+      .filter((value): value is string => typeof value === 'string' && value.length > 0);
+
+    if (publicIds.length === 0) return [];
 
     // 查詢這些房源的事件統計
     const { data: events, error: evtError } = await supabase
@@ -615,11 +692,16 @@ export class UAGService {
 
     if (evtError || !events) return [];
 
+    const parsedEvents = parseRpcRows('uag_events:stats', UagEventRowSchema, events);
+    if (parsedEvents.length === 0) return [];
+
     // 手動聚合
     const statsMap = new Map<string, PropertyViewStats>();
 
-    for (const evt of events) {
+    for (const evt of parsedEvents) {
       const pid = evt.property_id;
+      if (!pid) continue;
+
       if (!statsMap.has(pid)) {
         statsMap.set(pid, {
           property_id: pid,
@@ -630,7 +712,9 @@ export class UAGService {
           call_clicks: 0,
         });
       }
-      const stat = statsMap.get(pid)!;
+      const stat = statsMap.get(pid);
+      if (!stat) continue;
+
       stat.view_count++;
       stat.total_duration += evt.duration || 0;
 
@@ -646,11 +730,15 @@ export class UAGService {
 
     // 計算 unique sessions
     const sessionsByProperty = new Map<string, Set<string>>();
-    for (const evt of events) {
+    for (const evt of parsedEvents) {
+      if (!evt.property_id) continue;
       if (!sessionsByProperty.has(evt.property_id)) {
         sessionsByProperty.set(evt.property_id, new Set());
       }
-      sessionsByProperty.get(evt.property_id)!.add(evt.session_id);
+      const sessions = sessionsByProperty.get(evt.property_id);
+      if (sessions) {
+        sessions.add(evt.session_id);
+      }
     }
 
     for (const [pid, sessions] of sessionsByProperty) {
@@ -672,11 +760,23 @@ export class UAGService {
     cost: number,
     grade: Grade
   ): Promise<PurchaseLeadResult> {
+    const validatedUserId = ensureRequiredId(userId, 'userId');
+    const validatedLeadId = ensureRequiredId(leadId, 'leadId');
+
+    if (!Number.isFinite(cost) || cost < 0) {
+      return { success: false, error: 'Invalid cost' };
+    }
+
+    const gradeResult = GradeSchema.safeParse(grade);
+    if (!gradeResult.success) {
+      return { success: false, error: 'Invalid grade' };
+    }
+
     const { data, error } = await supabase.rpc('purchase_lead', {
-      p_user_id: userId,
-      p_lead_id: leadId,
+      p_user_id: validatedUserId,
+      p_lead_id: validatedLeadId,
       p_cost: cost,
-      p_grade: grade,
+      p_grade: gradeResult.data,
     });
 
     if (error) {

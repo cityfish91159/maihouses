@@ -2,6 +2,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { logger } from '../lib/logger';
+import { enforceCors } from '../lib/cors';
 // ============================================
 // Inlined Utils (Fix Vercel Import Issue)
 // ============================================
@@ -464,12 +465,16 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS & Cache
-  const allowedOrigins = ['https://maihouses.vercel.app', 'http://localhost:5173'];
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
+  if (!enforceCors(req, res)) return;
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({
+      success: false,
+      error: 'Method not allowed',
+    });
   }
+
+  // Cache
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
 
   let mixedProperties: PropertyForUI[] = [];

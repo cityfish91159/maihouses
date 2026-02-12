@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
@@ -264,7 +264,8 @@ describe('PropertyDetailPage phase11 interactions', () => {
     });
 
     await user.click(screen.getByTestId('agent-card-line-button'));
-    await user.click(screen.getByRole('checkbox'));
+    const lineFallbackDialog = await screen.findByRole('dialog');
+    await user.click(await within(lineFallbackDialog).findByRole('checkbox'));
     await user.type(screen.getByLabelText('你的 LINE ID'), 'fallback_line_id');
     await user.click(screen.getByRole('button', { name: '改用聯絡表單' }));
 
@@ -289,7 +290,8 @@ describe('PropertyDetailPage phase11 interactions', () => {
     });
 
     await user.click(screen.getByTestId('agent-card-line-button'));
-    await user.click(screen.getByRole('checkbox'));
+    const trustDialogA = await screen.findByRole('dialog');
+    await user.click(await within(trustDialogA).findByRole('checkbox'));
     await user.click(screen.getByRole('button', { name: '開啟 LINE' }));
 
     const fetchMock = vi.mocked(fetch);
@@ -334,7 +336,8 @@ describe('PropertyDetailPage phase11 interactions', () => {
     });
 
     await user.click(screen.getByTestId('agent-card-line-button'));
-    await user.click(screen.getByRole('checkbox'));
+    const trustDialogB = await screen.findByRole('dialog');
+    await user.click(await within(trustDialogB).findByRole('checkbox'));
     await user.click(screen.getByRole('button', { name: '開啟 LINE' }));
 
     const fetchMock = vi.mocked(fetch);
@@ -370,7 +373,8 @@ describe('PropertyDetailPage phase11 interactions', () => {
     });
 
     await user.click(screen.getByTestId('agent-card-line-button'));
-    await user.click(screen.getByRole('checkbox'));
+    const trustDialogC = await screen.findByRole('dialog');
+    await user.click(await within(trustDialogC).findByRole('checkbox'));
     await user.click(screen.getByRole('button', { name: '開啟 LINE' }));
 
     const fetchMock = vi.mocked(fetch);

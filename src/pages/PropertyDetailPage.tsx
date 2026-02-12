@@ -19,6 +19,7 @@ import { logger } from '../lib/logger';
 import { supabase } from '../lib/supabase';
 import { notify } from '../lib/notify';
 import { secureStorage } from '../lib/secureStorage';
+import { safeLocalStorage } from '../lib/safeStorage';
 import { SkeletonBanner } from '../components/SkeletonScreen';
 import { useAuth } from '../hooks/useAuth';
 import { useTrustActions } from '../hooks/useTrustActions';
@@ -144,10 +145,10 @@ export const PropertyDetailPage: React.FC = () => {
     return isValid ? trimmed : null;
   }, []);
 
-  // ✅ 計算 agent_id 優先級：URL ?aid > localStorage > property.agent.id > 'unknown'
+  // ✅ 計算 agent_id 優先級：URL ?aid > safeLocalStorage > property.agent.id > 'unknown'
   const agentId = useMemo(() => {
     let aid = normalizeAgentId(searchParams.get('aid'));
-    if (!aid) aid = normalizeAgentId(localStorage.getItem('uag_last_aid'));
+    if (!aid) aid = normalizeAgentId(safeLocalStorage.getItem('uag_last_aid'));
     if (!aid) aid = normalizeAgentId(property.agent?.id);
     return aid || 'unknown';
   }, [searchParams, property.agent?.id, normalizeAgentId]);
@@ -162,10 +163,10 @@ export const PropertyDetailPage: React.FC = () => {
     return 'unknown';
   }, [agentId, property.agent?.id]);
 
-  // ✅ 副作用：將有效 agentId 寫入 localStorage（React 18+ StrictMode 安全）
+  // ✅ 副作用：將有效 agentId 寫入 safeLocalStorage（React 18+ StrictMode 安全）
   useEffect(() => {
     if (agentId && agentId !== 'unknown') {
-      localStorage.setItem('uag_last_aid', agentId);
+      safeLocalStorage.setItem('uag_last_aid', agentId);
     }
   }, [agentId]);
 

@@ -1,5 +1,6 @@
 ﻿import { safeLocalStorage } from '../lib/safeStorage';
 import { logger } from '../lib/logger';
+import { getErrorMessage } from '../lib/error';
 
 export interface AppConfig {
   apiBaseUrl: string;
@@ -73,7 +74,7 @@ async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
     if (isValidConfig(remote)) return remote;
   } catch (err) {
     logger.warn('[config] fetch app.config.json failed, fallback to DEFAULT_CONFIG', {
-      error: err,
+      error: getErrorMessage(err),
     });
   }
 
@@ -148,7 +149,7 @@ export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
     return merged;
   } catch (err) {
     logger.error('[config] getConfig failed, using DEFAULT_CONFIG', {
-      error: err,
+      error: getErrorMessage(err),
     });
     const merged: AppConfig & RuntimeOverrides = {
       ...DEFAULT_CONFIG,

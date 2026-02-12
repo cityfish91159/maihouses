@@ -5,6 +5,7 @@
  */
 
 import type { TrustCase } from './types';
+import { MOCK_PROPERTY_TITLES } from '../../../../constants/mockData';
 
 /** Mock 案件資料 - 統一為 6 階段（M1-M6）[NASA TypeScript Safety] */
 export const MOCK_CASES: TrustCase[] = [
@@ -12,7 +13,7 @@ export const MOCK_CASES: TrustCase[] = [
     id: 'TR-2024-001',
     buyerId: 'A103',
     buyerName: '買方 A103',
-    propertyTitle: '惠宇上晴 12F',
+    propertyTitle: MOCK_PROPERTY_TITLES.huiyu12F,
     currentStep: 3,
     status: 'active',
     lastUpdate: Date.now() - 30 * 60000,

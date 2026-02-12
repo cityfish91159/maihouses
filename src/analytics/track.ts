@@ -1,4 +1,5 @@
 ﻿import { logger } from '../lib/logger';
+import { getErrorMessage } from '../lib/error';
 
 // 簡易埋點（事件命名更貼近用戶語意）
 export async function track(event: string, payload?: Record<string, unknown>) {
@@ -11,7 +12,7 @@ export async function track(event: string, payload?: Record<string, unknown>) {
     });
     logger.debug('[track]', { event, payload: payload || {} });
   } catch (err) {
-    logger.error('[Analytics] Track failed', { error: err });
+    logger.error('[Analytics] Track failed', { error: getErrorMessage(err) });
   }
 }
 export const Events = {

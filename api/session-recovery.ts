@@ -2,6 +2,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
 import { logger } from './lib/logger';
+import { enforceCors } from './lib/cors';
 
 // [NASA TypeScript Safety] Request Body Schema
 const SessionRecoveryRequestSchema = z.object({
@@ -59,15 +60,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
  * 時間窗口：7 天內活躍的 session 可恢復
  */
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
-  // CORS Headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  if (!enforceCors(req, res)) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({

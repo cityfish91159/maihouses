@@ -13,6 +13,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { messagingApi } from '@line/bot-sdk';
 import { z } from 'zod';
+import { enforceCors } from '../lib/cors';
 
 // [NASA TypeScript Safety] Test Request Schema
 const TestRequestSchema = z.object({
@@ -20,26 +21,40 @@ const TestRequestSchema = z.object({
   message: z.string().optional(),
 });
 
-interface TestRequest {
-  lineUserId: string;
-  message?: string;
+function getHeaderValue(headerValue: string | string[] | undefined): string {
+  if (typeof headerValue === 'string') return headerValue;
+  if (Array.isArray(headerValue) && headerValue.length > 0) return headerValue[0] ?? '';
+  return '';
 }
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<VercelResponse> {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (!enforceCors(req, res)) return res;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // 測試端點預設關閉：需顯式 ENABLE_TEST_APIS=true
+  if (process.env.ENABLE_TEST_APIS !== 'true') {
+    return res.status(403).json({
+      error: 'Test endpoint is disabled',
+      hint: 'Set ENABLE_TEST_APIS=true only in controlled environments',
+    });
+  }
+
+  const systemApiKey = process.env.SYSTEM_API_KEY;
+  if (!systemApiKey) {
+    return res.status(503).json({
+      error: 'SYSTEM_API_KEY not configured',
+    });
+  }
+
+  const requestSystemKey = getHeaderValue(req.headers['x-system-key']);
+  if (requestSystemKey !== systemApiKey) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   // 驗證環境變數

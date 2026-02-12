@@ -21,6 +21,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { enforceCors } from '../lib/cors';
 import { logger } from '../lib/logger';
 
 // ============================================
@@ -318,21 +319,13 @@ interface ReviewRowWithJoin {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 設定 CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (!enforceCors(req, res)) return;
 
   // H3 修復：強化快取策略
   // s-maxage=300: CDN 快取 5 分鐘 (確保穩定字母在快取期間不變)
   // stale-while-revalidate=600: 過期後 10 分鐘內仍可使用舊資料，同時背景更新
   // 這確保用戶在短時間內重複訪問會看到相同的字母
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
-
-  // OPTIONS 預檢請求
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
 
   // 只允許 GET
   if (req.method !== 'GET') {

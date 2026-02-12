@@ -1,13 +1,9 @@
 ﻿// api/visualize-detections.js
-export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+import { enforceCors } from './lib/cors';
+import { logger } from './lib/logger';
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+export default async function handler(req, res) {
+  if (!enforceCors(req, res)) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Use POST' });
@@ -91,10 +87,13 @@ export default async function handler(req, res) {
     res.setHeader('Content-Disposition', `attachment; filename="detection-${mode}.svg"`);
     return res.status(200).send(svg);
   } catch (error) {
-    console.error('Visualization error:', error);
+    logger.error('[visualize-detections] Visualization error', {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       error: 'Visualization failed',
-      message: error.message,
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 }
+

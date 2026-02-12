@@ -7,6 +7,7 @@
   Grade,
   LeadStatus,
 } from './types/uag.types';
+import { MOCK_AGENT_PROFILE as SHARED_MOCK_AGENT_PROFILE } from '../../constants/mockData';
 
 // Mock IDs
 export const MOCK_IDS = {
@@ -71,17 +72,7 @@ export const MOCK_IDS = {
 };
 
 // Mock 房仲個人資料（用於 UAG Header 房仲資訊條）
-export const MOCK_AGENT_PROFILE: AgentProfile = {
-  id: 'mock-agent-001',
-  internalCode: 12345,
-  name: '游杰倫',
-  avatarUrl: null,
-  company: '邁房子',
-  trustScore: 92,
-  encouragementCount: 18,
-  visitCount: 45,
-  dealCount: 8,
-};
+export const MOCK_AGENT_PROFILE: AgentProfile = SHARED_MOCK_AGENT_PROFILE;
 
 export const MOCK_DB: AppData = {
   user: { points: 1280, quota: { s: 2, a: 3 } },

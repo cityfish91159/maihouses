@@ -64,6 +64,12 @@ maihouses/
 ### 先讀後寫
 修改前必須讀取：目標檔案 + import 的模組 + 相關型別 + 相關 API/hooks。
 
+### 先想後做
+收到任務後，**先在對話中列出想法和方案**，待使用者確認後再動手寫程式碼。不要收到指令就直接開始改檔案。
+
+### 做完待命
+完成後回報結果，等待下一步指示。不自行發起後續動作、不主動擴大範圍。
+
 ### UI/UX
 所有 UI/UX 設計必須來自 `/ui-ux-pro-max`，嚴格禁止自己亂做。
 
@@ -99,6 +105,7 @@ feat: / fix: / refactor: / style: / docs: / chore: / test:
 
 | 需要了解 | 去讀 |
 |---------|------|
+| SOLID、命名、元件/API/CSS 慣例 | [`.context/CONVENTIONS.md`](.context/CONVENTIONS.md) |
 | 當前狀態、優先任務、禁區 | [`.context/STATUS.md`](.context/STATUS.md) |
 | 模組架構、五大核心、術語 | [`.context/ARCHITECTURE.md`](.context/ARCHITECTURE.md) |
 | TS/測試陷阱、架構決策 | [`.context/LESSONS.md`](.context/LESSONS.md) |
