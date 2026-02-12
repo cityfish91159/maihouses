@@ -1,41 +1,17 @@
 ﻿import { z } from 'zod';
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
-import type { AgentProfile, AgentProfileMe, UpdateAgentProfilePayload } from '../types/agent.types';
-
-const AgentProfileApiSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  avatar_url: z.string().nullable(),
-  company: z.string().nullable(),
-  bio: z.string().nullable().optional(),
-  specialties: z.array(z.string()).optional(),
-  certifications: z.array(z.string()).optional(),
-  phone: z.string().nullable().optional(),
-  line_id: z.string().nullable().optional(),
-  license_number: z.string().nullable().optional(),
-  is_verified: z.boolean().optional(),
-  verified_at: z.string().nullable().optional(),
-  trust_score: z.number(),
-  encouragement_count: z.number(),
-  service_rating: z.number(),
-  review_count: z.number(),
-  completed_cases: z.number(),
-  active_listings: z.number(),
-  service_years: z.number(),
-  joined_at: z.string().nullable().optional(),
-  internal_code: z.number().optional(),
-  visit_count: z.number().optional(),
-  deal_count: z.number().optional(),
-});
-
-const AgentProfileMeApiSchema = AgentProfileApiSchema.extend({
-  email: z.string().nullable(),
-  points: z.number(),
-  quota_s: z.number(),
-  quota_a: z.number(),
-  created_at: z.string().nullable(),
-});
+import {
+  AgentProfileApiSchema,
+  AgentProfileMeApiSchema,
+  AgentProfileMeSchema,
+  AgentProfileSchema,
+  type AgentProfile,
+  type AgentProfileApi,
+  type AgentProfileMe,
+  type AgentProfileMeApi,
+  type UpdateAgentProfilePayload,
+} from '../types/agent.types';
 
 type ApiResponse<T> = {
   success: boolean;
@@ -45,7 +21,7 @@ type ApiResponse<T> = {
   };
 };
 
-const ApiResponseSchema = <T extends z.ZodTypeAny>(schema: T) =>
+const createApiResponseSchema = <T extends z.ZodTypeAny>(schema: T) =>
   z.object({
     success: z.boolean(),
     data: schema.optional(),
@@ -56,11 +32,47 @@ const ApiResponseSchema = <T extends z.ZodTypeAny>(schema: T) =>
       .optional(),
   }) as z.ZodType<ApiResponse<z.infer<T>>>;
 
-const AgentProfileResponseSchema = ApiResponseSchema(AgentProfileApiSchema);
-const AgentProfileMeResponseSchema = ApiResponseSchema(AgentProfileMeApiSchema);
+const AgentProfileResponseSchema = createApiResponseSchema(AgentProfileApiSchema);
+const AgentProfileMeResponseSchema = createApiResponseSchema(AgentProfileMeApiSchema);
 
-const mapAgentProfile = (data: z.infer<typeof AgentProfileApiSchema>): AgentProfile => {
-  const profile: AgentProfile = {
+const RETRY_DELAYS_MS = [200, 600] as const;
+const DEFAULT_RETRY_DELAY_MS = 600;
+const HTTP_METHOD_GET = 'GET';
+
+const ERROR_REQUEST_FAILED = 'Request failed';
+const ERROR_INVALID_API_RESPONSE = 'Invalid API response';
+const ERROR_API_SUCCESS_FALSE = 'API returned success: false';
+const ERROR_UNAUTHORIZED = '未登入';
+const ERROR_EMPTY_AGENT_ID = 'agentId 不可為空';
+const ERROR_EMPTY_UPDATE_PAYLOAD = '更新內容不可為空';
+const ERROR_INVALID_FILE = '請提供有效的頭像檔案';
+const ERROR_UPDATE_FAILED = '更新失敗';
+const ERROR_UPLOAD_FAILED = '上傳失敗';
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const shouldRetryByStatus = (status: number) => status >= 500 || status === 429;
+
+const shouldRetryByMethod = (init?: RequestInit) =>
+  (init?.method ?? HTTP_METHOD_GET).toUpperCase() === HTTP_METHOD_GET;
+
+const getRetryDelay = (attempt: number) => {
+  const fallbackDelay = RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1] ?? DEFAULT_RETRY_DELAY_MS;
+  return RETRY_DELAYS_MS[attempt] ?? fallbackDelay;
+};
+
+const parseJsonSafely = async (response: Response): Promise<unknown> =>
+  response.json().catch(() => ({}));
+
+const getErrorMessage = (json: unknown, fallback: string, status?: number) => {
+  const payload = json as { error?: { message?: string } | string } | null;
+  const nestedMessage = typeof payload?.error === 'object' ? payload.error?.message : undefined;
+  const directMessage = typeof payload?.error === 'string' ? payload.error : undefined;
+  return nestedMessage || directMessage || (status ? `HTTP ${status}` : fallback);
+};
+
+const mapAgentProfile = (data: AgentProfileApi): AgentProfile =>
+  AgentProfileSchema.parse({
     id: data.id,
     name: data.name,
     avatarUrl: data.avatar_url,
@@ -80,53 +92,55 @@ const mapAgentProfile = (data: z.infer<typeof AgentProfileApiSchema>): AgentProf
     completedCases: data.completed_cases,
     activeListings: data.active_listings,
     serviceYears: data.service_years,
-  };
+    joinedAt: data.joined_at ?? undefined,
+    internalCode: data.internal_code ?? undefined,
+    visitCount: data.visit_count ?? undefined,
+    dealCount: data.deal_count ?? undefined,
+  });
 
-  if (data.joined_at !== undefined) {
-    profile.joinedAt = data.joined_at;
-  }
-  if (data.internal_code !== undefined) {
-    profile.internalCode = data.internal_code;
-  }
-  if (data.visit_count !== undefined) {
-    profile.visitCount = data.visit_count;
-  }
-  if (data.deal_count !== undefined) {
-    profile.dealCount = data.deal_count;
+const mapAgentProfileMe = (data: AgentProfileMeApi): AgentProfileMe =>
+  AgentProfileMeSchema.parse({
+    ...mapAgentProfile(data),
+    email: data.email,
+    points: data.points,
+    quotaS: data.quota_s,
+    quotaA: data.quota_a,
+    createdAt: data.created_at,
+  });
+
+const fetchWithRetry = async (input: RequestInfo, init?: RequestInit): Promise<Response> => {
+  let response: Response | null = null;
+  let fetchError: unknown = null;
+
+  const allowRetry = shouldRetryByMethod(init);
+  const maxRetries = allowRetry ? RETRY_DELAYS_MS.length : 0;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    try {
+      response = await fetch(input, init);
+      fetchError = null;
+
+      if (!allowRetry || !shouldRetryByStatus(response.status) || attempt === maxRetries) {
+        return response;
+      }
+    } catch (err) {
+      fetchError = err;
+      if (attempt === maxRetries) {
+        throw err;
+      }
+    }
+
+    await delay(getRetryDelay(attempt));
   }
 
-  return profile;
+  if (response) return response;
+  throw fetchError instanceof Error ? fetchError : new Error(ERROR_REQUEST_FAILED);
 };
 
-const mapAgentProfileMe = (data: z.infer<typeof AgentProfileMeApiSchema>): AgentProfileMe => ({
-  ...mapAgentProfile(data),
-  email: data.email,
-  points: data.points,
-  quotaS: data.quota_s,
-  quotaA: data.quota_a,
-  createdAt: data.created_at,
-});
-
-async function getAuthToken(): Promise<string | null> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.access_token ?? null;
-}
-
-async function fetchJson<T>(
-  input: RequestInfo,
-  init?: RequestInit,
+const validateAndExtractApiResponse = <T>(
+  json: unknown,
   schema?: z.ZodType<ApiResponse<T>>
-): Promise<T> {
-  const response = await fetch(input, init);
-  const json = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const message = json?.error?.message || json?.error || `HTTP ${response.status}`;
-    throw new Error(message);
-  }
-
+): T => {
   if (!schema) return json as T;
 
   const parsed = schema.safeParse(json);
@@ -134,51 +148,45 @@ async function fetchJson<T>(
     logger.error('[agentService] response validation failed', {
       error: parsed.error.message,
     });
-    throw new Error('Invalid API response');
+    throw new Error(ERROR_INVALID_API_RESPONSE);
   }
 
   const data = parsed.data;
   if (!data.success || data.data === undefined) {
-    throw new Error(data.error?.message || 'API returned success: false');
+    throw new Error(data.error?.message || ERROR_API_SUCCESS_FALSE);
   }
 
   return data.data;
-}
+};
 
-export async function fetchAgentProfile(agentId: string): Promise<AgentProfile> {
-  const data = await fetchJson(
-    `/api/agent/profile?id=${encodeURIComponent(agentId)}`,
-    undefined,
-    AgentProfileResponseSchema
-  );
-  return mapAgentProfile(data);
-}
+async function fetchJson<T>(
+  input: RequestInfo,
+  init?: RequestInit,
+  schema?: z.ZodType<ApiResponse<T>>
+): Promise<T> {
+  const response = await fetchWithRetry(input, init);
+  const json = await parseJsonSafely(response);
 
-export async function fetchAgentMe(): Promise<AgentProfileMe> {
-  const token = await getAuthToken();
-  if (!token) {
-    throw new Error('未登入');
+  if (!response.ok) {
+    throw new Error(getErrorMessage(json, ERROR_REQUEST_FAILED, response.status));
   }
 
-  const data = await fetchJson(
-    '/api/agent/me',
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    AgentProfileMeResponseSchema
-  );
-  return mapAgentProfileMe(data);
+  return validateAndExtractApiResponse(json, schema);
 }
 
-export async function updateAgentProfile(payload: UpdateAgentProfilePayload): Promise<string> {
-  const token = await getAuthToken();
+async function getAuthTokenOrThrow(): Promise<string> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const token = session?.access_token ?? null;
   if (!token) {
-    throw new Error('未登入');
+    throw new Error(ERROR_UNAUTHORIZED);
   }
+  return token;
+}
 
-  const body = Object.fromEntries(
+const buildUpdateRequestBody = (payload: UpdateAgentProfilePayload) =>
+  Object.fromEntries(
     Object.entries({
       name: payload.name,
       company: payload.company,
@@ -192,6 +200,42 @@ export async function updateAgentProfile(payload: UpdateAgentProfilePayload): Pr
     }).filter(([, value]) => value !== undefined)
   );
 
+export async function fetchAgentProfile(agentId: string): Promise<AgentProfile> {
+  const normalizedId = agentId.trim();
+  if (!normalizedId) {
+    throw new Error(ERROR_EMPTY_AGENT_ID);
+  }
+
+  const data = await fetchJson(
+    `/api/agent/profile?id=${encodeURIComponent(normalizedId)}`,
+    undefined,
+    AgentProfileResponseSchema
+  );
+  return mapAgentProfile(data);
+}
+
+export async function fetchAgentMe(): Promise<AgentProfileMe> {
+  const token = await getAuthTokenOrThrow();
+  const data = await fetchJson(
+    '/api/agent/me',
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    AgentProfileMeResponseSchema
+  );
+  return mapAgentProfileMe(data);
+}
+
+export async function updateAgentProfile(payload: UpdateAgentProfilePayload): Promise<string> {
+  const token = await getAuthTokenOrThrow();
+  const body = buildUpdateRequestBody(payload);
+
+  if (Object.keys(body).length === 0) {
+    throw new Error(ERROR_EMPTY_UPDATE_PAYLOAD);
+  }
+
   const response = await fetch('/api/agent/profile', {
     method: 'PUT',
     headers: {
@@ -201,21 +245,20 @@ export async function updateAgentProfile(payload: UpdateAgentProfilePayload): Pr
     body: JSON.stringify(body),
   });
 
-  const json = await response.json().catch(() => ({}));
-  if (!response.ok || !json?.success) {
-    const message = json?.error?.message || json?.error || '更新失敗';
-    throw new Error(message);
+  const json = await parseJsonSafely(response);
+  if (!response.ok || !(json as { success?: boolean })?.success) {
+    throw new Error(getErrorMessage(json, ERROR_UPDATE_FAILED, response.status));
   }
 
-  return json?.data?.updated_at || '';
+  return ((json as { data?: { updated_at?: string } })?.data?.updated_at ?? '');
 }
 
 export async function uploadAgentAvatar(file: File): Promise<string> {
-  const token = await getAuthToken();
-  if (!token) {
-    throw new Error('未登入');
+  if (!file || file.size <= 0) {
+    throw new Error(ERROR_INVALID_FILE);
   }
 
+  const token = await getAuthTokenOrThrow();
   const formData = new FormData();
   formData.append('avatar', file);
 
@@ -227,11 +270,10 @@ export async function uploadAgentAvatar(file: File): Promise<string> {
     body: formData,
   });
 
-  const json = await response.json().catch(() => ({}));
-  if (!response.ok || !json?.success) {
-    const message = json?.error?.message || json?.error || '上傳失敗';
-    throw new Error(message);
+  const json = await parseJsonSafely(response);
+  if (!response.ok || !(json as { success?: boolean })?.success) {
+    throw new Error(getErrorMessage(json, ERROR_UPLOAD_FAILED, response.status));
   }
 
-  return json?.data?.avatar_url || '';
+  return (json as { data?: { avatar_url?: string } })?.data?.avatar_url ?? '';
 }

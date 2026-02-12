@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -108,7 +108,7 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
     expect(mockUpdateAgentProfile).not.toHaveBeenCalled();
     expect(mockNotifySuccess).toHaveBeenCalledWith(
       '個人資料已儲存',
-      '這是模擬更新，實際資料未儲存'
+      'Mock 模式：資料未實際儲存'
     );
   });
 
@@ -169,7 +169,7 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
     expect(mockNotifySuccess).toHaveBeenCalledWith('個人資料已儲存');
   });
 
-  it('live mode updateProfile 失敗時應顯示固定錯誤通知', async () => {
+  it('live mode updateProfile 失敗時應顯示後端錯誤訊息', async () => {
     mockUpdateAgentProfile.mockRejectedValueOnce(new Error('service down'));
 
     const queryClient = createQueryClient();
@@ -187,6 +187,6 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
       ).rejects.toThrow('service down');
     });
 
-    expect(mockNotifyError).toHaveBeenCalledWith('儲存失敗，請稍後再試');
+    expect(mockNotifyError).toHaveBeenCalledWith('儲存失敗', 'service down');
   });
 });

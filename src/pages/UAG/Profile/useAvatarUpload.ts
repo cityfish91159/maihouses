@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import { notify } from '../../../lib/notify';
 import type { AvatarUploaderBaseProps } from './AvatarUploader';
@@ -39,13 +39,15 @@ export function useAvatarUpload({ avatarUrl, onUpload }: UseAvatarUploadParams) 
     if (!file) return;
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      notify.error('格式不支援', '請上傳 jpg/png/webp 圖片');
+      const fileType = file.type || 'unknown';
+      notify.error('格式不支援', `目前檔案格式為 ${fileType}，請上傳 JPG、PNG 或 WebP 圖片`);
       event.target.value = '';
       return;
     }
 
     if (file.size > MAX_FILE_SIZE_IN_BYTES) {
-      notify.error('檔案過大', '最大 2MB');
+      const fileSizeInMb = (file.size / 1024 / 1024).toFixed(2);
+      notify.error('檔案過大', `目前檔案大小為 ${fileSizeInMb}MB，最大限制為 2MB`);
       event.target.value = '';
       return;
     }

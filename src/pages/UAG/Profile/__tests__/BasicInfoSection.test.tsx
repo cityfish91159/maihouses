@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+﻿import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BasicInfoSection } from '../BasicInfoSection';
 import type { AgentProfileMe } from '../../../../types/agent.types';
@@ -233,7 +233,7 @@ describe('BasicInfoSection (#15)', () => {
 
     render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={vi.fn()} />);
 
-    await user.click(screen.getByRole('button', { name: '專長證照' }));
+    await user.click(screen.getByRole('tab', { name: '專長證照' }));
 
     expect(window.localStorage.getItem(buildProfileTabStorageKey())).toBe('expertise');
   });
@@ -250,7 +250,7 @@ describe('BasicInfoSection (#15)', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: '專長證照' }));
+    await user.click(screen.getByRole('tab', { name: '專長證照' }));
 
     expect(window.localStorage.getItem(buildProfileTabStorageKey('uag-profile-agent'))).toBe(
       'expertise'

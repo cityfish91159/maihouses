@@ -72,9 +72,10 @@ export function useAgentProfile() {
       return updateAgentProfile(payload);
     },
     onSuccess: (_, payload) => {
-      // #7 Mock 模式：提示這是模擬
+      const mockDetail = 'Mock 模式：資料未實際儲存';
+
       if (isMockMode) {
-        notify.success('個人資料已儲存', '這是模擬更新，實際資料未儲存');
+        notify.success('個人資料已儲存', mockDetail);
         // #7: Mock 模式更新本地快取，讓 UI 立即反映編輯結果
         queryClient.setQueryData<AgentProfileMe | undefined>(profileQueryKey, (prev) => {
           if (!prev) return prev;
@@ -97,8 +98,9 @@ export function useAgentProfile() {
         queryClient.invalidateQueries({ queryKey: profileQueryKey });
       }
     },
-    onError: () => {
-      notify.error('儲存失敗，請稍後再試');
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : '未知錯誤';
+      notify.error('儲存失敗', message);
     },
   });
 
@@ -117,9 +119,8 @@ export function useAgentProfile() {
       return uploadAgentAvatar(file);
     },
     onSuccess: (url) => {
-      // #7 Mock 模式：提示這是模擬
       if (isMockMode) {
-        notify.success('頭像已更新（Mock 模式）', '這是本地預覽，實際未上傳');
+        notify.success('頭像已更新', 'Mock 模式：這是本地預覽，實際未上傳');
       } else {
         notify.success('頭像已更新');
       }

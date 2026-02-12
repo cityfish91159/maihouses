@@ -1,9 +1,13 @@
-import { render } from '@testing-library/react';
+﻿import { fireEvent, render } from '@testing-library/react';
 import { AvatarUploader } from './AvatarUploader';
+
+const { mockNotifyError } = vi.hoisted(() => ({
+  mockNotifyError: vi.fn(),
+}));
 
 vi.mock('../../../lib/notify', () => ({
   notify: {
-    error: vi.fn(),
+    error: (...args: unknown[]) => mockNotifyError(...args),
   },
 }));
 
@@ -27,6 +31,33 @@ describe('AvatarUploader blob URL cleanup', () => {
       writable: true,
       value: mockRevokeObjectURL,
     });
+  });
+
+  it('invalid file type should show precise error message', async () => {
+    const { container } = renderAvatarUploader(null);
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const invalidFile = new File(['hello'], 'avatar.gif', { type: 'image/gif' });
+
+    fireEvent.change(fileInput, { target: { files: [invalidFile] } });
+
+    expect(mockNotifyError).toHaveBeenCalledWith(
+      '格式不支援',
+      '目前檔案格式為 image/gif，請上傳 JPG、PNG 或 WebP 圖片'
+    );
+  });
+
+  it('oversized file should show current size in MB', async () => {
+    const { container } = renderAvatarUploader(null);
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const oversizedFile = new File(['hello'], 'avatar.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(oversizedFile, 'size', { value: 3 * 1024 * 1024 });
+
+    fireEvent.change(fileInput, { target: { files: [oversizedFile] } });
+
+    expect(mockNotifyError).toHaveBeenCalledWith(
+      '檔案過大',
+      '目前檔案大小為 3.00MB，最大限制為 2MB'
+    );
   });
 
   it('avatarUrl 從 blob 切換時應釋放舊 URL', () => {

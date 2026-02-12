@@ -67,7 +67,7 @@ export default function UAGProfilePage() {
   if (isLoading) {
     return (
       <div
-        className="min-h-screen bg-slate-50"
+        className="min-h-screen bg-bg-base"
         role="status"
         aria-live="polite"
         aria-busy="true"
@@ -87,7 +87,7 @@ export default function UAGProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-bg-base">
         <div className="mx-auto max-w-3xl p-6">
           <button
             onClick={handleBackToUAG}

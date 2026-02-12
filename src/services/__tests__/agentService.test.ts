@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+﻿import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchAgentProfile, updateAgentProfile } from '../agentService';
 
 const { mockGetSession } = vi.hoisted(() => ({
