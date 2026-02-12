@@ -4,44 +4,56 @@
 
 ### P0 — 基礎建設
 
-- [ ] **#1** 建立 `usePageMode()` hook + `useModeAwareAction` + mock 整合接口 + 演示觸發機制 + cache key 規範（4 新檔案，阻塞後續所有工單）
-- [ ] **#2** 全站靜態 HTML 連結改為 React 路由 + `SEED_COMMUNITY_ID` 定義（7 檔 16 處）
-- [ ] **#3** 按讚按鈕三模式行為分離 + hook 層繞過策略（CommunityReviews + AgentReviewListModal）
-- [ ] **#14** 全站註冊引導統一策略 — `useRegisterGuide()` hook + toast action button（跨 8+ 處引導）
-- [ ] **#15** auth.html 替代策略定義 — `window.location.href` + `?return=` 參數統一（10 處 auth 引用）
+- [ ] **#1a** `usePageMode()` hook — 模式判斷 + localStorage TTL + 跨分頁同步（1 新檔案）
+- [ ] **#1b** `useModeAwareAction` hook — 三模式行為派發 + cache key 規範（1 新檔案）
+- [ ] **#1c** `DemoGate.tsx` — Logo 長按/連按觸發演示模式（1 新檔案）
+- [ ] **#2** 全站靜態 HTML 連結改 React 路由 + `SEED_COMMUNITY_ID`（7 檔 16 處）
+- [ ] **#3** 按讚三模式行為分離 — mode guard 優先於 auth guard（2 檔）
+- [ ] **#14a** 確認 Toast 支援 action button（前置條件）
+- [ ] **#14b** `useRegisterGuide()` hook — 訪客引導註冊 8 場景（1 新檔案）
+- [ ] **#15** `getAuthUrl()` 工具函數 — 統一 auth 跳轉 + `?return=` + `?role=`（1 新檔案）
 
 ### P1 — 逐頁接入
 
-- [ ] **#4a** 房產詳情頁：移除 isDemoPropertyId + 社會證明接入 usePageMode（5 檔 13 處）
-- [ ] **#4b** 房產詳情頁：連結修正 — 社區牆 + 註冊查看（2 檔 3 處）
-- [ ] **#5a** UAG：新增訪客 Landing Page + 角色守衛（1 新檔案 + App.tsx auth guard）
-- [ ] **#5b** UAG：後台接入 usePageMode + uagModeStore 消費者遷移策略（6 檔，含 ?mock= 參數清理）
-- [ ] **#6a** Feed：Logo 導航修復 + 廢棄路由清理（GlobalHeader 3 處 + routes.ts 4 常數）
-- [ ] **#6b** Feed：移除 DEMO_IDS + 接入 usePageMode + 演示入口路由（3 檔 8 處）
-- [ ] **#7** 登入後重定向修正 — agent→UAG、consumer→首頁（auth.html :1647）
+- [ ] **#4a** 房產詳情頁：移除 `isDemoPropertyId` 改用 usePageMode（5 檔）
+- [ ] **#4b** 房產詳情頁：社區牆 + 註冊查看連結修正（2 檔）
+- [ ] **#5a** UAG：訪客 Landing Page + 角色守衛（1 新檔案 + App.tsx）
+- [ ] **#5b** UAG：移除 `uagModeStore`，改用 usePageMode（6 檔）
+- [ ] **#6a** Feed：Logo 導航修復 + 廢棄路由清理（3 檔）
+- [ ] **#6b** Feed：移除 `DEMO_IDS` + 新增 `/feed/demo` 路由（4 檔）
+- [ ] **#7** 登入後重定向 — agent→UAG、consumer→首頁（auth.html）
 
 ### P1 — 跨頁面
 
-- [ ] **#12** 首頁 Header 已登入狀態偵測（Header.tsx 未使用 useAuth，已登入仍顯示「登入/註冊」）
-- [ ] **#13** PropertyListPage Header 統一（LegacyHeader → 統一 Header 元件）
+- [ ] **#12** 首頁 Header 接入 useAuth + 三模式 UI（Header.tsx + GlobalHeader.tsx）
+- [ ] **#13** PropertyListPage Header 統一（LegacyHeader → Header）
 
-### P1 — 程式碼品質改善
+### P1 — 程式碼品質
 
-- [ ] **#17** 統一錯誤處理工具 — 建立 `src/lib/error.ts` + `getErrorMessage()` / `getErrorInfo()` / `safeAsync()` / `safeSync()`（17 單元測試）
-- [ ] **#18** 重構錯誤處理 — `src/app/config.ts` / `src/analytics/track.ts` / `src/context/MaiMaiContext.tsx` 改用 `getErrorMessage()`（3 檔 5 處）
-- [ ] **#19** Supabase RPC 錯誤處理強化 — `fn_increment_completed_cases()` / `fn_calculate_trust_score()` / `fn_recalc_encouragement_count()` 加入完整錯誤處理（3 migration 檔案）
-- [ ] **#20** 整合分散 Mock Data — 建立 `src/constants/mockData.ts` 統一管理（整合 10+ 檔案，消除重複定義）
+- [x] **#17** `src/lib/error.ts` 統一錯誤處理工具（1 新檔案 + 17 測試）✅ 2026-02-12
+- [ ] **#18** 3 檔 catch 改用 `getErrorMessage()`（config / track / MaiMaiContext）
+- [x] **#19** [P1] 砍舊路徑：前端 `tracker` 由 `/api/uag-track` 切到 `/api/uag/track`，下線 deprecated JS 版 ✅ 2026-02-12
+- [ ] **#20** 整合分散 Mock Data + seed 不可變 `Object.freeze`（10+ 檔）
 
 ### P2 — 收尾清理
 
-- [ ] **#8** 社區牆接入演示模式 — mode guard + effectiveRole 整合 + LockedOverlay 修復
-- [ ] **#9** 移除靜態 HTML mock 頁 + 部署設定同步（4 頁移除 + after-login.html + vercel.json）
-- [ ] **#10** 演示模式浮動標籤 UI + 退出全域 state 清理（DemoBadge.tsx + cleanup）
-- [ ] **#11** Feed 定位確認 + 首頁入口（待確認方向）
-- [ ] **#16** 全站 UTF-8/文案健康檢查（亂碼字串 + emoji 清理 + CI lint）
-- [ ] **#21** 標準化 console.log 格式 — 全站改用 `logger.debug/info/warn/error` + 統一模組標籤（整合 `getErrorMessage()`）
-- [ ] **#22** 修復 Tailwind classnames 排序警告 — `MetricsDisplayCard.tsx` / `MetricsDisplayCompact.tsx`（2 檔）
-- [ ] **#23** 優化 React Hook 依賴陣列 — `useProfileFormState.ts:57` useMemo 依賴簡化
+- [ ] **#8a** 社區牆：`useEffectiveRole` hook + 按讚改用 useModeAwareAction（2 檔）
+- [ ] **#8b** 社區牆：發文/留言本地化 + LockedOverlay/BottomCTA 引導修正（3 檔）
+- [ ] **#9** 移除靜態 HTML mock 頁 + vercel.json 同步（6 檔）
+- [ ] **#10a** `DemoBadge.tsx` 浮動標籤 UI（1 新檔案，需 `/ui-ux-pro-max`）
+- [ ] **#10b** `exitDemoMode()` 退出清理 + 確認 dialog
+- [ ] **#11** Feed 產品定位確認（待決策）
+- [ ] **#16** 全站文案健康檢查 — 亂碼 + emoji + CI lint
+- [ ] **#21** 全站 `console.log` 改用 `logger`（整合 getErrorMessage）
+- [ ] **#22** Tailwind classnames 排序修復（2 檔）
+- [ ] **#23** React Hook 依賴陣列優化（1 檔）
+
+### P2 — 跨頁面三模式 + 清理
+
+- [ ] **#24** Chat 三模式支持（`Chat/index.tsx`）
+- [ ] **#25** Assure 三模式支持 — `isMock` → usePageMode（`Assure/Detail.tsx`）
+- [ ] **#26** 登出清理 — `cleanupAuthState()` 統一函數 + onAuthStateChange（2 檔）
+- [ ] **#27** UAG 新房仲空狀態 + MaiMai 引導（1 新組件）
 
 ---
 
@@ -50,23 +62,40 @@
 ### 依賴關係圖
 
 ```
-#1 usePageMode + DemoGate ─────────┬──→ #3 按讚行為分離
+#1a usePageMode hook ──────────────┬──→ #1b useModeAwareAction + cache key
+                                   ├──→ #1c DemoGate 觸發元件
+                                   ├──→ #3 按讚行為分離
                                    ├──→ #4a isDemoPropertyId 移除
                                    ├──→ #5b uagModeStore 遷移
                                    ├──→ #6b DEMO_IDS 移除
-                                   ├──→ #8 社區牆演示模式
-                                   ├──→ #10 浮動標籤 + 退出清理
+                                   ├──→ #8a 社區牆權限重構
+                                   ├──→ #10a 浮動標籤 UI
                                    ├──→ #12 Header 三模式行為
-                                   └──→ #20 Mock Data 整合（三模式區分）
+                                   ├──→ #20 Mock Data 整合
+                                   ├──→ #24 Chat 三模式
+                                   ├──→ #25 Assure 三模式
+                                   └──→ #26 登出完整清理
 
-#14 useRegisterGuide ──────────────┬──→ #3 visitor toast 引導
-                                   ├──→ #8 handleUnlock 引導
+#1b useModeAwareAction ────────────┬──→ #3 按讚 handler
+                                   ├──→ #8a 社區牆按讚 handler
+                                   └──→ #5b UAG 購買 Lead
+
+#1c DemoGate ──────────────────────→ #10a DemoBadge（同一目錄）
+
+#14a Toast 前置確認 ───────────────→ #14b useRegisterGuide hook
+
+#14b useRegisterGuide ─────────────┬──→ #3 visitor toast 引導
+                                   ├──→ #8b handleUnlock 引導
                                    └──→ #6b Feed 互動引導
 
 #15 authUtils + getAuthUrl ────────┬──→ #2 auth.html 引用統一
                                    ├──→ #4b 詳情頁連結修正
                                    ├──→ #6a GlobalHeader auth 引用
-                                   └──→ #8 BottomCTA auth 引用
+                                   └──→ #8b BottomCTA auth 引用
+
+#8a 權限重構 ──────────────────────→ #8b 互動本地化
+
+#10a 浮動標籤 UI ──────────────────→ #10b 退出清理策略
 
 #17 統一錯誤處理工具 ──────────────┬──→ #18 錯誤處理重構
                                    ├──→ #19 Supabase RPC 錯誤處理
@@ -74,19 +103,25 @@
 
 #2 靜態 HTML 連結清理 ─────────────→ #9 移除靜態 HTML 頁面
 #6a 廢棄路由清理 ──────────────────→ #9 移除靜態 HTML 頁面
-#5a UAG Landing + auth guard ──────→ #5b uagModeStore 遷移
+#5a UAG Landing + auth guard ──────┬──→ #5b uagModeStore 遷移
+                                   └──→ #27 UAG 新房仲空狀態 + MaiMai 引導
 #18 錯誤處理重構 ──────────────────→ #21 console.log 標準化
+#12 Header 三模式 ─────────────────→ #26 登出清理
 ```
 
 ### 建議施工順序
 
 | 波次 | 工單 | 原因 |
 |------|------|------|
-| **Wave 0** | #17、#19 | 基礎工具：統一錯誤處理 + Supabase RPC 強化，無依賴可平行 ✅ 已完成 |
-| **Wave 1** | #1、#14、#15、#18 | 基礎設施：usePageMode + useRegisterGuide + authUtils + 錯誤處理重構，無依賴可平行 |
-| **Wave 2** | #2、#3、#5a、#12、#20 | 依賴 Wave 1 的 hook/工具函數 + Mock Data 整合，彼此獨立可平行 |
-| **Wave 3** | #4a、#4b、#5b、#6a、#6b、#7、#8 | 逐頁接入，部分可平行（#4a/#4b 同頁，#5a→#5b 序列）|
-| **Wave 4** | #9、#10、#13、#16、#21、#22、#23 | 收尾清理，依賴前面全部完成 |
+| **Wave 0** | #17、#19 | 基礎工具 ✅ 已完成 |
+| **Wave 1** | #1a、#14a、#15、#18 | 核心 hook + toast 前置確認 + authUtils + 錯誤處理重構 |
+| **Wave 1B** | #1b、#1c、#14b | 依賴 Wave 1：useModeAwareAction + DemoGate + useRegisterGuide |
+| **Wave 2** | #2、#3、#5a、#12、#20 | 依賴 Wave 1B 的 hook，彼此獨立可平行 |
+| **Wave 3** | #4a、#4b、#5b、#6a、#6b、#7、#8a、#27 | 逐頁接入（#5a→#5b/#27 序列，其餘可平行）|
+| **Wave 3B** | #8b | 依賴 #8a 完成 |
+| **Wave 4** | #9、#10a、#13、#16、#21、#22、#23 | 收尾清理 |
+| **Wave 4B** | #10b、#24、#25 | DemoBadge 退出 + Chat/Assure 三模式 |
+| **Wave 4C** | #26 | 登出完整清理，依賴 #12 + #10b |
 | **Wave 5** | #11 | 產品方向確認，獨立於技術施工 |
 
 ---
@@ -105,7 +140,7 @@
 
 ### 一句話描述
 
-同一個網址，三種狀態自動共存：未登入看訪客模式、輸入隱藏密碼進演示模式、登入後進正式模式。
+同一個網址，三種狀態自動共存：未登入看訪客模式、觸發隱藏入口進演示模式、登入後進正式模式。
 
 ---
 
@@ -121,7 +156,7 @@
 
 ### 演示模式（Demo Mode）
 
-- **觸發**：首頁 Logo 隱藏入口 → 輸入密碼 → localStorage + TTL 儲存
+- **觸發**：首頁 Logo 隱藏入口（長按/連按）→ localStorage + TTL 儲存
 - **資料**：精心設計的 seed 資料，不走 API
 - **互動**：所有功能看起來都在運作，操作本地化，不寫 DB
 - **對象**：投資人、合作夥伴
@@ -144,12 +179,15 @@
 
 ### 演示模式觸發機制
 
-- 首頁 Logo 長按（3 秒）或連點（5 下）→ 彈出密碼輸入框
-- 密碼驗證成功 → `setDemoMode()`（localStorage + 2 小時 TTL）
-- 全站進入演示模式（跨分頁生效）
-- TTL 到期 → 自動退出（2 小時無需重新輸入密碼）
+- 首頁 Logo **長按 5 秒**或**連按 3 次** → 直接進入演示模式（不需密碼）
+- 觸發後 → `setDemoMode()`（localStorage + 2 小時有效期）→ 頁面重新整理
+- 全站進入演示模式（跨分頁同步，透過 storage event 監聽）
+- 有效期到期前 5 分鐘 → 彈 toast「演示即將結束」
+- 有效期到期 → 自動退出 + 重新整理頁面
+- 演示模式下點「登入/註冊」→ 彈 toast「請先退出演示模式」，不跳轉
+- 演示模式下操作記錄完全靜默（不送任何追蹤資料）
 - 正式用戶完全不知道這個機制存在
-- 演示模式下右下角浮動標籤「演示模式」+ 退出按鈕
+- 演示模式下浮動標籤「演示模式」+ 退出按鈕
 
 ### 統一 Hook
 
@@ -247,8 +285,10 @@ usePageMode() → PageMode   // 'visitor' | 'demo' | 'live'
 
 #### 需要修正
 
-- 接入 usePageMode 控制資料來源（演示模式不走 API）
+- 接入 usePageMode 控制資料來源（演示模式不走 API，用 seed；訪客模式維持現有 seed+API 補位）
+- 搜尋功能三模式下行為相同（純前端過濾），不需改動
 - 其餘不需改動，目前做得最好的頁面之一
+- **不需獨立工單**，在 Wave 2/3 施工時順便接入 usePageMode 即可（改動量極小：只需在資料 hook 加 `enabled: mode === 'live'`）
 
 ---
 
@@ -387,7 +427,7 @@ agent:    canSeeAllReviews=true,  canPostPublic=true,  canAccessPrivate=true
 | 發送訊息 | 不可操作（Landing Page 無此元素）| 本地操作 | API |
 | Mock/Live 切換 | 移除 | 移除 | 移除（由 usePageMode 自動）|
 
-> **訪客模式採用 Landing Page 方案**：UAG 的 mock 資料含 Lead 姓名、電話、分級等敏感欄位，即使是假資料也不該對訪客展示。訪客看到的是產品介紹頁（功能說明 + 截圖 + 「成為合作房仲」CTA），演示模式（密碼觸發）才進入真正後台。
+> **訪客模式採用 Landing Page 方案**：UAG 的 mock 資料含 Lead 姓名、電話、分級等敏感欄位，即使是假資料也不該對訪客展示。訪客看到的是產品介紹頁（功能說明 + 截圖 + 「成為合作房仲」CTA），演示模式（隱藏入口長按/連按觸發）才進入真正後台。
 
 #### 需要修正
 
@@ -520,9 +560,9 @@ agent:    canSeeAllReviews=true,  canPostPublic=true,  canAccessPrivate=true
 
 ---
 
-### #1 [P0] 建立 `usePageMode()` hook + mock 整合接口 + 演示觸發機制
+### #1a [P0] `usePageMode()` hook + localStorage TTL + 跨分頁同步 + API 三層防禦
 
-**目標**：建立全站統一的模式判斷系統、定義與三套 mock 系統的整合接口、演示模式隱藏入口
+**目標**：建立全站統一的模式判斷系統 + 演示狀態管理 + API 防禦機制
 
 **施工項目**：
 
@@ -544,29 +584,204 @@ function usePageMode(): PageMode {
 
 #### 1-A2. 演示狀態改用 `localStorage + TTL`（取代 sessionStorage）
 
-**原因**：`sessionStorage` 不跨分頁（`target="_blank"` 開新分頁讀不到演示狀態），改用 `localStorage` + 2 小時 TTL，關閉所有分頁後 TTL 到期自動退出。
+**原因**：`sessionStorage` 不跨分頁（`target="_blank"` 開新分頁讀不到演示狀態），改用 `localStorage` + 2 小時有效期，關閉所有分頁後有效期到就自動退出。
 
 ```typescript
 const DEMO_STORAGE_KEY = 'mai-demo-verified'
 const DEMO_TTL = 2 * 60 * 60 * 1000 // 2 小時
+const DEMO_WARN_BEFORE = 5 * 60 * 1000 // 到期前 5 分鐘提醒
+
+const DemoStorageSchema = z.object({ t: z.number() })
+
+function readDemoTimestamp(): number | null {
+  try {
+    const raw = localStorage.getItem(DEMO_STORAGE_KEY)
+    if (!raw) return null
+    const result = DemoStorageSchema.safeParse(JSON.parse(raw))
+    return result.success ? result.data.t : null
+  } catch {
+    return null
+  }
+}
 
 function setDemoMode(): void {
-  localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify({ t: Date.now() }))
+  try {
+    localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify({ t: Date.now() }))
+  } catch {
+    // Safari private mode / storage disabled: fail closed as visitor mode
+  }
 }
 
 function isDemoMode(): boolean {
-  const raw = localStorage.getItem(DEMO_STORAGE_KEY)
-  if (!raw) return false
-  const { t } = JSON.parse(raw) as { t: number }
+  const t = readDemoTimestamp()
+  if (t === null) return false
   return Date.now() - t < DEMO_TTL
 }
 
+function getDemoTimeRemaining(): number {
+  const t = readDemoTimestamp()
+  if (t === null) return 0
+  return Math.max(0, DEMO_TTL - (Date.now() - t))
+}
+
 function clearDemoMode(): void {
-  localStorage.removeItem(DEMO_STORAGE_KEY)
+  try {
+    localStorage.removeItem(DEMO_STORAGE_KEY)
+  } catch {
+    // no-op
+  }
 }
 ```
 
-> 此變更同步影響 #10-C 退出清理（改清 localStorage）和 1-D 觸發元件（改寫 localStorage）。
+#### 1-A3. 有效期到期處理
+
+**到期前 5 分鐘**：彈出 toast 提醒「演示即將結束，剩餘 X 分鐘」。
+**到期後**：`isDemoMode()` 回傳 false → 自動變回訪客模式 + `queryClient.clear()` + `window.location.reload()`。
+
+**實作方式**：計時器放在 **App.tsx 根層級**（不在 `usePageMode()` 內部），整個應用只設定一次，各頁面只讀取模式值。避免多組件呼叫 `usePageMode()` 產生重複計時器。
+
+```typescript
+// App.tsx 根層級（useDemoTimer.ts 獨立 hook，僅 App.tsx 使用）
+function useDemoTimer() {
+  const mode = usePageMode()
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (mode !== 'demo') return
+    const remaining = getDemoTimeRemaining()
+    if (remaining <= 0) return
+
+    const warnTimer = setTimeout(() => {
+      toast('演示即將結束，剩餘 5 分鐘')
+    }, Math.max(0, remaining - DEMO_WARN_BEFORE))
+
+    const expireTimer = setTimeout(() => {
+      clearDemoMode()
+      queryClient.clear()
+      window.location.reload()
+    }, remaining)
+
+    return () => { clearTimeout(warnTimer); clearTimeout(expireTimer) }
+  }, [mode, queryClient])
+}
+
+// App.tsx
+function App() {
+  useDemoTimer() // 全站唯一計時器
+  return <RouterProvider ... />
+}
+```
+
+> **⚠️ usePageMode() 本身不含計時器邏輯**，它是純讀取函數（讀 localStorage + useAuth），任何組件可安全多次呼叫。
+
+#### 1-A4. 跨分頁同步 + 有效期精確對齊
+
+**機制**：使用 `window.addEventListener('storage')` 監聽 localStorage 變更。分頁 A 進入/退出演示 → 分頁 B 收到 storage event → 重新讀取 `isDemoMode()` → `window.location.reload()` 同步狀態。
+
+```typescript
+// usePageMode 內部
+useEffect(() => {
+  let reloadTimer: ReturnType<typeof setTimeout> | null = null
+
+  const handler = (e: StorageEvent) => {
+    if (e.key !== DEMO_STORAGE_KEY) return
+    if (reloadTimer) clearTimeout(reloadTimer)
+    reloadTimer = setTimeout(() => window.location.reload(), 120)
+  }
+
+  window.addEventListener('storage', handler)
+  return () => {
+    if (reloadTimer) clearTimeout(reloadTimer)
+    window.removeEventListener('storage', handler)
+  }
+}, [])
+```
+
+**有效期精確同步問題**：storage event 只在 localStorage **寫入時**觸發，TTL 到期是時間事件不會觸發 storage event。因此多分頁的到期靠各自的 `setTimeout`（1-A3），基於同一個 `getDemoTimeRemaining()` 計算，終止時間自然一致（±1 秒內）。分頁 A 退出時執行 `clearDemoMode()`（刪除 localStorage key）→ 觸發 storage event → 分頁 B 收到後 reload。
+
+**新分頁打開**：新分頁打開時 `usePageMode()` 讀取 localStorage 計算剩餘時間 → 設定對應的 `setTimeout` → 與其他分頁的到期時間自然對齊。
+
+#### 1-A5. 演示模式下阻擋登入
+
+**規則**：演示模式下使用者點「登入/註冊」→ 彈 toast「請先退出演示模式」→ 不跳轉 auth.html。
+
+**實作位置**：所有 auth 跳轉處（Header 登入按鈕、LockedOverlay CTA、BottomCTA 等）先檢查 `mode === 'demo'`。
+
+```typescript
+// 在 getAuthUrl() 工具函數中包裝
+function handleAuthNavigation(mode: PageMode, authUrl: string) {
+  if (mode === 'demo') {
+    toast('請先退出演示模式')
+    return
+  }
+  window.location.href = authUrl
+}
+```
+
+#### 1-A6. 演示模式操作記錄策略
+
+**結論：不記錄**。演示模式下所有操作追蹤（`track()` 呼叫）靜默跳過，不送後端、不寫任何記錄。
+
+**實作位置**：`src/analytics/track.ts` 的 `track()` 函數頂部加入 mode 檢查。
+
+```typescript
+function track(event: string, data?: Record<string, unknown>) {
+  if (isDemoMode()) return // 演示模式完全靜默
+  // ...正常追蹤邏輯
+}
+```
+
+#### 1-A7. 演示模式下的 API 三層防禦
+
+**規則**：演示模式下不應有 API 呼叫，但若意外觸發 API 錯誤，靜默吞掉（不顯示錯誤 toast）。
+
+**三層防禦機制**：
+
+| 層級 | 機制 | 位置 | 說明 |
+|------|------|------|------|
+| L1（最優）| `enabled: mode === 'live'` | 各 useQuery hook | 禁止 API 發起 |
+| L2（備份）| Hook 層提前返回 mock | useModeAwareAction 消費端 | `if (mode !== 'live') return mockData` |
+| L3（最後防線）| 全局 onError 靜默 | QueryClient defaultOptions | 演示模式下 `onError` 不彈 toast |
+
+**L3 全局 React Query 配置**：
+
+```typescript
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      onError: (error) => {
+        if (isDemoMode()) {
+          logger.warn('[Demo] Unexpected API error:', error)
+          return // 靜默吞掉，不彈 toast
+        }
+        showErrorToast(error) // 正常錯誤處理
+      }
+    }
+  }
+})
+```
+
+**驗收**：演示模式下開啟 DevTools Network tab，應看不到任何 API 請求（除了靜態資源）。若有意外請求，console 只有 `[Demo] Unexpected API error` 日誌，無 toast。
+
+> 此變更同步影響 #10b 退出清理（改清 localStorage）和 #1c 觸發元件（改寫 localStorage）。
+
+**驗收標準（#1a）**：
+- `usePageMode()` 回傳單一 `PageMode` 值，正確判斷三種模式
+- 演示狀態存 localStorage + 2 小時 TTL（跨分頁可用）
+- 到期前 5 分鐘彈 toast、到期後自動退出 + reload
+- 跨分頁同步：storage event 監聽
+- 演示模式下 `track()` 完全靜默
+- L1/L2/L3 三層 API 防禦到位
+
+---
+
+### #1b [P0] `useModeAwareAction` hook + 本地操作持久化策略 + cache key 規範
+
+**目標**：統一「本地操作不寫 DB」策略 + 定義三模式 cache key + mock 系統整合接口
+
+**依賴**：#1a
+
+**施工項目**：
 
 #### 1-B. 三套 Mock 系統整合接口定義
 
@@ -624,59 +839,101 @@ queryKey: ['communityWall', mode, communityId]
 - Feed（發文）→ #6b
 
 ```typescript
+import { getErrorMessage } from '../lib/error'
+import { logger } from '../lib/logger'
+import { usePageMode } from './usePageMode'
+
+type ModeActionResult = { ok: true } | { ok: false; error: string }
+
 function useModeAwareAction<T>(handlers: {
-  visitor: () => void
-  demo: (data: T) => void
-  live: (data: T) => Promise<void>
+  visitor: (data: T) => void | Promise<void>
+  demo: (data: T) => void | Promise<void>
+  live: (data: T) => void | Promise<void>
 }) {
   const mode = usePageMode()
-  return (data: T) => handlers[mode](data)
+  return async (data: T): Promise<ModeActionResult> => {
+    try {
+      await handlers[mode](data)
+      return { ok: true }
+    } catch (error) {
+      logger.warn('[useModeAwareAction] action failed', { mode, error })
+      return { ok: false, error: getErrorMessage(error) }
+    }
+  }
 }
 ```
 
 **使用範例**：
 ```typescript
 const handleLike = useModeAwareAction<string>({
-  visitor: () => showRegisterGuide({ message: '註冊後即可鼓勵評價' }),
+  visitor: (_reviewId) => showRegisterGuide({ message: '註冊後即可鼓勵評價' }),
   demo: (reviewId) => setLocalLikes(prev => toggle(prev, reviewId)),
   live: async (reviewId) => { await likeMutation.mutateAsync(reviewId) },
 })
 ```
 
-> 各消費者工單（#3/#5b/#6b/#8）施工時改用此 hook，消除重複的 mode 分支邏輯。
+**本地操作持久化決策表**：
+
+| 操作類型 | 演示模式存儲 | 重新整理後 | 跨分頁同步 | 理由 |
+|---------|------------|---------|---------|------|
+| 按讚（評價/貼文）| React state | 消失 | 否 | 臨時互動模擬，消失可接受 |
+| 發文/留言 | React state | 消失 | 否 | 內容生成模擬，消失可接受 |
+| 購買 Lead | React state | 消失 | 否 | 交易模擬，消失可接受 |
+| 發送訊息 | React state | 消失 | 否 | 聊天模擬，消失可接受 |
+| 收藏（愛心）| React state | 消失 | 否 | 統一策略，不特殊化 |
+| Feed RoleToggle | sessionStorage | 保留 | 否 | 版面偏好，同分頁保留體驗較好 |
+
+**統一策略**：所有演示操作存純 React state，重新整理就消失。唯一例外是 Feed RoleToggle（版面切換狀態）存 sessionStorage 以避免切換版面後刷新重置。不存 localStorage（避免跨分頁衝突和清理遺漏）。
+
+> 各消費者工單（#3/#5b/#6b/#8a）施工時改用此 hook，消除重複的 mode 分支邏輯。
+
+**驗收標準（#1b）**：
+- `useModeAwareAction` hook 可正確派發三模式行為
+- 各 mock 系統消費者可透過 `usePageMode() === 'demo'` 取得統一判斷
+- 所有 queryKey 包含 mode 參數
+- 本地操作依持久化決策表：按讚/發文/購買存 React state，Feed RoleToggle 存 sessionStorage
+
+---
+
+### #1c [P0] `DemoGate.tsx` 觸發元件 — 長按/連按視覺回饋
+
+**目標**：演示模式隱藏入口，Logo 長按 5 秒或連按 3 次觸發
+
+**依賴**：#1a
+
+**施工項目**：
 
 #### 1-E. 演示模式觸發元件
 
 **新增檔案**：`src/components/DemoGate/DemoGate.tsx`
 
-- Logo 長按（3 秒）或連點（5 下）→ 彈出密碼輸入框
-- 密碼驗證成功 → `setDemoMode()`（寫入 localStorage + TTL，見 1-A2）
-- 頁面自動刷新進入演示模式
-- 密碼存在環境變數 `VITE_DEMO_PASSWORD`
+**觸發方式（不需密碼）**：
+- 首頁 Logo **長按 5 秒** → 直接進入演示模式
+- 首頁 Logo **連按 3 次** → 直接進入演示模式（觸控裝置 fallback）
+- 觸發後執行 `setDemoMode()` → `window.location.reload()` → 全站進入演示模式
+
+**視覺回饋設計**：
+- **長按回饋**：長按期間 Logo 周圍顯示倒數環（5→4→3→2→1），或顯示 tooltip「按住不放，X 秒進入演示模式」
+- **連按回饋**：第 1-2 次點擊 Logo 輕微 shake animation；第 3 次觸發時全屏 toast 確認「進入演示模式」
+- **手機 haptic feedback**：觸發成功時呼叫 `navigator.vibrate?.(50)`（若支援）
 
 **防衝突設計**：
 - 長按期間呼叫 `e.preventDefault()` 阻止瀏覽器原生選單
-- 長按未達 3 秒鬆開 → 正常觸發 `<a>` 導航
-- 連點 5 下方案作為 fallback
+- 長按未達 5 秒鬆開 → 正常觸發 `<a>` 導航（不進入演示）
+- 連按 3 次的判斷：500ms 內連續點擊 3 次才觸發
+- 已在演示模式中 → 長按/連按不重複觸發
 
-#### 1-F. 演示模式浮動標籤（基礎版）
-
-- 演示模式時右下角顯示「演示模式」小標籤
-- 標籤上有「退出」按鈕 → 執行 `exitDemoMode()` → 回到訪客模式
-
-**驗收標準**：
-- `usePageMode()` 回傳單一 `PageMode` 值（非物件），正確判斷三種模式
-- Logo 隱藏入口可觸發演示模式（長按 + 連點兩種方式皆可）
-- 演示狀態存 localStorage + 2 小時 TTL（跨分頁可用，TTL 到期自動退出）
-- 登入後演示狀態自動清除（`clearDemoMode()`）
-- `useModeAwareAction` hook 可正確派發三模式行為
-- 各 mock 系統消費者可透過 `usePageMode() === 'demo'` 取得統一判斷（不使用解構）
+**驗收標準（#1c）**：
+- 首頁 Logo 長按 5 秒或連按 3 次直接進入演示模式（不需密碼）
+- 長按過程中有視覺回饋（倒數環或 tooltip）
+- 連按時有 shake animation 回饋
+- 演示模式下點「登入/註冊」→ 彈 toast「請先退出演示模式」，不跳轉
 
 ---
 
 ### #2 [P0] 全站靜態 HTML 連結改為 React 路由 + `SEED_COMMUNITY_ID` 定義
 
-**目標**：消滅所有靜態 HTML 死路，讓訪客不會「掉出」React app
+**目標**：消滅除 `auth.html` 以外的靜態 HTML 死路，讓訪客不會「掉出」React app
 
 **施工項目**：
 
@@ -690,6 +947,7 @@ export const SEED_COMMUNITY_ID = 'xxx-待確認'
 ```
 
 **待確認**：seedId 值來源（選項 A：真實社區 ID / 選項 B：專用 seed 路由 / 選項 C：社區列表頁）
+**Blocker Gate**：`SEED_COMMUNITY_ID` 未定值前，不得合併 #2 相關改動。
 
 #### 2-B. 社區評價連結（6 處）
 
@@ -926,8 +1184,26 @@ mode === 'live' + role === 'consumer' → 顯示「此功能僅限合作房仲�
 
 #### 5b-A. 演示模式行為
 
-- seed 資料完整展示
+- seed 資料完整展示（MOCK_DB 的 16 個 Lead、3 個 Listings、Mock Agent Profile）
 - 所有按鈕可操作 → 本地執行（數字變、狀態變、動畫跑）→ 不寫 DB
+- 本地操作存純 React state，重新整理就消失
+
+**購買 Lead 演示流程**：
+1. 點「購買」→ 本地扣除配額（React state `remainingQuota -= 1`）
+2. Lead 狀態從「可購買」變為「已購買」（本地 state toggle）
+3. 購買歷史列表本地新增一筆（React state push）
+4. 保護期倒數計時：直接顯示一個固定的倒數 UI（如 `23:59:59`），不需要真的倒數
+
+**發送訊息演示流程**：
+1. 點「發送」→ 本地新增訊息到聊天列表（React state push）
+2. 顯示「已送出」toast
+3. 不呼叫 API、不走 Supabase
+
+**聊天室導航（沉浸感保護）**：
+- 發送訊息後，列表出現新訊息 → 點「打開聊天室」
+- **禁止**彈 toast「Mock 模式，聊天室功能需要切換到 Live 模式」（現有 `UAG/index.tsx:65-68` 的行為，破壞沉浸感）
+- **應改為**：進入簡易 Mock 聊天 UI，顯示本地訊息列表（React state），可輸入新訊息（本地 push）
+- 若建 Mock 聊天 UI 成本過高，退而求其次：進入真實聊天 UI（`/chat/{conversationId}`）但聊天室為空（只顯示本地訊息）
 
 #### 5b-B. 正式模式行為
 
@@ -949,9 +1225,9 @@ mode === 'live' + role === 'consumer' → 顯示「此功能僅限合作房仲�
 1. 每個消費者直接呼叫 `usePageMode()` — 回傳單一 `PageMode` 值，不需中間適配層
 2. 所有 `useMock` boolean → 統一用 `mode === 'demo'`
 3. React Query 的 `enabled` 條件：`enabled: mode === 'live' && ...`
-4. React Query 的 `queryKey` 必須包含 mode（見 #1 1-C Cache Key 規範）
+4. React Query 的 `queryKey` 必須包含 mode（見 #1b 1-C Cache Key 規範）
 5. Mock 資料回傳邏輯：`if (mode !== 'live') return MOCK_DATA`
-6. 互動操作建議使用 `useModeAwareAction`（見 #1 1-D2）
+6. 互動操作建議使用 `useModeAwareAction`（見 #1b 1-D2）
 
 #### 5b-D. 移除 mock/live toggle
 
@@ -1057,10 +1333,19 @@ else → redirect 首頁
 | `src/components/Feed/FeedPostCard.tsx` | 110 | 移除 `disabled={!isLoggedIn}` |
 | `src/hooks/useFeedData.ts` | 139, 183 | 移除獨立 `useMock` 判斷 |
 
+#### 6b-C. 舊 DEMO_IDS URL 301 重導向
+
+移除 `DEMO_IDS` 後，外部已分享的舊連結（如 `/feed/demo-001`）會 404。需在 #9 施工時補充 `vercel.json` 301 規則：
+
+```json
+{ "source": "/maihouses/feed/demo-:id", "destination": "/maihouses/feed/demo", "statusCode": 301 }
+```
+
 **驗收標準**：
 - 全域搜尋 `DEMO_IDS` 回傳 0 筆
 - Feed 根據 usePageMode 自動切換行為
 - `/feed/demo` 路由可正常載入 seed feed
+- `/feed/demo-001` 等舊 URL 301 至 `/feed/demo`
 
 ---
 
@@ -1070,32 +1355,75 @@ else → redirect 首頁
 
 **施工項目**：
 
-#### 7-A. 重定向邏輯
+#### 7-A. 重定向邏輯 + 角色分流
 
-**檔案**：`public/auth.html`
+**檔案**：`public/auth.html`（約 :1620-1660 `successRedirect` 函數）
 
+**現況問題**：`auth.html:1647` 統一 `go('/maihouses/feed/${user.id}')`，無角色區分。
+
+**應改為**：
+
+```javascript
+function successRedirect(user) {
+  // 1. 清除演示狀態（見 7-B）
+  try { localStorage.removeItem('mai-demo-verified') } catch (e) { /* Safari 隱私模式 */ }
+
+  // 2. 有 ?return= → 回到原頁
+  const returnPath = getSafeReturnPath()
+  if (returnPath) { go(returnPath); return }
+
+  // 3. 角色分流
+  const role = user.user_metadata?.role
+  if (role === 'agent') {
+    go('/maihouses/uag')
+  } else {
+    go('/maihouses/')  // consumer → 首頁
+  }
+}
 ```
-登入成功後：
-  1. 有 ?return= → 回到原頁（保留不變）
-  2. agent 角色 → /uag
-  3. consumer 角色 → /（首頁，帶已登入狀態）
-```
+
+**角色讀取**：從 `user.user_metadata.role` 取得（註冊時選擇的角色存在 Supabase user metadata 中）。
 
 #### 7-B. 清除演示狀態
 
-- 登入成功後自動清除演示驗證標記（`clearDemoMode()`）
-- 確保正式模式接管
+**呼叫位置**：`public/auth.html` 登入成功回調中（約 :1647 行），在 `go()` 重定向之前。
+
+```javascript
+// auth.html 登入成功回調
+function onLoginSuccess(user) {
+  // 1. 清除演示狀態（若有）
+  localStorage.removeItem('mai-demo-verified')
+
+  // 2. 根據角色重定向
+  if (hasReturn) go(getSafeReturnPath())
+  else if (user.role === 'agent') go('/maihouses/uag')
+  else go('/maihouses/')
+}
+```
+
+**為何不在 App.tsx 清除**：`usePageMode()` 判斷已登入時回傳 `'live'`，但 localStorage 中的演示標記仍殘留。雖不影響功能（已登入優先級最高），但登出後殘留標記可能讓使用者意外回到演示模式。因此在登入成功時明確清除。
+
+#### 7-C. 演示模式下進入 auth.html 的行為
+
+**規則**：演示模式下不應該進入 auth.html（見 #1a 1-A5）。所有 auth 跳轉點已被 `handleAuthNavigation()` 攔截，彈 toast「請先退出演示模式」。
+
+**但若使用者直接在網址列輸入 auth.html**：auth.html 本身不需要特殊處理，因為：
+- 使用者正常登入 → 7-B 的 `onLoginSuccess` 清除演示標記 → 進入正式模式
+- 使用者取消登入 → 回到原頁 → 仍在演示模式（不受影響）
 
 **驗收標準**：
 - agent 登入後到 UAG
 - consumer 登入後到首頁
-- 演示模式下登入後自動退出演示
+- 登入成功後 localStorage 無 `mai-demo-verified` 殘留
+- 演示模式下點「登入/註冊」按鈕被攔截，顯示 toast 提示
 
 ---
 
-### #8 [P2] 社區牆接入演示模式 — mode guard + effectiveRole 整合
+### #8a [P2] 社區牆權限重構 — `useEffectiveRole` hook + 按讚三模式
 
-**目標**：社區牆在演示模式下自動展示完整功能
+**目標**：抽取角色判斷 hook + 社區牆按讚改用 `useModeAwareAction`
+
+**依賴**：#1a、#1b
 
 **施工項目**：
 
@@ -1107,6 +1435,8 @@ else → redirect 首頁
 
 ```typescript
 // src/hooks/useEffectiveRole.ts（新增）
+type Role = 'guest' | 'consumer' | 'resident' | 'agent' | 'admin' | 'official'
+
 function useEffectiveRole(urlRole?: Role): Role {
   const mode = usePageMode()
   const { role: authRole, isAuthenticated, loading } = useAuth()
@@ -1121,6 +1451,8 @@ function useEffectiveRole(urlRole?: Role): Role {
 }
 ```
 
+> **⚠️ `admin` / `official` 角色**：`getPermissions()` 目前只處理 guest/consumer/resident/agent，admin 和 official 未定義權限。施工時須補充這兩個角色的權限對照表，或明確標示為 `agent` 超集。
+
 | 檔案 | 行號 | 動作 |
 |------|------|------|
 | `src/hooks/useEffectiveRole.ts` | 新增 | 獨立 hook，封裝 mode + role 計算邏輯 |
@@ -1131,7 +1463,7 @@ function useEffectiveRole(urlRole?: Role): Role {
 
 > **Mode Guard 執行順序規範**（同 #3）：mode 判斷必須在 auth 判斷之前，否則演示模式未登入直接被 `Wall.tsx:244 if (!isAuthenticated)` 攔截。
 
-建議改用 `useModeAwareAction`（見 #1 1-D2）：
+建議改用 `useModeAwareAction`（見 #1b 1-D2）：
 
 ```typescript
 const handleLike = useModeAwareAction<string>({
@@ -1148,18 +1480,49 @@ const handleLike = useModeAwareAction<string>({
 |------|------|------|
 | `src/pages/Community/Wall.tsx` | 241-256 | `handleLike` 改用 `useModeAwareAction`（mode guard 自動在 auth guard 之前）|
 | `src/pages/Community/Wall.tsx` | 258-261 | `handleUnlock` 只彈 toast「功能開發中」→ 改為 `showRegisterGuide()` |
+**驗收標準（#8a）**：
+- `useEffectiveRole()` hook 正確回傳角色（demo→resident、loading→guest、live→authRole）
+- 社區牆按讚走 `useModeAwareAction`（mode guard 在 auth guard 之前）
+- 演示模式下社區牆全部可見
+
+---
+
+### #8b [P2] 社區牆互動本地化 — 發文/留言演示 + LockedOverlay CTA + BottomCTA
+
+**目標**：社區牆互動操作本地化 + 引導完善
+
+**依賴**：#8a、#14b、#15
+
+**施工項目**：
+
+#### 8-B2. 互動引導修正
+
+| 檔案 | 行號 | 動作 |
+|------|------|------|
+| `src/pages/Community/Wall.tsx` | 258-261 | `handleUnlock` 改為 `showRegisterGuide()` |
 | `src/pages/Community/components/PostsSection.tsx` | 279 | 移除 `disabled={!isLoggedIn}`，改用 `useModeAwareAction` |
 | `src/pages/Community/components/BottomCTA.tsx` | 32 | `auth.html` → `getAuthUrl()` + `?return=`（見 #15）|
 
 #### 8-C. 演示模式下操作本地化
 
-- 發文、留言 → 本地新增（不寫 DB）
+- 發文、留言 → 本地新增（不寫 DB）→ 存純 React state，重新整理就消失
+- 按讚 → 本地 toggle（React state `Set<string>` 記錄已按讚 ID）
 
-**驗收標準**：
-- 演示模式下社區牆全部可見，操作本地化
-- 演示模式按讚/發文不觸發 API（mode guard 在 auth guard 之前）
-- 訪客模式維持現有 guest 限制（不動）
-- LockedOverlay CTA 有明確的註冊引導（不再是「功能開發中」toast）
+**發文演示流程**：
+1. 使用者輸入文字 → 點「發表」
+2. 本地新增一筆到貼文列表最上方（React state `unshift`）
+3. 作者顯示為「演示用戶」，時間顯示為「剛才」
+4. 不呼叫 API
+
+**留言演示流程**：
+1. 使用者輸入留言 → 點「送出」
+2. 本地新增一筆到該貼文的留言列表（React state `push`）
+3. 不呼叫 API
+
+**驗收標準（#8b）**：
+- 演示模式發文/留言本地化，不觸發 API
+- LockedOverlay CTA 改為 `showRegisterGuide()`
+- BottomCTA auth 引用改用 `getAuthUrl()`
 - 社區牆相關檔案搜尋 `auth.html` 回傳 0 筆
 
 ---
@@ -1178,6 +1541,7 @@ const handleLike = useModeAwareAction<string>({
 | `public/feed-consumer.html` | 移除或 redirect |
 | `public/auth/after-login.html` `:20` | `<noscript>` fallback → 改為 `/maihouses/` |
 | `vercel.json` `:57` | Rewrite rule `"dest": "/auth.html"` — 需同步更新 |
+| `vercel.json` | 新增 301：`/feed/demo-:id` → `/feed/demo`（見 #6b-C）|
 
 **前置條件**：#2、#6 完成後才能移除
 
@@ -1187,9 +1551,11 @@ const handleLike = useModeAwareAction<string>({
 
 ---
 
-### #10 [P2] 演示模式浮動標籤 UI + 退出全域 state 清理
+### #10a [P2] `DemoBadge.tsx` 浮動標籤 UI + 全域掛載
 
-**目標**：演示模式下有明確的視覺提示，退出時清理所有殘留狀態
+**目標**：演示模式下有明確的視覺提示
+
+**依賴**：#1a
 
 **施工項目**：
 
@@ -1197,42 +1563,78 @@ const handleLike = useModeAwareAction<string>({
 
 **新增檔案**：`src/components/DemoGate/DemoBadge.tsx`
 
-- 右下角固定浮動
-- 顯示「演示模式」
-- 有「退出」按鈕 → 執行 `exitDemoMode()` → 回到訪客模式
+**桌面版**：
+- 右下角固定浮動（`fixed bottom-4 right-4`）
+- `z-index: 40`（低於 modal/toast 的 50，高於一般內容）
+- 顯示「演示模式」文字 + 剩餘時間 + 「退出」按鈕
+- 小尺寸（不遮擋主要內容）
+
+**手機版**：
+- 位置改為**左下角**（`fixed bottom-4 left-4`），避免遮擋 MobileActionBar 的「加 LINE」和「致電」按鈕（右下角）
+- 或改為**頂部通知條**（`fixed top-0 left-0 right-0`），薄橫條不佔太多空間
+
+> **⚠️ 具體 UI 設計需呼叫 `/ui-ux-pro-max` 確認**，此處僅定義功能需求。
 
 #### 10-B. 全域掛載
 
 - 在 App.tsx 或 Layout 層根據 `usePageMode()` 條件渲染
+- `mode === 'demo'` → 渲染 `<DemoBadge />`
+- 其他模式 → 不渲染
+
+**驗收標準（#10a）**：
+- 演示模式下每個頁面都看得到標籤
+- 正式模式和訪客模式不顯示標籤
+- 手機版不遮擋 MobileActionBar
+
+---
+
+### #10b [P2] `exitDemoMode()` 退出清理策略 + 確認 dialog
+
+**目標**：退出時清理所有殘留狀態
+
+**依賴**：#10a
+
+**施工項目**：
 
 #### 10-C. 退出演示全域清理
+
+**退出流程（含確認）**：
+
+1. 使用者點 DemoBadge「退出」按鈕
+2. 彈 toast 確認：「確定要退出演示模式嗎？」+ 「確定退出」action button
+3. 使用者確認 → 彈 toast「已退出演示模式，重新載入中...」
+4. 延遲 500ms（讓 toast 顯示）→ 執行 `exitDemoMode()`
 
 **`exitDemoMode()` 清理清單**：
 
 ```typescript
 function exitDemoMode(queryClient: QueryClient) {
-  // 1. 清除演示驗證標記（localStorage + TTL，見 #1 1-A2）
+  // 1. 清除演示驗證標記（localStorage + TTL，見 #1a 1-A2）
   clearDemoMode()
 
   // 2. 清除演示期間的 localStorage 殘留（如 uagModeStore 遺留）
-  localStorage.removeItem('mai-uag-mode') // uagModeStore STORAGE_KEY
+  try { localStorage.removeItem('mai-uag-mode') } catch { /* Safari 隱私模式 */ }
 
-  // 3. 清除 React Query cache — 防止演示期間本地操作殘留
+  // 3. 清除 Feed RoleToggle sessionStorage
+  try { sessionStorage.removeItem('feed-demo-role') } catch { /* no-op */ }
+
+  // 4. 清除 React Query cache — 防止演示期間本地操作殘留
   //    Race Condition 範例：演示按讚 +1 → 退出 → cache 殘留 +1 → 訪客看到錯誤數字
   queryClient.clear()
 
-  // 4. 觸發頁面重新載入（清除所有 component state）
+  // 5. 觸發頁面重新載入（清除所有 component state）
   window.location.reload()
 }
 ```
 
 > **為何需要 `queryClient.clear()`**：`window.location.reload()` 雖然會重建 React tree，但如果 QueryClient 是 module-level singleton（常見模式），cache 可能殘留。明確呼叫 `clear()` 確保資料隔離。
 
-**驗收標準**：
-- 演示模式下每個頁面都看得到標籤
-- 點「退出」後回到訪客模式，頁面狀態完全乾淨
-- 正式模式和訪客模式不顯示標籤
-- 退出後 localStorage 無演示相關殘留
+> **為何不直接 reload 而需確認**：投資人可能正在操作（填寫表單、瀏覽內容），直接 reload 會丟失上下文。確認 dialog 給使用者一個反悔機會。
+
+**驗收標準（#10b）**：
+- 點「退出」→ 彈確認 toast → 確認後退出
+- 退出後回到訪客模式，頁面狀態完全乾淨
+- 退出後 localStorage / sessionStorage 無演示相關殘留
 
 ---
 
@@ -1273,14 +1675,31 @@ function exitDemoMode(queryClient: QueryClient) {
 #### 12-B. 三模式下的 Header 行為
 
 ```
-mode === 'visitor' → 登入/註冊按鈕
-mode === 'demo'    → 隱藏登入/註冊（演示不需要），可顯示「演示中」小標記
-mode === 'live'    → 頭像/帳號 + 下拉選單
+mode === 'visitor' → 登入/註冊按鈕（點擊跳轉 auth.html）
+mode === 'demo'    → 隱藏登入/註冊按鈕（演示模式下點登入會被攔截，乾脆不顯示）
+mode === 'live'    → 頭像/帳號 + 下拉選單（我的帳號、登出）
 ```
+
+**演示模式 Header 特殊處理**：
+- 登入/註冊按鈕不顯示（避免投資人困惑「演示模式為什麼要登入」）
+- 不額外加「演示中」標記在 Header（DemoBadge 浮動標籤已有此功能，見 #10a）
+
+> **⚠️ Header 三模式 UI 差異需呼叫 `/ui-ux-pro-max` 確認最終設計**
+
+#### 12-C. GlobalHeader 同步修正
+
+**問題**：Feed/社區牆使用的 `GlobalHeader.tsx` 有 `useAuth()` 但右側按鈕邏輯不完整 — 已登入時可能仍顯示登入按鈕。
+
+**檔案**：`src/components/layout/GlobalHeader.tsx`
+
+- `:150+` — 確認 `isAuthenticated` 時右側按鈕隱藏「登入」、顯示「帳號選單」
+- 與首頁 Header（#12-A）邏輯保持一致
 
 **驗收標準**：
 - 已登入用戶在首頁不再看到「登入/註冊」
+- 已登入用戶在 Feed/社區牆的 GlobalHeader 也不顯示「登入」按鈕
 - 已登入 agent 可從首頁 Header 快速進入 UAG 或自己的 Feed
+- 演示模式下兩個 Header 都不顯示登入/註冊按鈕
 
 ---
 
@@ -1295,27 +1714,87 @@ mode === 'live'    → 頭像/帳號 + 下拉選單
 - 目前使用手寫 HTML `LegacyHeader`，功能與首頁 Header 不一致（無搜尋框、無膠囊、無 useAuth）
 - 改為使用統一 `<Header />` 元件或新的全站統一 Header
 
+**三模式行為**：統一使用 `<Header />` 後，自動繼承 #12 的三模式行為（visitor→登入按鈕、demo→隱藏登入、live→頭像下拉）。
+
 **驗收標準**：
 - 房源列表頁的 Header 與首頁一致
+- 三模式行為與首頁 Header 一致
 - 已登入狀態正確顯示
 
 ---
 
-### #14 [P0] 全站註冊引導統一策略
+### #14a [P0] 前置確認：Toast action button 能力
 
-**目標**：建立全站統一的「引導註冊」機制，解決 8+ 處各自實作、文案不一、無 action button 的問題
+**目標**：確認 toast 元件是否支援 action slot，若不支援需先擴展
 
 **施工項目**：
-
-#### 14-A. `useRegisterGuide()` hook
 
 **新增檔案**：`src/hooks/useRegisterGuide.ts`
 
 ```typescript
+import { getAuthUrl } from '../lib/authUtils'
+
 interface RegisterGuideOptions {
   /** 引導文案，依場景不同 */
   message: string
   /** 當前頁面路徑，自動帶入 ?return= */
+  returnPath?: string
+}
+
+function useRegisterGuide() {
+  const location = useLocation()
+
+  return {
+    showGuide: (options: RegisterGuideOptions) => {
+      try {
+        const returnPath =
+          options.returnPath ??
+          `${location.pathname}${location.search}${location.hash}`
+        toast({
+          message: options.message,
+          action: {
+            label: '免費註冊',
+            onClick: () => { window.location.href = getAuthUrl('signup', returnPath) }
+          },
+          duration: 5000
+        })
+      } catch (error) {
+        logger.warn('[useRegisterGuide] showGuide failed', { error })
+      }
+    }
+  }
+}
+```
+
+#### 14a-A. 確認 toast action slot
+
+1. 檢查現有 toast 元件（sonner 或自建）是否支援 `action: { label, onClick }` 參數
+2. 若支援 → #14a 完成，進入 #14b
+3. 若不支援 → 擴展 toast 元件，新增 action slot
+
+**驗收標準（#14a）**：
+- toast 可接受 `action: { label: string, onClick: () => void }` 參數
+- action button 可正常點擊觸發 callback
+
+---
+
+### #14b [P0] `useRegisterGuide()` hook + 全站 8 場景文案定義
+
+**目標**：建立統一「引導註冊」機制
+
+**依賴**：#14a、#15
+
+**施工項目**：
+
+#### 14b-A. `useRegisterGuide()` hook
+
+**新增檔案**：`src/hooks/useRegisterGuide.ts`
+
+```typescript
+import { getAuthUrl } from '../lib/authUtils'
+
+interface RegisterGuideOptions {
+  message: string
   returnPath?: string
 }
 
@@ -1329,8 +1808,10 @@ function useRegisterGuide() {
         action: {
           label: '免費註冊',
           onClick: () => {
-            const returnPath = options.returnPath ?? location.pathname
-            window.location.href = `/maihouses/auth.html?mode=signup&return=${encodeURIComponent(returnPath)}`
+            const returnPath =
+              options.returnPath ??
+              `${location.pathname}${location.search}${location.hash}`
+            window.location.href = getAuthUrl('signup', returnPath)
           }
         },
         duration: 5000
@@ -1340,26 +1821,33 @@ function useRegisterGuide() {
 }
 ```
 
-#### 14-B. Toast action button 能力（前置阻塞）
+#### 14b-B. 全站引導文案統一 + 完整觸發場景清單
 
-**前置條件**：確認 toast 元件是否支援 action slot。若不支援，需先擴展。
+| # | 場景 | 文案 | 觸發位置（檔案:行號） | 歸屬工單 |
+|---|------|------|---------------------|---------|
+| 1 | 按讚（房產詳情頁） | 「註冊後即可鼓勵評價」 | `CommunityReviews.tsx:250` | #3 |
+| 2 | 按讚（社區牆） | 「註冊後即可鼓勵評價」 | `Wall.tsx:241` | #8a |
+| 3 | 留言（社區牆） | 「註冊後即可參與討論」 | `PostsSection.tsx:279` | #8b |
+| 4 | 留言（Feed） | 「註冊後即可參與討論」 | `FeedPostCard.tsx:110` | #6b |
+| 5 | 查看更多評價（LockedOverlay） | 「註冊解鎖完整社區評價」 | `CommunityReviews.tsx:358` | #3 |
+| 6 | 發文（Feed） | 「註冊後即可發表動態」 | Feed 發文按鈕 | #6b |
+| 7 | 社區牆 BottomCTA | 「免費註冊查看完整社區」 | `BottomCTA.tsx:32` | #8b |
+| 8 | Feed 私密牆 | 「註冊後即可查看私密動態」 | `PrivateWallLocked.tsx:23` | #6a |
 
-> **⚠️ 阻塞警告**：若 toast 不支援 action button，整個 #14 `useRegisterGuide` 的核心功能（「免費註冊」可點擊按鈕）無法實作。**施工前必須先確認**，必要時在 #14 開頭新增「14-B0. 擴展 toast action slot」子項目。
+**Toast 行為規範**：
+- action button 文字：「免費註冊」
+- 點擊後：透過 `getAuthUrl('signup', returnPath)` 跳轉（含 `?return=`）
+- toast 位置：底部（bottom）
+- toast 持續時間：5 秒
+- 演示模式下這些觸發點不會出現（演示模式功能全開，不需引導註冊）
 
-#### 14-C. 全站引導文案統一
+> **⚠️ Toast 規範需呼叫 `/ui-ux-pro-max` 確認最終設計**
 
-| 場景 | 文案 | 呼叫位置 |
-|------|------|---------|
-| 按讚 | 「註冊後即可鼓勵評價」 | CommunityReviews、Wall.tsx |
-| 留言 | 「註冊後即可參與討論」 | PostsSection、FeedPostCard |
-| 查看更多評價 | 「註冊解鎖完整社區評價」 | LockedOverlay |
-| 購買 Lead | 「註冊後即可使用客戶雷達」 | UAG（不適用，訪客看 Landing Page）|
-| 發文 | 「註冊後即可發表動態」 | Feed |
-
-**驗收標準**：
+**驗收標準（#14b）**：
 - 全站所有「引導註冊」統一使用 `useRegisterGuide()`
 - Toast 有「免費註冊」action button，可點擊跳轉
 - 所有跳轉自動帶 `?return=` 參數回到原頁
+- 上述 8 個觸發場景全部接入
 
 ---
 
@@ -1379,20 +1867,34 @@ function useRegisterGuide() {
 
 ```typescript
 // 工具函數
-function getAuthUrl(mode: 'login' | 'signup', returnPath?: string): string {
-  const url = new URL('/maihouses/auth.html', window.location.origin)
-  url.searchParams.set('mode', mode)
-  if (returnPath) url.searchParams.set('return', returnPath)
-  return url.toString()
+function getAuthUrl(mode: 'login' | 'signup', returnPath?: string, role?: 'agent' | 'consumer'): string {
+  try {
+    const url = new URL('/maihouses/auth.html', window.location.origin)
+    url.searchParams.set('mode', mode)
+    if (returnPath) url.searchParams.set('return', returnPath)
+    if (role) url.searchParams.set('role', role)
+    return url.toString()
+  } catch {
+    // fallback：SSR 或異常 origin 下硬拼路徑
+    const params = new URLSearchParams({ mode })
+    if (returnPath) params.set('return', returnPath)
+    if (role) params.set('role', role)
+    return `/maihouses/auth.html?${params.toString()}`
+  }
 }
 ```
 
 **新增檔案**：`src/lib/authUtils.ts`（集中管理 auth 相關工具函數）
 
+**使用範例**：
+- 一般：`getAuthUrl('signup', \`${location.pathname}${location.search}${location.hash}\`)`
+- UAG Landing CTA：`getAuthUrl('signup', '/maihouses/uag', 'agent')`
+
 **驗收標準**：
 - 全專案 `navigate(` 搜尋不含任何 `.html` 路徑
 - 全專案 `auth.html` 引用皆通過 `getAuthUrl()` 產生
 - 所有跳轉皆帶 `?return=` 參數
+- UAG Landing「成為合作房仲」CTA 帶 `?role=agent`
 - 註冊/登入完成後正確回到原頁
 
 ---
@@ -1425,289 +1927,278 @@ function getAuthUrl(mode: 'login' | 'signup', returnPath?: string): string {
 
 ---
 
-## 優化審查變更紀錄（2026-02-12）
+### #17 [P1] `src/lib/error.ts` 統一錯誤處理工具
 
-> 根據三組審查團隊（訪客 × 5 / 演示 × 5 / 正式 × 5 路徑）對照 SOLID / DRY / SoC / Composition over Inheritance 原則的審查結果，以下為本次補入工單的變更摘要。
+**目標**：建立單一錯誤處理入口，統一將 `unknown` 轉成可讀訊息，消除各處重複 `instanceof Error` 判斷。
 
-### P0 必須補入（9 項）
+**施工項目**：
 
-| # | 變更 | 影響工單 | 違反原則 |
-|---|------|---------|---------|
-| 1 | `usePageMode()` 回傳單一 `PageMode` 值（非物件）| #1（1-A）| ISP |
-| 2 | Mode Guard 必須在 Auth Guard 之前 + 執行順序規範 | #3、#8 | SoC |
-| 3 | React Query Cache Key 必須包含 mode | #1（1-C）| 資料隔離 |
-| 4 | 新增 `useModeAwareAction` hook 統一「本地操作不寫 DB」策略 | #1（1-D2）→ #3/#5b/#6b/#8 消費 | DRY |
-| 5 | 演示退出 `exitDemoMode()` 加入 `queryClient.clear()` | #10（10-C）| 狀態完整性 |
-| 6 | 演示狀態從 sessionStorage 改為 localStorage + 2h TTL（跨分頁） | #1（1-A2）| 資料一致性 |
-| 7 | ✅ 建立統一錯誤處理工具 `src/lib/error.ts` | #17 | DRY + Type Safety |
-| 8 | ✅ Supabase RPC 錯誤處理強化 + `RAISE WARNING` 不阻斷交易 | #19（3 migration） | Fail Safe |
-| 9 | Mock Data 整合需符合三模式架構（visitor/demo/live 區分） | #20 | SoC + DRY |
+#### 17-A. 統一錯誤提取策略（Fail Fast + Early Return）
+**檔案**：`src/lib/error.ts`
 
-### P1 建議補入（9 項）
+- 新增命名常數 `UNKNOWN_ERROR_MESSAGE`、`ERROR_MESSAGE_KEYS`，移除 magic string。
+- `getErrorMessage()` 改為 guard-clause 流程：`Error` → `string` → `record` → fallback。
+- 拆分 `isErrorRecord()`、`normalizeMessage()`，確保函式職責單一。
 
-| # | 變更 | 影響工單 | 違反原則 |
-|---|------|---------|---------|
-| 7 | LockedOverlay 移除內建 `handleAuthRedirect`，改由父組件注入 `onCtaClick` | #3（3-B）、#8 | DIP + SRP |
-| 8 | `effectiveRole` 抽取為 `useEffectiveRole()` 獨立 hook | #8（8-A）| SRP |
-| 9 | Toast action button 能力前置確認（阻塞警告）| #14（14-B）| 前置依賴 |
-| 10 | RoleToggle 語義釐清：`DemoRoleToggle` vs `DevRoleSwitcher` | #6b（6b-A2）| ISP |
-| 11 | 第 3 則評價演示模式直接解鎖（取代跳到社區牆）| #3（3-B）| LSP |
-| 12 | AgentTrustCard 移除 isDemo prop，改內部呼叫 `usePageMode()` | #4a（4a-A2）| DIP + ISP |
-| 13 | ✅ 錯誤處理重構 — 3 檔 5 處改用 `getErrorMessage()` | #18 | DRY |
-| 14 | 標準化 console.log — 整合 `logger` + `getErrorMessage()` | #21 | DRY + 可追蹤性 |
-| 15 | Tailwind / React Hook 優化 | #22、#23 | Code Quality |
+#### 17-B. Defensive Programming：巢狀錯誤與循環引用防護
+**檔案**：`src/lib/error.ts`
 
----
+- 新增 `getMessageFromRecord(record, visited)`，支援巢狀 `message / msg / error` 提取。
+- 使用 `WeakSet` 追蹤訪問過的物件，避免循環引用造成遞迴爆炸。
+- 新增 `serializeUnknownError()`，`JSON.stringify` 失敗時 fallback `String(error)`，最終保底 `Unknown error`。
 
-## 程式碼審計 — 優化項目清單
+#### 17-C. Result 型別包裝（同步/非同步）
+**檔案**：`src/lib/error.ts`
 
-> 2026-02-12 由 codebase 掃描產出，每項附 `file:line` 證據。
->
-> **最後更新**: 2026-02-12 新增 I 節 (已完成項目記錄)
+- 保留 `safeAsync()`、`safeSync()` 對外 API，不破壞既有呼叫點。
+- 所有失敗路徑統一回傳 `Result<T>` 的 `{ ok: false, error }` 結構。
 
----
+#### 17-D. 測試驗證（17 tests）
+**檔案**：`src/lib/__tests__/error.test.ts`
 
-### A. 靜態 HTML 死路（使用者點擊後掉出 React App）
+- 覆蓋 Error/string/object/null/undefined 與 async/sync 失敗分支。
+- 驗證 `safeAsync()`、`safeSync()` 在 throw/reject 時回傳一致錯誤格式。
 
-#### A-1. `community-wall_mvp.html` 引用（6 處）
+**驗收標準**：
+- [x] `src/lib/error.ts` 為單一錯誤處理入口，無重複 magic string
+- [x] `getErrorMessage()` 具備 early return + defensive guard
+- [x] `safeAsync()` / `safeSync()` 型別與回傳格式一致
+- [x] `src/lib/__tests__/error.test.ts` 17 tests 全通過
+- [x] `npm run typecheck` 通過
+- [x] `npm run check:utf8` 通過
 
-| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
-|---|------|------|-----------|---------|
-| A-1a | `src/constants/routes.ts` | 31 | `COMMUNITY_WALL_MVP: '/maihouses/community-wall_mvp.html'` | #2 |
-| A-1b | `src/features/home/sections/CommunityTeaser.tsx` | 11 | `const SEED_REVIEWS_URL = '/maihouses/community-wall_mvp.html'` | #2 |
-| A-1c | `src/features/home/sections/CommunityTeaser.tsx` | 103 | `window.location.href = SEED_REVIEWS_URL` | #2 |
-| A-1d | `src/features/home/sections/CommunityTeaser.tsx` | 205 | `href={SEED_REVIEWS_URL}` — 「查看更多真實住戶評價」 | #2 |
-| A-1e | `src/components/PropertyDetail/CommunityReviews.tsx` | 247 | `navigate('/maihouses/community-wall_mvp.html')` — 「前往社區牆」 | #4b |
-| A-1f | `src/features/home/components/CommunityWallCard.tsx` | 70 | `const communityWallUrl = '/maihouses/community-wall_mvp.html'` | #4b |
+### #17 施工紀錄（2026-02-12）
 
-#### A-2. `auth.html` 引用（10 處）
+#### 修改檔案
 
-| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
-|---|------|------|-----------|---------|
-| A-2a | `src/constants/routes.ts` | 43 | `AUTH: '/maihouses/auth.html'` | #2 |
-| A-2b | `src/components/Header/Header.tsx` | 81 | `href={\`${ROUTES.AUTH}?mode=login\`}` — 桌面版「登入」 | #2 |
-| A-2c | `src/components/Header/Header.tsx` | 90 | `href={\`${ROUTES.AUTH}?mode=signup\`}` — 桌面版「免費註冊」 | #2 |
-| A-2d | `src/components/Header/Header.tsx` | 102 | `href={\`${ROUTES.AUTH}?mode=login\`}` — 手機版「登入」 | #2 |
-| A-2e | `src/components/Header/Header.tsx` | 110 | `href={\`${ROUTES.AUTH}?mode=signup\`}` — 手機版「免費註冊」 | #2 |
-| A-2f | `src/components/PropertyDetail/CommunityReviews.tsx` | 243 | `navigate('/maihouses/auth.html?mode=login')` — 「註冊查看」 | #4b |
-| A-2g | `src/components/layout/GlobalHeader.tsx` | 283 | `href="/maihouses/auth.html?mode=login"` — Feed 登入按鈕 | #6a |
-| A-2h | `src/pages/Community/components/BottomCTA.tsx` | 32 | `window.location.href = '/maihouses/auth.html'` | #8 |
-| A-2i | `src/pages/Chat/index.tsx` | 62 | `href="/maihouses/auth.html?mode=login"` — Chat 登入提示 | #2（2-D）|
-| A-2j | `src/pages/PropertyListPage.tsx` | 100 | `href="/maihouses/auth.html"` — 房源列表登入按鈕 | #2（2-D）|
+1. `src/lib/error.ts`
+   - 重構為單一職責 helper：`isErrorRecord` / `normalizeMessage` / `getMessageFromRecord` / `serializeUnknownError`
+   - `getErrorMessage()` 改為 guard-clause + named constants，移除型別斷言 `as { ... }`
+   - 新增循環引用防護（`WeakSet`）與 fallback 保底策略
 
-#### A-3. `feed-agent.html` / `feed-consumer.html` 引用（5 處）
+2. `.claude/tickets/MOCK-SYSTEM.md`
+   - 勾選進度摘要 `#17`
+   - 補齊 `#17` 工單定義、驗收標準與施工紀錄
 
-| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
-|---|------|------|-----------|---------|
-| A-3a | `src/constants/routes.ts` | 22 | `FEED_AGENT_LEGACY: '/maihouses/feed-agent.html'` | #6a |
-| A-3b | `src/constants/routes.ts` | 25 | `FEED_CONSUMER_LEGACY: '/maihouses/feed-consumer.html'` | #6a |
-| A-3c | `src/components/layout/GlobalHeader.tsx` | 8-9 | 註解提示同步 `feed-consumer.html` 與 `feed-agent.html` | #6a |
-| A-3d | `public/auth/after-login.html` | 20 | `<noscript>..url=/maihouses/feed-consumer.html</noscript>` | #9 |
-| A-3e | Legacy HTML 頁面互相引用 | — | `feed-agent.html` ↔ `feed-consumer.html` ↔ `community-wall_mvp.html` | #9 |
+#### 驗證結果
+
+```bash
+npm run test -- src/lib/__tests__/error.test.ts   # 17 passed
+npm run typecheck                                 # 0 errors
+npm run check:utf8                                # UTF-8 check passed / Mojibake check passed
+```
 
 ---
 
-### B. 廢棄路由死路
+### #24 [P2] Chat 頁面三模式支持
 
-| # | 檔案 | 行號 | 程式碼片段 | 問題 | 歸屬工單 |
-|---|------|------|-----------|------|---------|
-| B-1 | `src/constants/routes.ts` | 16 | `FEED_AGENT: '/maihouses/feed/agent'` | 路由不存在 | #6a |
-| B-2 | `src/constants/routes.ts` | 19 | `FEED_CONSUMER: '/maihouses/feed/consumer'` | 路由不存在 | #6a |
-| B-3 | `src/components/layout/GlobalHeader.tsx` | 111 | `homeLink = ROUTES.FEED_AGENT` — agent Logo 導航 | 點擊 → 404 | #6a |
-| B-4 | `src/components/layout/GlobalHeader.tsx` | 113 | `homeLink = ROUTES.FEED_CONSUMER` — consumer Logo 導航 | 點擊 → 404 | #6a |
-| B-5 | `src/components/layout/GlobalHeader.tsx` | 246 | `const targetPath = ROUTES.FEED_CONSUMER` — Profile 導航 | 點擊 → 404 | #6a |
+**目標**：Chat 頁面接入 `usePageMode()`，三模式下行為明確
 
----
+**現況**：`src/pages/Chat/index.tsx` 使用 `useAuth()` + `useConsumerSession()`，無 `usePageMode()` 支持。演示模式下發送訊息會寫 DB。
 
-### C. 舊 Mock 機制散布
+**施工項目**：
 
-#### C-1. `isDemoPropertyId()` 孤島邏輯（5 個檔案、13+ 處引用）
+#### 24-A. Chat 三模式行為定義
 
-| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
-|---|------|------|-----------|---------|
-| C-1a | `src/constants/property.ts` | 1-4 | `DEMO_PROPERTY_ID = 'MH-100001'` + `isDemoPropertyId()` 定義 | #4a |
-| C-1b | `src/services/propertyService.ts` | 5, 366 | `import { isDemoPropertyId }` → `isDemo = isDemoPropertyId(publicId)` | #4a |
-| C-1c | `src/pages/PropertyDetailPage.tsx` | 29, 127 | `import { isDemoPropertyId }` → `isDemo: isDemoPropertyId(id)` | #4a |
-| C-1d | `src/pages/PropertyDetailPage.tsx` | 249 | `enabled: !property.isDemo && Boolean(property.publicId)` — 禁用 API query | #4a |
-| C-1e | `src/pages/PropertyDetailPage.tsx` | 261-279 | Mock 社會證明（基於 publicId charCode 產生虛擬瀏覽人數） | #4a |
-| C-1f | `src/pages/PropertyDetailPage.tsx` | 292-294 | Demo 導向 `/maihouses/assure?mock=true` | #4a |
-| C-1g | `src/pages/PropertyDetailPage.tsx` | 679-713 | Dev 測試按鈕（僅 Demo 頁面顯示切換安心留痕開關） | #4a |
-| C-1h | `src/pages/PropertyDetailPage.tsx` | 774-775 | 傳遞 `isDemo` prop → CommunityReviews | #4a |
-| C-1i | `src/pages/PropertyDetailPage.tsx` | 784-785 | 傳遞 `isDemo` prop → AgentTrustCard | #4a |
-| C-1j | `src/pages/PropertyDetailPage.tsx` | 813 | Demo 時自動顯示已驗證徽章 | #4a |
-| C-1k | `src/pages/propertyDetail/PropertyDetailActionLayer.tsx` | 86 | `property.isDemo ? true` — MobileActionBar isVerified 判斷 | #4a |
+| 區塊 | 訪客模式 | 演示模式 | 正式模式 |
+|------|---------|---------|---------|
+| 訊息列表 | 顯示「請登入或取得有效連結」提示 | 本地 Mock 聊天 UI | API 真實訊息 |
+| 發送訊息 | 不可操作（提示登入）| 本地新增（React state push）| API 寫入 |
+| Session 過期 | 顯示過期提示 | 不檢查（演示無 session）| 顯示過期提示 |
 
-#### C-2. `uagModeStore` 手動 Mock/Live 切換（3 個檔案）
+#### 24-B. 施工位置
 
-| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
-|---|------|------|-----------|---------|
-| C-2a | `src/stores/uagModeStore.ts` | 全檔 | Zustand store：STORAGE_KEY、URL_PARAM_KEY、localStorage 讀寫 | #5b |
-| C-2b | `src/pages/UAG/hooks/useUAGData.ts` | 20, 78-103 | `useUAGModeStore(selectUseMock)` + `toggleMode` 回調 | #5b |
-| C-2c | `src/pages/UAG/hooks/useAgentProfile.ts` | 4, 20-35 | `useMock` → 決定回傳 MOCK_AGENT_PROFILE 或 fetchAgentMe() | #5b |
-| C-2d | `src/pages/UAG/components/TrustFlow/index.tsx` | 14, 34 | `useUAGModeStore(selectUseMock)` — 信任案件資料來源切換 | #5b |
+| 檔案 | 行號 | 動作 |
+|------|------|------|
+| `src/pages/Chat/index.tsx` | 13-50 | 加入 `usePageMode()` 判斷 |
+| `src/pages/Chat/index.tsx` | 訪客分支 | visitor → `showRegisterGuide({ message: '登入後即可開始對話' })` |
+| `src/pages/Chat/index.tsx` | 演示分支 | demo → 本地化聊天（React state） |
 
-#### C-3. `DEMO_IDS` 白名單（Feed）
-
-| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
-|---|------|------|-----------|---------|
-| C-3a | `src/pages/Feed/index.tsx` | 19 | `const DEMO_IDS = ['demo-001', 'demo-consumer', 'demo-agent']` | #6b |
-| C-3b | `src/pages/Feed/index.tsx` | 30-32 | `isDemo = DEMO_IDS.includes(userId)` → `forceMock` 判斷 | #6b |
-| C-3c | `src/pages/Feed/index.tsx` | 40-50 | forceMock → 直接載入 mock 版本 | #6b |
-| C-3d | `src/pages/Feed/index.tsx` | 84-87 | RoleToggle 根據 forceMock 決定顯示 | #6b |
-
-#### C-4. `?mock=` URL 參數散布（4 處）
-
-| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
-|---|------|------|-----------|---------|
-| C-4a | `src/stores/uagModeStore.ts` | 47-56 | `getInitialModeFromUrl()` — `?mock=1/true/0/false` | #5b |
-| C-4b | `src/pages/Feed/index.tsx` | 30 | `searchParams.get('mock')` | #6b |
-| C-4c | `src/pages/UAG/Profile/index.tsx` | 49, 55 | `isMockMode = searchParams.get('mock') === 'true'` | #5b |
-| C-4d | `src/pages/UAG/Profile/hooks/useAgentProfile.ts` | 49-50 | Mock 判斷影響 query key 和資料來源 | #5b |
+**驗收標準**：
+- 訪客進 `/chat` → 看到登入提示
+- 演示模式進 `/chat` → 可本地發送訊息，不寫 DB
+- 正式模式 → 現有邏輯不變
+- Chat 相關檔案搜尋 `auth.html` 回傳 0 筆（改用 `getAuthUrl()`）
 
 ---
 
-### D. 按讚 / 互動體驗問題
+### #25 [P2] Assure 信賴交易頁面三模式支持
 
-| # | 檔案 | 行號 | 問題 | 應改為 | 歸屬工單 |
-|---|------|------|------|--------|---------|
-| D-1 | `src/components/PropertyDetail/CommunityReviews.tsx` | 310 | `disabled={!isLoggedIn}` — 按鈕灰掉無任何引導 | 永遠可點，mode 決定行為 | #3 |
-| D-2 | `src/components/PropertyDetail/CommunityReviews.tsx` | 313-318 | `!isLoggedIn ? 'cursor-not-allowed opacity-50'` — 視覺禁用 | 移除，統一由 mode 控制 | #3 |
-| D-3 | `src/components/PropertyDetail/CommunityReviews.tsx` | 250-269 | `handleToggleLike` 只判斷 `isDemo`，不判斷 visitor | 加入 visitor → toast 引導 | #3 |
-| D-4 | `src/components/PropertyDetail/CommunityReviews.tsx` | 358-369 | LockedOverlay `!isLoggedIn` 觸發，Demo 也被鎖 | 改用 mode 判斷 | #3 |
-| D-5 | `src/pages/Community/components/PostsSection.tsx` | 279 | `disabled={!isLoggedIn}` — CommentInput 禁用 | 改用 mode 判斷 | #8 |
-| D-6 | `src/components/Feed/FeedPostCard.tsx` | 110 | `disabled={!isLoggedIn}` — Feed CommentInput 禁用 | 改用 mode 判斷 | #6b |
-| D-7 | `src/pages/Community/Wall.tsx` | 241-256 | `handleLike` 只檢查 `isAuthenticated` | 加入 demo 本地 toggle / visitor toast | #8 |
+**目標**：Assure 頁面用 `usePageMode()` 替代 `isMock`，三模式行為明確
 
----
+**現況**：`src/pages/Assure/Detail.tsx` 使用 `useTrustRoom()` 的 `isMock` 判斷，未接入 `usePageMode()`。
 
-### E. AgentReviewListModal Demo 判斷孤島
+**施工項目**：
 
-| # | 檔案 | 行號 | 問題 | 歸屬工單 |
-|---|------|------|------|---------|
-| E-1 | `src/components/AgentReviewListModal.tsx` | 60 | `isDemo = agentId.startsWith('mock-') \|\| agentId === SEED_AGENT_ID` — 獨立判斷 | #4a |
-| E-2 | `src/components/AgentReviewListModal.tsx` | 71-77 | Demo → Mock 資料，否則 API — 未接入 usePageMode | #4a |
+#### 25-A. Assure 三模式行為定義
 
----
+| 區塊 | 訪客模式 | 演示模式 | 正式模式 |
+|------|---------|---------|---------|
+| 案件詳情 | 顯示「請登入查看」提示 | Mock 資料展示（完整 UI） | API 真實資料 |
+| 操作按鈕 | 不可操作 | 本地操作（不寫 DB） | API 寫入 |
 
-### F. 登入後重定向
+#### 25-B. 施工位置
 
-| # | 檔案 | 行號 | 問題 | 應改為 | 歸屬工單 |
-|---|------|------|------|--------|---------|
-| F-1 | `public/auth.html` | 1647 | `go(\`/maihouses/feed/${user.id}\`)` — 統一導到 Feed | agent → `/uag`、consumer → `/` | #7 |
-| F-2 | `public/auth.html` | 1655 | 備用回退 `go('/maihouses/')` | 保留 ✅ | — |
-| F-3 | `public/auth/after-login.html` | 20 | `<noscript>` fallback → `feed-consumer.html` | 更新為 `/maihouses/` | #9 |
+| 檔案 | 行號 | 動作 |
+|------|------|------|
+| `src/pages/Assure/Detail.tsx` | 23-50 | `useTrustRoom()` 的 `isMock` → 改讀 `usePageMode() === 'demo'` |
+| `src/pages/Assure/Detail.tsx` | 全檔 | 加入 visitor 模式提示 |
+
+**驗收標準**：
+- 全專案搜尋 Assure 相關 `isMock` → 改為 `mode === 'demo'`
+- 訪客進 `/assure` → 看到登入提示
+- 演示模式 → Mock 資料展示，操作本地化
 
 ---
 
-### G. 工單外新發現（需補入或另建）
+### #26 [P2] 登出完整清理策略
 
-#### 靜態掃描發現（G-1 ~ G-9）
+**目標**：全站統一清理函數 + UAG 獨立 handleSignOut 同步 + onAuthStateChange 防禦
 
-| # | 檔案 | 行號 | 問題 | 建議歸屬 |
-|---|------|------|------|---------|
-| G-1 | `src/pages/Chat/index.tsx` | 62 | `auth.html` 硬編碼 — Chat 頁登入引導掉出 app | 補入 #2 |
-| G-2 | `src/pages/PropertyListPage.tsx` | 100 | `auth.html` 硬編碼 — 房源列表登入按鈕掉出 app | 補入 #2 |
-| G-3 | `src/components/TrustManager.tsx` | 257 | `auth.html` 硬編碼 — 信任交易管理器登入提示 | 補入 #2 |
-| G-4 | `src/components/Feed/PrivateWallLocked.tsx` | 23 | `window.location.href = ROUTES.AUTH` — Feed 私密牆鎖定 | 補入 #6a |
-| G-5 | `src/components/Composer/LoginPrompt.tsx` | 40 | `<a href={ROUTES.AUTH}>` — 作曲家登入提示 | 補入 #2 |
-| G-6 | `src/features/home/components/CommunityWallCard.tsx` | 70 | `community-wall_mvp.html` 硬編碼 — 聊天頁社區牆卡片 | 補入 #4b |
-| G-7 | `src/hooks/useFeedData.ts` | 139, 183 | `useMock: boolean` — Feed 資料 Hook 仍有獨立 mock 判斷 | 補入 #6b |
-| G-8 | `vercel.json` | 57 | Rewrite rule `"dest": "/auth.html"` — 部署設定需同步 | 補入 #9 |
-| G-9 | `src/components/layout/GlobalHeader.tsx` | 246 | Profile 導航使用 `ROUTES.FEED_CONSUMER`（廢棄路由） | 補入 #6a |
+**現況**：
+- `GlobalHeader.tsx:handleSignOut` 只呼叫 `signOut()` + `navigate(HOME)`，未清理 cache
+- `UAG/index.tsx:116-123` 有獨立的 `handleSignOut`，清理範圍與 GlobalHeader 不同步
+- 缺少 `onAuthStateChange(SIGNED_IN)` 防禦（多分頁登入時 cache 殘留）
 
-#### 補充發現（G-10 ~ G-22）
+**施工項目**：
 
-| # | 檔案 | 行號 | 問題 | 嚴重度 | 建議歸屬 |
-|---|------|------|------|--------|---------|
-| G-10 | `src/pages/Community/Wall.tsx` | 258-261 | LockedOverlay CTA（`handleUnlock`）只彈 toast「功能開發中」，**不導向註冊頁** | 🔴 | 補入 #8 |
-| G-11 | `src/components/Header/Header.tsx` | 全檔 | **首頁 Header 完全未使用 `useAuth`**：已登入仍顯示「登入/註冊」，無頭像/帳號/登出 | 🔴 | 新增子工單 |
-| G-12 | `src/pages/UAG/index.tsx` | 全檔 | **UAG 無角色檢查**：consumer 進入可完整操作 Mock 後台，無任何「你不是房仲」引導 | 🔴 | 補入 #5a |
-| G-13 | `src/pages/UAG/hooks/useUAGData.ts` | 93-103 | **toggleMode 不檢查角色**：consumer 可切到 Live 模式，用 consumer ID 查 agent 資料 | 🔴 | 補入 #5b |
-| G-14 | `src/stores/uagModeStore.ts` | 79 | **已登入 agent 首次進 UAG 默認 Mock 模式**，需手動切 Live 才看到真實資料 | 🟡 | 補入 #5b |
-| G-15 | `src/components/Header/Header.tsx` | 267 | 膠囊「房仲專區」用 `target="_blank"` 在新分頁開啟，使用者容易迷失 | 🟢 | 可選優化 |
-| G-16 | `src/pages/PropertyListPage.tsx` | 75-104 | PropertyListPage 使用獨立 LegacyHeader，與首頁 Header 視覺/功能不一致 | 🟡 | 新增子工單 |
-| G-17 | `src/components/Header/Header.tsx` | 19 | Header 搜尋用 `window.location.href` 做整頁重載，而非 React Router 導航 | 🟢 | 可選優化 |
-| G-18 | `src/components/PropertyDetail/CommunityReviews.tsx` | 60-69 | `LOCKED_PREVIEW_PLACEHOLDER` 在已登入時顯示為「真實」評價，可能誤導 | 🟢 | 可選優化 |
-| G-19 | `src/components/PropertyDetail/CommunityReviews.tsx` | 243, 247 | `navigate()` 導向 `.html` 路徑，React Router 匹配到 catch-all → **顯示 NotFoundPage**（比掉出 app 更嚴重）| 🔴 | 已在 #4b 但嚴重度需上調 |
-| G-20 | `src/pages/Community/Wall.tsx` | 80-81 | 生產環境 `initialRole` 硬設 `'guest'`，sessionStorage demo 完全不被讀取 | 🔴 | 已在 #8 |
-| G-21 | `App.tsx` | 100-115 | **UAG + UAG Profile 路由無 auth guard / ProtectedRoute 包裝** | 🔴 | 補入 #5a |
-| G-22 | `src/pages/Feed/index.tsx` | 53-76 | 非 DEMO_IDS 的真實 userId：Supabase query 可能失敗（UUID 格式不符） | 🟡 | 補入 #6b |
+#### 26-A. 建立統一清理函數
+
+**新增位置**：`src/lib/authUtils.ts`（與 #15 `getAuthUrl` 同檔案）
+
+```typescript
+const AUTH_CLEANUP_KEYS = [
+  'mh.auth.pending_role',
+  'uag_session',
+  'uag_session_created',
+  'uag_last_aid',
+  'mai-uag-mode',
+  'mai-demo-verified',
+  'maimai-mood-v1',
+] as const
+
+function cleanupAuthState(queryClient: QueryClient): void {
+  queryClient.clear()
+  AUTH_CLEANUP_KEYS.forEach(key => {
+    try { localStorage.removeItem(key) } catch { /* Safari 隱私模式 */ }
+  })
+  try { sessionStorage.removeItem('feed-demo-role') } catch { /* no-op */ }
+}
+```
+
+#### 26-B. GlobalHeader + UAG 統一使用
+
+**檔案**：`GlobalHeader.tsx:67-81`、`UAG/index.tsx:116-123`
+
+```typescript
+// 兩處 handleSignOut 統一呼叫
+const handleSignOut = async () => {
+  try {
+    await signOut()
+    cleanupAuthState(queryClient)
+    notify.success('已登出')
+    navigate(ROUTES.HOME)
+  } catch (error) {
+    logger.error('handleSignOut.failed', { error })
+    notify.error('登出失敗，請重試')
+  }
+}
+```
+
+#### 26-C. onAuthStateChange 多分頁防禦
+
+**檔案**：`App.tsx`（根層級 useEffect）
+
+```typescript
+useEffect(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_IN') queryClient.clear()
+  })
+  return () => subscription.unsubscribe()
+}, [queryClient])
+```
+
+**用途**：分頁 A 演示中 → 分頁 B 登入 → SIGNED_IN event → 清除分頁 A 的 demo cache，防止正式資料混入 seed 資料。
+
+**驗收標準**：
+- `cleanupAuthState()` 被 GlobalHeader 和 UAG 共用
+- `AUTH_CLEANUP_KEYS` 包含全部 7 個 key（含 `uag_last_aid`、`maimai-mood-v1`）
+- `onAuthStateChange(SIGNED_IN)` 觸發 `queryClient.clear()`
+- A 帳號登出 → B 帳號登入 → 看到 B 帳號的資料（非 A 的 cache）
 
 ---
 
-### H. 影響檔案總覽
+### #27 [P1] UAG 新房仲空狀態 UI + MaiMai 新手引導
 
-> 共 **45+ 個檔案**需修改，依工單分組：
+**目標**：新註冊房仲進入 UAG 後台時，空白 Dashboard 改為 MaiMai 引導式 Onboarding 畫面
 
-| 工單 | 涉及檔案數 | 關鍵檔案 |
-|------|-----------|---------|
-| #1 | 4 新增 | `usePageMode.ts`（新增）、`useModeAwareAction.ts`（新增）、`DemoGate.tsx`（新增）、`DemoBadge.tsx` 基礎版（新增） |
-| #2 | 8（1 新增） | `seed.ts`（新增）、`routes.ts`、`Header.tsx`、`CommunityTeaser.tsx`、`Chat/index.tsx`、`PropertyListPage.tsx`、`TrustManager.tsx`、`LoginPrompt.tsx` |
-| #3 | 2 | `CommunityReviews.tsx`、`AgentReviewListModal.tsx` |
-| #4a | 5 | `PropertyDetailPage.tsx`、`PropertyDetailActionLayer.tsx`、`propertyService.ts`、`property.ts`、`AgentReviewListModal.tsx` |
-| #4b | 2 | `CommunityReviews.tsx`、`CommunityWallCard.tsx` |
-| #5a | 2（1 新增） | `UAGLandingPage.tsx`（新增）、`App.tsx`（auth guard） |
-| #17 | 1 新增 + 1 測試 | `src/lib/error.ts`（新增 141 行）、`src/lib/__tests__/error.test.ts`（新增 17 單元測試） ✅ 已完成 |
-| #18 | 3 | `src/app/config.ts`（2 處）、`src/analytics/track.ts`（1 處）、`src/context/MaiMaiContext.tsx`（2 處） ✅ 已完成 |
-| #19 | 3 migration | `20260209_agent_verification_and_cases.sql`、`20260130_agent_profile_extension.sql`、`20260209_community_review_likes.sql` ✅ 已完成 |
-| #20 | 10+ 整合 | 整合 `src/services/mock/`（4 檔）、`src/pages/UAG/mockData.ts`、`src/pages/Community/mockData.ts`、`src/pages/Feed/mockData/`（5 檔）→ 統一到 `src/constants/mockData.ts` |
-| #5b | 6 | `uagModeStore.ts`（移除）、`useUAGData.ts`、`useAgentProfile.ts`、`TrustFlow/index.tsx`、`UAG/Profile/index.tsx`、`Profile/hooks/useAgentProfile.ts` |
-| #6a | 3 | `GlobalHeader.tsx`、`routes.ts`、`PrivateWallLocked.tsx` |
-| #6b | 4 | `Feed/index.tsx`、`FeedPostCard.tsx`、`useFeedData.ts`、`App.tsx`（新增 `/feed/demo` 路由） |
-| #7 | 1 | `auth.html` |
-| #8 | 4（1 新增） | `useEffectiveRole.ts`（新增）、`Wall.tsx`、`BottomCTA.tsx`、`PostsSection.tsx` |
-| #9 | 5 移除/更新 | `community-wall_mvp.html`、`feed-agent.html`、`feed-consumer.html`、`after-login.html`、`vercel.json` |
-| #10 | 2 | `DemoBadge.tsx`（新增）、`App.tsx` |
-| #12 | 1 | `Header.tsx`（接入 useAuth） |
-| #13 | 1 | `PropertyListPage.tsx`（統一 Header） |
-| #14 | 2（1 新增） | `useRegisterGuide.ts`（新增）、toast 元件（可能需擴展 action slot） |
-| #15 | 1 新增 | `authUtils.ts`（新增 `getAuthUrl()` 工具函數） |
+**依賴**：#5a（UAG Landing + auth guard）
+
+**施工項目**：
+
+#### 27-A. 空狀態偵測
+
+```
+Leads 數量 === 0 && Listings 數量 === 0 → 顯示 <UAGEmptyState />
+```
+
+#### 27-B. MaiMai 引導 UI
+
+**新增組件**：`src/pages/UAG/components/UAGEmptyState.tsx`
+
+- MaiMai 角色出場引導（使用 MaiMaiContext 的 mood 系統）
+- 3 步引導：完善個人檔案 → 發布第一間房源 → 啟用智慧客戶雷達
+- 每步完成可打勾，狀態存 localStorage
+- UI 設計須呼叫 `/ui-ux-pro-max`
+
+#### 27-C. 演示模式處理
+
+- 演示模式下跳過空狀態（seed 資料已有 Lead/Listings）
+- 訪客看 Landing Page（#5a），不會進到 Dashboard
+
+**驗收標準**：
+- 新 agent 首次進 UAG → 看到 MaiMai 引導，非空白頁
+- 完成引導步驟後引導消失，進入正常 Dashboard
+- 演示模式不觸發空狀態
 
 ---
 
-### I. 已完成項目記錄（2026-02-12）
+### #19 [P1] 砍舊路徑：`/api/uag-track` → `/api/uag/track`
 
-> Wave 0 基礎工具完成記錄
+**目標**：統一 UAG 追蹤端點，移除已棄用的 JS 版 API 路徑。
 
-#### I-1. 統一錯誤處理工具（#17）✅
+**施工項目**：
 
-| # | 檔案 | 變更內容 |
-|---|------|---------|
-| I-1a | `src/lib/error.ts` | 新增 141 行：`getErrorMessage()` / `getErrorInfo()` / `safeAsync()` / `safeSync()` |
-| I-1b | `src/lib/__tests__/error.test.ts` | 新增 17 個單元測試，100% 覆蓋率 |
+1. `public/js/tracker.js`
+   - `navigator.sendBeacon('/api/uag-track', ...)` 改為 `navigator.sendBeacon('/api/uag/track', ...)`
+2. `src/hooks/usePropertyTracker.ts`
+   - 三處追蹤呼叫（beacon / fetch / fallback beacon）統一改到 `/api/uag/track`
+   - 抽出 `UAG_TRACK_ENDPOINT` 常數，避免 magic string
+3. `api/uag-track.js`
+   - 刪除 deprecated JS endpoint，正式下線舊路徑
+4. `src/types/api.generated.ts`
+   - API path 由 `'/uag-track'` 更新為 `'/uag/track'`
 
-#### I-2. 錯誤處理重構（#18）✅
-
-| # | 檔案 | 行號 | 變更內容 |
-|---|------|------|---------|
-| I-2a | `src/app/config.ts` | 1, 76, 152 | 新增 import + 2 處 catch 改用 `getErrorMessage(err)` |
-| I-2b | `src/analytics/track.ts` | 1, 14 | 新增 import + 1 處 catch 改用 `getErrorMessage(err)` |
-| I-2c | `src/context/MaiMaiContext.tsx` | 4, 78, 92 | 新增 import + 2 處 catch 改用 `getErrorMessage(e)` |
-
-#### I-3. Supabase RPC 錯誤處理強化（#19）✅
-
-| # | 檔案 | 函數 | 變更內容 |
-|---|------|------|---------|
-| I-3a | `20260209_agent_verification_and_cases.sql` | `fn_increment_completed_cases()` | 新增 `agent_id IS NULL` 驗證 + `GET DIAGNOSTICS` + `EXCEPTION` 區塊 |
-| I-3b | `20260130_agent_profile_extension.sql` | `fn_calculate_trust_score()` | 新增 `p_agent_id IS NULL` 驗證 + 改善錯誤訊息 + `EXCEPTION` 返回預設值 60 |
-| I-3c | `20260209_community_review_likes.sql` | `fn_recalc_encouragement_count()` | 新增 `property_id IS NULL` 驗證 + `NOT FOUND` 檢查 + `GET DIAGNOSTICS` + `EXCEPTION` 區塊 |
-
-**驗證結果**:
-- ✅ TypeScript: 0 errors
-- ✅ ESLint: 0 errors
-- ✅ Tests: 140/140 passed (123 existing + 17 new)
+**驗收標準**：
+- [x] 前端追蹤請求不再使用 `/api/uag-track`
+- [x] 追蹤 API 統一走 `/api/uag/track`
+- [x] deprecated JS endpoint 已下線
+- [x] `typecheck` / 相關測試 / UTF-8 檢查通過
 
 ---
 
 ## 核心原則
 
 1. **訪客模式 ≠ Mock** — 是正式頁面的「未登入視角」，seed 資料 + 限制互動 + 註冊引導
-2. **演示模式 = 完整功能預覽** — 隱藏密碼觸發，全站生效，操作本地化，不寫 DB
+2. **演示模式 = 完整功能預覽** — 隱藏入口（長按/連按）觸發，全站生效，操作本地化，不寫 DB
 3. **每個 disabled 按鈕都需要解釋** — 學習 Community Wall 的 LockedOverlay 模式
 4. **消滅靜態 HTML 死路** — 所有頁面都在 React app 內，保持一致的 Header/導航
 5. **角色 ≠ 登入狀態** — 未登入不代表是消費者，頁面處理「未登入」而不假設身份
 6. **演示模式不影響正式用戶** — 登入後自動退出演示，正式用戶永遠不知道演示入口存在
 7. **統一錯誤處理** — 所有 catch 區塊使用 `getErrorMessage()`，Supabase RPC 用 `RAISE WARNING` 不阻斷交易
+8. **三層防禦** — API 在 query 層禁止（L1）、hook 層攔截（L2）、全局 onError 靜默（L3）
+9. **進出清理完整** — 登入清演示標記、登出清 cache+storage、演示退出清全部
+10. **全站覆蓋** — Chat 和 Assure 也要接入三模式，不遺漏任何頁面
 
 ---
 
@@ -1731,9 +2222,33 @@ grep -r "navigate.*auth\.html" src/ --include="*.tsx"
 # 5. 確認無 community-wall_mvp.html 引用（#2 完成後應回傳 0 筆）
 grep -r "community-wall_mvp" src/ --include="*.tsx" --include="*.ts"
 
-# 6. 確認無 disabled={!isLoggedIn}（#3/#8/#6b 完成後應回傳 0 筆）
+# 6. 確認無 disabled={!isLoggedIn}（#3/#8a/#8b/#6b 完成後應回傳 0 筆）
 grep -r "disabled={!isLoggedIn}" src/ --include="*.tsx"
 
 # 7. 確認 useModeAwareAction 統一策略（不應存在手動 mode 分支）
 grep -r "if.*mode.*===.*demo.*{" src/ --include="*.tsx"
+
+# 8. 確認 Chat/Assure 已接入 usePageMode（#24/#25 完成後）
+grep -r "usePageMode" src/pages/Chat/ src/pages/Assure/ --include="*.tsx"
+
+# 9. 確認登出清理完整（#26 完成後）
+grep -r "queryClient.clear" src/components/layout/GlobalHeader.tsx
+
+# 10. 確認 isMock 已被替換（#25 完成後）
+grep -r "isMock" src/pages/Assure/ --include="*.tsx"
 ```
+
+---
+
+## 各 Wave 施工注意事項
+
+> 每個 Wave 施工時須額外留意的邊界問題，已整合進對應子工單但易遺漏。
+
+| Wave | 注意事項 |
+|------|---------|
+| Wave 1 | `usePageMode()` 需處理 auth loading 中間態（防 FOUC）、`isDemoMode()` JSON.parse 加 try-catch、storage event 加 debounce 防 reload 風暴、Safari 隱私模式 localStorage 可能拋錯、`returnPath` 要帶 `location.search`（不只 pathname） |
+| Wave 1B | Toast duration 考慮改 Infinity（5 秒消失後失去註冊入口）、`queryClient.clear()` 評估是否改 `invalidateQueries`（clear 過度激進）、Logo 長按/連按與現有 click handler 防衝突 |
+| Wave 2 | `SEED_COMMUNITY_ID` 必須在施工前確定值、SEO 爬蟲勿索引 seed 評價（加 noindex 或 robots）、seed 資料用 `Object.freeze` 防 mutate |
+| Wave 3 | `getSafeReturnPath()` 加路由黑名單（`/uag` 等受限頁）、auth.html 與 useAuth 角色讀取統一用 `app_metadata`、`?mock=true` 舊 URL 做 301 重導向、`useEffectiveRole` loading 時回 `'guest'` 會閃爍 |
+| Wave 4 | `maimai-mood-v1` / `uag_last_aid` 加入清理清單、Service Worker cache 演示資料需處理 |
+| Wave 4B/C | `exitDemoMode()` 執行順序：先 clear cache → 清 storage → 最後 `location.replace()`（防 Race Condition）、Chat/Assure 訪客提示 UI 需 `/ui-ux-pro-max` |

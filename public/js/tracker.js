@@ -289,6 +289,7 @@ class EventBatcher {
   }
 
   sendEvent(event) {
+    const UAG_TRACK_ENDPOINT = '/api/uag/track';
     const payload = {
       session_id: this.tracker.sessionId,
       agent_id: this.tracker.agentId,
@@ -299,7 +300,7 @@ class EventBatcher {
     const blob = new Blob([JSON.stringify(payload)], {
       type: 'application/json',
     });
-    navigator.sendBeacon('/api/uag-track', blob);
+    navigator.sendBeacon(UAG_TRACK_ENDPOINT, blob);
   }
 }
 

@@ -1142,7 +1142,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/uag-track': {
+  '/uag/track': {
     parameters: {
       query?: never;
       header?: never;

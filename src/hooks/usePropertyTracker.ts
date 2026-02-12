@@ -19,6 +19,8 @@ export interface PropertyTrackerActions {
   trackMapClick: () => Promise<void>;
 }
 
+const UAG_TRACK_ENDPOINT = '/api/uag/track';
+
 /**
  * UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
  *
@@ -142,13 +144,13 @@ export const usePropertyTracker = (
         const blob = new Blob([JSON.stringify(payload)], {
           type: 'application/json',
         });
-        navigator.sendBeacon('/api/uag-track', blob);
+        navigator.sendBeacon(UAG_TRACK_ENDPOINT, blob);
         return;
       }
 
       // 互動事件用 fetch，以便獲取等級回傳
       try {
-        const res = await fetch('/api/uag-track', {
+        const res = await fetch(UAG_TRACK_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -186,7 +188,7 @@ export const usePropertyTracker = (
         const blob = new Blob([JSON.stringify(payload)], {
           type: 'application/json',
         });
-        navigator.sendBeacon('/api/uag-track', blob);
+        navigator.sendBeacon(UAG_TRACK_ENDPOINT, blob);
       }
     },
     [buildPayload, onGradeUpgrade, propertyId]

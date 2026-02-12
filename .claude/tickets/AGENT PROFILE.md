@@ -123,6 +123,9 @@
 - [x] 19d-M5
 - [x] 19e-M8
 
+### Mock System
+- [x] MOCK-19-P1（`/api/uag-track` → `/api/uag/track`，deprecated JS endpoint 下線）
+
 ## 實作進度總覽
 
 > **設計原則：每個工單 ≤ 5 項施工內容**，確保 AI 能一次性完成不跳步。
@@ -5666,4 +5669,53 @@ feat(uag-profile): close #21b desktop quality upgrades
 - API endpoint `/api/community/review-like` 已在 #14a 完成
 - DB trigger `fn_recalc_encouragement_count` 已在 #14a 完成
 - 按讚成功後自動刷新 `agent-profile` query，無需手動更新 cache
+
+---
+
+## MOCK-SYSTEM #19 [P1] 砍舊路徑：`/api/uag-track` → `/api/uag/track`
+
+### 驗收標準
+
+- [x] `public/js/tracker.js` 追蹤請求改走 `/api/uag/track`
+- [x] `src/hooks/usePropertyTracker.ts` 的 beacon/fetch/fallback beacon 全改走 `/api/uag/track`
+- [x] `api/uag-track.js` deprecated JS endpoint 下線
+- [x] `src/types/api.generated.ts` 路徑同步為 `'/uag/track'`
+- [x] `typecheck`、相關測試、UTF-8 檢查通過
+
+### 施工紀錄（2026-02-12）
+
+1. `public/js/tracker.js`
+   - `EventBatcher.sendEvent` 改為送到 `/api/uag/track`
+2. `src/hooks/usePropertyTracker.ts`
+   - 新增 `UAG_TRACK_ENDPOINT` 常數
+   - `sendBeacon`、`fetch`、fallback `sendBeacon` 三處統一路徑
+3. `api/uag-track.js`
+   - 刪除檔案，下線 deprecated JS API
+4. `src/types/api.generated.ts`
+   - path key 由 `'/uag-track'` 改為 `'/uag/track'`
+5. `.claude/tickets/MOCK-SYSTEM.md`
+   - #19 勾選完成，補上本次施工與驗收標準
+
+### 驗證結果
+
+```bash
+npm run typecheck
+npm run test -- api/uag/__tests__/track.test.ts
+npm run check:utf8
+```
+
+- `typecheck`：通過
+- `api/uag/__tests__/track.test.ts`：7/7 通過
+- `UTF-8` / `Mojibake`：通過
+
+### Commit
+
+```bash
+feat(mock-system): close #19 route migration for uag tracker endpoint
+
+- migrate tracker endpoint from /api/uag-track to /api/uag/track
+- remove deprecated api/uag-track.js handler
+- sync generated API path to /uag/track
+- update MOCK-SYSTEM #19 and AGENT PROFILE execution record
+```
 
