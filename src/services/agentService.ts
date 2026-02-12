@@ -1,6 +1,7 @@
 ﻿import { z } from 'zod';
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
+import { getErrorMessage, UNKNOWN_ERROR_MESSAGE } from '../lib/error';
 import {
   AgentProfileApiSchema,
   AgentProfileMeApiSchema,
@@ -64,11 +65,25 @@ const getRetryDelay = (attempt: number) => {
 const parseJsonSafely = async (response: Response): Promise<unknown> =>
   response.json().catch(() => ({}));
 
-const getErrorMessage = (json: unknown, fallback: string, status?: number) => {
-  const payload = json as { error?: { message?: string } | string } | null;
-  const nestedMessage = typeof payload?.error === 'object' ? payload.error?.message : undefined;
-  const directMessage = typeof payload?.error === 'string' ? payload.error : undefined;
-  return nestedMessage || directMessage || (status ? `HTTP ${status}` : fallback);
+const getApiErrorField = (json: unknown): unknown => {
+  if (typeof json !== 'object' || json === null) {
+    return undefined;
+  }
+
+  return (json as { error?: unknown }).error;
+};
+
+const getApiErrorMessage = (json: unknown, fallback: string, status?: number): string => {
+  const extractedMessage = getErrorMessage(getApiErrorField(json));
+  if (extractedMessage !== UNKNOWN_ERROR_MESSAGE) {
+    return extractedMessage;
+  }
+
+  if (typeof status === 'number') {
+    return `HTTP ${status}`;
+  }
+
+  return fallback;
 };
 
 const mapAgentProfile = (data: AgentProfileApi): AgentProfile =>
@@ -168,7 +183,7 @@ async function fetchJson<T>(
   const json = await parseJsonSafely(response);
 
   if (!response.ok) {
-    throw new Error(getErrorMessage(json, ERROR_REQUEST_FAILED, response.status));
+    throw new Error(getApiErrorMessage(json, ERROR_REQUEST_FAILED, response.status));
   }
 
   return validateAndExtractApiResponse(json, schema);
@@ -247,7 +262,7 @@ export async function updateAgentProfile(payload: UpdateAgentProfilePayload): Pr
 
   const json = await parseJsonSafely(response);
   if (!response.ok || !(json as { success?: boolean })?.success) {
-    throw new Error(getErrorMessage(json, ERROR_UPDATE_FAILED, response.status));
+    throw new Error(getApiErrorMessage(json, ERROR_UPDATE_FAILED, response.status));
   }
 
   return ((json as { data?: { updated_at?: string } })?.data?.updated_at ?? '');
@@ -272,7 +287,7 @@ export async function uploadAgentAvatar(file: File): Promise<string> {
 
   const json = await parseJsonSafely(response);
   if (!response.ok || !(json as { success?: boolean })?.success) {
-    throw new Error(getErrorMessage(json, ERROR_UPLOAD_FAILED, response.status));
+    throw new Error(getApiErrorMessage(json, ERROR_UPLOAD_FAILED, response.status));
   }
 
   return (json as { data?: { avatar_url?: string } })?.data?.avatar_url ?? '';

@@ -5486,6 +5486,24 @@ feat(uag-profile): close #21b desktop quality upgrades
    - `npm run test -- src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx src/pages/UAG/Profile/AvatarUploader.test.tsx src/services/__tests__/agentService.test.ts` ✅（30 tests passed）
    - `npm run check:utf8` ✅
 
+6. **增量補強（2026-02-12）— E3 Magic Number + 錯誤處理工具統一**
+   - `supabase/migrations/20260130_agent_profile_extension.sql`
+     - `fn_calculate_trust_score()` 抽離硬編碼數字為具名常數：`BASE_TRUST_SCORE`、`TRUST_SCORE_MAX`、`SERVICE_RATING_BONUS_MAX`、`SERVICE_RATING_MULTIPLIER`、`COMPLETED_CASES_BONUS_MAX`、`COMPLETED_CASES_DIVISOR`、`ENCOURAGEMENT_BONUS_MAX`、`ENCOURAGEMENT_DIVISOR`。
+     - 保留原邏輯，提升可讀性與可維護性（Explicit over Implicit）。
+   - `src/lib/error.ts`
+     - 匯出 `UNKNOWN_ERROR_MESSAGE`，作為跨模組一致錯誤判斷常數。
+   - `src/services/agentService.ts`
+     - 移除本地重複錯誤解析邏輯，改用 `src/lib/error.ts` 的 `getErrorMessage`。
+     - 新增 `getApiErrorField` / `getApiErrorMessage`，維持 `HTTP {status}` fallback 行為，並以 guard clause 實作 early return。
+   - `src/pages/Community/components/WallErrorBoundary.tsx`
+     - 移除本地 `getErrorMessage`，改用 `src/lib/error.ts`。
+     - 新增 `collectErrorChainMessage`，保留 `cause` 鏈分類能力，並統一錯誤上報與複製內容訊息來源。
+   - 驗證：
+     - `npm run typecheck` ✅
+     - `npm run lint -- src/lib/error.ts src/services/agentService.ts src/pages/Community/components/WallErrorBoundary.tsx` ✅
+     - `npm run test -- src/services/__tests__/agentService.test.ts src/lib/__tests__/error.test.ts` ✅（20 tests passed）
+     - `npm run check:utf8` ✅（UTF-8 / Mojibake passed）
+
 ---
 
 ## 依賴關係

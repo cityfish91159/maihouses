@@ -13,7 +13,7 @@
  * ```
  */
 
-const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
+export const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
 const ERROR_MESSAGE_KEYS = ['message', 'msg', 'error'] as const;
 
 type ErrorRecord = Record<string, unknown>;

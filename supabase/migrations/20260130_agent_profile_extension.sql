@@ -87,36 +87,53 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_score INTEGER := 60;
+  BASE_TRUST_SCORE CONSTANT INTEGER := 60;
+  TRUST_SCORE_MAX CONSTANT INTEGER := 100;
+  SERVICE_RATING_BONUS_MAX CONSTANT INTEGER := 20;
+  SERVICE_RATING_MULTIPLIER CONSTANT INTEGER := 4;
+  COMPLETED_CASES_BONUS_MAX CONSTANT INTEGER := 10;
+  COMPLETED_CASES_DIVISOR CONSTANT INTEGER := 5;
+  ENCOURAGEMENT_BONUS_MAX CONSTANT INTEGER := 10;
+  ENCOURAGEMENT_DIVISOR CONSTANT INTEGER := 20;
+  v_score INTEGER := BASE_TRUST_SCORE;
   v_agent agents%ROWTYPE;
 BEGIN
   -- Validate input
   IF p_agent_id IS NULL THEN
-    RAISE WARNING '[fn_calculate_trust_score] agent_id is NULL, returning default score 60';
-    RETURN 60;
+    RAISE WARNING '[fn_calculate_trust_score] agent_id is NULL, returning default score %', BASE_TRUST_SCORE;
+    RETURN BASE_TRUST_SCORE;
   END IF;
 
   SELECT * INTO v_agent FROM public.agents WHERE id = p_agent_id;
 
   IF NOT FOUND THEN
-    RAISE WARNING '[fn_calculate_trust_score] Agent not found for id=%, returning default score 60', p_agent_id;
-    RETURN 60;
+    RAISE WARNING '[fn_calculate_trust_score] Agent not found for id=%, returning default score %', p_agent_id, BASE_TRUST_SCORE;
+    RETURN BASE_TRUST_SCORE;
   END IF;
 
   -- Service rating bonus (max +20)
-  v_score := v_score + LEAST(20, COALESCE(v_agent.service_rating, 0)::INTEGER * 4);
+  v_score := v_score + LEAST(
+    SERVICE_RATING_BONUS_MAX,
+    COALESCE(v_agent.service_rating, 0)::INTEGER * SERVICE_RATING_MULTIPLIER
+  );
 
   -- Completed cases bonus (max +10)
-  v_score := v_score + LEAST(10, COALESCE(v_agent.completed_cases, 0) / 5);
+  v_score := v_score + LEAST(
+    COMPLETED_CASES_BONUS_MAX,
+    COALESCE(v_agent.completed_cases, 0) / COMPLETED_CASES_DIVISOR
+  );
 
   -- Encouragement bonus (max +10)
-  v_score := v_score + LEAST(10, COALESCE(v_agent.encouragement_count, 0) / 20);
+  v_score := v_score + LEAST(
+    ENCOURAGEMENT_BONUS_MAX,
+    COALESCE(v_agent.encouragement_count, 0) / ENCOURAGEMENT_DIVISOR
+  );
 
-  RETURN LEAST(100, v_score);
+  RETURN LEAST(TRUST_SCORE_MAX, v_score);
 EXCEPTION
   WHEN OTHERS THEN
     RAISE WARNING '[fn_calculate_trust_score] Error for agent_id=%: % (SQLSTATE: %)', p_agent_id, SQLERRM, SQLSTATE;
-    RETURN 60; -- 發生錯誤時返回預設分數
+    RETURN BASE_TRUST_SCORE; -- 發生錯誤時返回預設分數
 END;
 $$;
 

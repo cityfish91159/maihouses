@@ -9,6 +9,7 @@
  */
 
 import React from 'react';
+import { getErrorMessage, UNKNOWN_ERROR_MESSAGE } from '../../../lib/error';
 import { logger } from '../../../lib/logger';
 
 // DEV 模式除錯用
@@ -29,21 +30,33 @@ interface CategorizedError {
   onAction?: () => void;
 }
 
-/**
- * 遞迴收集 error.message 與 error.cause.message（ES2022 cause chain）
- */
-const getErrorMessage = (error: Error): string => {
-  const messages: string[] = [error.message];
-  let current: unknown = error.cause;
-  while (current instanceof Error) {
-    messages.push(current.message);
+const collectErrorChainMessage = (error: Error): string => {
+  const messages: string[] = [];
+  let current: unknown = error;
+
+  while (current !== undefined && current !== null) {
+    const message = getErrorMessage(current);
+    if (message !== UNKNOWN_ERROR_MESSAGE) {
+      messages.push(message);
+    }
+
+    if (!(current instanceof Error)) {
+      break;
+    }
+
     current = current.cause;
   }
-  return messages.join(' ').toLowerCase();
+
+  if (messages.length === 0) {
+    return UNKNOWN_ERROR_MESSAGE;
+  }
+
+  return messages.join(' ');
 };
 
 const categorizeError = (error: Error): CategorizedError => {
-  const message = getErrorMessage(error);
+  const message = collectErrorChainMessage(error).toLowerCase();
+  const runtimeMessage = getErrorMessage(error);
 
   if (message.includes('401') || message.includes('403') || message.includes('unauthorized')) {
     return {
@@ -78,7 +91,10 @@ const categorizeError = (error: Error): CategorizedError => {
   return {
     category: 'runtime',
     title: '載入失敗',
-    message: error.message || '發生未預期的錯誤，我們正在處理中',
+    message:
+      runtimeMessage === UNKNOWN_ERROR_MESSAGE
+        ? '發生未預期的錯誤，我們正在處理中'
+        : runtimeMessage,
     actionText: '重試',
   };
 };
@@ -127,7 +143,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           error: {
-            message: error.message,
+            message: getErrorMessage(error),
             stack: error.stack,
             name: error.name,
           },
@@ -138,7 +154,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
         }),
       }).catch((reportError) => {
         logger.error('[WallErrorBoundary] Failed to report error', {
-          error: reportError,
+          error: getErrorMessage(reportError),
         });
       });
     }
@@ -159,7 +175,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
     if (!this.state.error) return;
     const { error, errorInfo, errorId } = this.state;
     const payload = [
-      `Message: ${error.message}`,
+      `Message: ${getErrorMessage(error)}`,
       `Stack: ${error.stack ?? 'N/A'}`,
       `Component Stack: ${errorInfo?.componentStack ?? 'N/A'}`,
       `URL: ${typeof window !== 'undefined' ? window.location.href : 'N/A'}`,
