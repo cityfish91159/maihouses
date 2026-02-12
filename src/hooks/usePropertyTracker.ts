@@ -2,6 +2,7 @@
 import { track } from '../analytics/track';
 import { logger } from '../lib/logger';
 import { safeLocalStorage } from '../lib/safeStorage';
+import { isDemoMode } from '../lib/pageMode';
 import { toast } from 'sonner';
 import { TOAST_DURATION } from '../constants/toast';
 
@@ -122,6 +123,8 @@ export const usePropertyTracker = (
   // 發送追蹤事件 (支援 S 級回調)
   const sendEvent = useCallback(
     async (eventType: string, useBeacon = false) => {
+      if (isDemoMode()) return;
+
       const payload = buildPayload(eventType);
 
       // UAG-6 修復: page_exit 去重邏輯（單一檢查點，鎖在第一時間）
@@ -219,7 +222,7 @@ export const usePropertyTracker = (
 
   // 初始化：發送 page_view，離開時發送 page_exit
   useEffect(() => {
-    if (!propertyId) return;
+    if (!propertyId || isDemoMode()) return;
 
     // 發送 page_view (用 beacon，不需等回應)
     sendEventRef.current('page_view', true);
@@ -254,9 +257,11 @@ export const usePropertyTracker = (
   // 暴露追蹤方法
   return {
     trackPhotoClick: () => {
+      if (isDemoMode()) return;
       actions.current.click_photos++;
     },
     trackLineClick: async () => {
+      if (isDemoMode()) return;
       if (clickSent.current.line) return; // 防重複點擊
       clickSent.current.line = true;
 
@@ -277,6 +282,7 @@ export const usePropertyTracker = (
       }
     },
     trackCallClick: async () => {
+      if (isDemoMode()) return;
       if (clickSent.current.call) return; // 防重複點擊
       clickSent.current.call = true;
 
@@ -296,6 +302,7 @@ export const usePropertyTracker = (
       }
     },
     trackMapClick: async () => {
+      if (isDemoMode()) return;
       if (clickSent.current.map) return; // 防重複點擊
       clickSent.current.map = true;
 

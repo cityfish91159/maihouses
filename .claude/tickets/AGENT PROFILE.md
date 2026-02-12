@@ -124,6 +124,7 @@
 - [x] 19e-M8
 
 ### Mock System
+- [x] MOCK-1A-P0（`usePageMode` + localStorage TTL + 跨分頁同步 + demo 靜默追蹤）
 - [x] MOCK-19-P1（`/api/uag-track` → `/api/uag/track`，deprecated JS endpoint 下線）
 
 ## 實作進度總覽
@@ -5687,6 +5688,56 @@ feat(uag-profile): close #21b desktop quality upgrades
 - API endpoint `/api/community/review-like` 已在 #14a 完成
 - DB trigger `fn_recalc_encouragement_count` 已在 #14a 完成
 - 按讚成功後自動刷新 `agent-profile` query，無需手動更新 cache
+
+---
+
+## MOCK-SYSTEM #1a [P0] `usePageMode()` hook + localStorage TTL + 跨分頁同步
+
+### 驗收標準
+
+- [x] `usePageMode()` 回傳單一 `PageMode` 值（`visitor` / `demo` / `live`）
+- [x] 演示狀態改為 localStorage + 2 小時 TTL（含損壞資料防禦）
+- [x] 到期前 5 分鐘提醒、到期自動退出 demo + 清 cache + reload
+- [x] storage event 跨分頁同步（含 debounce）
+- [x] demo 模式下 `track()` 靜默，不送 analytics
+- [x] QueryClient 全域 `onError` 在 demo 模式靜默（L3 防線）
+
+### 施工紀錄（2026-02-12）
+
+1. `src/lib/pageMode.ts`（新增）
+   - 建立模式核心工具：`readDemoTimestamp`、`setDemoMode`、`clearDemoMode`、`isDemoMode`、`getDemoTimeRemaining`、`resolvePageMode`。
+   - 使用 Zod 驗證 demo storage payload，損壞資料 fail-fast 清除。
+   - 新增 `subscribeDemoModeStorageSync()`，以 storage event + debounce 處理跨分頁同步。
+
+2. `src/hooks/usePageMode.ts`（新增）
+   - 依 `useAuth()` 優先級回傳單一模式值：`live > demo > visitor`。
+   - 已登入時自動清除 demo 標記，避免模式殘留。
+
+3. `src/hooks/useDemoTimer.ts`（新增） + `src/App.tsx`（修改）
+   - App 根層級掛單一 demo timer，避免多處重複計時。
+   - 到期前 5 分鐘提示；到期執行 `clearDemoMode + queryClient.clear + reload`。
+   - QueryClient `defaultOptions.queries.onError` 新增 demo 靜默處理（僅 logger.warn）。
+
+4. `src/analytics/track.ts`、`src/hooks/usePropertyTracker.ts`
+   - `track()` 加入 demo early return（不送請求）。
+   - Property tracker 加入 demo guard，停止 beacon/fetch 上報。
+
+5. 測試
+   - 新增 `src/lib/__tests__/pageMode.test.ts`
+   - 新增 `src/hooks/__tests__/usePageMode.test.tsx`
+   - 新增 `src/analytics/__tests__/track.test.ts`
+
+### 驗證結果
+
+```bash
+npm run typecheck
+npm run test -- src/lib/__tests__/pageMode.test.ts src/hooks/__tests__/usePageMode.test.tsx src/analytics/__tests__/track.test.ts
+npm run check:utf8
+```
+
+- `typecheck`：通過
+- 新增測試：全部通過
+- `UTF-8` / `Mojibake`：通過
 
 ---
 

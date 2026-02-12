@@ -773,6 +773,39 @@ const queryClient = new QueryClient({
 - 演示模式下 `track()` 完全靜默
 - L1/L2/L3 三層 API 防禦到位
 
+### #1a 施工紀錄（2026-02-12）
+
+1. `src/lib/pageMode.ts`（新增）
+   - 新增 `PageMode` 型別與常數：`DEMO_STORAGE_KEY`、`DEMO_TTL_MS`、`DEMO_WARN_BEFORE_MS`。
+   - 實作 `readDemoTimestamp` / `setDemoMode` / `clearDemoMode` / `isDemoMode` / `getDemoTimeRemaining`。
+   - 使用 Zod 驗證 localStorage payload（Fail Fast），損壞資料自動清除。
+   - 新增 `subscribeDemoModeStorageSync`（storage event + debounce）供跨分頁同步。
+
+2. `src/hooks/usePageMode.ts`（新增）
+   - 以 `useAuth()` 為最高優先：`live > demo > visitor`。
+   - 回傳單一 `PageMode` 值（符合 ISP，避免肥介面）。
+   - 已登入時自動清除 demo 標記，避免模式殘留。
+   - 內建 storage sync 監聽，跨分頁切換 demo 狀態時觸發 reload。
+
+3. `src/hooks/useDemoTimer.ts`（新增） + `src/App.tsx`（整合）
+   - App 根層級掛載單一 demo timer（避免多組件重複計時）。
+   - 到期前 5 分鐘 `notify.info` 提醒；到期後 `clearDemoMode + queryClient.clear + reload`。
+   - QueryClient 全局 `onError` 加入 L3 防線：demo 模式僅記錄 warn，不彈錯誤提示。
+
+4. `src/analytics/track.ts`、`src/hooks/usePropertyTracker.ts`
+   - `track()` 新增 demo guard，演示模式直接 early return（完全靜默）。
+   - `usePropertyTracker` 新增 demo guard，停止 beacon/fetch 追蹤請求（L2 防線）。
+
+5. 測試補齊
+   - `src/lib/__tests__/pageMode.test.ts`（新增）
+   - `src/hooks/__tests__/usePageMode.test.tsx`（新增）
+   - `src/analytics/__tests__/track.test.ts`（新增）
+
+6. 驗證結果
+   - `npm run typecheck` ✅
+   - `npm run test -- src/lib/__tests__/pageMode.test.ts src/hooks/__tests__/usePageMode.test.tsx src/analytics/__tests__/track.test.ts` ✅
+   - `npm run check:utf8` ✅（UTF-8 / Mojibake passed）
+
 ---
 
 ### #1b [P0] `useModeAwareAction` hook + 本地操作持久化策略 + cache key 規範

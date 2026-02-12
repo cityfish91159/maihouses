@@ -1,11 +1,14 @@
 ﻿import { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config';
 import DevTools from './app/devtools';
 import { trackEvent } from './services/analytics';
+import { getErrorMessage } from './lib/error';
+import { logger } from './lib/logger';
+import { isDemoMode } from './lib/pageMode';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import Wall from './pages/Community/Wall';
@@ -34,8 +37,17 @@ import NotFoundPage from './pages/NotFoundPage';
 import MusePage from './pages/Muse/MusePage';
 import GodView from './pages/Admin/GodView';
 import SharedReportPreviewPage from './pages/UAG/SharedReportPreviewPage';
+import { useDemoTimer } from './hooks/useDemoTimer';
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error: unknown) => {
+      if (!isDemoMode()) return;
+      logger.warn('[Demo] Unexpected API error', {
+        error: getErrorMessage(error),
+      });
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
@@ -46,6 +58,11 @@ const queryClient = new QueryClient({
 
 // 🔒 私密功能開關 - deploy 分支強制啟用
 const ENABLE_PRIVATE_FEATURES = true;
+
+function DemoRuntimeBridge() {
+  useDemoTimer();
+  return null;
+}
 
 export default function App() {
   const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null);
@@ -65,6 +82,7 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <DemoRuntimeBridge />
       <QuietModeProvider>
         <MoodProvider>
           <MaiMaiProvider>

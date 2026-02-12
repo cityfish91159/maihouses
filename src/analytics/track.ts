@@ -1,8 +1,11 @@
 ﻿import { logger } from '../lib/logger';
 import { getErrorMessage } from '../lib/error';
+import { isDemoMode } from '../lib/pageMode';
 
 // 簡易埋點（事件命名更貼近用戶語意）
 export async function track(event: string, payload?: Record<string, unknown>) {
+  if (isDemoMode()) return;
+
   try {
     await fetch('/api/analytics', {
       method: 'POST',
