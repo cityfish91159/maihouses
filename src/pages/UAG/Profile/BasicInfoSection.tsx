@@ -402,7 +402,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({
                       ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-1'
                       : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1'
                   }`}
-                  placeholder="09xxxxxxxx"
+                  placeholder="09xx-xxx-xxx"
                   pattern="09[0-9]{8}"
                   aria-label="手機號碼"
                   aria-invalid={Boolean(errors.phone)}

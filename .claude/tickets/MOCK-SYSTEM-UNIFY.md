@@ -4,26 +4,26 @@
 
 ### P0 — 基礎建設
 
-- [ ] **#1** 建立 `usePageMode()` hook + 演示模式隱藏觸發機制
-- [ ] **#2** 首頁所有靜態 HTML 連結改為 React 路由
-- [ ] **#3** 按讚按鈕三模式行為分離
+- [ ] **#1** 建立 `usePageMode()` hook + 演示模式隱藏觸發機制（3 新檔案，阻塞後續所有工單）
+- [ ] **#2** 全站靜態 HTML 連結改為 React 路由（6 檔 16 處：community-wall_mvp×6 + auth.html×10）
+- [ ] **#3** 按讚按鈕三模式行為分離（CommunityReviews + AgentReviewListModal，7 處 disabled 改 mode）
 
 ### P1 — 逐頁接入
 
-- [ ] **#4a** 房產詳情頁：移除 isDemoPropertyId + 社會證明接入 usePageMode
-- [ ] **#4b** 房產詳情頁：連結修正（社區牆 + 註冊查看）
-- [ ] **#5a** UAG：新增訪客 Landing Page
-- [ ] **#5b** UAG：後台接入 usePageMode + 移除 mock/live toggle
-- [ ] **#6a** Feed：Logo 導航修復 + 廢棄路由清理
-- [ ] **#6b** Feed：移除 DEMO_IDS + 接入 usePageMode
-- [ ] **#7** 登入後重定向修正（agent→UAG、consumer→首頁）
+- [ ] **#4a** 房產詳情頁：移除 isDemoPropertyId + 社會證明接入 usePageMode（4 檔 12 處）
+- [ ] **#4b** 房產詳情頁：連結修正 — 社區牆 + 註冊查看（2 檔 3 處）
+- [ ] **#5a** UAG：新增訪客 Landing Page（1 新檔案 + 路由判斷）
+- [ ] **#5b** UAG：後台接入 usePageMode + 移除 uagModeStore（6 檔，含 ?mock= 參數清理）
+- [ ] **#6a** Feed：Logo 導航修復 + 廢棄路由清理（GlobalHeader 3 處 + routes.ts 4 常數）
+- [ ] **#6b** Feed：移除 DEMO_IDS + 接入 usePageMode（3 檔 8 處）
+- [ ] **#7** 登入後重定向修正 — agent→UAG、consumer→首頁（auth.html :1647）
 
 ### P2 — 收尾清理
 
-- [ ] **#8** 社區牆接入演示模式（自動 resident 權限）
-- [ ] **#9** 移除所有靜態 HTML mock 頁檔案
-- [ ] **#10** 演示模式浮動標籤 UI
-- [ ] **#11** Feed 定位確認 + 首頁入口
+- [ ] **#8** 社區牆接入演示模式 — 自動 resident 權限（Wall.tsx + PostsSection + BottomCTA）
+- [ ] **#9** 移除靜態 HTML mock 頁 + 部署設定同步（4 頁移除 + after-login.html + vercel.json）
+- [ ] **#10** 演示模式浮動標籤 UI 正式版（DemoBadge.tsx + App.tsx 全域掛載）
+- [ ] **#11** Feed 定位確認 + 首頁入口（待確認方向）
 
 ---
 
@@ -501,17 +501,19 @@ interface UsePageModeReturn {
 
 ---
 
-### #2 [P0] 首頁所有靜態 HTML 連結改為 React 路由
+### #2 [P0] 全站靜態 HTML 連結改為 React 路由
 
 **目標**：消滅所有靜態 HTML 死路，讓訪客不會「掉出」React app
 
 **施工項目**：
 
-#### 2-A. 社區評價連結（4 處）
+#### 2-A. 社區評價連結（6 處 → 見審計 A-1）
 
 **影響檔案**：
-- `src/features/home/sections/CommunityTeaser.tsx` — seed 卡片 + 查看更多
-- `src/components/Header/Header.tsx` — 膠囊「社區評價」+ 手機選單
+- `src/features/home/sections/CommunityTeaser.tsx` — seed 卡片 + 查看更多（:11, :103, :205）
+- `src/components/Header/Header.tsx` — 膠囊「社區評價」（:262）
+- `src/components/PropertyDetail/CommunityWallCard.tsx` — 聊天頁卡片（:70）⚠️ 原工單遺漏
+- `src/constants/routes.ts` — `COMMUNITY_WALL_MVP` 常數定義（:31）
 
 所有 `community-wall_mvp.html` → `/community/{seedId}/wall`
 
@@ -522,9 +524,18 @@ interface UsePageModeReturn {
 - 「社區評價」→ `/community/{seedId}/wall`
 - 「房仲專區」→ `/uag`（已正確）
 
+#### 2-C. auth.html 引用清理（原工單遺漏的 3 處 → 見審計 G-1~G-3, G-5）
+
+**新增影響檔案**：
+- `src/pages/Chat/index.tsx` — Chat 頁登入引導（:62）
+- `src/pages/PropertyListPage.tsx` — 房源列表登入按鈕（:100）
+- `src/components/TrustManager.tsx` — 信任交易管理器登入提示（:257）
+- `src/components/Composer/LoginPrompt.tsx` — 作曲家登入提示（:40）
+
 **驗收標準**：
 - 全專案搜尋 `community-wall_mvp` 回傳 0 筆（排除靜態 HTML 檔本身）
-- 所有首頁按鈕點擊後留在 React app 內
+- 全專案 `.tsx/.ts` 搜尋 `auth.html` 回傳 0 筆
+- 所有按鈕點擊後留在 React app 內
 
 ---
 
@@ -534,7 +545,7 @@ interface UsePageModeReturn {
 
 **施工項目**：
 
-#### 3-A. CommunityReviews 按讚邏輯
+#### 3-A. CommunityReviews 按讚邏輯（見審計 D-1~D-4）
 
 **檔案**：`src/components/PropertyDetail/CommunityReviews.tsx`
 
@@ -544,9 +555,11 @@ mode === 'demo'    → 本地 toggle（已有邏輯，移除 isLoggedIn 檢查�
 mode === 'visitor' → 點擊 → toast「註冊後即可鼓勵評價」→ 引導註冊
 ```
 
-- 移除 `disabled={!isLoggedIn}`（Line 278）
-- 移除 `cursor-not-allowed` / `opacity-50`
-- 按鈕永遠可點擊，行為由 mode 決定
+需修改的具體行號：
+- `:310` — 移除 `disabled={!isLoggedIn}`
+- `:313-318` — 移除 `cursor-not-allowed` / `opacity-50` 條件樣式
+- `:250-269` — `handleToggleLike` 加入 visitor 分支（toast 引導）
+- `:358-369` — LockedOverlay 改用 mode 判斷，Demo 不再被鎖
 
 #### 3-B. 第 3 則評價鎖定邏輯
 
@@ -558,17 +571,25 @@ mode === 'demo'    → blur + LockedOverlay（點了 → 跳到 /community/{id}/
 mode === 'visitor' → blur + LockedOverlay + 「註冊查看更多」→ 引導註冊
 ```
 
-#### 3-C. AgentReviewListModal 按讚邏輯
+#### 3-C. AgentReviewListModal Demo 孤島邏輯（見審計 E-1~E-2）
 
-**檔案**：`src/components/PropertyDetail/AgentReviewListModal.tsx`
+**檔案**：`src/components/AgentReviewListModal.tsx`
 
-- 同步接入 `usePageMode()`，行為與 CommunityReviews 一致
+- `:60` — 移除 `agentId.startsWith('mock-') || agentId === SEED_AGENT_ID` 獨立判斷
+- `:71-77` — 改用 `usePageMode()` 判斷資料來源
+
+#### 3-D. 其他 `disabled={!isLoggedIn}` 位置（見審計 D-5~D-7）
+
+> 以下位置雖歸屬其他工單，但需同步清理：
+- `src/pages/Community/components/PostsSection.tsx` `:279` → 歸 #8
+- `src/components/Feed/FeedPostCard.tsx` `:110` → 歸 #6b
+- `src/pages/Community/Wall.tsx` `:241-256` `handleLike` → 歸 #8
 
 **驗收標準**：
 - 訪客模式：按讚可點擊，彈出註冊引導 toast
 - 演示模式：按讚本地 toggle，數字變化
 - 正式模式：按讚 API 寫入
-- 不存在任何 `disabled={!isLoggedIn}` 的按讚按鈕
+- 全專案搜尋 `disabled={!isLoggedIn}` 回傳 0 筆
 
 ---
 
@@ -576,26 +597,38 @@ mode === 'visitor' → blur + LockedOverlay + 「註冊查看更多」→ 引導
 
 **目標**：移除孤島 mock 判斷，改用統一 hook
 
-**施工項目**：
+**施工項目**：（見審計 C-1、E-1~E-2）
 
 #### 4a-A. 移除 `isDemoPropertyId` 孤島邏輯
 
-**檔案**：`src/pages/PropertyDetailPage.tsx`
+需修改的具體位置：
 
-- 移除 `isDemoPropertyId()` 判斷
-- 改用 `usePageMode()` 統一判斷
-- `isDemo` 概念整合進 `mode === 'demo'`
+| 檔案 | 行號 | 動作 |
+|------|------|------|
+| `src/constants/property.ts` | 1-4 | 移除 `DEMO_PROPERTY_ID` + `isDemoPropertyId()` 定義 |
+| `src/services/propertyService.ts` | 5, 366 | 移除 import 和 `isDemo = isDemoPropertyId(publicId)` |
+| `src/pages/PropertyDetailPage.tsx` | 29 | 移除 import |
+| `src/pages/PropertyDetailPage.tsx` | 127 | 移除 `isDemo: isDemoPropertyId(id)` |
+| `src/pages/PropertyDetailPage.tsx` | 249 | `enabled` 條件改用 `mode !== 'demo'` |
+| `src/pages/PropertyDetailPage.tsx` | 292-294 | Demo Assure 導航改用 mode 判斷 |
+| `src/pages/PropertyDetailPage.tsx` | 679-713 | Dev 測試按鈕改用 mode 判斷 |
+| `src/pages/PropertyDetailPage.tsx` | 774-785 | 傳遞 mode 取代 isDemo prop |
+| `src/pages/PropertyDetailPage.tsx` | 813 | 已驗證徽章改用 mode 判斷 |
+| `src/components/AgentReviewListModal.tsx` | 60, 71-77 | 移除獨立 isDemo 判斷，接入 usePageMode |
 
 #### 4a-B. 社會證明（Social Proof）
 
+**檔案**：`src/pages/PropertyDetailPage.tsx` `:261-279`
+
 ```
-mode === 'live'    → API 資料
-mode === 'demo'    → seed 隨機數（現有邏輯）
+mode === 'live'    → API 資料（publicStats）
+mode === 'demo'    → seed 隨機數（現有 charCode 邏輯）
 mode === 'visitor' → seed 隨機數
 ```
 
 **驗收標準**：
-- 不存在 `isDemoPropertyId` 的引用
+- 全專案搜尋 `isDemoPropertyId` 回傳 0 筆
+- 全專案搜尋 `DEMO_PROPERTY_ID` 回傳 0 筆
 - 詳情頁根據 usePageMode 自動切換行為
 
 ---
@@ -604,22 +637,23 @@ mode === 'visitor' → seed 隨機數
 
 **目標**：詳情頁內的靜態 HTML 連結改為 React 路由
 
-**施工項目**：
+**施工項目**：（見審計 A-1e, A-1f, A-2f）
 
 #### 4b-A. 「前往社區牆」連結
 
-**檔案**：`src/components/PropertyDetail/CommunityReviews.tsx`
-
-- 從 `community-wall_mvp.html` 改為 `/community/{communityId}/wall`
+| 檔案 | 行號 | 現況 | 改為 |
+|------|------|------|------|
+| `src/components/PropertyDetail/CommunityReviews.tsx` | 247 | `navigate('/maihouses/community-wall_mvp.html')` | `/community/{communityId}/wall` |
+| `src/components/PropertyDetail/CommunityWallCard.tsx` | 70 | `'/maihouses/community-wall_mvp.html'` ⚠️ 原工單遺漏 | `/community/{communityId}/wall` |
 
 #### 4b-B. 「註冊查看」連結
 
-**檔案**：`src/components/PropertyDetail/CommunityReviews.tsx`
-
-- 從 `auth.html?mode=login` 改為 React 路由或 toast 引導
+| 檔案 | 行號 | 現況 | 改為 |
+|------|------|------|------|
+| `src/components/PropertyDetail/CommunityReviews.tsx` | 243 | `navigate('/maihouses/auth.html?mode=login')` | React 路由或 toast 引導 |
 
 **驗收標準**：
-- 詳情頁內搜尋 `community-wall_mvp` 和 `auth.html` 回傳 0 筆
+- 詳情頁相關檔案搜尋 `community-wall_mvp` 和 `auth.html` 回傳 0 筆
 
 ---
 
@@ -658,7 +692,7 @@ mode === 'live'    → 渲染現有 UAG 後台
 
 **目標**：UAG 後台由 usePageMode 自動判斷模式
 
-**施工項目**：
+**施工項目**：（見審計 C-2、C-4）
 
 #### 5b-A. 演示模式行為
 
@@ -672,13 +706,22 @@ mode === 'live'    → 渲染現有 UAG 後台
 
 #### 5b-C. 移除 mock/live toggle
 
-- 移除 `uagModeStore` 的手動切換
-- 改為 `usePageMode()` 自動判斷
+需修改的具體位置：
+
+| 檔案 | 行號 | 動作 |
+|------|------|------|
+| `src/stores/uagModeStore.ts` | 全檔 | 移除整個 Zustand store |
+| `src/pages/UAG/hooks/useUAGData.ts` | 20, 78-103 | 移除 `useUAGModeStore` import 和 `toggleMode`，改用 usePageMode |
+| `src/pages/UAG/hooks/useAgentProfile.ts` | 4, 20-35 | 移除 `useMock` 判斷，改用 usePageMode |
+| `src/pages/UAG/components/TrustFlow/index.tsx` | 14, 34 | 移除 `selectUseMock` 引用 |
+| `src/pages/UAG/Profile/index.tsx` | 49, 55 | 移除 `?mock=true` URL 參數判斷 |
+| `src/pages/UAG/Profile/hooks/useAgentProfile.ts` | 49-50 | 移除 mock 判斷 |
 
 **驗收標準**：
 - 演示模式操作本地化，不寫 DB
 - agent 登入看到真實資料
 - consumer 登入看到引導提示
+- 全專案搜尋 `uagModeStore` 回傳 0 筆
 - 不存在手動 mock/live 切換 UI
 
 ---
@@ -687,25 +730,33 @@ mode === 'live'    → 渲染現有 UAG 後台
 
 **目標**：修復 Feed 頁面的導航死路
 
-**施工項目**：
+**施工項目**：（見審計 B-1~B-5、A-3、G-4、G-9）
 
 #### 6a-A. Logo 導航修復
 
-**檔案**：`src/components/layout/GlobalHeader.tsx`
+需修改的具體位置：
 
-- Logo `href` 統一改為 `ROUTES.HOME`（`/maihouses/`）
-- 移除根據 role 切換 homeLink 的邏輯
+| 檔案 | 行號 | 現況 | 改為 |
+|------|------|------|------|
+| `src/components/layout/GlobalHeader.tsx` | 109-115 | 根據 role 切換 `homeLink`（agent→FEED_AGENT、consumer→FEED_CONSUMER）| 統一 `ROUTES.HOME` |
+| `src/components/layout/GlobalHeader.tsx` | 246 | `targetPath = ROUTES.FEED_CONSUMER` — Profile 導航 ⚠️ 原工單遺漏 | 正確的 profile 路由 |
+| `src/components/layout/GlobalHeader.tsx` | 283 | `href="/maihouses/auth.html?mode=login"` — 登入按鈕 | React 路由 |
+| `src/components/Feed/PrivateWallLocked.tsx` | 23 | `window.location.href = ROUTES.AUTH` ⚠️ 原工單遺漏 | React 路由或 toast |
 
 #### 6a-B. 廢棄路由清理
 
-**檔案**：`src/constants/routes.ts`
-
-- 移除 `FEED_AGENT`、`FEED_CONSUMER`、`FEED_AGENT_LEGACY`、`FEED_CONSUMER_LEGACY`
-- 全域搜尋確認無其他引用
+| 檔案 | 行號 | 動作 |
+|------|------|------|
+| `src/constants/routes.ts` | 16 | 移除 `FEED_AGENT` |
+| `src/constants/routes.ts` | 19 | 移除 `FEED_CONSUMER` |
+| `src/constants/routes.ts` | 22 | 移除 `FEED_AGENT_LEGACY` |
+| `src/constants/routes.ts` | 25 | 移除 `FEED_CONSUMER_LEGACY` |
+| `src/components/layout/GlobalHeader.tsx` | 8-9 | 移除同步 HTML 的過時警告註解 |
 
 **驗收標準**：
 - Feed 頁面 Logo 回到首頁
 - 全域搜尋 `FEED_AGENT`、`FEED_CONSUMER` 回傳 0 筆
+- GlobalHeader 不再有 auth.html 引用
 
 ---
 
@@ -713,19 +764,18 @@ mode === 'live'    → 渲染現有 UAG 後台
 
 **目標**：Feed 改用統一 hook 判斷模式
 
-**施工項目**：
+**施工項目**：（見審計 C-3、C-4b、D-6、G-7）
 
 #### 6b-A. 移除 DEMO_IDS 白名單
 
-**檔案**：`src/pages/Feed/index.tsx`
-
-- 移除 `DEMO_IDS` 硬編碼
-- 改用 `usePageMode()` 判斷
-
-#### 6b-B. 靜態 HTML 備份處理
-
-- `public/feed-agent.html`、`public/feed-consumer.html`
-- 若無引用則移除或加 redirect 到首頁
+| 檔案 | 行號 | 動作 |
+|------|------|------|
+| `src/pages/Feed/index.tsx` | 19 | 移除 `DEMO_IDS` 定義 |
+| `src/pages/Feed/index.tsx` | 30-32 | 移除 `isDemo`/`forceMock` 判斷，改用 usePageMode |
+| `src/pages/Feed/index.tsx` | 40-50 | 移除 forceMock 分支 |
+| `src/pages/Feed/index.tsx` | 84-87 | RoleToggle 改用 mode 判斷 |
+| `src/components/Feed/FeedPostCard.tsx` | 110 | 移除 `disabled={!isLoggedIn}` |
+| `src/hooks/useFeedData.ts` | 139, 183 | 移除獨立 `useMock` 判斷 ⚠️ 原工單遺漏 |
 
 **驗收標準**：
 - 全域搜尋 `DEMO_IDS` 回傳 0 筆
@@ -766,17 +816,16 @@ mode === 'live'    → 渲染現有 UAG 後台
 
 **目標**：社區牆在演示模式下自動展示完整功能
 
-**施工項目**：
+**施工項目**：（見審計 A-2h、D-5、D-7）
 
 #### 8-A. 演示模式自動套用 resident 權限
 
-**檔案**：`src/pages/Community/Wall.tsx`
-
-```
-mode === 'demo'    → 自動套用 resident 權限（全部可看、可操作）
-mode === 'visitor' → guest 權限（現有邏輯，不動）
-mode === 'live'    → 真實權限
-```
+| 檔案 | 行號 | 動作 |
+|------|------|------|
+| `src/pages/Community/Wall.tsx` | 122-128 | `effectiveRole` 加入 demo → 自動 `'resident'` |
+| `src/pages/Community/Wall.tsx` | 241-256 | `handleLike` 加入 demo 本地 toggle / visitor toast |
+| `src/pages/Community/components/PostsSection.tsx` | 279 | 移除 `disabled={!isLoggedIn}`，改用 mode |
+| `src/pages/Community/components/BottomCTA.tsx` | 32 | `auth.html` → React 路由或 toast |
 
 #### 8-B. 演示模式下操作本地化
 
@@ -785,24 +834,30 @@ mode === 'live'    → 真實權限
 **驗收標準**：
 - 演示模式下社區牆全部可見，操作本地化
 - 訪客模式維持現有 guest 限制（不動）
+- 社區牆相關檔案搜尋 `auth.html` 回傳 0 筆
 
 ---
 
-### #9 [P2] 移除所有靜態 HTML mock 頁
+### #9 [P2] 移除所有靜態 HTML mock 頁 + 部署設定同步
 
 **目標**：清理所有靜態 HTML 殘留
 
-**施工項目**：
+**施工項目**：（見審計 A-3d、F-3、G-8）
 
-- `public/community-wall_mvp.html` → 移除或 redirect
-- `public/feed-agent.html` → 移除或 redirect
-- `public/feed-consumer.html` → 移除或 redirect
-- 全域搜尋確認無引用殘留
+| 檔案 | 動作 |
+|------|------|
+| `public/community-wall_mvp.html` | 移除或 redirect |
+| `public/maihouses/community-wall_mvp.html` | 移除或 redirect |
+| `public/feed-agent.html` | 移除或 redirect |
+| `public/feed-consumer.html` | 移除或 redirect |
+| `public/auth/after-login.html` `:20` | `<noscript>` fallback → 改為 `/maihouses/` ⚠️ 原工單遺漏 |
+| `vercel.json` `:57` | Rewrite rule `"dest": "/auth.html"` — 需同步更新 ⚠️ 原工單遺漏 |
 
 **前置條件**：#2、#6 完成後才能移除
 
 **驗收標準**：
 - 不存在任何指向靜態 HTML mock 頁的連結
+- `vercel.json` rewrite 規則與新路由一致
 
 ---
 
@@ -848,6 +903,183 @@ mode === 'live'    → 真實權限
 - 登入 → `/feed/{userId}`
 
 **施工項目**：待定位確認後展開
+
+---
+
+## 程式碼審計 — 優化項目清單
+
+> 2026-02-12 由 codebase 掃描產出，每項附 `file:line` 證據。
+
+---
+
+### A. 靜態 HTML 死路（使用者點擊後掉出 React App）
+
+#### A-1. `community-wall_mvp.html` 引用（6 處）
+
+| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
+|---|------|------|-----------|---------|
+| A-1a | `src/constants/routes.ts` | 31 | `COMMUNITY_WALL_MVP: '/maihouses/community-wall_mvp.html'` | #2 |
+| A-1b | `src/features/home/sections/CommunityTeaser.tsx` | 11 | `const SEED_REVIEWS_URL = '/maihouses/community-wall_mvp.html'` | #2 |
+| A-1c | `src/features/home/sections/CommunityTeaser.tsx` | 103 | `window.location.href = SEED_REVIEWS_URL` | #2 |
+| A-1d | `src/features/home/sections/CommunityTeaser.tsx` | 205 | `href={SEED_REVIEWS_URL}` — 「查看更多真實住戶評價」 | #2 |
+| A-1e | `src/components/PropertyDetail/CommunityReviews.tsx` | 247 | `navigate('/maihouses/community-wall_mvp.html')` — 「前往社區牆」 | #4b |
+| A-1f | `src/components/PropertyDetail/CommunityWallCard.tsx` | 70 | `const communityWallUrl = '/maihouses/community-wall_mvp.html'` | #4b |
+
+#### A-2. `auth.html` 引用（10 處）
+
+| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
+|---|------|------|-----------|---------|
+| A-2a | `src/constants/routes.ts` | 43 | `AUTH: '/maihouses/auth.html'` | #2 |
+| A-2b | `src/components/Header/Header.tsx` | 81 | `href={\`${ROUTES.AUTH}?mode=login\`}` — 桌面版「登入」 | #2 |
+| A-2c | `src/components/Header/Header.tsx` | 90 | `href={\`${ROUTES.AUTH}?mode=signup\`}` — 桌面版「免費註冊」 | #2 |
+| A-2d | `src/components/Header/Header.tsx` | 102 | `href={\`${ROUTES.AUTH}?mode=login\`}` — 手機版「登入」 | #2 |
+| A-2e | `src/components/Header/Header.tsx` | 110 | `href={\`${ROUTES.AUTH}?mode=signup\`}` — 手機版「免費註冊」 | #2 |
+| A-2f | `src/components/PropertyDetail/CommunityReviews.tsx` | 243 | `navigate('/maihouses/auth.html?mode=login')` — 「註冊查看」 | #4b |
+| A-2g | `src/components/layout/GlobalHeader.tsx` | 283 | `href="/maihouses/auth.html?mode=login"` — Feed 登入按鈕 | #6a |
+| A-2h | `src/pages/Community/components/BottomCTA.tsx` | 32 | `window.location.href = '/maihouses/auth.html'` | #8 |
+| A-2i | `src/pages/Chat/index.tsx` | 62 | `href="/maihouses/auth.html?mode=login"` — Chat 登入提示 | 新增 |
+| A-2j | `src/pages/PropertyListPage.tsx` | 100 | `href="/maihouses/auth.html"` — 房源列表登入按鈕 | 新增 |
+
+> **工單外遺漏**：A-2i (Chat) 和 A-2j (PropertyListPage) 未在原始工單中列出，需補入 #2 或另建子工單。
+
+#### A-3. `feed-agent.html` / `feed-consumer.html` 引用（5 處）
+
+| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
+|---|------|------|-----------|---------|
+| A-3a | `src/constants/routes.ts` | 22 | `FEED_AGENT_LEGACY: '/maihouses/feed-agent.html'` | #6a |
+| A-3b | `src/constants/routes.ts` | 25 | `FEED_CONSUMER_LEGACY: '/maihouses/feed-consumer.html'` | #6a |
+| A-3c | `src/components/layout/GlobalHeader.tsx` | 8-9 | 註解提示同步 `feed-consumer.html` 與 `feed-agent.html` | #6a |
+| A-3d | `public/auth/after-login.html` | 20 | `<noscript>..url=/maihouses/feed-consumer.html</noscript>` | #9 |
+| A-3e | Legacy HTML 頁面互相引用 | — | `feed-agent.html` ↔ `feed-consumer.html` ↔ `community-wall_mvp.html` | #9 |
+
+---
+
+### B. 廢棄路由死路
+
+| # | 檔案 | 行號 | 程式碼片段 | 問題 | 歸屬工單 |
+|---|------|------|-----------|------|---------|
+| B-1 | `src/constants/routes.ts` | 16 | `FEED_AGENT: '/maihouses/feed/agent'` | 路由不存在 | #6a |
+| B-2 | `src/constants/routes.ts` | 19 | `FEED_CONSUMER: '/maihouses/feed/consumer'` | 路由不存在 | #6a |
+| B-3 | `src/components/layout/GlobalHeader.tsx` | 111 | `homeLink = ROUTES.FEED_AGENT` — agent Logo 導航 | 點擊 → 404 | #6a |
+| B-4 | `src/components/layout/GlobalHeader.tsx` | 113 | `homeLink = ROUTES.FEED_CONSUMER` — consumer Logo 導航 | 點擊 → 404 | #6a |
+| B-5 | `src/components/layout/GlobalHeader.tsx` | 246 | `const targetPath = ROUTES.FEED_CONSUMER` — Profile 導航 | 點擊 → 404 | #6a |
+
+---
+
+### C. 舊 Mock 機制散布
+
+#### C-1. `isDemoPropertyId()` 孤島邏輯（4 個檔案、12+ 處引用）
+
+| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
+|---|------|------|-----------|---------|
+| C-1a | `src/constants/property.ts` | 1-4 | `DEMO_PROPERTY_ID = 'MH-100001'` + `isDemoPropertyId()` 定義 | #4a |
+| C-1b | `src/services/propertyService.ts` | 5, 366 | `import { isDemoPropertyId }` → `isDemo = isDemoPropertyId(publicId)` | #4a |
+| C-1c | `src/pages/PropertyDetailPage.tsx` | 29, 127 | `import { isDemoPropertyId }` → `isDemo: isDemoPropertyId(id)` | #4a |
+| C-1d | `src/pages/PropertyDetailPage.tsx` | 249 | `enabled: !property.isDemo && Boolean(property.publicId)` — 禁用 API query | #4a |
+| C-1e | `src/pages/PropertyDetailPage.tsx` | 261-279 | Mock 社會證明（基於 publicId charCode 產生虛擬瀏覽人數） | #4a |
+| C-1f | `src/pages/PropertyDetailPage.tsx` | 292-294 | Demo 導向 `/maihouses/assure?mock=true` | #4a |
+| C-1g | `src/pages/PropertyDetailPage.tsx` | 679-713 | Dev 測試按鈕（僅 Demo 頁面顯示切換安心留痕開關） | #4a |
+| C-1h | `src/pages/PropertyDetailPage.tsx` | 774-775 | 傳遞 `isDemo` prop → CommunityReviews | #4a |
+| C-1i | `src/pages/PropertyDetailPage.tsx` | 784-785 | 傳遞 `isDemo` prop → AgentTrustCard | #4a |
+| C-1j | `src/pages/PropertyDetailPage.tsx` | 813 | Demo 時自動顯示已驗證徽章 | #4a |
+
+#### C-2. `uagModeStore` 手動 Mock/Live 切換（3 個檔案）
+
+| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
+|---|------|------|-----------|---------|
+| C-2a | `src/stores/uagModeStore.ts` | 全檔 | Zustand store：STORAGE_KEY、URL_PARAM_KEY、localStorage 讀寫 | #5b |
+| C-2b | `src/pages/UAG/hooks/useUAGData.ts` | 20, 78-103 | `useUAGModeStore(selectUseMock)` + `toggleMode` 回調 | #5b |
+| C-2c | `src/pages/UAG/hooks/useAgentProfile.ts` | 4, 20-35 | `useMock` → 決定回傳 MOCK_AGENT_PROFILE 或 fetchAgentMe() | #5b |
+| C-2d | `src/pages/UAG/components/TrustFlow/index.tsx` | 14, 34 | `useUAGModeStore(selectUseMock)` — 信任案件資料來源切換 | #5b |
+
+#### C-3. `DEMO_IDS` 白名單（Feed）
+
+| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
+|---|------|------|-----------|---------|
+| C-3a | `src/pages/Feed/index.tsx` | 19 | `const DEMO_IDS = ['demo-001', 'demo-consumer', 'demo-agent']` | #6b |
+| C-3b | `src/pages/Feed/index.tsx` | 30-32 | `isDemo = DEMO_IDS.includes(userId)` → `forceMock` 判斷 | #6b |
+| C-3c | `src/pages/Feed/index.tsx` | 40-50 | forceMock → 直接載入 mock 版本 | #6b |
+| C-3d | `src/pages/Feed/index.tsx` | 84-87 | RoleToggle 根據 forceMock 決定顯示 | #6b |
+
+#### C-4. `?mock=` URL 參數散布（4 處）
+
+| # | 檔案 | 行號 | 程式碼片段 | 歸屬工單 |
+|---|------|------|-----------|---------|
+| C-4a | `src/stores/uagModeStore.ts` | 47-56 | `getInitialModeFromUrl()` — `?mock=1/true/0/false` | #5b |
+| C-4b | `src/pages/Feed/index.tsx` | 30 | `searchParams.get('mock')` | #6b |
+| C-4c | `src/pages/UAG/Profile/index.tsx` | 49, 55 | `isMockMode = searchParams.get('mock') === 'true'` | #5b |
+| C-4d | `src/pages/UAG/Profile/hooks/useAgentProfile.ts` | 49-50 | Mock 判斷影響 query key 和資料來源 | #5b |
+
+---
+
+### D. 按讚 / 互動體驗問題
+
+| # | 檔案 | 行號 | 問題 | 應改為 | 歸屬工單 |
+|---|------|------|------|--------|---------|
+| D-1 | `src/components/PropertyDetail/CommunityReviews.tsx` | 310 | `disabled={!isLoggedIn}` — 按鈕灰掉無任何引導 | 永遠可點，mode 決定行為 | #3 |
+| D-2 | `src/components/PropertyDetail/CommunityReviews.tsx` | 313-318 | `!isLoggedIn ? 'cursor-not-allowed opacity-50'` — 視覺禁用 | 移除，統一由 mode 控制 | #3 |
+| D-3 | `src/components/PropertyDetail/CommunityReviews.tsx` | 250-269 | `handleToggleLike` 只判斷 `isDemo`，不判斷 visitor | 加入 visitor → toast 引導 | #3 |
+| D-4 | `src/components/PropertyDetail/CommunityReviews.tsx` | 358-369 | LockedOverlay `!isLoggedIn` 觸發，Demo 也被鎖 | 改用 mode 判斷 | #3 |
+| D-5 | `src/pages/Community/components/PostsSection.tsx` | 279 | `disabled={!isLoggedIn}` — CommentInput 禁用 | 改用 mode 判斷 | #8 |
+| D-6 | `src/components/Feed/FeedPostCard.tsx` | 110 | `disabled={!isLoggedIn}` — Feed CommentInput 禁用 | 改用 mode 判斷 | #6b |
+| D-7 | `src/pages/Community/Wall.tsx` | 241-256 | `handleLike` 只檢查 `isAuthenticated` | 加入 demo 本地 toggle / visitor toast | #8 |
+
+---
+
+### E. AgentReviewListModal Demo 判斷孤島
+
+| # | 檔案 | 行號 | 問題 | 歸屬工單 |
+|---|------|------|------|---------|
+| E-1 | `src/components/AgentReviewListModal.tsx` | 60 | `isDemo = agentId.startsWith('mock-') \|\| agentId === SEED_AGENT_ID` — 獨立判斷 | #4a |
+| E-2 | `src/components/AgentReviewListModal.tsx` | 71-77 | Demo → Mock 資料，否則 API — 未接入 usePageMode | #4a |
+
+---
+
+### F. 登入後重定向
+
+| # | 檔案 | 行號 | 問題 | 應改為 | 歸屬工單 |
+|---|------|------|------|--------|---------|
+| F-1 | `public/auth.html` | 1647 | `go(\`/maihouses/feed/${user.id}\`)` — 統一導到 Feed | agent → `/uag`、consumer → `/` | #7 |
+| F-2 | `public/auth.html` | 1655 | 備用回退 `go('/maihouses/')` | 保留 ✅ | — |
+| F-3 | `public/auth/after-login.html` | 20 | `<noscript>` fallback → `feed-consumer.html` | 更新為 `/maihouses/` | #9 |
+
+---
+
+### G. 工單外新發現（需補入或另建）
+
+| # | 檔案 | 行號 | 問題 | 建議歸屬 |
+|---|------|------|------|---------|
+| G-1 | `src/pages/Chat/index.tsx` | 62 | `auth.html` 硬編碼 — Chat 頁登入引導掉出 app | 補入 #2 |
+| G-2 | `src/pages/PropertyListPage.tsx` | 100 | `auth.html` 硬編碼 — 房源列表登入按鈕掉出 app | 補入 #2 |
+| G-3 | `src/components/TrustManager.tsx` | 257 | `auth.html` 硬編碼 — 信任交易管理器登入提示 | 補入 #2 |
+| G-4 | `src/components/Feed/PrivateWallLocked.tsx` | 23 | `window.location.href = ROUTES.AUTH` — Feed 私密牆鎖定 | 補入 #6a |
+| G-5 | `src/components/Composer/LoginPrompt.tsx` | 40 | `<a href={ROUTES.AUTH}>` — 作曲家登入提示 | 補入 #2 |
+| G-6 | `src/components/PropertyDetail/CommunityWallCard.tsx` | 70 | `community-wall_mvp.html` 硬編碼 — 聊天頁社區牆卡片 | 補入 #4b |
+| G-7 | `src/hooks/useFeedData.ts` | 139, 183 | `useMock: boolean` — Feed 資料 Hook 仍有獨立 mock 判斷 | 補入 #6b |
+| G-8 | `vercel.json` | 57 | Rewrite rule `"dest": "/auth.html"` — 部署設定需同步 | 補入 #9 |
+| G-9 | `src/components/layout/GlobalHeader.tsx` | 246 | Profile 導航使用 `ROUTES.FEED_CONSUMER`（廢棄路由） | 補入 #6a |
+
+---
+
+### H. 影響檔案總覽
+
+> 共 **25+ 個檔案**需修改，依工單分組：
+
+| 工單 | 涉及檔案數 | 關鍵檔案 |
+|------|-----------|---------|
+| #1 | 2 新增 | `usePageMode.ts`（新增）、`DemoGate.tsx`（新增） |
+| #2 | 6 | `routes.ts`、`Header.tsx`、`CommunityTeaser.tsx`、`Chat/index.tsx`、`PropertyListPage.tsx`、`TrustManager.tsx` |
+| #3 | 2 | `CommunityReviews.tsx`、`AgentReviewListModal.tsx` |
+| #4a | 4 | `PropertyDetailPage.tsx`、`propertyService.ts`、`property.ts`、`AgentReviewListModal.tsx` |
+| #4b | 2 | `CommunityReviews.tsx`、`CommunityWallCard.tsx` |
+| #5a | 1 新增 | `UAGLandingPage.tsx`（新增） |
+| #5b | 4 | `uagModeStore.ts`、`useUAGData.ts`、`useAgentProfile.ts`、`TrustFlow/index.tsx` |
+| #6a | 3 | `GlobalHeader.tsx`、`routes.ts`、`PrivateWallLocked.tsx` |
+| #6b | 3 | `Feed/index.tsx`、`FeedPostCard.tsx`、`useFeedData.ts` |
+| #7 | 1 | `auth.html` |
+| #8 | 3 | `Wall.tsx`、`BottomCTA.tsx`、`PostsSection.tsx` |
+| #9 | 4 移除 | `community-wall_mvp.html`、`feed-agent.html`、`feed-consumer.html`、`after-login.html` |
+| #10 | 2 | `DemoBadge.tsx`（新增）、`App.tsx` |
 
 ---
 

@@ -67,7 +67,7 @@ const makeLiveProfile = () => ({
   createdAt: '2023-01-01T00:00:00Z',
 });
 
-describe('useAgentProfile (#7 mock mode)', () => {
+describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetchAgentMe.mockResolvedValue(makeLiveProfile());
@@ -107,7 +107,7 @@ describe('useAgentProfile (#7 mock mode)', () => {
     expect(result.current.profile?.phone).toBe('0987654321');
     expect(mockUpdateAgentProfile).not.toHaveBeenCalled();
     expect(mockNotifySuccess).toHaveBeenCalledWith(
-      '已更新個人資料（Mock 模式）',
+      '個人資料已儲存',
       '這是模擬更新，實際資料未儲存'
     );
   });
@@ -147,5 +147,46 @@ describe('useAgentProfile (#7 mock mode)', () => {
 
     expect(mockFetchAgentMe).toHaveBeenCalledTimes(1);
     expect(liveRender.result.current.profile?.id).toBe('live-agent-001');
+  });
+
+  it('live mode updateProfile 成功時應顯示成功通知', async () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(() => useAgentProfile(), {
+      wrapper: createWrapper(queryClient, '/uag/profile'),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.updateProfile({
+        name: '正式房仲-更新',
+      });
+    });
+
+    expect(mockUpdateAgentProfile).toHaveBeenCalledWith({
+      name: '正式房仲-更新',
+    });
+    expect(mockNotifySuccess).toHaveBeenCalledWith('個人資料已儲存');
+  });
+
+  it('live mode updateProfile 失敗時應顯示固定錯誤通知', async () => {
+    mockUpdateAgentProfile.mockRejectedValueOnce(new Error('service down'));
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(() => useAgentProfile(), {
+      wrapper: createWrapper(queryClient, '/uag/profile'),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await expect(
+        result.current.updateProfile({
+          name: '正式房仲-失敗',
+        })
+      ).rejects.toThrow('service down');
+    });
+
+    expect(mockNotifyError).toHaveBeenCalledWith('儲存失敗，請稍後再試');
   });
 });

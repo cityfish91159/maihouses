@@ -207,6 +207,7 @@ describe('BasicInfoSection (#15)', () => {
     render(<BasicInfoSection profile={createProfile()} isSaving={false} onSave={vi.fn()} />);
 
     const phoneInput = screen.getByLabelText('手機號碼');
+    expect(phoneInput).toHaveAttribute('placeholder', '09xx-xxx-xxx');
     await user.clear(phoneInput);
     await user.type(phoneInput, 'abc');
     await user.tab();

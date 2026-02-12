@@ -94,7 +94,7 @@
 ### 待開發 — UAG Profile 頁 UX 升級（新增 #21 拆分）
 
 - [ ] **#21a** [P0] Profile 手機版佈局重構（5 項：P1 頭像 compact variant + P2 指標 2x2 compact + P3 Tab 分段 + P4 Sticky Save Bar + P5 返回按鈕 touch target）
-- [ ] **#21b** [P1] Profile 桌面版 + 通用品質提升（4 項：P6 Tab 內容區視覺分段 + P7 表單即時驗證 + P8 儲存 Spinner + P9 指標色彩 design token；~~P10 已移除~~）
+- [x] **#21b** [P1] Profile 桌面版 + 通用品質提升（4 項：P6 Tab 內容區視覺分段 + P7 表單即時驗證 + P8 儲存 Spinner + P9 指標色彩 design token；~~P10 已移除~~）✅ 2026-02-12
 
 ### 已完成項快速驗證
 
@@ -5267,17 +5267,79 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 | 類型 | 檔案 |
 |------|------|
 | 修改 | `src/pages/UAG/Profile/BasicInfoSection.tsx` |
-| 修改 | `src/pages/UAG/Profile/MetricsDisplay.tsx` |
+| 修改 | `src/pages/UAG/Profile/MetricsDisplayCard.tsx` |
+| 修改 | `src/pages/UAG/Profile/MetricsDisplayCompact.tsx` |
 | 修改 | `src/pages/UAG/Profile/hooks/useAgentProfile.ts` |
+| 修改 | `src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx` |
+| 修改 | `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx` |
+| 新增 | `src/pages/UAG/Profile/MetricsDisplay.test.tsx` |
 
 ### 驗收標準
 
-- [ ] P6: Tab 1 內 3 區段視覺分隔（區段標題 + spacing），無過度嵌套
-- [ ] P7: 手機/LINE ID/姓名 blur 驗證，Lucide `AlertCircle` icon + `role="alert"`
-- [ ] P8: 儲存按鈕 `Loader2` spinner + `animate-spin motion-reduce:animate-none`，成功/失敗 toast 正確觸發
-- [ ] P9: 信任分用 `brand-*` token 高亮，hover + `motion-reduce` 支援
-- [ ] ~~P10: 已移除~~
-- [ ] typecheck + lint + test 通過
+- [x] P6: Tab 1 內 3 區段視覺分隔（區段標題 + spacing），無過度嵌套
+- [x] P7: 手機/LINE ID/姓名 blur 驗證，Lucide `AlertCircle` icon + `role="alert"`
+- [x] P8: 儲存按鈕 `Loader2` spinner + `animate-spin motion-reduce:animate-none`，成功/失敗 toast 正確觸發
+- [x] P9: 信任分用 `brand-*` token 高亮，hover + `motion-reduce` 支援
+- [x] ~~P10: 已移除~~
+- [ ] typecheck + lint + test 通過（`npm run test` 仍有既有失敗，見下方驗證結果）
+
+### 實作記錄（2026-02-12）
+
+#### 修改檔案
+
+1. **src/pages/UAG/Profile/BasicInfoSection.tsx**
+   - 手機欄位 placeholder 改為 `09xx-xxx-xxx`，與 21b-P7 規格一致。
+   - 保留既有 blur 驗證（姓名/手機/LINE ID）與 `AlertCircle + role="alert"` 組合。
+
+2. **src/pages/UAG/Profile/hooks/useAgentProfile.ts**
+   - 儲存成功通知統一為 `notify.success('個人資料已儲存')`（mock/live 都一致）。
+   - 儲存失敗通知改為 `notify.error('儲存失敗，請稍後再試')`（固定文案）。
+
+3. **src/pages/UAG/Profile/MetricsDisplayCard.tsx**
+   - 信任分卡片改用 design token：`bg-brand-50 border-brand-200`。
+   - 信任分 icon/數值文字改用 `text-brand-700`。
+   - 其餘卡片維持 `border-slate-200 bg-slate-50`，全部保留 `hover:border-brand-300` 與 `motion-reduce`。
+
+4. **src/pages/UAG/Profile/MetricsDisplayCompact.tsx**
+   - compact 版信任分 tile 同步套用 `bg-brand-50 border-brand-200 text-brand-700`。
+   - 其餘三格維持 slate 樣式，hover/motion 規則一致。
+
+5. **src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx**
+   - 補上手機欄位 placeholder 斷言：`09xx-xxx-xxx`。
+
+6. **src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx**
+   - 更新成功通知斷言為 `個人資料已儲存`。
+   - 新增 live mode 成功/失敗通知測試（含固定錯誤文案）。
+
+7. **src/pages/UAG/Profile/MetricsDisplay.test.tsx**
+   - 新增 #21b-P9 測試：驗證 trust 卡使用 brand token，其他卡片維持 slate 樣式（default + compact）。
+
+#### 驗證結果
+
+```
+✅ typecheck  0 errors
+✅ eslint     0 errors, 0 warnings
+✅ #21b 目標測試全通過（24 tests）
+   - src/pages/UAG/Profile/__tests__/BasicInfoSection.test.tsx
+   - src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx
+   - src/pages/UAG/Profile/MetricsDisplay.test.tsx
+⚠️ npm run test（全專案）目前有既有失敗（與 #21b 無直接關聯）：
+   - src/pages/UAG/index.test.tsx（1 failed）
+   - src/pages/__tests__/PropertyDetailPage.defaultProperty.test.tsx（1 failed）
+   - src/pages/__tests__/PropertyDetailPage.phase11.test.tsx（4 failed）
+```
+
+#### Commit
+
+```
+feat(uag-profile): close #21b desktop quality upgrades
+
+- P6: 基本資料 Tab 1 內視覺分段維持 3 區塊（個人/聯絡/自介）
+- P7: 手機 placeholder 對齊規格，保留 blur 驗證與 alert 語意
+- P8: 儲存成功/失敗通知文案統一
+- P9: 信任分卡片改用 brand design token（default + compact）
+- 補齊 #21b 測試覆蓋（表單、通知、指標 token）
+```
 
 ---
 

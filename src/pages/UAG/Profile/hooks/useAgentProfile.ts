@@ -74,7 +74,7 @@ export function useAgentProfile() {
     onSuccess: (_, payload) => {
       // #7 Mock 模式：提示這是模擬
       if (isMockMode) {
-        notify.success('已更新個人資料（Mock 模式）', '這是模擬更新，實際資料未儲存');
+        notify.success('個人資料已儲存', '這是模擬更新，實際資料未儲存');
         // #7: Mock 模式更新本地快取，讓 UI 立即反映編輯結果
         queryClient.setQueryData<AgentProfileMe | undefined>(profileQueryKey, (prev) => {
           if (!prev) return prev;
@@ -93,13 +93,12 @@ export function useAgentProfile() {
           return { ...prev, ...updates };
         });
       } else {
-        notify.success('已更新個人資料');
+        notify.success('個人資料已儲存');
         queryClient.invalidateQueries({ queryKey: profileQueryKey });
       }
     },
-    onError: (err) => {
-      const message = err instanceof Error ? err.message : '更新失敗';
-      notify.error('更新失敗', message);
+    onError: () => {
+      notify.error('儲存失敗，請稍後再試');
     },
   });
 
