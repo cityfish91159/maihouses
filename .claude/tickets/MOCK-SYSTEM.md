@@ -4,12 +4,12 @@
 
 ### P0 — 基礎建設
 
-- [ ] **#1a** `usePageMode()` hook — 模式判斷 + localStorage TTL + 跨分頁同步（1 新檔案）
+- [x] **#1a** `usePageMode()` hook — 模式判斷 + localStorage TTL + 跨分頁同步（1 新檔案）✅ 2026-02-12
 - [ ] **#1b** `useModeAwareAction` hook — 三模式行為派發 + cache key 規範（1 新檔案）
 - [ ] **#1c** `DemoGate.tsx` — Logo 長按/連按觸發演示模式（1 新檔案）
 - [ ] **#2** 全站靜態 HTML 連結改 React 路由 + `SEED_COMMUNITY_ID`（7 檔 16 處）
 - [ ] **#3** 按讚三模式行為分離 — mode guard 優先於 auth guard（2 檔）
-- [ ] **#14a** 確認 Toast 支援 action button（前置條件）
+- [x] **#14a** 確認 Toast 支援 action button（前置條件）✅ 2026-02-12
 - [ ] **#14b** `useRegisterGuide()` hook — 訪客引導註冊 8 場景（1 新檔案）
 - [ ] **#15** `getAuthUrl()` 工具函數 — 統一 auth 跳轉 + `?return=` + `?role=`（1 新檔案）
 
@@ -1773,8 +1773,29 @@ function useRegisterGuide() {
 3. 若不支援 → 擴展 toast 元件，新增 action slot
 
 **驗收標準（#14a）**：
-- toast 可接受 `action: { label: string, onClick: () => void }` 參數
-- action button 可正常點擊觸發 callback
+- [x] toast 可接受 `action: { label: string, onClick: () => void }` 參數
+- [x] action button 可正常點擊觸發 callback
+
+### #14a 施工紀錄（2026-02-12）
+
+#### 修改檔案
+
+1. `src/lib/notify.ts`
+   - `NotifyOptions` 新增 `action?: { label: string; onClick: () => void }`，對齊工單參考碼的 action slot 形狀。
+   - `mapOptions()` 優先處理 `options.action`，並保留舊版 `actionLabel/onAction` 相容行為（避免破壞既有呼叫點）。
+
+2. `src/lib/__tests__/notify.test.ts`
+   - 新增 #14a 單元測試，驗證 `notify.info(..., { action })` 可正確映射到 sonner 的 `action` 參數。
+   - 新增相容性測試，驗證舊版 `actionLabel/onAction` 仍可正常工作。
+
+#### 驗證結果
+
+```bash
+npm run test -- src/lib/__tests__/notify.test.ts      # 2 passed
+npm run typecheck                                     # 目前有既有錯誤（src/App.tsx，非 #14a 變更）
+npm run lint -- src/lib/notify.ts src/lib/__tests__/notify.test.ts
+npm run check:utf8                                    # UTF-8 / Mojibake passed
+```
 
 ---
 

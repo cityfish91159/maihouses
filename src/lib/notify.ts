@@ -5,6 +5,7 @@ export type NotifyOptions = {
   id?: string | number;
   description?: string;
   duration?: number;
+  action?: { label: string; onClick: () => void };
   actionLabel?: string;
   onAction?: () => void;
   dismissible?: boolean;
@@ -38,7 +39,9 @@ const mapOptions = (
     mapped.description = options.description;
   }
 
-  if (options.actionLabel && options.onAction) {
+  if (options.action) {
+    mapped.action = options.action;
+  } else if (options.actionLabel && options.onAction) {
     mapped.action = { label: options.actionLabel, onClick: options.onAction };
   }
 
