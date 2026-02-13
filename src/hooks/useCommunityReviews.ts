@@ -167,18 +167,16 @@ export function useCommunityReviews({
   isDemo = false,
   isVisible,
 }: UseCommunityReviewsOptions): UseCommunityReviewsReturn {
-  const useMockData = isDemo && !communityId;
+  // API 模式用 state；mock 模式用下方 localLikeOverrides 疊加常數
+  const [fetchedReviews, setFetchedReviews] = useState<ReviewPreview[]>([]);
+  const [fetchedTotal, setFetchedTotal] = useState<number | null>(null);
 
-  const [totalReviews, setTotalReviews] = useState<number | null>(() =>
-    useMockData ? MOCK_TOTAL_REVIEWS : null
-  );
-  const [reviewPreviews, setReviewPreviews] = useState<ReviewPreview[]>(() =>
-    useMockData ? MOCK_REVIEWS : []
-  );
+  // Demo 模式本地按讚覆蓋：key = propertyId, value = liked toggle count（奇數 = toggled）
+  const [localLikeOverrides, setLocalLikeOverrides] = useState<Record<string, number>>({});
 
-  // Fetch review data when visible
+  // Fetch review data when visible（僅 API 模式）
   useEffect(() => {
-    if (!isVisible || !communityId) return;
+    if (isDemo || !communityId || !isVisible) return;
 
     const controller = new AbortController();
 
@@ -209,12 +207,12 @@ export function useCommunityReviews({
           .map((item, index) => toPreview(item, index))
           .filter((item): item is ReviewPreview => Boolean(item));
 
-        setReviewPreviews(parsedReviews.slice(0, 3));
+        setFetchedReviews(parsedReviews.slice(0, 3));
 
         if (typeof data.data.total === 'number') {
-          setTotalReviews(data.data.total);
+          setFetchedTotal(data.data.total);
         } else if (items.length > 0) {
-          setTotalReviews(items.length);
+          setFetchedTotal(items.length);
         }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
@@ -225,23 +223,37 @@ export function useCommunityReviews({
     void fetchReviewData();
 
     return () => controller.abort();
-  }, [communityId, isVisible]);
+  }, [communityId, isDemo, isVisible]);
+
+  // 基底資料：mock 用常數，無 communityId 回空，其餘用 fetch 結果
+  const baseReviews = isDemo ? MOCK_REVIEWS : (!communityId ? [] : fetchedReviews);
+  const totalReviews = isDemo ? MOCK_TOTAL_REVIEWS : (!communityId ? null : fetchedTotal);
+
+  // 套用本地按讚覆蓋（demo 模式按讚不寫 DB）
+  const reviewPreviews = useMemo(() => {
+    if (Object.keys(localLikeOverrides).length === 0) return baseReviews;
+    return baseReviews.map((review) => {
+      const toggleCount = localLikeOverrides[review.propertyId];
+      if (toggleCount === undefined || toggleCount === 0) return review;
+      const toggled = toggleCount % 2 === 1;
+      if (!toggled) return review;
+      const newLiked = !review.liked;
+      return {
+        ...review,
+        liked: newLiked,
+        totalLikes: newLiked
+          ? review.totalLikes + 1
+          : Math.max(0, review.totalLikes - 1),
+      };
+    });
+  }, [baseReviews, localLikeOverrides]);
 
   // Demo 模式按讚：僅做本地狀態切換，不寫入 API/DB
   const toggleLocalLike = useCallback((propertyId: string) => {
-    setReviewPreviews((prev) =>
-      prev.map((review) =>
-        review.propertyId === propertyId
-          ? {
-              ...review,
-              liked: !review.liked,
-              totalLikes: review.liked
-                ? Math.max(0, review.totalLikes - 1)
-                : review.totalLikes + 1,
-            }
-          : review
-      )
-    );
+    setLocalLikeOverrides((prev) => ({
+      ...prev,
+      [propertyId]: (prev[propertyId] ?? 0) + 1,
+    }));
   }, []);
 
   // Computed values

@@ -8,7 +8,7 @@
  * - 刪除留言
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import { notify } from '../lib/notify';
@@ -44,6 +44,7 @@ export function useComments({
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const inFlightLikeIdsRef = useRef<Set<string>>(new Set());
 
   // 載入頂層留言
   const refresh = useCallback(async () => {
@@ -177,6 +178,10 @@ export function useComments({
    * - 避免快速連擊時丟失中間操作
    */
   const toggleLike = useCallback(async (commentId: string) => {
+    if (inFlightLikeIdsRef.current.has(commentId)) {
+      return;
+    }
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -184,6 +189,8 @@ export function useComments({
       notify.error('請先登入', '登入後才能按讚');
       return;
     }
+
+    inFlightLikeIdsRef.current.add(commentId);
 
     /**
      * 輔助函數：套用按讚切換（可用於樂觀更新和回滾）
@@ -276,6 +283,8 @@ export function useComments({
         reason: 'API_FAILURE',
       });
       notify.error('按讚失敗', '請稍後再試');
+    } finally {
+      inFlightLikeIdsRef.current.delete(commentId);
     }
   }, []); // 空依賴：不依賴任何外部狀態，完全使用 functional update
 

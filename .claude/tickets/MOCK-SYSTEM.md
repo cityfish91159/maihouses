@@ -8,7 +8,7 @@
 - [x] **#1b** `useModeAwareAction` hook — 三模式行為派發 + cache key 規範（1 新檔案）✅ 2026-02-13
 - [x] **#1c** `DemoGate.tsx` — Logo 連按 5 次觸發演示模式（1 新檔案）✅ 2026-02-13
 - [x] **#2** 全站靜態 HTML 連結改 React 路由 + `SEED_COMMUNITY_ID`（7 檔 16 處）✅ 2026-02-13
-- [ ] **#3** 按讚三模式行為分離 — mode guard 優先於 auth guard（2 檔）
+- [x] **#3** 按讚三模式行為分離 — mode guard 優先於 auth guard（2 檔）✅ 2026-02-13
 - [x] **#14a** 確認 Toast 支援 action button（前置條件）✅ 2026-02-12
 - [ ] **#14b** `useRegisterGuide()` hook — 訪客引導註冊 8 場景（1 新檔案）
 - [x] **#15** `getAuthUrl()` 工具函數 — 統一 auth 跳轉 + `?return=` + `?role=`（1 新檔案 + 7 處重構）✅ 2026-02-12
@@ -322,6 +322,43 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 另：`useComments.ts` 的 `toggleLike` 缺 `isLiking` debounce（live 模式快速連點會重複 API），施工時一併補 guard。
 
 **驗收**：`grep -r "disabled={!isLoggedIn}" src/` 回傳 0 筆
+
+#### 2026-02-13 #3 收斂（mode guard 優先）
+
+**摘要**
+
+- [x] `CommunityReviews` 按讚改用 `useModeAwareAction`，visitor 先行攔截註冊引導
+- [x] `CommunityReviews` 移除 `disabled={!isLoggedIn}` 與 `cursor-not-allowed` 條件樣式
+- [x] `LockedReviewCard` CTA 改為 `onCtaClick` 由父層注入（DIP）
+- [x] `AgentReviewListModal` 移除 agentId 推斷 demo，改由 `usePageMode()` 決定 mock/live
+- [x] `useComments.toggleLike` 補 `inFlightLikeIdsRef` 防重入 guard，避免快速連點重複 API
+
+**本次修改**
+
+1. `src/components/PropertyDetail/CommunityReviews.tsx`
+   - 匯入 `useModeAwareAction`、`usePageMode`、`notify`，將按讚改為三模式派發。
+   - visitor：toast 引導註冊；demo：本地 toggle；live：保留 mutation 呼叫（auth guard 只在 live 分支）。
+   - 移除 Like 按鈕 `disabled={!isLoggedIn}` 與 `cursor-not-allowed` 條件樣式。
+   - `LockedReviewCard` 介面從 `onAuthRedirect` 改為 `onCtaClick`，由父層注入 CTA 行為。
+2. `src/hooks/useCommunityReviews.ts`
+   - demo 模式停止 API fetch，統一走 mock reviews。
+   - 本地按讚覆蓋改為 `localLikeOverrides`，確保 demo 互動不寫 DB。
+3. `src/components/AgentReviewListModal.tsx`
+   - 移除 agentId 的 demo 推斷邏輯，改由 `usePageMode()` 控制是否使用 mock reviews。
+4. `src/hooks/useComments.ts`
+   - 新增 `inFlightLikeIdsRef`，同一留言在 API 進行中時忽略重入點擊。
+5. 測試調整
+   - `src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx`
+   - `src/components/PropertyDetail/__tests__/CommunityReviews.motion.test.tsx`
+   - `src/components/__tests__/AgentReviewListModal.test.tsx`
+
+**收斂驗證**
+
+- [x] `npm run test -- src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx src/components/PropertyDetail/__tests__/CommunityReviews.motion.test.tsx src/components/__tests__/AgentReviewListModal.test.tsx src/hooks/__tests__/useComments.raceCondition.test.ts` 通過（28 tests）
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `npm run gate` 通過
+- [x] `rg -n "disabled={!isLoggedIn}" src/components/PropertyDetail/CommunityReviews.tsx` 無結果
+- [ ] `rg -n "disabled={!isLoggedIn}" src` 尚餘 2 筆（`src/components/Feed/FeedPostCard.tsx`、`src/pages/Community/components/PostsSection.tsx`），歸 #6b / #8b 施工
 
 ---
 

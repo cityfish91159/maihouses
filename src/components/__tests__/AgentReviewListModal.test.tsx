@@ -5,13 +5,16 @@ import type { ReactElement } from 'react';
 import { AgentReviewListModal } from '../AgentReviewListModal';
 import { fetchAgentReviews } from '../../hooks/useAgentReviews';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import type { PageMode } from '../../hooks/usePageMode';
 
 vi.mock('../../hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn(),
 }));
 
+const mockUsePageMode = vi.fn<() => PageMode>(() => 'demo');
+
 vi.mock('../../hooks/usePageMode', () => ({
-  usePageMode: () => 'demo',
+  usePageMode: () => mockUsePageMode(),
 }));
 
 vi.mock('../../hooks/useAgentReviews', () => ({
@@ -47,6 +50,7 @@ describe('AgentReviewListModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUsePageMode.mockReturnValue('demo');
   });
 
   it('renders nothing when open=false', () => {
@@ -83,6 +87,7 @@ describe('AgentReviewListModal', () => {
   });
 
   it('shows empty state when total is zero', async () => {
+    mockUsePageMode.mockReturnValue('live');
     mockedFetchAgentReviews.mockResolvedValueOnce({
       reviews: [],
       total: 0,

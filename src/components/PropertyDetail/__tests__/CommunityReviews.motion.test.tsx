@@ -1,6 +1,13 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { CommunityReviews } from '../CommunityReviews';
+import type { PageMode } from '../../../hooks/usePageMode';
+
+const mockUsePageMode = vi.fn<() => PageMode>(() => 'visitor');
+
+vi.mock('../../../hooks/usePageMode', () => ({
+  usePageMode: () => mockUsePageMode(),
+}));
 
 describe('CommunityReviews motion a11y', () => {
   it('skeleton loading animation includes reduced-motion protection', () => {

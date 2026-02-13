@@ -2,6 +2,20 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { CommunityReviews } from '../CommunityReviews';
+import type { PageMode } from '../../../hooks/usePageMode';
+
+const mockUsePageMode = vi.fn<() => PageMode>();
+const mockNotifyInfo = vi.fn();
+
+vi.mock('../../../hooks/usePageMode', () => ({
+  usePageMode: () => mockUsePageMode(),
+}));
+
+vi.mock('../../../lib/notify', () => ({
+  notify: {
+    info: (...args: unknown[]) => mockNotifyInfo(...args),
+  },
+}));
 
 class MockIntersectionObserver implements IntersectionObserver {
   readonly root = null;
@@ -36,6 +50,7 @@ describe('CommunityReviews', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUsePageMode.mockReturnValue('demo');
     vi.stubGlobal('fetch', vi.fn());
   });
 
@@ -87,14 +102,13 @@ describe('CommunityReviews', () => {
     expect(button.className).toContain('py-2');
   });
 
-  it('disables like buttons when user is not logged in', async () => {
+  it('keeps like buttons enabled in demo mode for logged-out users', async () => {
     renderWithRouter(<CommunityReviews isLoggedIn={false} isDemo={true} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
       const likeButtons = screen.getAllByLabelText(/鼓勵這則評價/);
       likeButtons.forEach((button) => {
-        expect(button).toBeDisabled();
-        expect(button.className).toContain('opacity-50');
+        expect(button).toBeEnabled();
       });
     });
   });
@@ -115,6 +129,7 @@ describe('CommunityReviews', () => {
   });
 
   it('calls onToggleLike in live mode', async () => {
+    mockUsePageMode.mockReturnValue('live');
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -153,6 +168,19 @@ describe('CommunityReviews', () => {
     expect(onToggleLike).toHaveBeenCalledWith('review-1');
   });
 
+  it('prioritizes mode guard before auth guard in visitor mode', async () => {
+    mockUsePageMode.mockReturnValue('visitor');
+    const user = userEvent.setup();
+
+    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
+
+    const likeButton = await screen.findByLabelText('鼓勵這則評價');
+    await user.click(likeButton);
+
+    expect(onToggleLike).not.toHaveBeenCalled();
+    expect(mockNotifyInfo).toHaveBeenCalled();
+  });
+
   it('keeps like button touch target >=44px', async () => {
     renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
 
@@ -165,7 +193,8 @@ describe('CommunityReviews', () => {
   });
 
   it('shows locked CTA for logged-out users', async () => {
-    renderWithRouter(<CommunityReviews isLoggedIn={false} isDemo={true} onToggleLike={onToggleLike} />);
+    mockUsePageMode.mockReturnValue('visitor');
+    renderWithRouter(<CommunityReviews isLoggedIn={false} isDemo={false} onToggleLike={onToggleLike} />);
 
     const cta = await screen.findByRole('button', { name: /註冊查看全部|註冊查看更多評價/ });
     expect(within(cta).getByText(/註冊/)).toBeInTheDocument();

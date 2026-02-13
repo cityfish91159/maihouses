@@ -11,12 +11,15 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronRight, Lock, MessageSquare, Star, ThumbsUp } from 'lucide-react';
-import { getLoginUrl, getCurrentPath } from '../../lib/authUtils';
+import { getCurrentPath, getLoginUrl, getSignupUrl } from '../../lib/authUtils';
 import { ROUTES } from '../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../constants/seed';
+import { notify } from '../../lib/notify';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { INTERSECTION_THRESHOLD, REVIEW_KEY_PREVIEW_LENGTH } from './constants';
+import { useModeAwareAction } from '../../hooks/useModeAwareAction';
+import { usePageMode } from '../../hooks/usePageMode';
 import { useCommunityReviews } from '../../hooks/useCommunityReviews';
 import type { ReviewPreview } from '../../hooks/useCommunityReviews';
 
@@ -25,6 +28,8 @@ import type { ReviewPreview } from '../../hooks/useCommunityReviews';
 const STAR_COUNT = 5;
 const FILLED_STAR_COUNT = 4;
 const LOCKED_CONTENT_PREVIEW_LENGTH = 36;
+const REGISTER_GUIDE_TITLE = '註冊後即可鼓勵評價';
+const REGISTER_GUIDE_DESCRIPTION = '免費註冊即可解鎖完整社區評價與互動。';
 
 // ========== Sub-components ==========
 
@@ -49,11 +54,10 @@ function ReviewStars({ className }: { className?: string }) {
 
 interface ReviewCardProps {
   review: ReviewPreview;
-  isLoggedIn: boolean;
   onToggleLike: (propertyId: string) => void;
 }
 
-function ReviewCard({ review, isLoggedIn, onToggleLike }: ReviewCardProps) {
+function ReviewCard({ review, onToggleLike }: ReviewCardProps) {
   return (
     <div
       key={`${review.name}-${review.content.slice(0, REVIEW_KEY_PREVIEW_LENGTH)}`}
@@ -77,14 +81,12 @@ function ReviewCard({ review, isLoggedIn, onToggleLike }: ReviewCardProps) {
         <div className="mt-2 flex items-center gap-1">
           <button
             onClick={() => onToggleLike(review.propertyId)}
-            disabled={!isLoggedIn}
             aria-label={`鼓勵這則評價${review.liked ? '（已鼓勵）' : ''}`}
             className={cn(
               'inline-flex min-h-[44px] items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
               review.liked
                 ? 'bg-brand-50 font-medium text-brand-700'
-                : 'bg-bg-base text-text-muted hover:bg-brand-50 hover:text-brand-600',
-              !isLoggedIn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                : 'bg-bg-base text-text-muted hover:bg-brand-50 hover:text-brand-600'
             )}
           >
             <ThumbsUp size={12} />
@@ -98,20 +100,20 @@ function ReviewCard({ review, isLoggedIn, onToggleLike }: ReviewCardProps) {
 
 interface LockedReviewCardProps {
   review: ReviewPreview;
-  isLoggedIn: boolean;
+  canViewFullReview: boolean;
   reviewButtonText: string;
-  onAuthRedirect: () => void;
+  onCtaClick: () => void;
 }
 
 function LockedReviewCard({
   review,
-  isLoggedIn,
+  canViewFullReview,
   reviewButtonText,
-  onAuthRedirect,
+  onCtaClick,
 }: LockedReviewCardProps) {
   return (
     <div className="relative mt-3 overflow-hidden rounded-2xl">
-      <div className={cn('flex gap-3 bg-bg-base p-3', !isLoggedIn && 'select-none blur-sm')}>
+      <div className={cn('flex gap-3 bg-bg-base p-3', !canViewFullReview && 'select-none blur-sm')}>
         <div
           className={cn(
             'flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white',
@@ -124,20 +126,20 @@ function LockedReviewCard({
           <div className="mb-1 flex items-center gap-2">
             <span className="text-sm font-bold text-ink-900">{review.name}</span>
             <span className="text-sm text-text-muted">{review.residentLabel}</span>
-            {isLoggedIn && <ReviewStars className="shrink-0" />}
+            {canViewFullReview && <ReviewStars className="shrink-0" />}
           </div>
           <p className="text-sm text-ink-600">
-            {isLoggedIn
+            {canViewFullReview
               ? review.content
               : `${review.content.slice(0, LOCKED_CONTENT_PREVIEW_LENGTH).trimEnd()}...`}
           </p>
         </div>
       </div>
 
-      {!isLoggedIn && (
+      {!canViewFullReview && (
         <div className="via-bg-card/80 absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent to-bg-card pb-3">
           <button
-            onClick={onAuthRedirect}
+            onClick={onCtaClick}
             className="flex min-h-[44px] items-center gap-2 rounded-full bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-lg transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
           >
             <Lock size={14} />
@@ -167,6 +169,9 @@ export const CommunityReviews = memo(function CommunityReviews({
 }: CommunityReviewsProps) {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const mode = usePageMode();
+  const isDemoMode = mode === 'demo' || isDemo;
+  const canViewFullReview = mode !== 'visitor' || isDemoMode;
 
   // Intersection Observer for lazy loading
   useEffect(() => {
@@ -190,32 +195,59 @@ export const CommunityReviews = memo(function CommunityReviews({
   // Use custom hook for data fetching and state
   const { publicReviews, lockedReview, reviewButtonText, toggleLocalLike } = useCommunityReviews({
     communityId,
-    isDemo,
+    isDemo: isDemoMode,
     isVisible,
   });
 
-  const canInteract = isLoggedIn;
-  const handleToggleLike = useCallback(
-    (propertyId: string) => {
-      if (isDemo) {
-        toggleLocalLike(propertyId);
-        return;
-      }
-      onToggleLike?.(propertyId);
-    },
-    [isDemo, onToggleLike, toggleLocalLike]
-  );
-
   // Auth redirect handler
-  const loginUrl = getLoginUrl(getCurrentPath());
+  const currentPath = getCurrentPath();
+  const loginUrl = getLoginUrl(currentPath);
+  const signupUrl = getSignupUrl(currentPath);
+
   const handleAuthRedirect = useCallback(() => {
     window.location.href = loginUrl;
   }, [loginUrl]);
+  const handleSignupRedirect = useCallback(() => {
+    window.location.href = signupUrl;
+  }, [signupUrl]);
 
   // Community wall navigation
   const handleCommunityWall = useCallback(() => {
     window.location.href = ROUTES.COMMUNITY_WALL(communityId ?? SEED_COMMUNITY_ID);
   }, [communityId]);
+
+  const dispatchToggleLike = useModeAwareAction<string>({
+    visitor: () => {
+      notify.info(REGISTER_GUIDE_TITLE, REGISTER_GUIDE_DESCRIPTION, {
+        action: {
+          label: '免費註冊',
+          onClick: handleSignupRedirect,
+        },
+      });
+    },
+    demo: (propertyId) => {
+      toggleLocalLike(propertyId);
+    },
+    live: (propertyId) => {
+      if (!isLoggedIn) {
+        notify.info('請先登入', '登入後即可鼓勵評價。', {
+          action: {
+            label: '前往登入',
+            onClick: handleAuthRedirect,
+          },
+        });
+        return;
+      }
+      onToggleLike?.(propertyId);
+    },
+  });
+
+  const handleToggleLike = useCallback(
+    (propertyId: string) => {
+      void dispatchToggleLike(propertyId);
+    },
+    [dispatchToggleLike]
+  );
 
   return (
     <div ref={ref} className="rounded-2xl border border-border bg-bg-card p-4 shadow-sm">
@@ -239,7 +271,6 @@ export const CommunityReviews = memo(function CommunityReviews({
                 <ReviewCard
                   key={`${review.name}-${review.content.slice(0, REVIEW_KEY_PREVIEW_LENGTH)}`}
                   review={review}
-                  isLoggedIn={canInteract}
                   onToggleLike={handleToggleLike}
                 />
               ))
@@ -253,9 +284,9 @@ export const CommunityReviews = memo(function CommunityReviews({
           {/* Locked Review */}
           <LockedReviewCard
             review={lockedReview}
-            isLoggedIn={canInteract}
+            canViewFullReview={canViewFullReview}
             reviewButtonText={reviewButtonText}
-            onAuthRedirect={handleAuthRedirect}
+            onCtaClick={handleSignupRedirect}
           />
 
           {/* Footer CTA */}
