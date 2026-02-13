@@ -687,6 +687,31 @@ grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts
 - [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
 - [x] `npm run gate` 通過
 
+#### 2026-02-13 尾差修復（#15 收斂）
+
+**摘要**
+
+- [x] `src/pages/PropertyUploadPage.tsx` 的 `/auth` Link 改為 `getLoginUrl(getCurrentPath())`
+- [x] `src/pages/Community/components/WallErrorBoundary.tsx` 的 `actionHref: '/auth'` 改為 `getLoginUrl(getCurrentPath())`
+- [x] `src/` 直接 `'/auth'` 入口完成收斂（保留測試與 `public/` 舊頁）
+
+**本次修改**
+
+1. `src/pages/PropertyUploadPage.tsx`
+   - 新增 `getCurrentPath` / `getLoginUrl` 匯入。
+   - `登入同步` 連結由 `<Link to="/auth">` 改為 `<a href={loginUrl}>`，確保 auth.html 走完整導轉流程與 `?return=`。
+2. `src/pages/Community/components/WallErrorBoundary.tsx`
+   - 權限錯誤分類的 `actionHref` 改為 `getLoginUrl(getCurrentPath())`，移除舊 `/auth`。
+   - 保留既有錯誤分類結構，僅替換登入導向策略。
+
+**收斂驗證**
+
+- [x] `rg -n "/auth" src` 僅剩測試字串與 import 路徑，不含直接登入入口
+- [x] `npm run test -- src/lib/__tests__/authUtils.test.ts src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx` 通過
+- [x] `npm run typecheck` 通過
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `npm run gate` 通過
+
 ---
 
 ### #16 全站 UTF-8/文案健康檢查

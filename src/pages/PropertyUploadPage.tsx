@@ -16,6 +16,7 @@ import { Logo } from '../components/Logo/Logo'; // Atomic Logo w/ M Icon
 import { useMaiMai } from '../context/MaiMaiContext';
 import { parse591Content, detect591Content } from '../lib/parse591';
 import { logger } from '../lib/logger';
+import { getCurrentPath, getLoginUrl } from '../lib/authUtils';
 
 // 抽離的子組件 (HP-2.2)
 import { BasicInfoSection } from '../components/upload/BasicInfoSection';
@@ -29,6 +30,7 @@ import { UploadFormProvider, useUploadForm } from '../components/upload/UploadCo
 const PropertyUploadContent: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const loginUrl = getLoginUrl(getCurrentPath());
 
   const {
     loading,
@@ -538,9 +540,9 @@ const PropertyUploadContent: React.FC = () => {
             </button>
 
             {!userId && (
-              <Link to="/auth" className="ml-2 text-sm font-bold text-[#003366] hover:underline">
+              <a href={loginUrl} className="ml-2 text-sm font-bold text-[#003366] hover:underline">
                 登入同步
-              </Link>
+              </a>
             )}
           </div>
         </div>

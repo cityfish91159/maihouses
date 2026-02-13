@@ -11,6 +11,7 @@
 import React from 'react';
 import { getErrorMessage, UNKNOWN_ERROR_MESSAGE } from '../../../lib/error';
 import { logger } from '../../../lib/logger';
+import { getCurrentPath, getLoginUrl } from '../../../lib/authUtils';
 
 // DEV 模式除錯用
 declare global {
@@ -64,7 +65,7 @@ const categorizeError = (error: Error): CategorizedError => {
       title: '需要登入',
       message: '請先登入後再查看社區牆內容',
       actionText: '前往登入',
-      actionHref: '/auth',
+      actionHref: getLoginUrl(getCurrentPath()),
     };
   }
 

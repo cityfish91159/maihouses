@@ -5789,6 +5789,36 @@ npm run gate
 - `UTF-8` / `Mojibake`：通過
 - `gate`：QUALITY GATE PASSED
 
+### #15 尾差修復（2026-02-13）
+
+#### 摘要
+
+- [x] `PropertyUploadPage` 移除 `/auth` Link，改走 `getLoginUrl(getCurrentPath())`
+- [x] `WallErrorBoundary` 移除 `actionHref: '/auth'`，改走 `getLoginUrl(getCurrentPath())`
+- [x] `src/` 直接 `/auth` 登入入口收斂完成（保留測試與 `public/` 舊頁）
+
+#### 施工紀錄
+
+1. `src/pages/PropertyUploadPage.tsx`
+   - 新增 `getCurrentPath`、`getLoginUrl` 匯入。
+   - `登入同步` 由 `<Link to="/auth">` 改為 `<a href={loginUrl}>`，確保 `auth.html` 導向與 `?return=` 一致。
+2. `src/pages/Community/components/WallErrorBoundary.tsx`
+   - 權限錯誤導向由 `'/auth'` 改為 `getLoginUrl(getCurrentPath())`，與 #15 規範一致。
+
+#### 驗證結果
+
+```bash
+npm run test -- src/lib/__tests__/authUtils.test.ts src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx
+npm run typecheck
+npm run check:utf8
+npm run gate
+```
+
+- 測試：31/31 通過（authUtils 27 + P7 4）
+- `typecheck`：通過
+- `UTF-8` / `Mojibake`：通過
+- `gate`：QUALITY GATE PASSED
+
 ---
 
 ## MOCK-SYSTEM #19 [P1] 砍舊路徑：`/api/uag-track` → `/api/uag/track`
