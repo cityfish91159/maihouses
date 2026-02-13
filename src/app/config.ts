@@ -45,9 +45,10 @@ const AppConfigSchema = z
 async function fetchJson(url: string): Promise<unknown> {
   const r = await fetch(url);
   if (!r.ok) {
-    throw new Error(`Failed to fetch ${url}: ${r.status}`);
+    throw new Error(`取得 ${url} 失敗: ${r.status}`);
   }
-  return r.json();
+  const data: unknown = await r.json();
+  return data;
 }
 
 function isValidConfig(obj: unknown): obj is AppConfig & Partial<RuntimeOverrides> {
@@ -85,9 +86,9 @@ async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
 }
 
 function getParamFromBoth(key: string): string | undefined {
-  const search = new URLSearchParams(location.search).get(key);
-  const i = location.hash.indexOf('?');
-  const hash = i > -1 ? new URLSearchParams(location.hash.slice(i)).get(key) : null;
+  const search = new URLSearchParams(window.location.search).get(key);
+  const i = window.location.hash.indexOf('?');
+  const hash = i > -1 ? new URLSearchParams(window.location.hash.slice(i)).get(key) : null;
   return hash ?? search ?? undefined;
 }
 

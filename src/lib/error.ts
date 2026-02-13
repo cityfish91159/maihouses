@@ -1,7 +1,7 @@
 /**
  * 統一錯誤處理工具
  *
- * 提供標準化的錯誤訊息提取,避免各處重複判斷 `err instanceof Error`
+ * 提供標準化的錯誤訊息提取，避免各處重複判斷 `err instanceof Error`
  *
  * @example
  * ```ts
@@ -163,7 +163,7 @@ function serializeUnknownError(error: unknown): string {
  * 從未知型別的錯誤物件中提取訊息字串
  *
  * @param error - 捕捉到的錯誤 (unknown type)
- * @returns 錯誤訊息字串,若無法提取則返回 'Unknown error'
+ * @returns 錯誤訊息字串，若無法提取則返回 'Unknown error'
  */
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
@@ -210,7 +210,7 @@ export function getErrorInfo(error: unknown): ErrorInfo {
 }
 
 /**
- * 安全地包裝 async 函數,自動捕捉錯誤並返回 Result 型別
+ * 安全地包裝 async 函數，自動捕捉錯誤並返回 Result 型別
  *
  * @example
  * ```ts
@@ -238,7 +238,7 @@ export async function safeAsync<T>(
 }
 
 /**
- * 安全地包裝同步函數,自動捕捉錯誤並返回 Result 型別
+ * 安全地包裝同步函數，自動捕捉錯誤並返回 Result 型別
  */
 export function safeSync<T>(
   fn: () => T

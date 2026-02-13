@@ -51,10 +51,7 @@ describe('MaiMaiContext', () => {
       });
 
       it('initializes with valid mood from storage', () => {
-        const mockGetItem = safeLocalStorage.getItem as unknown as {
-          mockImplementation: (fn: (key: string) => string | null) => void;
-        };
-        mockGetItem.mockImplementation((key: string) => {
+        vi.mocked(safeLocalStorage.getItem).mockImplementation((key: string) => {
           if (key === 'maimai-mood-v1') return 'happy';
           return null;
         });
@@ -65,10 +62,7 @@ describe('MaiMaiContext', () => {
       });
 
       it('initializes with idle when storage has invalid mood', () => {
-        const mockGetItem = safeLocalStorage.getItem as unknown as {
-          mockImplementation: (fn: (key: string) => string | null) => void;
-        };
-        mockGetItem.mockImplementation((key: string) => {
+        vi.mocked(safeLocalStorage.getItem).mockImplementation((key: string) => {
           if (key === 'maimai-mood-v1') return 'invalid_matrix_mood';
           return null;
         });
@@ -106,7 +100,7 @@ describe('MaiMaiContext', () => {
         // State should still update even if storage fails
         expect(result.current.mood).toBe('shy');
         expect(loggerModule.logger.warn).toHaveBeenCalledWith(
-          '[MaiMaiContext] Failed to save mood',
+          '[MaiMaiContext] 儲存心情失敗',
           expect.objectContaining({ error: 'QuotaExceeded' })
         );
       });
@@ -174,11 +168,23 @@ describe('MaiMaiContext', () => {
         expect(safeLocalStorage.setItem).toHaveBeenCalledWith('maimai-messages-v1', '[]');
       });
 
+      it('非字串陣列（含數字或物件）應重設為空陣列', () => {
+        vi.mocked(safeLocalStorage.getItem).mockImplementation((key: string) => {
+          if (key === 'maimai-messages-v1') return JSON.stringify([1, { msg: 'hi' }, true]);
+          return null;
+        });
+
+        const { result } = renderHook(() => useMaiMai(), { wrapper });
+
+        expect(result.current.messages).toEqual([]);
+        expect(loggerModule.logger.warn).toHaveBeenCalledWith(
+          '[MaiMaiContext] 已儲存訊息結構無效，已重設',
+          expect.objectContaining({ raw: expect.any(Array) })
+        );
+      });
+
       it('handles corrupted message storage gracefully', () => {
-        const mockGetItem = safeLocalStorage.getItem as unknown as {
-          mockImplementation: (fn: (key: string) => string | null) => void;
-        };
-        mockGetItem.mockImplementation((key: string) => {
+        vi.mocked(safeLocalStorage.getItem).mockImplementation((key: string) => {
           if (key === 'maimai-messages-v1') return '{invalid_json}';
           return null;
         });
@@ -187,7 +193,7 @@ describe('MaiMaiContext', () => {
 
         expect(result.current.messages).toEqual([]);
         expect(loggerModule.logger.warn).toHaveBeenCalledWith(
-          '[MaiMaiContext] Failed to parse stored messages',
+          '[MaiMaiContext] 解析已儲存訊息失敗',
           expect.objectContaining({ error: expect.any(String) })
         );
       });
@@ -207,7 +213,7 @@ describe('MaiMaiContext', () => {
         // State update works
         expect(result.current.messages).toContain('Important Message');
         expect(loggerModule.logger.warn).toHaveBeenCalledWith(
-          '[MaiMaiContext] Failed to save messages',
+          '[MaiMaiContext] 儲存訊息失敗',
           expect.objectContaining({ error: 'QuotaExceeded' })
         );
       });

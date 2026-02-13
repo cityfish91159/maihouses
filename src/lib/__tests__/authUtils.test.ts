@@ -20,8 +20,9 @@ vi.mock('../logger', () => ({
 
 describe('authUtils (#15)', () => {
   const originalLocation = window.location;
+  // 繞過 TypeScript 型別檢查，測試 runtime 參數驗證
   const invokeGetAuthUrlAtRuntime = (...args: unknown[]) =>
-    Reflect.apply(getAuthUrl, undefined, args);
+    (getAuthUrl as (...a: unknown[]) => string)(...args);
 
   beforeEach(() => {
     vi.clearAllMocks();

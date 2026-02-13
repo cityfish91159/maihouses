@@ -26,6 +26,7 @@ export type NotifyOptions = {
   dismissible?: boolean;
 };
 
+/** 內部 toast 映射選項（排除 legacy 欄位），非 Sonner 原生 ExternalToast */
 export type ToastOptions = Omit<NotifyOptions, 'actionLabel' | 'onAction'>;
 
 const DEFAULT_DISMISSIBLE = true;

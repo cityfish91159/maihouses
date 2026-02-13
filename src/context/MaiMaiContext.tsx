@@ -1,4 +1,5 @@
 ﻿import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { z } from 'zod';
 import type { MaiMaiMood } from '../components/MaiMai/types';
 import { safeLocalStorage } from '../lib/safeStorage';
 import { logger } from '../lib/logger';
@@ -40,10 +41,14 @@ const VALID_MOODS = new Set<MaiMaiMood>([
   'shy',
   'sleep',
 ]);
+const VALID_MOOD_STRINGS = new Set<string>(VALID_MOODS);
+
+// Zod schema 驗證 localStorage 中的 messages 結構
+const StoredMessagesSchema = z.array(z.string()).max(MAX_MESSAGES);
 
 // [NASA TypeScript Safety] 類型守衛驗證 MaiMaiMood
 function isValidMood(mood: unknown): mood is MaiMaiMood {
-  return typeof mood === 'string' && VALID_MOODS.has(mood as never);
+  return typeof mood === 'string' && VALID_MOOD_STRINGS.has(mood);
 }
 
 export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -61,10 +66,18 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const stored = safeLocalStorage.getItem(STORAGE_KEY_MESSAGES);
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        return Array.isArray(parsed) ? parsed.slice(-MAX_MESSAGES) : [];
+        const raw: unknown = JSON.parse(stored);
+        const result = StoredMessagesSchema.safeParse(raw);
+        if (result.success) {
+          return result.data.slice(-MAX_MESSAGES);
+        }
+        // 結構不符預期（非字串陣列等），靜默回退
+        logger.warn('[MaiMaiContext] 已儲存訊息結構無效，已重設', {
+          raw,
+        });
+        return [];
       } catch (e) {
-        logger.warn('[MaiMaiContext] Failed to parse stored messages', {
+        logger.warn('[MaiMaiContext] 解析已儲存訊息失敗', {
           error: getErrorMessage(e),
         });
         return [];
@@ -79,7 +92,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       safeLocalStorage.setItem(STORAGE_KEY_MOOD, newMood);
     } catch (e) {
-      logger.warn('[MaiMaiContext] Failed to save mood', { error: getErrorMessage(e) });
+      logger.warn('[MaiMaiContext] 儲存心情失敗', { error: getErrorMessage(e) });
     }
   }, []);
 
@@ -93,7 +106,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       try {
         safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(updated));
       } catch (e) {
-        logger.warn('[MaiMaiContext] Failed to save messages', { error: getErrorMessage(e) });
+        logger.warn('[MaiMaiContext] 儲存訊息失敗', { error: getErrorMessage(e) });
       }
       return updated;
     });
@@ -105,7 +118,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify([]));
     } catch (e) {
-      logger.warn('[MaiMaiContext] Failed to reset messages', { error: getErrorMessage(e) });
+      logger.warn('[MaiMaiContext] 重設訊息失敗', { error: getErrorMessage(e) });
     }
   }, []);
 

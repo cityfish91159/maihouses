@@ -41,7 +41,7 @@ describe('notify', () => {
     mockLoading.mockReturnValue('loading-id');
   });
 
-  it('supports action object options in info', () => {
+  it('info 應支援 action 物件選項', () => {
     const onClick = vi.fn();
 
     notify.info('Sign up required', 'Please create an account first', {
@@ -62,7 +62,7 @@ describe('notify', () => {
     );
   });
 
-  it('keeps actionLabel/onAction backwards compatibility', () => {
+  it('應保持 actionLabel/onAction 向後相容', () => {
     const onAction = vi.fn();
 
     notify.warning('Permission denied', 'Please login first', {
@@ -83,7 +83,7 @@ describe('notify', () => {
     );
   });
 
-  it('warns when actionLabel is provided without onAction', () => {
+  it('actionLabel 無 onAction 時應發出警告', () => {
     notify.info('Invalid action config', undefined, { actionLabel: 'Click me' });
 
     expect(mockLoggerWarn).toHaveBeenCalledWith('[notify] actionLabel provided without onAction', {
@@ -95,7 +95,7 @@ describe('notify', () => {
     );
   });
 
-  it('prefers action object when both action and legacy fields exist', () => {
+  it('action 與 legacy 欄位並存時應優先使用 action', () => {
     const modernOnClick = vi.fn();
     const legacyOnAction = vi.fn();
 
@@ -116,7 +116,7 @@ describe('notify', () => {
     );
   });
 
-  it('accepts empty action callback function', () => {
+  it('應接受空操作回呼函式', () => {
     const emptyOnClick = () => undefined;
 
     notify.info('Empty callback', undefined, {
@@ -134,7 +134,7 @@ describe('notify', () => {
     );
   });
 
-  it('uses default durations for success and info', () => {
+  it('success 和 info 應使用預設 duration', () => {
     notify.success('Saved');
     notify.info('Heads up');
 
@@ -148,13 +148,13 @@ describe('notify', () => {
     );
   });
 
-  it('uses provided duration in error', () => {
+  it('error 應使用自訂 duration', () => {
     notify.error('Failed', undefined, { duration: 1234 });
 
     expect(mockError).toHaveBeenCalledWith('Failed', expect.objectContaining({ duration: 1234 }));
   });
 
-  it('uses warning default duration when duration is not provided', () => {
+  it('warning 未提供 duration 時應使用預設值', () => {
     notify.warning('Warning');
 
     expect(mockWarning).toHaveBeenCalledWith(
@@ -163,7 +163,7 @@ describe('notify', () => {
     );
   });
 
-  it('uses infinity duration for loading by default', () => {
+  it('loading 預設應使用 Infinity duration', () => {
     notify.loading('Loading data', { description: 'Please wait' });
 
     expect(mockLoading).toHaveBeenCalledWith(
@@ -175,7 +175,7 @@ describe('notify', () => {
     );
   });
 
-  it('uses default dev message and duration', () => {
+  it('dev 應使用預設訊息和 duration', () => {
     notify.dev();
 
     expect(mockInfo).toHaveBeenCalledWith(
@@ -187,13 +187,13 @@ describe('notify', () => {
     );
   });
 
-  it('passes id into dismiss', () => {
+  it('dismiss 應傳遞 id', () => {
     notify.dismiss('toast-id');
 
     expect(mockDismiss).toHaveBeenCalledWith('toast-id');
   });
 
-  it('logs warning and returns fallback id when toast call throws', () => {
+  it('toast 拋錯時應記錄警告並回傳 fallback id', () => {
     mockInfo.mockImplementationOnce(() => {
       throw new Error('toast crash');
     });
@@ -207,7 +207,7 @@ describe('notify', () => {
     });
   });
 
-  it('returns numeric toast id when sonner returns number', () => {
+  it('sonner 回傳數字時應回傳 numeric toast id', () => {
     mockSuccess.mockReturnValueOnce(77);
 
     const result = notify.success('Numeric id');
