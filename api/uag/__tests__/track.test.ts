@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const { mockRpc, mockCreateClient, mockCaptureError, mockAddBreadcrumb, mockLoggerWarn } =
   vi.hoisted(() => ({
@@ -83,6 +84,14 @@ function createMockResponse(): MockRes {
   return res;
 }
 
+async function invokeHandler(
+  handler: typeof import('../track').default,
+  req: MockReq,
+  res: MockRes
+): Promise<void> {
+  await handler(req as VercelRequest, res as VercelResponse);
+}
+
 describe('/api/uag/track', () => {
   let originalEnv: NodeJS.ProcessEnv;
 
@@ -114,7 +123,7 @@ describe('/api/uag/track', () => {
     });
     const res = createMockResponse();
 
-    await handler(req as never, res as never);
+    await invokeHandler(handler, req, res);
 
     expect(res.statusCode).toBe(400);
     expect(res.jsonData).toMatchObject({
@@ -130,7 +139,7 @@ describe('/api/uag/track', () => {
     });
     const res = createMockResponse();
 
-    await handler(req as never, res as never);
+    await invokeHandler(handler, req, res);
 
     expect(res.statusCode).toBe(400);
     expect(res.jsonData).toMatchObject({
@@ -138,7 +147,7 @@ describe('/api/uag/track', () => {
       error: { code: 'INVALID_INPUT' },
     });
     expect(mockLoggerWarn).toHaveBeenCalledWith(
-      '[UAG] Failed to parse request JSON',
+      '[UAG] 解析請求 JSON 失敗',
       expect.objectContaining({
         error: expect.any(String),
       })
@@ -155,7 +164,7 @@ describe('/api/uag/track', () => {
     });
     const res = createMockResponse();
 
-    await handler(req as never, res as never);
+    await invokeHandler(handler, req, res);
 
     expect(res.statusCode).toBe(400);
     expect(res.jsonData).toMatchObject({
@@ -176,7 +185,7 @@ describe('/api/uag/track', () => {
     });
     const res = createMockResponse();
 
-    await handler(req as never, res as never);
+    await invokeHandler(handler, req, res);
 
     expect(res.statusCode).toBe(400);
     expect(res.jsonData).toMatchObject({
@@ -195,7 +204,7 @@ describe('/api/uag/track', () => {
     const req = createMockRequest();
     const res = createMockResponse();
 
-    await handler(req as never, res as never);
+    await invokeHandler(handler, req, res);
 
     expect(mockRpc).toHaveBeenCalledWith(
       'track_uag_event_v8_2',
@@ -225,12 +234,41 @@ describe('/api/uag/track', () => {
     const req = createMockRequest();
     const res = createMockResponse();
 
-    await handler(req as never, res as never);
+    await invokeHandler(handler, req, res);
 
     expect(mockRpc).toHaveBeenCalledTimes(2);
     expect(mockRpc).toHaveBeenNthCalledWith(1, 'track_uag_event_v8_2', expect.any(Object));
     expect(mockRpc).toHaveBeenNthCalledWith(2, 'track_uag_event_v8', expect.any(Object));
     expect(res.statusCode).toBe(200);
+    expect(res.jsonData).toMatchObject({
+      success: true,
+      data: { grade: 'B' },
+    });
+  });
+
+  it('returns 500 when fallback RPC returns invalid payload shape', async () => {
+    mockRpc
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'v8_2 failure' },
+      })
+      .mockResolvedValueOnce({
+        data: { ok: true },
+        error: null,
+      });
+
+    const handler = (await import('../track')).default;
+    const req = createMockRequest();
+    const res = createMockResponse();
+
+    await invokeHandler(handler, req, res);
+
+    expect(mockRpc).toHaveBeenCalledTimes(2);
+    expect(res.statusCode).toBe(500);
+    expect(res.jsonData).toMatchObject({
+      success: false,
+      error: { code: 'INTERNAL_ERROR' },
+    });
   });
 
   it('accepts RPC result with grade only', async () => {
@@ -243,7 +281,7 @@ describe('/api/uag/track', () => {
     const req = createMockRequest();
     const res = createMockResponse();
 
-    await handler(req as never, res as never);
+    await invokeHandler(handler, req, res);
 
     expect(res.statusCode).toBe(200);
     expect(res.jsonData).toMatchObject({
@@ -262,12 +300,62 @@ describe('/api/uag/track', () => {
     const req = createMockRequest();
     const res = createMockResponse();
 
-    await handler(req as never, res as never);
+    await invokeHandler(handler, req, res);
 
     expect(res.statusCode).toBe(503);
     expect(res.jsonData).toMatchObject({
       success: false,
       error: { code: 'SERVICE_UNAVAILABLE' },
     });
+  });
+
+  it('uses VITE_SUPABASE_ANON_KEY fallback when SUPABASE_SERVICE_ROLE_KEY is missing', async () => {
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    process.env.VITE_SUPABASE_ANON_KEY = 'anon-fallback-key';
+    mockRpc.mockResolvedValue({
+      data: { grade: 'A', score: 90 },
+      error: null,
+    });
+
+    const handler = (await import('../track')).default;
+    const req = createMockRequest();
+    const res = createMockResponse();
+
+    await invokeHandler(handler, req, res);
+
+    expect(mockCreateClient).toHaveBeenCalledWith(
+      'https://example.supabase.co',
+      'anon-fallback-key'
+    );
+    expect(res.statusCode).toBe(200);
+  });
+
+  it('stress test: invalid JSON payload burst should fail fast without RPC calls', async () => {
+    const handler = (await import('../track')).default;
+    const burstCount = 50;
+    const requests = Array.from({ length: burstCount }, () => {
+      const req = createMockRequest({
+        body: '{broken_json',
+      });
+      const res = createMockResponse();
+      return { req, res };
+    });
+
+    await Promise.all(
+      requests.map(async ({ req, res }) => {
+        await invokeHandler(handler, req, res);
+      })
+    );
+
+    for (const { res } of requests) {
+      expect(res.statusCode).toBe(400);
+      expect(res.jsonData).toMatchObject({
+        success: false,
+        error: { code: 'INVALID_INPUT' },
+      });
+    }
+
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(mockLoggerWarn).toHaveBeenCalledTimes(burstCount);
   });
 });

@@ -1,160 +1,243 @@
-﻿// Mock Supabase
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          gte: vi.fn(() => ({
-            order: vi.fn(() => ({
-              limit: vi.fn(() => ({
-                single: vi.fn(),
-              })),
-            })),
-          })),
-        })),
-      })),
-    })),
-  })),
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createMockRequest, createMockResponse } from '../__test-utils__/mockRequest';
+import type { SessionRecoveryResponse } from '../session-recovery';
+
+interface SessionData {
+  session_id: string;
+  last_active: string;
+  grade: string;
+}
+
+interface QueryMock {
+  select: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  gte: ReturnType<typeof vi.fn>;
+  order: ReturnType<typeof vi.fn>;
+  limit: ReturnType<typeof vi.fn>;
+  single: ReturnType<typeof vi.fn>;
+}
+
+interface SupabaseSingleResult {
+  data: SessionData | null;
+  error: { code?: string; message?: string } | null;
+}
+
+const { mockCreateClient } = vi.hoisted(() => ({
+  mockCreateClient: vi.fn(),
 }));
 
-// Import types
-import type { SessionRecoveryRequest, SessionRecoveryResponse } from '../session-recovery';
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: mockCreateClient,
+}));
 
-describe('Session Recovery API Types', () => {
-  describe('SessionRecoveryRequest', () => {
-    it('should accept valid request with fingerprint only', () => {
-      const request: SessionRecoveryRequest = {
-        fingerprint: 'eyJ0ZXN0IjoidGVzdCJ9',
-      };
-      expect(request.fingerprint).toBeDefined();
-      expect(request.agentId).toBeUndefined();
+vi.mock('../lib/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
+describe('/api/session-recovery', () => {
+  let handler: typeof import('../session-recovery').default;
+  let singleResult: SupabaseSingleResult;
+  let latestQuery: QueryMock | null;
+  let originalEnv: NodeJS.ProcessEnv;
+
+  function createQueryMock(): QueryMock {
+    const query = {} as QueryMock;
+    query.select = vi.fn(() => query);
+    query.eq = vi.fn(() => query);
+    query.gte = vi.fn(() => query);
+    query.order = vi.fn(() => query);
+    query.limit = vi.fn(() => query);
+    query.single = vi.fn(async () => singleResult);
+    return query;
+  }
+
+  async function invokeHandler(
+    body: unknown,
+    ipAddress: string
+  ): Promise<{ statusCode: number; payload: SessionRecoveryResponse }> {
+    const req = createMockRequest({
+      method: 'POST',
+      body,
+      headers: {
+        'x-forwarded-for': ipAddress,
+      },
     });
+    const res = createMockResponse();
 
-    it('should accept valid request with fingerprint and agentId', () => {
-      const request: SessionRecoveryRequest = {
-        fingerprint: 'eyJ0ZXN0IjoidGVzdCJ9',
-        agentId: 'agent-123',
-      };
-      expect(request.fingerprint).toBe('eyJ0ZXN0IjoidGVzdCJ9');
-      expect(request.agentId).toBe('agent-123');
-    });
-  });
+    await handler(req as never, res as never);
 
-  describe('SessionRecoveryResponse', () => {
-    it('should return recovered: false when no session found', () => {
-      const response: SessionRecoveryResponse = {
-        recovered: false,
-      };
-      expect(response.recovered).toBe(false);
-      expect(response.session_id).toBeUndefined();
-    });
+    return {
+      statusCode: res.statusCode,
+      payload: JSON.parse(res._json) as SessionRecoveryResponse,
+    };
+  }
 
-    it('should return full data when session recovered', () => {
-      const response: SessionRecoveryResponse = {
-        recovered: true,
-        session_id: 'u_abc123',
-        grade: 'A',
-        last_active: '2025-12-31T10:00:00Z',
-      };
-      expect(response.recovered).toBe(true);
-      expect(response.session_id).toBe('u_abc123');
-      expect(response.grade).toBe('A');
-    });
-
-    it('should include error message on failure', () => {
-      const response: SessionRecoveryResponse = {
-        recovered: false,
-        error: 'Missing required parameter: fingerprint',
-      };
-      expect(response.recovered).toBe(false);
-      expect(response.error).toBe('Missing required parameter: fingerprint');
-    });
-  });
-});
-
-describe('Session Recovery API Logic', () => {
-  let mockSupabase: {
-    from: ReturnType<typeof vi.fn>;
-    rpc: ReturnType<typeof vi.fn>;
-  };
-
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     vi.clearAllMocks();
+
+    originalEnv = { ...process.env };
+    process.env.SUPABASE_URL = 'https://example.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key';
+    process.env.SESSION_RECOVERY_TOKEN_SECRET = 'test-session-recovery-secret';
+    process.env.SESSION_RECOVERY_TOKEN_TTL_MS = '300000';
+    delete process.env.RATE_LIMIT_SESSION_RECOVERY_LOOKUP_MAX;
+    delete process.env.RATE_LIMIT_SESSION_RECOVERY_LOOKUP_WINDOW_MS;
+    delete process.env.RATE_LIMIT_SESSION_RECOVERY_REDEEM_MAX;
+    delete process.env.RATE_LIMIT_SESSION_RECOVERY_REDEEM_WINDOW_MS;
+
+    singleResult = {
+      data: null,
+      error: { code: 'PGRST116', message: 'Row not found' },
+    };
+    latestQuery = null;
+
+    const mockFrom = vi.fn(() => {
+      latestQuery = createQueryMock();
+      return latestQuery;
+    });
+
+    mockCreateClient.mockReturnValue({
+      from: mockFrom,
+    });
+
+    handler = (await import('../session-recovery')).default;
   });
 
-  describe('成功恢復場景', () => {
-    it('應該成功恢復有效指紋的 session', async () => {
-      const mockResult = {
-        data: {
-          session_id: 'u_test123',
-          grade: 'S',
-          last_active: '2025-12-30T12:00:00Z',
-        },
-        error: null,
-      };
+  afterEach(() => {
+    process.env = originalEnv;
+  });
 
-      // Verify expected response structure
-      const expectedResponse: SessionRecoveryResponse = {
-        recovered: true,
+  it('returns recovery_token instead of session_id for lookup and supports one-time redemption', async () => {
+    singleResult = {
+      data: {
         session_id: 'u_test123',
         grade: 'S',
-        last_active: '2025-12-30T12:00:00Z',
-      };
+        last_active: '2026-02-13T10:00:00Z',
+      },
+      error: null,
+    };
 
-      expect(expectedResponse.recovered).toBe(true);
-      expect(expectedResponse.session_id).toBe('u_test123');
-    });
+    const lookup = await invokeHandler({ fingerprint: 'fp-test-001' }, '10.0.0.1');
+
+    expect(lookup.statusCode).toBe(200);
+    expect(lookup.payload.recovered).toBe(true);
+    expect(lookup.payload.recovery_token).toEqual(expect.any(String));
+    expect(lookup.payload.session_id).toBeUndefined();
+
+    const token = lookup.payload.recovery_token;
+    expect(token).toBeDefined();
+
+    const redeem = await invokeHandler({ recoveryToken: token }, '10.0.0.1');
+    expect(redeem.statusCode).toBe(200);
+    expect(redeem.payload.recovered).toBe(true);
+    expect(redeem.payload.session_id).toBe('u_test123');
+    expect(redeem.payload.grade).toBe('S');
+
+    const replay = await invokeHandler({ recoveryToken: token }, '10.0.0.1');
+    expect(replay.statusCode).toBe(200);
+    expect(replay.payload.recovered).toBe(false);
+    expect(replay.payload.error).toBe('Invalid or expired recovery token');
   });
 
-  describe('錯誤處理場景', () => {
-    it('缺少 fingerprint 時應回傳錯誤', () => {
-      const response: SessionRecoveryResponse = {
-        recovered: false,
-        error: 'Missing required parameter: fingerprint',
-      };
+  it('returns 400 for invalid request body', async () => {
+    const result = await invokeHandler({}, '10.0.0.2');
 
-      expect(response.recovered).toBe(false);
-      expect(response.error).toContain('fingerprint');
-    });
-
-    it('錯誤 HTTP method 時應回傳 405', () => {
-      const response: SessionRecoveryResponse = {
-        recovered: false,
-        error: 'Method not allowed',
-      };
-
-      expect(response.recovered).toBe(false);
-      expect(response.error).toBe('Method not allowed');
-    });
-
-    it('查無資料時應回傳 recovered: false', () => {
-      const response: SessionRecoveryResponse = {
-        recovered: false,
-      };
-
-      expect(response.recovered).toBe(false);
-      expect(response.session_id).toBeUndefined();
-      expect(response.error).toBeUndefined();
-    });
+    expect(result.statusCode).toBe(400);
+    expect(result.payload.recovered).toBe(false);
+    expect(result.payload.error).toBe('Invalid request body');
   });
 
-  describe('邊界條件', () => {
-    it('agentId 為 unknown 時應忽略過濾', () => {
-      const request: SessionRecoveryRequest = {
-        fingerprint: 'eyJ0ZXN0IjoidGVzdCJ9',
-        agentId: 'unknown',
-      };
+  it('applies lookup rate limit', async () => {
+    process.env.RATE_LIMIT_SESSION_RECOVERY_LOOKUP_MAX = '1';
+    process.env.RATE_LIMIT_SESSION_RECOVERY_LOOKUP_WINDOW_MS = '60000';
 
-      // unknown should be treated as no agentId filter
-      expect(request.agentId).toBe('unknown');
-    });
+    const first = await invokeHandler({ fingerprint: 'fp-rate-limit-lookup' }, '10.0.0.3');
+    const second = await invokeHandler({ fingerprint: 'fp-rate-limit-lookup' }, '10.0.0.3');
 
-    it('7 天時間窗口應正確計算', () => {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const now = new Date();
-      const diffDays = (now.getTime() - sevenDaysAgo.getTime()) / (1000 * 60 * 60 * 24);
+    expect(first.statusCode).toBe(200);
+    expect(second.statusCode).toBe(429);
+    expect(second.payload.recovered).toBe(false);
+    expect(second.payload.error).toBe('Too many requests, please try again later.');
+  });
 
-      expect(diffDays).toBeCloseTo(7, 0);
-    });
+  it('applies redeem rate limit', async () => {
+    process.env.RATE_LIMIT_SESSION_RECOVERY_REDEEM_MAX = '1';
+    process.env.RATE_LIMIT_SESSION_RECOVERY_REDEEM_WINDOW_MS = '60000';
+
+    const first = await invokeHandler({ recoveryToken: 'invalid.token' }, '10.0.0.4');
+    const second = await invokeHandler({ recoveryToken: 'invalid.token' }, '10.0.0.4');
+
+    expect(first.statusCode).toBe(200);
+    expect(first.payload.recovered).toBe(false);
+
+    expect(second.statusCode).toBe(429);
+    expect(second.payload.recovered).toBe(false);
+    expect(second.payload.error).toBe('Too many requests, please try again later.');
+  });
+
+  it('adds agent_id filter when agentId is provided', async () => {
+    await invokeHandler(
+      {
+        fingerprint: 'fp-with-agent',
+        agentId: 'agent-123',
+      },
+      '10.0.0.5'
+    );
+
+    expect(latestQuery).not.toBeNull();
+    expect(latestQuery?.eq).toHaveBeenCalledWith('agent_id', 'agent-123');
+  });
+
+  it('returns recovered false on supabase unexpected error without throwing to caller', async () => {
+    singleResult = {
+      data: null,
+      error: { code: 'XX000', message: 'database down' },
+    };
+
+    const result = await invokeHandler({ fingerprint: 'fp-db-error' }, '10.0.0.6');
+
+    expect(result.statusCode).toBe(200);
+    expect(result.payload.recovered).toBe(false);
+    expect(result.payload.error).toBe('Internal server error');
+  });
+
+  it('stress test: concurrent redeem on same token allows exactly one success', async () => {
+    process.env.RATE_LIMIT_SESSION_RECOVERY_REDEEM_MAX = '500';
+    process.env.RATE_LIMIT_SESSION_RECOVERY_REDEEM_WINDOW_MS = '60000';
+
+    singleResult = {
+      data: {
+        session_id: 'u_extreme_case',
+        grade: 'A',
+        last_active: '2026-02-13T11:00:00Z',
+      },
+      error: null,
+    };
+
+    const lookup = await invokeHandler({ fingerprint: 'fp-extreme' }, '10.0.0.7');
+    const token = lookup.payload.recovery_token;
+    expect(token).toBeDefined();
+
+    const concurrentCount = 50;
+    const results = await Promise.all(
+      Array.from({ length: concurrentCount }, () =>
+        invokeHandler({ recoveryToken: token }, '10.0.0.7')
+      )
+    );
+
+    const successCount = results.filter((result) => result.payload.recovered).length;
+    const rejectedCount = results.filter(
+      (result) => !result.payload.recovered && result.payload.error === 'Invalid or expired recovery token'
+    ).length;
+
+    expect(successCount).toBe(1);
+    expect(rejectedCount).toBe(concurrentCount - 1);
   });
 });
+

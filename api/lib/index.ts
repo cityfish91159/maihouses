@@ -6,6 +6,7 @@
 export * from './auth';
 export * from './crypto';
 export * from './env';
+export * from './error';
 export * from './intentDetector';
 export * from './logger';
 export * from './sentry';

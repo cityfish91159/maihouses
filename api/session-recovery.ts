@@ -1,30 +1,73 @@
-﻿import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createHash } from 'crypto';
 import { z } from 'zod';
-import { logger } from './lib/logger';
 import { enforceCors } from './lib/cors';
+import { logger } from './lib/logger';
+import { checkRateLimit, getIdentifier } from './lib/rateLimiter';
+import {
+  consumeSessionRecoveryToken,
+  issueSessionRecoveryToken,
+  type RecoverySessionData,
+} from './lib/sessionRecoveryToken';
 
-// [NASA TypeScript Safety] Request Body Schema
-const SessionRecoveryRequestSchema = z.object({
-  fingerprint: z.string(),
-  agentId: z.string().optional(),
-});
+// ============================================================================
+// Constants
+// ============================================================================
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const DEFAULT_LOOKUP_RATE_LIMIT_MAX = 5;
+const DEFAULT_LOOKUP_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const DEFAULT_REDEEM_RATE_LIMIT_MAX = 20;
+const DEFAULT_REDEEM_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const LOOKUP_RATE_LIMIT_MAX_ENV = 'RATE_LIMIT_SESSION_RECOVERY_LOOKUP_MAX';
+const LOOKUP_RATE_LIMIT_WINDOW_ENV = 'RATE_LIMIT_SESSION_RECOVERY_LOOKUP_WINDOW_MS';
+const REDEEM_RATE_LIMIT_MAX_ENV = 'RATE_LIMIT_SESSION_RECOVERY_REDEEM_MAX';
+const REDEEM_RATE_LIMIT_WINDOW_ENV = 'RATE_LIMIT_SESSION_RECOVERY_REDEEM_WINDOW_MS';
+const RATE_LIMIT_ERROR_MESSAGE = 'Too many requests, please try again later.';
+const INVALID_REQUEST_BODY_MESSAGE = 'Invalid request body';
+const INVALID_RECOVERY_TOKEN_MESSAGE = 'Invalid or expired recovery token';
+
+// ============================================================================
+// Schemas
+// ============================================================================
+
+const SessionRecoveryLookupRequestSchema = z
+  .object({
+    fingerprint: z.string().trim().min(1),
+    agentId: z.string().trim().optional(),
+  })
+  .strict();
+
+const SessionRecoveryRedeemRequestSchema = z
+  .object({
+    recoveryToken: z.string().trim().min(1).max(4096),
+  })
+  .strict();
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export interface SessionRecoveryRequest {
+export interface SessionRecoveryLookupRequest {
   fingerprint: string;
   agentId?: string;
 }
 
+export interface SessionRecoveryRedeemRequest {
+  recoveryToken: string;
+}
+
+export type SessionRecoveryRequest = SessionRecoveryLookupRequest | SessionRecoveryRedeemRequest;
+
 export interface SessionRecoveryResponse {
   recovered: boolean;
+  recovery_token?: string;
   session_id?: string;
   grade?: string;
   last_active?: string;
   error?: string;
+  retryAfter?: number;
 }
 
 interface SessionData {
@@ -32,6 +75,10 @@ interface SessionData {
   last_active: string;
   grade: string;
 }
+
+type ParsedRequestBody =
+  | { kind: 'lookup'; payload: SessionRecoveryLookupRequest }
+  | { kind: 'redeem'; payload: SessionRecoveryRedeemRequest };
 
 // ============================================================================
 // Supabase Client
@@ -49,16 +96,215 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  if (!value) return fallback;
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) return fallback;
+  return Math.floor(parsedValue);
+}
+
+function resolveRateLimitConfig(
+  maxEnvVar: string,
+  windowEnvVar: string,
+  maxFallback: number,
+  windowFallback: number
+): { maxRequests: number; windowMs: number } {
+  return {
+    maxRequests: parsePositiveInt(process.env[maxEnvVar], maxFallback),
+    windowMs: parsePositiveInt(process.env[windowEnvVar], windowFallback),
+  };
+}
+
+function parseRequestBody(body: unknown): ParsedRequestBody | null {
+  const lookupResult = SessionRecoveryLookupRequestSchema.safeParse(body);
+  if (lookupResult.success) {
+    return {
+      kind: 'lookup',
+      payload: lookupResult.data,
+    };
+  }
+
+  const redeemResult = SessionRecoveryRedeemRequestSchema.safeParse(body);
+  if (redeemResult.success) {
+    return {
+      kind: 'redeem',
+      payload: redeemResult.data,
+    };
+  }
+
+  return null;
+}
+
+function getFingerprintHash(fingerprint: string): string {
+  return createHash('sha256').update(fingerprint).digest('hex').slice(0, 16);
+}
+
+function enforceRequestRateLimit(
+  res: VercelResponse,
+  identifier: string,
+  maxRequests: number,
+  windowMs: number
+): boolean {
+  const rateLimitResult = checkRateLimit(identifier, maxRequests, windowMs);
+
+  res.setHeader('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
+  res.setHeader('X-RateLimit-Reset', Math.ceil(rateLimitResult.resetTime / 1000).toString());
+
+  if (rateLimitResult.allowed) {
+    return true;
+  }
+
+  if (rateLimitResult.retryAfter !== undefined) {
+    res.setHeader('Retry-After', rateLimitResult.retryAfter.toString());
+  }
+
+  res.status(429).json({
+    recovered: false,
+    error: RATE_LIMIT_ERROR_MESSAGE,
+    retryAfter: rateLimitResult.retryAfter,
+  } satisfies SessionRecoveryResponse);
+
+  return false;
+}
+
+async function findRecoverableSession(
+  fingerprint: string,
+  agentId?: string
+): Promise<SessionData | null> {
+  const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS).toISOString();
+
+  let query = supabase
+    .from('uag_sessions')
+    .select('session_id, last_active, grade')
+    .eq('fingerprint', fingerprint)
+    .gte('last_active', sevenDaysAgo)
+    .order('last_active', { ascending: false })
+    .limit(1);
+
+  if (agentId && agentId !== 'unknown') {
+    query = query.eq('agent_id', agentId);
+  }
+
+  const { data, error } = await query.single<SessionData>();
+
+  if (error && error.code !== 'PGRST116') {
+    throw error;
+  }
+
+  return data ?? null;
+}
+
+async function handleLookupRequest(
+  req: VercelRequest,
+  res: VercelResponse,
+  payload: SessionRecoveryLookupRequest
+): Promise<void> {
+  const clientIp = getIdentifier(req);
+  const fingerprintHash = getFingerprintHash(payload.fingerprint);
+  const lookupRateLimit = resolveRateLimitConfig(
+    LOOKUP_RATE_LIMIT_MAX_ENV,
+    LOOKUP_RATE_LIMIT_WINDOW_ENV,
+    DEFAULT_LOOKUP_RATE_LIMIT_MAX,
+    DEFAULT_LOOKUP_RATE_LIMIT_WINDOW_MS
+  );
+  const lookupRateLimitKey = `session-recovery:lookup:${clientIp}:${fingerprintHash}`;
+
+  if (
+    !enforceRequestRateLimit(
+      res,
+      lookupRateLimitKey,
+      lookupRateLimit.maxRequests,
+      lookupRateLimit.windowMs
+    )
+  ) {
+    return;
+  }
+
+  const session = await findRecoverableSession(payload.fingerprint, payload.agentId);
+  if (!session) {
+    logger.info('[session-recovery] No session found', {
+      fingerprintHash,
+      agentId: payload.agentId,
+    });
+    res.status(200).json({ recovered: false } satisfies SessionRecoveryResponse);
+    return;
+  }
+
+  const recoveryToken = issueSessionRecoveryToken({
+    sessionId: session.session_id,
+    grade: session.grade,
+    lastActive: session.last_active,
+  } satisfies RecoverySessionData);
+
+  logger.info('[session-recovery] Issued one-time recovery token', {
+    fingerprintHash,
+    grade: session.grade,
+    lastActive: session.last_active,
+    agentId: payload.agentId,
+  });
+
+  res.status(200).json({
+    recovered: true,
+    recovery_token: recoveryToken,
+    grade: session.grade,
+    last_active: session.last_active,
+  } satisfies SessionRecoveryResponse);
+}
+
+function handleRedeemRequest(
+  req: VercelRequest,
+  res: VercelResponse,
+  payload: SessionRecoveryRedeemRequest
+): void {
+  const clientIp = getIdentifier(req);
+  const redeemRateLimit = resolveRateLimitConfig(
+    REDEEM_RATE_LIMIT_MAX_ENV,
+    REDEEM_RATE_LIMIT_WINDOW_ENV,
+    DEFAULT_REDEEM_RATE_LIMIT_MAX,
+    DEFAULT_REDEEM_RATE_LIMIT_WINDOW_MS
+  );
+  const redeemRateLimitKey = `session-recovery:redeem:${clientIp}`;
+
+  if (
+    !enforceRequestRateLimit(
+      res,
+      redeemRateLimitKey,
+      redeemRateLimit.maxRequests,
+      redeemRateLimit.windowMs
+    )
+  ) {
+    return;
+  }
+
+  const session = consumeSessionRecoveryToken(payload.recoveryToken);
+  if (!session) {
+    res.status(200).json({
+      recovered: false,
+      error: INVALID_RECOVERY_TOKEN_MESSAGE,
+    } satisfies SessionRecoveryResponse);
+    return;
+  }
+
+  logger.info('[session-recovery] Redeemed one-time recovery token', {
+    grade: session.grade,
+    lastActive: session.lastActive,
+  });
+
+  res.status(200).json({
+    recovered: true,
+    session_id: session.sessionId,
+    grade: session.grade,
+    last_active: session.lastActive,
+  } satisfies SessionRecoveryResponse);
+}
+
+// ============================================================================
 // Handler
 // ============================================================================
 
-/**
- * Session Recovery API
- *
- * 功能：根據設備指紋恢復用戶的 session_id
- * 場景：用戶清除 localStorage 後，避免創建新 session
- * 時間窗口：7 天內活躍的 session 可恢復
- */
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (!enforceCors(req, res)) return;
 
@@ -66,94 +312,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(405).json({
       error: 'Method not allowed',
       recovered: false,
-    });
+    } satisfies SessionRecoveryResponse);
     return;
   }
 
-  // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as SessionRecoveryRequest
-  const parseResult = SessionRecoveryRequestSchema.safeParse(req.body);
-  if (!parseResult.success) {
+  const parsedBody = parseRequestBody(req.body);
+  if (!parsedBody) {
     res.status(400).json({
-      error: 'Invalid request body',
+      error: INVALID_REQUEST_BODY_MESSAGE,
       recovered: false,
-    });
-    return;
-  }
-  const { fingerprint, agentId } = parseResult.data;
-
-  // 驗證必填參數
-  if (!fingerprint) {
-    res.status(400).json({
-      error: 'Missing required parameter: fingerprint',
-      recovered: false,
-    });
+    } satisfies SessionRecoveryResponse);
     return;
   }
 
   try {
-    // 查詢最近 7 天內相同指紋的活躍 session
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    let query = supabase
-      .from('uag_sessions')
-      .select('session_id, last_active, grade')
-      .eq('fingerprint', fingerprint)
-      .gte('last_active', sevenDaysAgo)
-      .order('last_active', { ascending: false })
-      .limit(1);
-
-    // 如果提供 agentId，優先查找該房仲的 session
-    if (agentId && agentId !== 'unknown') {
-      query = query.eq('agent_id', agentId);
-    }
-
-    const { data, error } = await query.single<SessionData>();
-
-    // PGRST116 = "Row not found" - 這是正常情況，不是錯誤
-    if (error && error.code !== 'PGRST116') {
-      logger.error('[session-recovery] Supabase error', error, {
-        fingerprint: fingerprint.substring(0, 20) + '...',
-        agentId,
-      });
-      throw error;
-    }
-
-    // 成功找到可恢復的 session
-    if (data) {
-      logger.info('[session-recovery] Session recovered', {
-        session_id: data.session_id,
-        grade: data.grade,
-        last_active: data.last_active,
-        agentId,
-      });
-
-      res.status(200).json({
-        recovered: true,
-        session_id: data.session_id,
-        grade: data.grade,
-        last_active: data.last_active,
-      });
+    if (parsedBody.kind === 'lookup') {
+      await handleLookupRequest(req, res, parsedBody.payload);
       return;
     }
 
-    // 沒有找到可恢復的 session
-    logger.info('[session-recovery] No session found for fingerprint', {
-      fingerprint: fingerprint.substring(0, 20) + '...',
-      agentId,
-    });
-
-    res.status(200).json({ recovered: false });
-  } catch (err) {
-    // [NASA TypeScript Safety] 使用 instanceof 類型守衛取代 as Error
-    const error = err instanceof Error ? err : new Error(String(err));
-    logger.error('[session-recovery] Unexpected error', error, {
-      fingerprint: fingerprint ? fingerprint.substring(0, 20) + '...' : 'undefined',
-    });
-
-    // 即使出錯也回傳 recovered: false，不中斷前端追蹤器
+    handleRedeemRequest(req, res, parsedBody.payload);
+  } catch (error) {
+    logger.error(
+      '[session-recovery] Unexpected error',
+      error instanceof Error ? error : new Error(String(error)),
+      { requestKind: parsedBody.kind }
+    );
     res.status(200).json({
       recovered: false,
       error: 'Internal server error',
-    });
+    } satisfies SessionRecoveryResponse);
   }
 }
+

@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -28,6 +30,9 @@ jobs:
 
       - name: ESLint 檢查
         run: npm run lint
+
+      - name: API Security Regression Gate
+        run: npm run check:api-security
 
       - name: G6 偷懶代碼檢查
         run: |
