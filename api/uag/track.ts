@@ -11,6 +11,7 @@ import { withSentryHandler, captureError, addBreadcrumb } from '../lib/sentry';
 import { enforceCors, cors } from '../lib/cors';
 import { logger } from '../lib/logger';
 import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
+import { getErrorMessage } from '../../src/lib/error';
 
 // [NASA TypeScript Safety] Track Result Schema
 const TrackResultSchema = z.object({
@@ -21,44 +22,23 @@ const TrackResultSchema = z.object({
 });
 
 // ============================================================================
-// Types
-// ============================================================================
-
-interface TrackEvent {
-  property_id: string;
-  duration?: number;
-  scroll_depth?: number;
-  clicked_contact?: boolean;
-  clicked_share?: boolean;
-  clicked_favorite?: boolean;
-}
-
-interface TrackRequest {
-  session_id: string;
-  agent_id?: string;
-  fingerprint?: string;
-  event: TrackEvent;
-}
-
-interface TrackResult {
-  grade: string;
-  score?: number;
-  reason?: string | null;
-}
-
-// ============================================================================
 // Configuration
 // ============================================================================
 
 // RPC 版本選擇 (可透過環境變數切換)
 const UAG_RPC_VERSION = process.env.UAG_RPC_VERSION || 'v8_2';
+const MODULE_TAG = '[UAG]';
 
-function safeCaptureError(error: Error | unknown, context?: Record<string, unknown>): void {
+function toErrorDetail(error: unknown): string {
+  return getErrorMessage(error);
+}
+
+function safeCaptureError(error: unknown, context?: Record<string, unknown>): void {
   try {
     captureError(error, context);
   } catch (captureErr) {
-    logger.warn('[UAG] Sentry capture skipped due to env validation error', {
-      captureError: captureErr instanceof Error ? captureErr.message : String(captureErr),
+    logger.warn(`${MODULE_TAG} Sentry capture skipped due to env validation error`, {
+      error: toErrorDetail(captureErr),
       context,
     });
   }
@@ -68,17 +48,29 @@ function safeAddBreadcrumb(message: string, category: string, data?: Record<stri
   try {
     addBreadcrumb(message, category, data);
   } catch (breadcrumbErr) {
-    logger.warn('[UAG] Sentry breadcrumb skipped due to env validation error', {
-      error: breadcrumbErr instanceof Error ? breadcrumbErr.message : String(breadcrumbErr),
+    logger.warn(`${MODULE_TAG} Sentry breadcrumb skipped due to env validation error`, {
+      error: toErrorDetail(breadcrumbErr),
       message,
       category,
     });
   }
 }
 
-function isTrackRequest(value: unknown): value is TrackRequest {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
+const TrackEventSchema = z.object({
+  property_id: z.string().min(1),
+  duration: z.number().optional(),
+  scroll_depth: z.number().optional(),
+  clicked_contact: z.boolean().optional(),
+  clicked_share: z.boolean().optional(),
+  clicked_favorite: z.boolean().optional(),
+});
+
+const TrackRequestSchema = z.object({
+  session_id: z.string().min(1),
+  agent_id: z.string().optional(),
+  fingerprint: z.string().optional(),
+  event: TrackEventSchema,
+});
 
 // ============================================================================
 // Handler
@@ -92,11 +84,11 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelR
 
   // 驗證環境變數
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     const isDev = process.env.NODE_ENV !== 'production';
-    logger.error('[UAG] Missing required environment variables', null, {
+    logger.error(`${MODULE_TAG} Missing required environment variables`, null, {
       hasUrl: Boolean(supabaseUrl),
       hasKey: Boolean(supabaseKey),
       env: process.env.NODE_ENV,
@@ -122,33 +114,23 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelR
     if (typeof data === 'string') {
       try {
         data = JSON.parse(data);
-      } catch {
+      } catch (parseError) {
+        logger.warn(`${MODULE_TAG} Failed to parse request JSON`, {
+          error: toErrorDetail(parseError),
+        });
         return res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, 'JSON 格式錯誤'));
       }
     }
 
-    if (Array.isArray(data)) {
+    // 使用 Zod safeParse 統一驗證請求結構
+    const requestParseResult = TrackRequestSchema.safeParse(data);
+    if (!requestParseResult.success) {
       return res
         .status(400)
-        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '事件格式錯誤：不支援批次陣列 payload'));
+        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '事件格式錯誤：' + requestParseResult.error.issues[0]?.message));
     }
 
-    if (!isTrackRequest(data)) {
-      return res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '事件格式錯誤'));
-    }
-
-    const { session_id, agent_id, event, fingerprint } = data;
-
-    if (!session_id || !event) {
-      return res
-        .status(400)
-        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '缺少必要欄位：session_id 或 event'));
-    }
-
-    // Basic Event Validation - 放寬驗證，duration 可以是 0 (page_view)
-    if (typeof event !== 'object' || !event.property_id) {
-      return res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '事件格式錯誤'));
-    }
+    const { session_id, agent_id, event, fingerprint } = requestParseResult.data;
 
     // 添加追蹤
     safeAddBreadcrumb('UAG track event', 'uag', {
@@ -168,7 +150,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelR
     });
 
     if (error) {
-      logger.error('[UAG] Supabase RPC failed', error, { rpcName, session_id });
+      logger.error(`${MODULE_TAG} Supabase RPC failed`, error, { rpcName, session_id });
 
       // Fallback 到舊版 RPC
       if (UAG_RPC_VERSION === 'v8_2') {
@@ -183,7 +165,14 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelR
         );
 
         if (!fallbackError) {
-          return res.status(200).json(fallbackResult);
+          const fallbackParseResult = TrackResultSchema.safeParse(fallbackResult);
+          if (fallbackParseResult.success) {
+            return res.status(200).json(successResponse(fallbackParseResult.data));
+          }
+          logger.error(`${MODULE_TAG} Fallback RPC result validation failed`, null, {
+            error: fallbackParseResult.error.message,
+            result: fallbackResult,
+          });
         }
       }
 
@@ -196,7 +185,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelR
     // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as TrackResult
     const trackParseResult = TrackResultSchema.safeParse(result);
     if (!trackParseResult.success) {
-      logger.error('[UAG] Track result validation failed', null, {
+      logger.error(`${MODULE_TAG} Track result validation failed`, null, {
         error: trackParseResult.error.message,
         result,
       });
@@ -208,7 +197,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelR
 
     // Realtime Trigger - S-Grade Alert
     if (trackResult.grade === 'S') {
-      logger.info('[UAG] S-Grade Lead detected', {
+      logger.info(`${MODULE_TAG} S-Grade Lead detected`, {
         session_id,
         score: trackResult.score,
         reason: trackResult.reason,
@@ -221,7 +210,10 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelR
 
     return res.status(200).json(successResponse(trackResult));
   } catch (err) {
-    logger.error('[UAG] Track handler error', err, { handler: 'uag/track' });
+    logger.error(`${MODULE_TAG} Track handler error`, err, {
+      error: toErrorDetail(err),
+      handler: 'uag/track',
+    });
     safeCaptureError(err, { handler: 'uag/track' });
     return res
       .status(500)
@@ -232,7 +224,7 @@ async function handler(req: VercelRequest, res: VercelResponse): Promise<VercelR
 const sentryWrappedHandler = withSentryHandler(handler, 'uag/track');
 
 function isSentryEnvValidationError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = toErrorDetail(error);
   return (
     message.includes('Environment validation failed') ||
     message.includes('SUPABASE_URL') ||
@@ -252,7 +244,8 @@ export default async function uagTrackHandler(
     const isDev = process.env.NODE_ENV !== 'production';
 
     if (isSentryEnvValidationError(error)) {
-      logger.error('[UAG] Track unavailable due to strict env validation', error, {
+      logger.error(`${MODULE_TAG} Track unavailable due to strict env validation`, error, {
+        error: toErrorDetail(error),
         handler: 'uag/track',
       });
       return res
@@ -265,7 +258,10 @@ export default async function uagTrackHandler(
         );
     }
 
-    logger.error('[UAG] Track wrapper error', error, { handler: 'uag/track' });
+    logger.error(`${MODULE_TAG} Track wrapper error`, error, {
+      error: toErrorDetail(error),
+      handler: 'uag/track',
+    });
     safeCaptureError(error, { handler: 'uag/track', wrapper: true });
     return res
       .status(500)

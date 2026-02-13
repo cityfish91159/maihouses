@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockRpc, mockCreateClient, mockCaptureError, mockAddBreadcrumb } = vi.hoisted(() => ({
+const { mockRpc, mockCreateClient, mockCaptureError, mockAddBreadcrumb, mockLoggerWarn } =
+  vi.hoisted(() => ({
   mockRpc: vi.fn(),
   mockCreateClient: vi.fn(),
   mockCaptureError: vi.fn(),
   mockAddBreadcrumb: vi.fn(),
+  mockLoggerWarn: vi.fn(),
 }));
 
 vi.mock('@supabase/supabase-js', () => ({
@@ -20,7 +22,7 @@ vi.mock('../../lib/sentry', () => ({
 vi.mock('../../lib/logger', () => ({
   logger: {
     info: vi.fn(),
-    warn: vi.fn(),
+    warn: mockLoggerWarn,
     error: vi.fn(),
     debug: vi.fn(),
   },
@@ -119,6 +121,28 @@ describe('/api/uag/track', () => {
       success: false,
       error: { code: 'INVALID_INPUT' },
     });
+  });
+
+  it('returns 400 and logs parse error when request body is invalid JSON string', async () => {
+    const handler = (await import('../track')).default;
+    const req = createMockRequest({
+      body: '{invalid_json',
+    });
+    const res = createMockResponse();
+
+    await handler(req as never, res as never);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.jsonData).toMatchObject({
+      success: false,
+      error: { code: 'INVALID_INPUT' },
+    });
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      '[UAG] Failed to parse request JSON',
+      expect.objectContaining({
+        error: expect.any(String),
+      })
+    );
   });
 
   it('rejects payload without event.property_id', async () => {

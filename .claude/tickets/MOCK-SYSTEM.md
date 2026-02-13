@@ -31,7 +31,7 @@
 ### P1 — 程式碼品質
 
 - [x] **#17** `src/lib/error.ts` 統一錯誤處理工具（1 新檔案 + 17 測試）✅ 2026-02-12
-- [ ] **#18** 3 檔 catch 改用 `getErrorMessage()`（config / track / MaiMaiContext）
+- [x] **#18** 3 檔 catch 改用 `getErrorMessage()`（config / track / MaiMaiContext）✅ 2026-02-13
 - [x] **#19** [P1] 砍舊路徑：前端 `tracker` 由 `/api/uag-track` 切到 `/api/uag/track`，下線 deprecated JS 版 ✅ 2026-02-12
 - [ ] **#20** 整合分散 Mock Data + seed 不可變 `Object.freeze`（10+ 檔）
 
@@ -666,9 +666,30 @@ grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts
 
 ---
 
-### #18 3 檔 catch 改用 `getErrorMessage()`
+### #18 ✅ 3 檔 catch 改用 `getErrorMessage()`
+
+**已完成** 2026-02-13
 
 **檔案**：`src/app/config.ts`、`api/uag/track.ts`、`src/context/MaiMaiContext.tsx`
+
+**施工重點**：
+
+1. `src/app/config.ts`
+   - `localStorage` 讀取、遠端設定抓取、快取寫入三個 catch 全部統一為 `logger.warn/error + getErrorMessage(err)`。
+2. `src/context/MaiMaiContext.tsx`
+   - mood / messages 的 parse、save、reset catch 全部統一為 `logger.warn + getErrorMessage(e)`。
+3. `api/uag/track.ts`
+   - 新增 `getErrorMessage` 匯入，集中使用 `toErrorDetail()`。
+   - `safeCaptureError` / `safeAddBreadcrumb` / request JSON parse / handler 與 wrapper catch 全部統一使用 `getErrorMessage()`。
+   - 移除空 catch：`JSON.parse` 失敗時改為可觀測 `logger.warn` + 明確 `400 INVALID_INPUT`。
+4. `api/uag/__tests__/track.test.ts`
+   - 新增邊界測試：request body 為無效 JSON 字串時，應回 `400` 並記錄 parse warning。
+
+**驗收**：
+- [x] 三個目標檔案 catch 全部採用 `getErrorMessage()` 統一錯誤訊息提取
+- [x] `api/uag/track.ts` 不存在空 catch
+- [x] `api/uag/__tests__/track.test.ts` 新增 JSON parse 失敗邊界測試
+- [x] 相關測試通過
 
 ---
 

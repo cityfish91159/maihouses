@@ -125,6 +125,7 @@
 
 ### Mock System
 - [x] MOCK-1A-P0（`usePageMode` + localStorage TTL + 跨分頁同步 + demo 靜默追蹤）
+- [x] MOCK-18-P1（3 檔 catch 統一 `getErrorMessage()` + 空 catch 清除 + 邊界測試）
 - [x] MOCK-19-P1（`/api/uag-track` → `/api/uag/track`，deprecated JS endpoint 下線）
 
 ## 實作進度總覽
@@ -5786,5 +5787,57 @@ feat(mock-system): close #19 route migration for uag tracker endpoint
 - remove deprecated api/uag-track.js handler
 - sync generated API path to /uag/track
 - update MOCK-SYSTEM #19 and AGENT PROFILE execution record
+```
+
+---
+
+## MOCK-SYSTEM #18 [P1] 3 檔 catch 改用 `getErrorMessage()`
+
+### 驗收標準
+
+- [x] `src/app/config.ts` 的 catch 統一走 `getErrorMessage()`
+- [x] `src/context/MaiMaiContext.tsx` 的 catch 統一走 `getErrorMessage()`
+- [x] `api/uag/track.ts` 的 catch（含 JSON.parse）統一走 `getErrorMessage()`
+- [x] `api/uag/track.ts` 不再有空 catch
+- [x] 相關測試與 lint 通過
+
+### 施工紀錄（2026-02-13）
+
+1. `api/uag/track.ts`
+   - 匯入 `getErrorMessage` 並新增 `toErrorDetail()`，統一錯誤訊息提取。
+   - `safeCaptureError` / `safeAddBreadcrumb` catch 改為 `logger.warn + getErrorMessage()`。
+   - request body JSON 解析從空 catch 改為 `catch(parseError)`，記錄 warning 並回傳 `400 INVALID_INPUT`。
+   - handler 與 wrapper catch 改為使用 `getErrorMessage()` 寫入結構化 log context。
+2. `api/uag/__tests__/track.test.ts`
+   - 新增「無效 JSON request body」邊界測試，驗證：
+     - 回應狀態為 `400`
+     - error code 為 `INVALID_INPUT`
+     - logger 會記錄 parse failure warning
+3. `.claude/tickets/MOCK-SYSTEM.md`
+   - #18 狀態改為完成，補上施工重點與驗收勾選。
+
+### 驗證結果
+
+```bash
+npm run test -- api/uag/__tests__/track.test.ts
+npm run test -- src/context/__tests__/MaiMaiContext.test.tsx
+npm run lint -- api/uag/track.ts api/uag/__tests__/track.test.ts
+npm run check:utf8
+```
+
+- `api/uag/__tests__/track.test.ts`：通過（含新增邊界測試）
+- `src/context/__tests__/MaiMaiContext.test.tsx`：通過
+- `lint`：通過
+- `UTF-8` / `Mojibake`：通過
+
+### Commit
+
+```bash
+feat(mock-system): close #18 unify catch handling with getErrorMessage
+
+- unify catch error extraction with getErrorMessage in config/track/MaiMaiContext scope
+- remove empty JSON.parse catch in api/uag/track.ts with observable warning log
+- add invalid JSON boundary test for uag track endpoint
+- update MOCK-SYSTEM #18 and AGENT PROFILE execution record
 ```
 
