@@ -17,30 +17,20 @@ export type AuthMode = 'login' | 'signup';
 /** 使用者角色 */
 export type AuthRole = 'agent' | 'consumer';
 
-/** Auth URL 參數 */
-export interface AuthUrlParams {
-  /** 認證模式 */
-  mode: AuthMode;
-  /** 認證完成後返回的路徑 */
-  returnPath?: string;
-  /** 使用者角色 */
-  role?: AuthRole;
-}
-
 /** Auth 頁面基礎路徑 */
 const AUTH_BASE_PATH = '/maihouses/auth.html';
 const DEFAULT_RETURN_PATH = '/maihouses/';
 
 function assertValidAuthMode(mode: AuthMode): void {
   if (mode !== 'login' && mode !== 'signup') {
-    throw new Error(`[authUtils] Invalid auth mode: ${String(mode)}`);
+    throw new Error(`[authUtils] 無效的認證模式: ${String(mode)}`);
   }
 }
 
 function assertValidAuthRole(role?: AuthRole): void {
   if (role === undefined) return;
   if (role !== 'agent' && role !== 'consumer') {
-    throw new Error(`[authUtils] Invalid auth role: ${String(role)}`);
+    throw new Error(`[authUtils] 無效的使用者角色: ${String(role)}`);
   }
 }
 
@@ -51,7 +41,7 @@ function normalizeReturnPath(returnPath?: string): string | undefined {
 
   const hasInvalidPrefix = !trimmedPath.startsWith('/') || trimmedPath.startsWith('//');
   if (hasInvalidPrefix) {
-    logger.warn('[authUtils] Invalid returnPath, fallback to default', {
+    logger.warn('[authUtils] returnPath 格式無效，改用預設路徑', {
       returnPath: trimmedPath,
     });
     return DEFAULT_RETURN_PATH;
@@ -121,7 +111,7 @@ export function getAuthUrl(mode: AuthMode, returnPath?: string, role?: AuthRole)
     url.search = params.toString();
     return url.toString();
   } catch {
-    logger.warn('[authUtils] Invalid window.location.origin, fallback to relative URL', { origin });
+    logger.warn('[authUtils] window.location.origin 無效，改用相對路徑', { origin });
     return toRelativeAuthUrl(params);
   }
 }
@@ -149,7 +139,7 @@ export function getCurrentPath(): string {
  */
 export function navigateToAuth(mode: AuthMode, returnPath?: string, role?: AuthRole): void {
   if (typeof window === 'undefined') {
-    logger.warn('[authUtils] navigateToAuth called in non-browser environment', {
+    logger.warn('[authUtils] 非瀏覽器環境呼叫 navigateToAuth，已略過', {
       mode,
       returnPath,
       role,
@@ -160,7 +150,7 @@ export function navigateToAuth(mode: AuthMode, returnPath?: string, role?: AuthR
   const targetPath = returnPath ?? getCurrentPath();
   const authUrl = getAuthUrl(mode, targetPath, role);
 
-  logger.debug('[authUtils] Navigating to auth', { mode, returnPath: targetPath, role });
+  logger.debug('[authUtils] 導向認證頁', { mode, returnPath: targetPath, role });
 
   window.location.href = authUrl;
 }

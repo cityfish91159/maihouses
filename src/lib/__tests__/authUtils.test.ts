@@ -19,6 +19,8 @@ vi.mock('../logger', () => ({
 
 describe('authUtils (#15)', () => {
   const originalLocation = window.location;
+  const invokeGetAuthUrlAtRuntime = (...args: unknown[]) =>
+    Reflect.apply(getAuthUrl, undefined, args);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -114,29 +116,38 @@ describe('authUtils (#15)', () => {
   describe('navigateToAuth', () => {
     it('should call window.location.href with correct URL', () => {
       const mockHref = vi.fn();
-      Object.defineProperty(window, 'location', {
-        value: {
-          ...originalLocation,
-          href: '',
-          pathname: '/maihouses/test',
-          search: '',
-          hash: '',
-          origin: 'http://localhost:5173',
-        },
-        writable: true,
-      });
+      try {
+        Object.defineProperty(window, 'location', {
+          value: {
+            ...originalLocation,
+            href: '',
+            pathname: '/maihouses/test',
+            search: '',
+            hash: '',
+            origin: 'http://localhost:5173',
+          },
+          writable: true,
+        });
 
-      // Mock setter
-      Object.defineProperty(window.location, 'href', {
-        set: mockHref,
-        get: () => '',
-      });
+        // Mock setter
+        Object.defineProperty(window.location, 'href', {
+          set: mockHref,
+          get: () => '',
+        });
 
-      navigateToAuth('login');
+        navigateToAuth('login');
 
-      expect(mockHref).toHaveBeenCalledTimes(1);
-      const calledUrl = mockHref.mock.calls[0]?.[0] as string;
-      expect(calledUrl).toContain('mode=login');
+        expect(mockHref).toHaveBeenCalledTimes(1);
+        const firstCall = mockHref.mock.calls[0];
+        expect(firstCall).toBeDefined();
+        const calledUrl = String(firstCall?.[0] ?? '');
+        expect(calledUrl).toContain('mode=login');
+      } finally {
+        Object.defineProperty(window, 'location', {
+          value: originalLocation,
+          writable: true,
+        });
+      }
     });
   });
 
@@ -187,7 +198,7 @@ describe('authUtils (#15)', () => {
       expect(url).toContain('mode=login');
       expect(url).toContain('return=%2Fmaihouses%2F');
       expect(logger.warn).toHaveBeenCalledWith(
-        '[authUtils] Invalid returnPath, fallback to default',
+        '[authUtils] returnPath 格式無效，改用預設路徑',
         expect.objectContaining({ returnPath: '//malicious.example.com' })
       );
     });
@@ -197,7 +208,7 @@ describe('authUtils (#15)', () => {
       getAuthUrl('login', 'relative/path');
 
       expect(logger.warn).toHaveBeenCalledWith(
-        '[authUtils] Invalid returnPath, fallback to default',
+        '[authUtils] returnPath 格式無效，改用預設路徑',
         expect.objectContaining({ returnPath: 'relative/path' })
       );
     });
@@ -221,13 +232,82 @@ describe('authUtils (#15)', () => {
     });
 
     it('should throw on invalid AuthMode at runtime', () => {
-      expect(() => getAuthUrl('invalid' as AuthMode)).toThrow('[authUtils] Invalid auth mode');
+      expect(() => invokeGetAuthUrlAtRuntime('invalid')).toThrow('[authUtils] 無效的認證模式');
     });
 
     it('should throw on invalid AuthRole at runtime', () => {
-      expect(() => getAuthUrl('signup', '/test', 'invalid' as AuthRole)).toThrow(
-        '[authUtils] Invalid auth role'
+      expect(() => invokeGetAuthUrlAtRuntime('signup', '/test', 'invalid')).toThrow(
+        '[authUtils] 無效的使用者角色'
       );
+    });
+  });
+
+  describe('extreme scenarios', () => {
+    it('should handle very long returnPath safely', () => {
+      const longSegment = 'a'.repeat(4096);
+      const longQuery = 'q=' + 'b'.repeat(2048);
+      const longHash = 'h'.repeat(512);
+      const returnPath = `/maihouses/${longSegment}?${longQuery}#${longHash}`;
+
+      const url = getAuthUrl('login', returnPath);
+
+      expect(url).toContain('mode=login');
+      expect(url).toContain('return=');
+      expect(url.length).toBeGreaterThan(6000);
+    });
+
+    it('should trim returnPath whitespace before encoding', () => {
+      const url = getAuthUrl('login', '   /maihouses/chat?tab=1#profile   ');
+
+      expect(url).toContain('mode=login');
+      expect(url).toContain('return=%2Fmaihouses%2Fchat%3Ftab%3D1%23profile');
+    });
+
+    it('should fallback to relative URL when origin is malformed', async () => {
+      const { logger } = await import('../logger');
+
+      try {
+        Object.defineProperty(window, 'location', {
+          value: {
+            ...originalLocation,
+            origin: '::invalid-origin::',
+            pathname: '/maihouses/extreme',
+            search: '',
+            hash: '',
+          },
+          writable: true,
+        });
+
+        const url = getAuthUrl('login', '/maihouses/extreme');
+
+        expect(url.startsWith('/maihouses/auth.html?')).toBe(true);
+        expect(url).toContain('mode=login');
+        expect(url).toContain('return=%2Fmaihouses%2Fextreme');
+        expect(logger.warn).toHaveBeenCalledWith(
+          '[authUtils] window.location.origin 無效，改用相對路徑',
+          expect.objectContaining({ origin: '::invalid-origin::' })
+        );
+      } finally {
+        Object.defineProperty(window, 'location', {
+          value: originalLocation,
+          writable: true,
+        });
+      }
+    });
+
+    it('should fail fast safely in non-browser runtime', async () => {
+      const { logger } = await import('../logger');
+
+      vi.stubGlobal('window', undefined);
+      try {
+        expect(() => navigateToAuth('login', '/maihouses/')).not.toThrow();
+        expect(logger.warn).toHaveBeenCalledWith(
+          '[authUtils] 非瀏覽器環境呼叫 navigateToAuth，已略過',
+          expect.objectContaining({ mode: 'login', returnPath: '/maihouses/' })
+        );
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
   });
 });
