@@ -8,7 +8,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { withSentryHandler, captureError, addBreadcrumb } from '../lib/sentry';
-import { enforceCors } from '../lib/cors';
+import { enforceCors, cors } from '../lib/cors';
 import { logger } from '../lib/logger';
 import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
 
@@ -248,7 +248,7 @@ export default async function uagTrackHandler(
   try {
     return await sentryWrappedHandler(req, res);
   } catch (error) {
-    setCorsHeaders(res);
+    cors(req, res);
     const isDev = process.env.NODE_ENV !== 'production';
 
     if (isSentryEnvValidationError(error)) {
