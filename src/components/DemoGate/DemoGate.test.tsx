@@ -11,6 +11,7 @@ const pageModeMocks = vi.hoisted(() => ({
 
 const notifyMocks = vi.hoisted(() => ({
   dismiss: vi.fn(),
+  error: vi.fn(),
   info: vi.fn(),
 }));
 
@@ -26,6 +27,7 @@ vi.mock('../../lib/pageMode', () => ({
 vi.mock('../../lib/notify', () => ({
   notify: {
     dismiss: notifyMocks.dismiss,
+    error: notifyMocks.error,
     info: notifyMocks.info,
   },
 }));
@@ -37,6 +39,22 @@ interface DemoToastOptions {
     label: string;
     onClick: () => void;
   };
+}
+
+function wasCanceledByHandler(target: Element): boolean {
+  let wasPrevented = false;
+
+  window.addEventListener(
+    'click',
+    (event) => {
+      wasPrevented = event.defaultPrevented;
+      event.preventDefault();
+    },
+    { once: true }
+  );
+
+  fireEvent.click(target);
+  return wasPrevented;
 }
 
 function parseDemoToastAction(value: unknown): { label: string; onClick: () => void } | null {
@@ -83,7 +101,9 @@ describe('DemoGate', () => {
     mockUsePageMode.mockReturnValue('visitor');
     pageModeMocks.reloadPage.mockReset();
     pageModeMocks.setDemoMode.mockReset();
+    pageModeMocks.setDemoMode.mockReturnValue(true);
     notifyMocks.dismiss.mockReset();
+    notifyMocks.error.mockReset();
     notifyMocks.info.mockReset();
   });
 
@@ -138,6 +158,28 @@ describe('DemoGate', () => {
     expect(pageModeMocks.setDemoMode).not.toHaveBeenCalled();
   });
 
+  it('visitor 模式在未達門檻前不應取消子元素預設行為', () => {
+    render(
+      <DemoGate>
+        <a href="/maihouses/">logo-link</a>
+      </DemoGate>
+    );
+
+    const logoLink = screen.getByRole('link', { name: 'logo-link' });
+
+    for (let index = 0; index < 4; index += 1) {
+      const canceled = wasCanceledByHandler(logoLink);
+      expect(canceled).toBe(false);
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+    }
+
+    const isCanceledOnThreshold = wasCanceledByHandler(logoLink);
+    expect(isCanceledOnThreshold).toBe(true);
+    expect(notifyMocks.info).toHaveBeenCalledTimes(1);
+  });
+
   it('點擊 toast action 後應執行 setDemoMode + reload', () => {
     render(
       <DemoGate>
@@ -165,8 +207,8 @@ describe('DemoGate', () => {
     expect(pageModeMocks.reloadPage).toHaveBeenCalledTimes(1);
   });
 
-  it('demo/live 模式下不應觸發', () => {
-    mockUsePageMode.mockReturnValue('demo');
+  it.each(['demo', 'live'] as const)('%s 模式下不應觸發', (mode) => {
+    mockUsePageMode.mockReturnValue(mode);
     render(
       <DemoGate>
         <button type="button">logo</button>
