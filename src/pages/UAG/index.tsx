@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useRef, useState } from 'react';
+﻿import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,7 @@ import styles from './UAG.module.css';
 import { useUAG } from './hooks/useUAG';
 import { useLeadSelection } from './hooks/useLeadSelection';
 import { useAgentProfile } from './hooks/useAgentProfile';
+import { resolveUAGQueryMode, uagDataQueryKey } from './hooks/queryKeys';
 import { useAuth } from '../../hooks/useAuth';
 
 import { UAGHeader } from './components/UAGHeader';
@@ -38,6 +39,8 @@ function UAGPageContent() {
   const { user, loading: authLoading, error: authError, signOut } = useAuth();
   const { profile: agentProfile } = useAgentProfile(user?.id);
   const actionPanelRef = useRef<HTMLDivElement>(null);
+  const uagMode = resolveUAGQueryMode(useMock, user?.id);
+  const uagCacheKey = useMemo(() => uagDataQueryKey(uagMode, user?.id), [uagMode, user?.id]);
 
   // MSG-5: Modal 狀態
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -82,7 +85,7 @@ function UAGPageContent() {
       if (!assetMessageLead) return;
 
       // 更新 React Query cache - 設置 conversation_id 和 notification_status
-      queryClient.setQueryData<AppData>(['uagData', useMock, user?.id], (oldData) => {
+      queryClient.setQueryData<AppData>(uagCacheKey, (oldData) => {
         if (!oldData) return oldData;
 
         return {
@@ -110,7 +113,7 @@ function UAGPageContent() {
       setShowAssetMessageModal(false);
       setAssetMessageLead(null);
     },
-    [assetMessageLead, queryClient, useMock, user?.id]
+    [assetMessageLead, queryClient, uagCacheKey, useMock]
   );
 
   const handleSignOut = async () => {
@@ -158,7 +161,7 @@ function UAGPageContent() {
       if (!purchasedLead) return;
 
       // 更新 React Query cache - 設置 conversation_id 和 notification_status
-      queryClient.setQueryData<AppData>(['uagData', useMock, user?.id], (oldData) => {
+      queryClient.setQueryData<AppData>(uagCacheKey, (oldData) => {
         if (!oldData) return oldData;
 
         return {
@@ -187,7 +190,7 @@ function UAGPageContent() {
       setPurchasedLead(null);
       setCurrentConversationId(undefined);
     },
-    [purchasedLead, queryClient, useMock, user?.id]
+    [purchasedLead, queryClient, uagCacheKey, useMock]
   );
 
   // FEED-01 Phase 10: 從 feed 提取可用社區列表（去重）
@@ -212,14 +215,14 @@ function UAGPageContent() {
       try {
         await createPost(communityId, content, 'public');
         // 成功後重新載入資料
-        queryClient.invalidateQueries({ queryKey: ['uagData'] });
+        queryClient.invalidateQueries({ queryKey: uagCacheKey });
       } catch (err) {
         const message = err instanceof Error ? err.message : '發文失敗';
         logger.error('[UAG] handleCreatePost failed', { error: message });
         throw err; // 讓 ListingFeed 顯示錯誤
       }
     },
-    [queryClient]
+    [queryClient, uagCacheKey]
   );
 
   if (isLoading) return <UAGLoadingSkeleton />;
@@ -347,3 +350,4 @@ export default function UAGPage() {
     </QueryErrorResetBoundary>
   );
 }
+

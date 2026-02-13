@@ -6,7 +6,7 @@
 
 - [x] **#1a** `usePageMode()` hook — 模式判斷 + localStorage TTL + 跨分頁同步（1 新檔案）✅ 2026-02-12
 - [x] **#1b** `useModeAwareAction` hook — 三模式行為派發 + cache key 規範（1 新檔案）✅ 2026-02-13
-- [ ] **#1c** `DemoGate.tsx` — Logo 連按 5 次觸發演示模式（1 新檔案）
+- [x] **#1c** `DemoGate.tsx` — Logo 連按 5 次觸發演示模式（1 新檔案）✅ 2026-02-13
 - [ ] **#2** 全站靜態 HTML 連結改 React 路由 + `SEED_COMMUNITY_ID`（7 檔 16 處）
 - [ ] **#3** 按讚三模式行為分離 — mode guard 優先於 auth guard（2 檔）
 - [x] **#14a** 確認 Toast 支援 action button（前置條件）✅ 2026-02-12
@@ -187,9 +187,36 @@ function useModeAwareAction<T>(handlers: {
 - 所有 queryKey 含 mode
 - `grep -r "queryKey.*\[" src/hooks/ --include="*.ts"` 確認
 
+#### 2026-02-13 尾差修復（#1b 收斂）
+
+**摘要**
+
+- [x] UAG 頁面快取 key 對齊 `uagDataQueryKey(mode, userId)`，移除舊 `['uagData', useMock, userId]`
+- [x] AssetMonitor 與購買後發訊息流程的 `setQueryData` 全部改用 mode-aware key
+- [x] UAG 發文後 `invalidateQueries` 改為 mode-aware key，避免跨模式快取污染
+- [x] #1b 工單完成紀錄與驗證結果補齊
+
+**本次修改**
+
+1. `src/pages/UAG/index.tsx`
+   - 新增 `resolveUAGQueryMode` / `uagDataQueryKey` 匯入，集中產生 `uagCacheKey`。
+   - 2 處 `queryClient.setQueryData` 改為 `queryClient.setQueryData(uagCacheKey, ...)`。
+   - `handleCreatePost` 的 `invalidateQueries` 改為 `queryKey: uagCacheKey`。
+2. `.claude/tickets/MOCK-SYSTEM.md`
+   - 補登 #1b 尾差收斂內容（摘要 / 施工紀錄 / 驗證）。
+
+**收斂驗證**
+
+- [x] `npm run test -- src/hooks/__tests__/useModeAwareAction.test.tsx src/pages/UAG/hooks/__tests__/useUAG.test.ts src/pages/UAG/index.test.tsx`
+- [x] `npm run check:utf8`
+- [x] `npm run gate`
+- [x] `rg -n "\\['uagData'\\s*,\\s*useMock|queryKey:\\s*\\['uagData'" src/pages/UAG` 無結果
+
 ---
 
-### #1c `DemoGate.tsx` 觸發元件
+### #1c ✅ `DemoGate.tsx` 觸發元件
+
+**已完成** 2026-02-13
 
 **目標**：首頁 Logo 連按 5 次進入演示模式
 
@@ -197,11 +224,27 @@ function useModeAwareAction<T>(handlers: {
 
 **新增**：`src/components/DemoGate/DemoGate.tsx`
 
-- 連按 5 次（1500ms 內）→ shake + 確認 toast → `setDemoMode()` + reload
-- 已在 demo → 不重複觸發
-- 不使用長按：iOS Safari 長按約 1 秒即觸發原生選單，無法達到 5 秒
+**修改**：`src/components/Header/Header.tsx`
 
-**驗收**：連按可觸發、有視覺回饋、demo 下點「登入」被攔截
+**施工重點**：
+
+1. `DemoGate` 以 click-capture 實作 1500ms 內 5 連按判定，達標後顯示確認 toast（含 action button）。
+2. 確認 action 執行 `setDemoMode()` + `reloadPage()`，符合 #1c 進入 demo 流程。
+3. 觸發成功時加入 `motion-safe:animate-shake` 視覺回饋（500ms），提供可見反饋。
+4. 僅 `visitor` 可觸發；`demo/live` 狀態不重複觸發。
+5. 首頁 Header 的登入/註冊按鈕加入 demo 攔截，點擊只提示、不進入 auth 流程。
+
+**驗收**：
+- [x] 連按 5 次（1500ms 內）可觸發演示模式確認 toast
+- [x] 點擊確認後執行 `setDemoMode()` + reload
+- [x] 觸發時有 shake 視覺回饋
+- [x] 已在 demo 不重複觸發
+- [x] demo 下點「登入」被攔截
+
+**驗證結果**：
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `npm run gate` 通過
+- [x] `npm run test -- src/pages/Home.test.tsx` 通過
 
 ---
 
