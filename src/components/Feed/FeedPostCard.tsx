@@ -107,7 +107,6 @@ function FeedPostCommentSection({
       />
       <CommentInput
         onSubmit={(content) => addComment(content)}
-        disabled={!isLoggedIn}
         userInitial={userInitial}
         placeholder={isLoggedIn ? '寫下您的留言...' : '請先登入後留言'}
       />

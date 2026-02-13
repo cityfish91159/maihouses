@@ -358,7 +358,7 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 - [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
 - [x] `npm run gate` 通過
 - [x] `rg -n "disabled={!isLoggedIn}" src/components/PropertyDetail/CommunityReviews.tsx` 無結果
-- [ ] `rg -n "disabled={!isLoggedIn}" src` 尚餘 2 筆（`src/components/Feed/FeedPostCard.tsx`、`src/pages/Community/components/PostsSection.tsx`），歸 #6b / #8b 施工
+- [x] `rg -n "disabled={!isLoggedIn}" src` 無結果（原先兩筆 `FeedPostCard.tsx`、`PostsSection.tsx` 已清除）
 
 ---
 

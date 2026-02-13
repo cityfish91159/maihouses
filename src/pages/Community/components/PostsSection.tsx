@@ -273,10 +273,9 @@ function PostCommentSection({
         onDeleteComment={deleteComment}
         onLoadReplies={loadReplies}
       />
-      {/* Bug 1 & 3 修正：傳遞 disabled 和 userInitial */}
+      {/* Bug 1 & 3 修正：傳遞 userInitial 與登入提示文案 */}
       <CommentInput
         onSubmit={(content) => addComment(content)}
-        disabled={!isLoggedIn}
         userInitial={userInitial}
         placeholder={isLoggedIn ? '寫下您的留言...' : '請先登入後留言'}
       />
