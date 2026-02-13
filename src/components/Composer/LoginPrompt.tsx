@@ -1,8 +1,7 @@
 import { memo, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
 import { FocusTrap } from '../ui/FocusTrap';
 import { STRINGS } from '../../constants/strings';
-import { getLoginUrl } from '../../lib/authUtils';
+import { getCurrentPath, getLoginUrl } from '../../lib/authUtils';
 
 interface LoginPromptProps {
   readonly isOpen: boolean;
@@ -10,13 +9,11 @@ interface LoginPromptProps {
 }
 
 export const LoginPrompt = memo(function LoginPrompt({ isOpen, onClose }: LoginPromptProps) {
-  const location = useLocation();
-
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);
 
-  const loginUrl = getLoginUrl(`${location.pathname}${location.search}${location.hash}`);
+  const loginUrl = getLoginUrl(getCurrentPath());
 
   if (!isOpen) return null;
 

@@ -83,6 +83,7 @@ function toRelativeAuthUrl(params: URLSearchParams): string {
  * @param returnPath - 認證完成後返回的路徑
  * @param role - 使用者角色 ('agent' | 'consumer')
  * @returns 完整的 auth URL
+ * @throws {Error} 當 mode 或 role 非法時拋出錯誤（僅非型別安全的 runtime 呼叫）
  *
  * @example
  * // 基本登入

@@ -8,6 +8,7 @@ import {
   type AuthMode,
   type AuthRole,
 } from '../authUtils';
+import { logger } from '../logger';
 
 // Mock logger
 vi.mock('../logger', () => ({
@@ -191,8 +192,7 @@ describe('authUtils (#15)', () => {
       expect(url).toContain('return=%2Fmaihouses%2F');
     });
 
-    it('should fallback to default return path for protocol-relative URL (//)', async () => {
-      const { logger } = await import('../logger');
+    it('should fallback to default return path for protocol-relative URL (//)', () => {
       const url = getAuthUrl('login', '//malicious.example.com');
 
       expect(url).toContain('mode=login');
@@ -203,8 +203,7 @@ describe('authUtils (#15)', () => {
       );
     });
 
-    it('should log warning when returnPath does not start with /', async () => {
-      const { logger } = await import('../logger');
+    it('should log warning when returnPath does not start with /', () => {
       getAuthUrl('login', 'relative/path');
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -232,11 +231,13 @@ describe('authUtils (#15)', () => {
     });
 
     it('should throw on invalid AuthMode at runtime', () => {
-      expect(() => invokeGetAuthUrlAtRuntime('invalid')).toThrow('[authUtils] 無效的認證模式');
+      expect(() => invokeGetAuthUrlAtRuntime('invalid-mode')).toThrow(
+        '[authUtils] 無效的認證模式'
+      );
     });
 
     it('should throw on invalid AuthRole at runtime', () => {
-      expect(() => invokeGetAuthUrlAtRuntime('signup', '/test', 'invalid')).toThrow(
+      expect(() => invokeGetAuthUrlAtRuntime('signup', '/test', 'invalid-role')).toThrow(
         '[authUtils] 無效的使用者角色'
       );
     });
@@ -263,9 +264,7 @@ describe('authUtils (#15)', () => {
       expect(url).toContain('return=%2Fmaihouses%2Fchat%3Ftab%3D1%23profile');
     });
 
-    it('should fallback to relative URL when origin is malformed', async () => {
-      const { logger } = await import('../logger');
-
+    it('should fallback to relative URL when origin is malformed', () => {
       try {
         Object.defineProperty(window, 'location', {
           value: {
@@ -295,9 +294,7 @@ describe('authUtils (#15)', () => {
       }
     });
 
-    it('should fail fast safely in non-browser runtime', async () => {
-      const { logger } = await import('../logger');
-
+    it('should fail fast safely in non-browser runtime', () => {
       vi.stubGlobal('window', undefined);
       try {
         expect(() => navigateToAuth('login', '/maihouses/')).not.toThrow();

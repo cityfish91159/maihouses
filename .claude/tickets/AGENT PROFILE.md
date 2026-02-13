@@ -5770,7 +5770,7 @@ npm run check:utf8
    - Auth error 按鈕由 `'/auth'` 改為 `navigateToAuth('login')`。
    - 移除未使用 `useNavigate`，減少隱性依賴。
 6. `src/lib/__tests__/authUtils.test.ts`
-   - 新增不安全 `returnPath` fallback 與 runtime fail-fast（無效 mode/role）測試，並補齊 `logger.warn` mock。
+   - 新增不安全 `returnPath` fallback、runtime fail-fast（無效 mode/role）與極限測試（超長路徑、非法 origin、非瀏覽器環境），並補齊 `logger.warn` mock。
 7. `src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx`
    - 斷言更新為新 auth URL（`mode=login` + `return=`）。
 
@@ -5783,7 +5783,7 @@ npm run check:utf8
 npm run gate
 ```
 
-- `src/lib/__tests__/authUtils.test.ts`：21/21 通過
+- `src/lib/__tests__/authUtils.test.ts`：27/27 通過
 - `src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx`：4/4 通過
 - `typecheck`：通過
 - `UTF-8` / `Mojibake`：通過
@@ -5857,12 +5857,20 @@ feat(mock-system): close #19 route migration for uag tracker endpoint
    - `safeCaptureError` / `safeAddBreadcrumb` catch 改為 `logger.warn + getErrorMessage()`。
    - request body JSON 解析從空 catch 改為 `catch(parseError)`，記錄 warning 並回傳 `400 INVALID_INPUT`。
    - handler 與 wrapper catch 改為使用 `getErrorMessage()` 寫入結構化 log context。
-2. `api/uag/__tests__/track.test.ts`
+   - 維持 `SUPABASE_SERVICE_ROLE_KEY || VITE_SUPABASE_ANON_KEY` fallback，避免既有環境配置回歸。
+   - 錯誤日誌訊息統一為繁中，符合 CLAUDE.md 語言規範。
+2. `src/app/config.ts`、`src/context/MaiMaiContext.tsx`
+   - catch 錯誤訊息文案統一改為繁中，維持 `getErrorMessage()` 擷取規格。
+3. `src/context/__tests__/MaiMaiContext.test.tsx`
+   - 同步更新 warning 訊息斷言為繁中。
+4. `api/uag/__tests__/track.test.ts`
    - 新增「無效 JSON request body」邊界測試，驗證：
      - 回應狀態為 `400`
      - error code 為 `INVALID_INPUT`
      - logger 會記錄 parse failure warning
-3. `.claude/tickets/MOCK-SYSTEM.md`
+   - 新增 `VITE_SUPABASE_ANON_KEY` fallback 回歸測試。
+   - 新增 50 筆並發無效 JSON 壓測，驗證 fail-fast 與 `mockRpc` 不被呼叫。
+5. `.claude/tickets/MOCK-SYSTEM.md`
    - #18 狀態改為完成，補上施工重點與驗收勾選。
 
 ### 驗證結果
@@ -5871,12 +5879,14 @@ feat(mock-system): close #19 route migration for uag tracker endpoint
 npm run test -- api/uag/__tests__/track.test.ts
 npm run test -- src/context/__tests__/MaiMaiContext.test.tsx
 npm run lint -- api/uag/track.ts api/uag/__tests__/track.test.ts
+npm run gate
 npm run check:utf8
 ```
 
-- `api/uag/__tests__/track.test.ts`：通過（含新增邊界測試）
+- `api/uag/__tests__/track.test.ts`：10/10 通過（含邊界 / 回歸 / 並發壓測）
 - `src/context/__tests__/MaiMaiContext.test.tsx`：通過
 - `lint`：通過
+- `gate`：QUALITY GATE PASSED
 - `UTF-8` / `Mojibake`：通過
 
 ### Commit
@@ -5889,4 +5899,54 @@ feat(mock-system): close #18 unify catch handling with getErrorMessage
 - add invalid JSON boundary test for uag track endpoint
 - update MOCK-SYSTEM #18 and AGENT PROFILE execution record
 ```
+
+---
+
+## MOCK-SYSTEM 回歸修復（2026-02-13）
+
+### 摘要
+
+- [x] 移除 `P7_ScenarioVerification` 的 `as any`，改用 `vi.mocked()`
+- [x] `P7_ScenarioVerification` mock 資料對齊 `UseFeedDataReturn`（含 `UnifiedFeedData.sidebarData`）
+- [x] `Wall.tsx` 移除 `as never` / `as Role` / `as Record<string, unknown>` 斷言
+- [x] `LoginPrompt.tsx` 改用 `getCurrentPath()`，移除手動拼接路徑
+- [x] `authUtils.ts` 補上 `@throws` 說明，強化 runtime fail-fast 可讀性
+- [x] `CommunityReviews.tsx` 測試回歸修正（維持未登入鎖定）
+- [x] `typecheck`、`check:utf8`、`gate` 全部通過
+
+### 施工紀錄
+
+1. `src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx`
+   - `(useAuth as any)` / `(useFeedData as any)` 改為 `vi.mocked(useAuth/useFeedData)`。
+   - `setupFeedMock(canViewPrivate)` 實際控制回傳貼文集合，修復未使用參數問題。
+   - 補齊 `UseFeedDataReturn` 必填欄位，避免 `UnifiedFeedData` 型別缺漏。
+2. `src/pages/Community/Wall.tsx`
+   - 新增 `isRole()`、`getMetadataString()`，移除所有 `as` 斷言。
+3. `src/components/Composer/LoginPrompt.tsx`
+   - 移除 `useLocation`，統一用 `getLoginUrl(getCurrentPath())`。
+4. `src/components/PropertyDetail/CommunityReviews.tsx`
+   - 抽出 `ReviewCard` / `LockedReviewCard`，資料改走 `useCommunityReviews`。
+   - 修正測試回歸：`canInteract` 回到未登入鎖定規格。
+5. `src/lib/authUtils.ts`
+   - JSDoc 補上 `@throws`，對齊 fail-fast 行為文件化。
+6. `src/app/config.ts`
+   - `z.record` 改為 `z.record(z.string(), z.boolean())`，修正 Zod v4 型別簽名。
+7. `.claude/tickets/MOCK-SYSTEM.md`
+   - 同步更新 #15 補強紀錄與驗收結果（含極限測試描述）。
+
+### 驗證結果
+
+```bash
+npm run test -- src/lib/__tests__/authUtils.test.ts src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx src/components/PropertyDetail/__tests__/CommunityReviews.motion.test.tsx
+npm run typecheck
+npm run check:utf8
+npm run gate
+```
+
+- `authUtils`：27/27 通過（含極限測試）
+- `P7_ScenarioVerification`：4/4 通過
+- `CommunityReviews`：10/10 通過（含 motion）
+- `typecheck`：通過
+- `UTF-8` / `Mojibake`：通過
+- `gate`：QUALITY GATE PASSED
 

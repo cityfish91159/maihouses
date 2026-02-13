@@ -18,8 +18,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Consumer from '../Consumer';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeedData } from '../../../hooks/useFeedData';
+import { useFeedData, type UseFeedDataReturn } from '../../../hooks/useFeedData';
 import { STRINGS } from '../../../constants/strings';
+import type { Role } from '../../../types/community';
 
 // Define mocks using hoisting to avoid ReferenceError
 const mocks = vi.hoisted(() => ({
@@ -66,6 +67,10 @@ Object.defineProperty(window, 'location', {
 });
 
 describe('P7 Scenario Verification (L7+ Standard)', () => {
+  const emptySidebarData = { hotPosts: [], saleItems: [] };
+  const mockedUseAuth = vi.mocked(useAuth);
+  const mockedUseFeedData = vi.mocked(useFeedData);
+
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -86,8 +91,12 @@ describe('P7 Scenario Verification (L7+ Standard)', () => {
   });
 
   // Mock UseFeedData with controllable private posts
+  // [NASA TypeScript Safety] 符合 FeedPost 完整型別定義
   const mockPrivatePost = {
     id: 1,
+    type: 'resident' as const,
+    time: '2026-02-12T10:00:00Z',
+    title: '私密貼文標題',
     content: 'Secret Content',
     author: 'Resident A',
     private: true,
@@ -97,6 +106,9 @@ describe('P7 Scenario Verification (L7+ Standard)', () => {
 
   const mockPublicPost = {
     id: 2,
+    type: 'resident' as const,
+    time: '2026-02-12T09:00:00Z',
+    title: '公開貼文標題',
     content: 'Public Content',
     author: 'Resident B',
     private: false,
@@ -104,40 +116,56 @@ describe('P7 Scenario Verification (L7+ Standard)', () => {
     comments: 0,
   };
 
-  const mockUseFeedDataBase = {
-    authLoading: false,
-    activeTransaction: { hasActive: false },
-    userProfile: null,
-    userInitial: 'G',
-    isAuthenticated: false,
-    isLoading: false,
-    error: null,
-    data: { posts: [mockPublicPost, mockPrivatePost], totalPosts: 2 },
-    sidebarData: { hotPosts: [], saleItems: [] },
+  const mockUseFeedDataBase: UseFeedDataReturn = {
+    data: {
+      posts: [mockPublicPost, mockPrivatePost],
+      totalPosts: 2,
+      sidebarData: emptySidebarData,
+    },
     useMock: true,
     setUseMock: vi.fn(),
+    isLoading: false,
+    error: null,
     refresh: vi.fn(),
+    toggleLike: vi.fn(),
+    createPost: vi.fn(),
+    addComment: vi.fn(),
+    viewerRole: 'guest',
+    isAuthenticated: false,
     isLiked: vi.fn().mockReturnValue(false),
-    handleLike: vi.fn(),
-    handleCreatePost: vi.fn(),
-    handleReply: vi.fn(),
-    handleComment: vi.fn(),
-    handleShare: vi.fn(),
   };
 
-  const setupAuth = (role: string, isAuthenticated: boolean) => {
-    (useAuth as any).mockReturnValue({
-      user: isAuthenticated ? { id: 'user-1' } : null,
-      role: role,
+  const setupAuth = (role: Role, isAuthenticated: boolean) => {
+    // [NASA TypeScript Safety] 符合 Supabase User 完整型別定義
+    const mockUser = isAuthenticated
+      ? {
+          id: 'user-1',
+          app_metadata: { role },
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: '2026-01-01T00:00:00Z',
+        }
+      : null;
+
+    mockedUseAuth.mockReturnValue({
+      session: null,
+      user: mockUser,
+      role,
       isAuthenticated,
       loading: false,
+      error: null,
+      signOut: vi.fn(),
     });
   };
 
   const setupFeedMock = (canViewPrivate: boolean) => {
-    (useFeedData as any).mockReturnValue({
+    const posts = canViewPrivate
+      ? [mockPublicPost, mockPrivatePost]
+      : [mockPublicPost];
+
+    mockedUseFeedData.mockReturnValue({
       ...mockUseFeedDataBase,
-      data: { posts: [mockPublicPost, mockPrivatePost] },
+      data: { posts, totalPosts: posts.length, sidebarData: emptySidebarData },
     });
   };
 

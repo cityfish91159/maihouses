@@ -634,17 +634,15 @@ function getAuthUrl(
    - L32：改用 `signupUrl`
 
 8. `src/pages/PropertyListPage.tsx`
-   - L2：新增 `useLocation` import
-   - L6：新增 `getLoginUrl` import
-   - L76-111：`LegacyHeader` 改為接受 `loginUrl` 參數
-   - L116：新增 `loginUrl` 變數
-   - L175：`<LegacyHeader loginUrl={loginUrl} />`
+   - Header 內部統一改用 `getLoginUrl(getCurrentPath())`
+   - 移除 `auth.html?mode=*` 硬編碼
+   - 不額外做 prop drilling，`LegacyHeader` 保持單一職責
 
 #### 驗證結果
 
 ```bash
 npm run typecheck                              # 0 errors
-npx vitest run src/lib/__tests__/authUtils.test.ts  # 21 tests passed
+npx vitest run src/lib/__tests__/authUtils.test.ts  # 27 tests passed
 npm run gate                                   # QUALITY GATE PASSED
 grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts comment)
 ```
@@ -674,7 +672,7 @@ grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts
    - 同步移除未使用的 `useNavigate`。
 
 6. `src/lib/__tests__/authUtils.test.ts`
-   - 新增不安全 `returnPath` 邊界測試與 runtime fail-fast（無效 mode/role）測試。
+   - 新增不安全 `returnPath` 邊界測試、runtime fail-fast（無效 mode/role）測試與極限測試（超長路徑、非法 origin、非瀏覽器環境）。
 
 7. `src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx`
    - 更新預期為新版 auth URL（含 `mode=login` + `return=`）。
@@ -683,7 +681,7 @@ grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts
 
 - [x] `ROUTES.AUTH` 直接跳轉在 `src/` 清零（測試斷言除外）
 - [x] `window.location.href = '/auth'` 清零
-- [x] `authUtils` 邊界測試通過（21 tests）
+- [x] `authUtils` 邊界/極限測試通過（27 tests）
 - [x] `P7_ScenarioVerification` 4 個情境測試通過
 - [x] `npm run typecheck` 通過
 - [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
@@ -716,19 +714,27 @@ grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts
 
 1. `src/app/config.ts`
    - `localStorage` 讀取、遠端設定抓取、快取寫入三個 catch 全部統一為 `logger.warn/error + getErrorMessage(err)`。
+   - 錯誤訊息改為繁中（台灣用語），符合 `CLAUDE.md` 語言規範。
 2. `src/context/MaiMaiContext.tsx`
    - mood / messages 的 parse、save、reset catch 全部統一為 `logger.warn + getErrorMessage(e)`。
+   - warning 訊息改為繁中，並同步更新測試斷言。
 3. `api/uag/track.ts`
    - 新增 `getErrorMessage` 匯入，集中使用 `toErrorDetail()`。
    - `safeCaptureError` / `safeAddBreadcrumb` / request JSON parse / handler 與 wrapper catch 全部統一使用 `getErrorMessage()`。
    - 移除空 catch：`JSON.parse` 失敗時改為可觀測 `logger.warn` + 明確 `400 INVALID_INPUT`。
+   - 保留原有 `SUPABASE_SERVICE_ROLE_KEY || VITE_SUPABASE_ANON_KEY` fallback，避免設定回歸。
+   - 修正錯誤日誌為繁中訊息，對齊 CLAUDE 語言規範。
 4. `api/uag/__tests__/track.test.ts`
    - 新增邊界測試：request body 為無效 JSON 字串時，應回 `400` 並記錄 parse warning。
+   - 新增回歸測試：`SUPABASE_SERVICE_ROLE_KEY` 缺失時，應使用 `VITE_SUPABASE_ANON_KEY` fallback。
+   - 新增極限測試：50 筆並發無效 JSON 請求，全部 fail-fast 回 `400` 且不觸發 RPC。
 
 **驗收**：
 - [x] 三個目標檔案 catch 全部採用 `getErrorMessage()` 統一錯誤訊息提取
 - [x] `api/uag/track.ts` 不存在空 catch
-- [x] `api/uag/__tests__/track.test.ts` 新增 JSON parse 失敗邊界測試
+- [x] `api/uag/__tests__/track.test.ts` 新增 JSON parse 邊界 + fallback 回歸 + 並發壓測
+- [x] `src/context/__tests__/MaiMaiContext.test.tsx` 通過（13 tests）
+- [x] `npm run gate` 通過
 - [x] 相關測試通過
 
 ---

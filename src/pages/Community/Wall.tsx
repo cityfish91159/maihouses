@@ -46,13 +46,27 @@ const VALID_ROLES: Role[] = ['guest', 'member', 'resident', 'agent'];
 const rawMockFlag = `${import.meta.env.VITE_COMMUNITY_WALL_ALLOW_MOCK ?? ''}`.trim().toLowerCase();
 const GLOBAL_MOCK_TOGGLE_ENABLED = rawMockFlag !== 'false';
 
-// [NASA TypeScript Safety] 使用類型守衛取代 as Role
+function isRole(value: unknown): value is Role {
+  return value === 'guest' || value === 'member' || value === 'resident' || value === 'agent';
+}
+
+function getMetadataString(metadata: unknown, key: 'name' | 'full_name'): string | null {
+  if (typeof metadata !== 'object' || metadata === null) {
+    return null;
+  }
+
+  const candidate = Reflect.get(metadata, key);
+  if (typeof candidate !== 'string') {
+    return null;
+  }
+
+  const normalized = candidate.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
 const parseRoleParam = (value: string | null): Role | null => {
   if (!value) return null;
-  if (VALID_ROLES.includes(value as never)) {
-    return value as Role;
-  }
-  return null;
+  return isRole(value) ? value : null;
 };
 
 const updateURLParam = (params: URLSearchParams, key: string, value: string | null) => {
@@ -83,10 +97,9 @@ function WallInner() {
     if (urlRole) {
       return urlRole;
     }
-    // [NASA TypeScript Safety] 使用類型守衛取代 as Role
     const stored = safeLocalStorage.getItem(ROLE_STORAGE_KEY);
-    if (stored && VALID_ROLES.includes(stored as never)) {
-      return stored as Role;
+    if (isRole(stored)) {
+      return stored;
     }
     return 'guest';
   }, []);
@@ -106,14 +119,14 @@ function WallInner() {
 
   // 取得 currentUserId 和 userInitial 供留言系統使用
   const currentUserId = user?.id;
-  // [NASA TypeScript Safety] 使用類型守衛取代 as Record
   const userMetadata = user?.user_metadata;
   const userName = (() => {
-    if (typeof userMetadata === 'object' && userMetadata !== null) {
-      const meta = userMetadata as Record<string, unknown>;
-      if (typeof meta.name === 'string') return meta.name;
-      if (typeof meta.full_name === 'string') return meta.full_name;
-    }
+    const name = getMetadataString(userMetadata, 'name');
+    if (name) return name;
+
+    const fullName = getMetadataString(userMetadata, 'full_name');
+    if (fullName) return fullName;
+
     return user?.email;
   })();
   const userInitial =

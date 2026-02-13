@@ -1,4 +1,5 @@
 ﻿import { safeLocalStorage } from '../lib/safeStorage';
+import { z } from 'zod';
 import { logger } from '../lib/logger';
 import { getErrorMessage } from '../lib/error';
 
@@ -32,7 +33,16 @@ const DEFAULT_CONFIG: AppConfig & Partial<RuntimeOverrides> = {
   error: 0,
 };
 
-async function fetchJson(url: string) {
+const AppConfigSchema = z
+  .object({
+    apiBaseUrl: z.string(),
+    appVersion: z.string(),
+    minBackend: z.string(),
+    features: z.record(z.string(), z.boolean()),
+  })
+  .passthrough();
+
+async function fetchJson(url: string): Promise<unknown> {
   const r = await fetch(url);
   if (!r.ok) {
     throw new Error(`Failed to fetch ${url}: ${r.status}`);
@@ -40,20 +50,8 @@ async function fetchJson(url: string) {
   return r.json();
 }
 
-// [NASA TypeScript Safety] 使用類型守衛取代 as Record<string, unknown>
-function isValidConfig(obj: unknown): obj is AppConfig {
-  if (obj === null || typeof obj !== 'object') return false;
-  const record = obj as Record<string, unknown>;
-  return (
-    'apiBaseUrl' in record &&
-    typeof record.apiBaseUrl === 'string' &&
-    'appVersion' in record &&
-    typeof record.appVersion === 'string' &&
-    'minBackend' in record &&
-    typeof record.minBackend === 'string' &&
-    'features' in record &&
-    typeof record.features === 'object'
-  );
+function isValidConfig(obj: unknown): obj is AppConfig & Partial<RuntimeOverrides> {
+  return AppConfigSchema.safeParse(obj).success;
 }
 
 async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
@@ -65,7 +63,7 @@ async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
       if (isValidConfig(parsed)) return parsed;
     }
   } catch (err) {
-    logger.warn('[config] Failed to read cached config, fallback to remote config', {
+    logger.warn('[config] 讀取快取設定失敗，改用遠端設定', {
       error: getErrorMessage(err),
     });
   }
@@ -77,7 +75,7 @@ async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
     const remote = await fetchJson(url);
     if (isValidConfig(remote)) return remote;
   } catch (err) {
-    logger.warn('[config] fetch app.config.json failed, fallback to DEFAULT_CONFIG', {
+    logger.warn('[config] 取得 app.config.json 失敗，改用預設設定', {
       error: getErrorMessage(err),
     });
   }
@@ -137,26 +135,25 @@ export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
   try {
     const base = await readBase();
     const o = pickParams();
-    const baseWithOverrides = base as AppConfig & Partial<RuntimeOverrides>;
     const merged: AppConfig & RuntimeOverrides = {
       ...base,
       ...o,
-      mock: o.mock ?? baseWithOverrides.mock ?? true,
-      latency: o.latency ?? baseWithOverrides.latency ?? 0,
-      error: o.error ?? baseWithOverrides.error ?? 0,
+      mock: o.mock ?? base.mock ?? true,
+      latency: o.latency ?? base.latency ?? 0,
+      error: o.error ?? base.error ?? 0,
     };
 
     try {
       safeLocalStorage.setItem(LS, JSON.stringify(merged));
     } catch (err) {
-      logger.warn('[config] Failed to persist merged config to localStorage', {
+      logger.warn('[config] 寫入合併設定到 localStorage 失敗', {
         error: getErrorMessage(err),
       });
     }
 
     return merged;
   } catch (err) {
-    logger.error('[config] getConfig failed, using DEFAULT_CONFIG', {
+    logger.error('[config] getConfig 失敗，改用預設設定', {
       error: getErrorMessage(err),
     });
     const merged: AppConfig & RuntimeOverrides = {
