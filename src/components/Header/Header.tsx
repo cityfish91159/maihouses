@@ -82,7 +82,7 @@ export default function Header() {
             <Logo
               showSlogan={true}
               showBadge={true}
-              href={undefined}
+              href=""
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             />
           </DemoGate>

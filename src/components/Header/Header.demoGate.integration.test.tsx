@@ -62,11 +62,11 @@ describe('Header + DemoGate integration', () => {
     });
   });
 
-  it('visitor 點 Logo 一次不應被攔截（保留連結預設行為）', () => {
+  it('visitor 點 Logo 一次不應被攔截（保留按鈕預設行為）', () => {
     const { getByRole } = render(<Header />);
-    const logoLink = getByRole('link', { name: /邁房子/ });
+    const logoButton = getByRole('button', { name: /邁房子/ });
 
-    const isCanceled = wasCanceledByHandler(logoLink);
+    const isCanceled = wasCanceledByHandler(logoButton);
 
     expect(isCanceled).toBe(false);
     expect(notifyMocks.info).not.toHaveBeenCalled();
@@ -74,14 +74,14 @@ describe('Header + DemoGate integration', () => {
 
   it('visitor 點 Logo 五次時，第五次應觸發 DemoGate 攔截', () => {
     const { getByRole } = render(<Header />);
-    const logoLink = getByRole('link', { name: /邁房子/ });
+    const logoButton = getByRole('button', { name: /邁房子/ });
 
     for (let index = 0; index < 4; index += 1) {
-      const canceled = wasCanceledByHandler(logoLink);
+      const canceled = wasCanceledByHandler(logoButton);
       expect(canceled).toBe(false);
     }
 
-    const canceledOnFifth = wasCanceledByHandler(logoLink);
+    const canceledOnFifth = wasCanceledByHandler(logoButton);
     expect(canceledOnFifth).toBe(true);
     expect(notifyMocks.info).toHaveBeenCalledWith(
       '已解鎖演示模式',
