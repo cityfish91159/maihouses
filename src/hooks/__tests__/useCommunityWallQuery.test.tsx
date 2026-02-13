@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+﻿import { renderHook, act } from '@testing-library/react';
 import type { Mock } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCommunityWall, communityWallKeys } from '../useCommunityWallQuery';
@@ -11,6 +11,12 @@ import {
   askQuestion as apiAskQuestion,
   answerQuestion as apiAnswerQuestion,
 } from '../../services/communityService';
+
+const mockUsePageMode = vi.fn();
+
+vi.mock('../usePageMode', () => ({
+  usePageMode: () => mockUsePageMode(),
+}));
 
 vi.mock('../../services/communityService', () => ({
   getCommunityWall: vi.fn(),
@@ -74,6 +80,7 @@ const createWallData = (): CommunityWallData => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockUsePageMode.mockReturnValue('demo');
   (getCommunityWall as Mock).mockResolvedValue(createWallData());
   (apiToggleLike as Mock).mockResolvedValue(undefined);
   (apiCreatePost as Mock).mockResolvedValue(undefined);
@@ -89,7 +96,7 @@ describe('useCommunityWall - API mutations', () => {
   it('uses provided user id when toggling likes', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
-    const wallKey = communityWallKeys.wall('community-1', false);
+    const wallKey = communityWallKeys.wall('demo', 'community-1', false);
     client.setQueryData(wallKey, createWallData());
 
     const { result, unmount } = renderHook(
@@ -121,10 +128,9 @@ describe('useCommunityWall - API mutations', () => {
   it('calls createPost API with provided arguments', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
-    const { result, unmount } = renderHook(
-      () => useCommunityWall('community-1', { enabled: false }),
-      { wrapper }
-    );
+    const { result, unmount } = renderHook(() => useCommunityWall('community-1', { enabled: false }), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.createPost('new post', 'private');
@@ -139,10 +145,9 @@ describe('useCommunityWall - API mutations', () => {
   it('calls askQuestion API', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
-    const { result, unmount } = renderHook(
-      () => useCommunityWall('community-1', { enabled: false }),
-      { wrapper }
-    );
+    const { result, unmount } = renderHook(() => useCommunityWall('community-1', { enabled: false }), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.askQuestion('Is parking easy?');
@@ -157,10 +162,9 @@ describe('useCommunityWall - API mutations', () => {
   it('calls answerQuestion API', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
-    const { result, unmount } = renderHook(
-      () => useCommunityWall('community-1', { enabled: false }),
-      { wrapper }
-    );
+    const { result, unmount } = renderHook(() => useCommunityWall('community-1', { enabled: false }), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.answerQuestion('question-1', 'Answer');

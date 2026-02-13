@@ -6,7 +6,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { z } from 'zod';
 import {
   getCommunityWall,
@@ -17,6 +17,7 @@ import {
   type CommunityWallData,
   type CommunityPost,
 } from '../services/communityService';
+import { usePageMode, type PageMode } from './usePageMode';
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證錯誤物件的 status 屬性
 const ErrorWithStatusSchema = z.object({
@@ -34,10 +35,10 @@ function hasErrorStatus(error: unknown): error is { status: number } {
 // Query Keys
 export const communityWallKeys = {
   all: ['communityWall'] as const,
-  wall: (communityId: string, includePrivate: boolean) =>
-    [...communityWallKeys.all, 'wall', communityId, includePrivate] as const,
-  posts: (communityId: string, visibility: 'public' | 'private') =>
-    [...communityWallKeys.all, 'posts', communityId, visibility] as const,
+  wall: (mode: PageMode, communityId: string, includePrivate: boolean) =>
+    [...communityWallKeys.all, mode, 'wall', communityId, includePrivate] as const,
+  posts: (mode: PageMode, communityId: string, visibility: 'public' | 'private') =>
+    [...communityWallKeys.all, mode, 'posts', communityId, visibility] as const,
 };
 
 export interface UseCommunityWallOptions {
@@ -89,14 +90,19 @@ export function useCommunityWall(
   } = options;
 
   const queryClient = useQueryClient();
+  const mode = usePageMode();
   const [isOptimisticUpdating, setIsOptimisticUpdating] = useState(false);
+  const wallQueryKey = useMemo(
+    () => communityWallKeys.wall(mode, communityId || '', includePrivate),
+    [communityId, includePrivate, mode]
+  );
   // K: 若未登入則不使用樂觀更新（避免假成功再回滾的差 UX）
   const canOptimisticUpdate = !!currentUserId;
   const optimisticUserId = currentUserId ?? '';
 
   // 主要查詢
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: communityWallKeys.wall(communityId || '', includePrivate),
+    queryKey: wallQueryKey,
     queryFn: () => getCommunityWall(communityId!, { includePrivate }),
     enabled: enabled && !!communityId,
     staleTime,
@@ -136,13 +142,11 @@ export function useCommunityWall(
 
       // 取消任何正在進行的查詢
       await queryClient.cancelQueries({
-        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
+        queryKey: wallQueryKey,
       });
 
       // 保存舊資料用於回滾
-      const previousData = queryClient.getQueryData<CommunityWallData>(
-        communityWallKeys.wall(communityId || '', includePrivate)
-      );
+      const previousData = queryClient.getQueryData<CommunityWallData>(wallQueryKey);
 
       // 樂觀更新
       if (previousData) {
@@ -160,7 +164,7 @@ export function useCommunityWall(
           });
 
         queryClient.setQueryData<CommunityWallData>(
-          communityWallKeys.wall(communityId || '', includePrivate),
+          wallQueryKey,
           {
             ...previousData,
             posts: {
@@ -178,7 +182,7 @@ export function useCommunityWall(
       // 失敗時回滾
       if (context?.previousData) {
         queryClient.setQueryData(
-          communityWallKeys.wall(communityId || '', includePrivate),
+          wallQueryKey,
           context.previousData
         );
       }
@@ -187,7 +191,7 @@ export function useCommunityWall(
       setIsOptimisticUpdating(false);
       // 重新驗證資料
       queryClient.invalidateQueries({
-        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
+        queryKey: wallQueryKey,
       });
     },
   });
@@ -198,7 +202,7 @@ export function useCommunityWall(
       apiCreatePost(communityId!, content, visibility),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
+        queryKey: wallQueryKey,
       });
     },
   });
@@ -208,7 +212,7 @@ export function useCommunityWall(
     mutationFn: (question: string) => apiAskQuestion(communityId!, question),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
+        queryKey: wallQueryKey,
       });
     },
   });
@@ -219,7 +223,7 @@ export function useCommunityWall(
       apiAnswerQuestion(questionId, content),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
+        queryKey: wallQueryKey,
       });
     },
   });

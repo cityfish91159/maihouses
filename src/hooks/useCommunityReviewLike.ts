@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { usePageMode, type PageMode } from './usePageMode';
 import {
   ToggleReviewLikePayloadSchema,
   ReviewLikeResponseSchema,
@@ -7,8 +8,8 @@ import {
   type ReviewLikeResponse,
 } from '../types/community-review-like';
 
-export const reviewLikeQueryKey = (propertyId: string) =>
-  ['community-review-like', propertyId] as const;
+export const reviewLikeQueryKey = (mode: PageMode, propertyId: string) =>
+  ['community-review-like', mode, propertyId] as const;
 
 function parseErrorMessage(payload: unknown, fallback: string): string {
   const parsed = ReviewLikeApiErrorSchema.safeParse(payload);
@@ -76,8 +77,10 @@ export async function postReviewLike(propertyId: string): Promise<ReviewLikeResp
 }
 
 export function useCommunityReviewLikeStatus(propertyId: string, enabled = true) {
+  const mode = usePageMode();
+
   return useQuery({
-    queryKey: reviewLikeQueryKey(propertyId),
+    queryKey: reviewLikeQueryKey(mode, propertyId),
     queryFn: () => fetchReviewLikeStatus(propertyId),
     enabled: enabled && Boolean(propertyId),
     staleTime: 60_000,
@@ -85,12 +88,13 @@ export function useCommunityReviewLikeStatus(propertyId: string, enabled = true)
 }
 
 export function useCommunityReviewLike() {
+  const mode = usePageMode();
   const queryClient = useQueryClient();
 
   const toggleLike = useMutation({
     mutationFn: (propertyId: string) => postReviewLike(propertyId),
     onMutate: async (propertyId: string) => {
-      const key = reviewLikeQueryKey(propertyId);
+      const key = reviewLikeQueryKey(mode, propertyId);
       await queryClient.cancelQueries({ queryKey: key });
 
       const previous = queryClient.getQueryData<ReviewLikeResponse>(key);
@@ -110,8 +114,8 @@ export function useCommunityReviewLike() {
       }
     },
     onSuccess: (_data, propertyId) => {
-      queryClient.invalidateQueries({ queryKey: ['agent-profile'] });
-      queryClient.invalidateQueries({ queryKey: reviewLikeQueryKey(propertyId) });
+      queryClient.invalidateQueries({ queryKey: ['agent-profile', mode] });
+      queryClient.invalidateQueries({ queryKey: reviewLikeQueryKey(mode, propertyId) });
     },
   });
 

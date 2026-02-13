@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { supabase } from '../lib/supabase';
+import { usePageMode, type PageMode } from './usePageMode';
 import {
   AgentReviewListResponseSchema,
   CreateReviewPayloadSchema,
@@ -21,6 +22,19 @@ const ErrorResponseSchema = z.object({
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 const STALE_TIME_MS = 2 * 60 * 1000;
+
+export const agentReviewsQueryKey = (
+  mode: PageMode,
+  agentId: string,
+  page = DEFAULT_PAGE,
+  limit = DEFAULT_LIMIT
+) => ['agent-reviews', mode, agentId, page, limit] as const;
+
+export const agentReviewsQueryPrefix = (mode: PageMode, agentId: string) =>
+  ['agent-reviews', mode, agentId] as const;
+
+export const agentProfileQueryKey = (mode: PageMode, agentId: string) =>
+  ['agent-profile', mode, agentId] as const;
 
 export async function fetchAgentReviews(
   agentId: string,
@@ -93,8 +107,10 @@ export async function postAgentReview(payload: CreateReviewPayload): Promise<{ r
 }
 
 export function useAgentReviewList(agentId: string, enabled: boolean, page = 1, limit = 10) {
+  const mode = usePageMode();
+
   return useQuery({
-    queryKey: ['agent-reviews', agentId, page, limit],
+    queryKey: agentReviewsQueryKey(mode, agentId, page, limit),
     queryFn: () => fetchAgentReviews(agentId, page, limit),
     enabled: enabled && Boolean(agentId),
     staleTime: STALE_TIME_MS,
@@ -102,13 +118,14 @@ export function useAgentReviewList(agentId: string, enabled: boolean, page = 1, 
 }
 
 export function useSubmitReview() {
+  const mode = usePageMode();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: CreateReviewPayload) => postAgentReview(payload),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['agent-reviews', variables.agentId] });
-      queryClient.invalidateQueries({ queryKey: ['agent-profile', variables.agentId] });
+      queryClient.invalidateQueries({ queryKey: agentReviewsQueryPrefix(mode, variables.agentId) });
+      queryClient.invalidateQueries({ queryKey: agentProfileQueryKey(mode, variables.agentId) });
     },
   });
 }

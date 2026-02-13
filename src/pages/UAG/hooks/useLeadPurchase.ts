@@ -9,7 +9,7 @@
  * @module useLeadPurchase
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UAGService, type PurchaseLeadResult } from '../services/uagService';
 import type { AppData, Grade, Lead } from '../types/uag.types';
@@ -17,7 +17,7 @@ import { isUnpurchasedLead, LeadStatusSchema } from '../types/uag.types';
 import { notify } from '../../../lib/notify';
 import { GRADE_PROTECTION_HOURS } from '../uag-config';
 import { validateQuota } from '../utils/validation';
-import { UAG_QUERY_KEY } from './useUAGData';
+import { resolveUAGQueryMode, uagDataQueryKey } from './queryKeys';
 
 // ============================================================================
 // Types
@@ -87,6 +87,8 @@ export function useLeadPurchase({
   userId,
 }: UseLeadPurchaseParams): UseLeadPurchaseReturn {
   const queryClient = useQueryClient();
+  const mode = resolveUAGQueryMode(useMock, userId);
+  const cacheKey = useMemo(() => uagDataQueryKey(mode, userId), [mode, userId]);
 
   /**
    * React Mutation：購買 Lead
@@ -121,10 +123,10 @@ export function useLeadPurchase({
      */
     onMutate: async ({ leadId, cost, grade }): Promise<MutationContext> => {
       // 取消進行中的查詢
-      await queryClient.cancelQueries({ queryKey: [UAG_QUERY_KEY] });
+      await queryClient.cancelQueries({ queryKey: [cacheKey[0]] });
 
       // 保存當前數據（用於 rollback）
-      const previousData = queryClient.getQueryData<AppData>([UAG_QUERY_KEY, useMock, userId]);
+      const previousData = queryClient.getQueryData<AppData>(cacheKey);
 
       if (previousData) {
         // 前置驗證：配額檢查
@@ -161,7 +163,7 @@ export function useLeadPurchase({
           ),
         };
 
-        queryClient.setQueryData([UAG_QUERY_KEY, useMock, userId], newData);
+        queryClient.setQueryData(cacheKey, newData);
       }
 
       return { previousData };
@@ -172,7 +174,7 @@ export function useLeadPurchase({
      */
     onError: (err, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData([UAG_QUERY_KEY, useMock, userId], context.previousData);
+        queryClient.setQueryData(cacheKey, context.previousData);
       }
       notify.error(`購買失敗: ${err instanceof Error ? err.message : 'Unknown error'}`);
     },
@@ -235,7 +237,7 @@ export function useLeadPurchase({
               // 將 lead.id 從 session_id 替換為 purchase UUID
               // 這樣 lead 就變成 PurchasedLead 類型
               // 注意：status 已在 onMutate 樂觀更新中設為 "purchased"，此處無需重複設定
-              queryClient.setQueryData<AppData>([UAG_QUERY_KEY, useMock, userId], (oldData) => {
+              queryClient.setQueryData<AppData>(cacheKey, (oldData) => {
                 if (!oldData) return oldData;
 
                 return {
@@ -255,7 +257,7 @@ export function useLeadPurchase({
               });
 
               // 從更新後的 cache 中取得最終 lead
-              const finalData = queryClient.getQueryData<AppData>([UAG_QUERY_KEY, useMock, userId]);
+              const finalData = queryClient.getQueryData<AppData>(cacheKey);
               const updatedLead = finalData?.leads.find((l) => l.id === result?.purchase_id) ?? {
                 ...lead,
                 id: result?.purchase_id ?? lead.id,
@@ -281,7 +283,7 @@ export function useLeadPurchase({
         );
       });
     },
-    [data, buyLeadMutation, queryClient, useMock, userId]
+    [cacheKey, data, buyLeadMutation, queryClient, useMock]
   );
 
   return {

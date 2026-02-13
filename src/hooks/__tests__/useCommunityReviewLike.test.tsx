@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+﻿import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
@@ -9,8 +9,14 @@ import {
   useCommunityReviewLike,
 } from '../useCommunityReviewLike';
 
+const mockUsePageMode = vi.fn();
+
 const { mockGetSession } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
+}));
+
+vi.mock('../usePageMode', () => ({
+  usePageMode: () => mockUsePageMode(),
 }));
 
 vi.mock('../../lib/supabase', () => ({
@@ -47,9 +53,12 @@ function createDeferred<T>() {
 }
 
 describe('useCommunityReviewLike', () => {
+  const mode = 'demo' as const;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    mockUsePageMode.mockReturnValue(mode);
     mockGetSession.mockResolvedValue({
       data: {
         session: {
@@ -127,7 +136,7 @@ describe('useCommunityReviewLike', () => {
 
     const queryClient = createQueryClient();
     const propertyId = 'MH-100001';
-    queryClient.setQueryData(reviewLikeQueryKey(propertyId), {
+    queryClient.setQueryData(reviewLikeQueryKey(mode, propertyId), {
       success: true,
       liked: false,
       totalLikes: 1,
@@ -143,7 +152,7 @@ describe('useCommunityReviewLike', () => {
     });
 
     await waitFor(() => {
-      expect(queryClient.getQueryData(reviewLikeQueryKey(propertyId))).toMatchObject({
+      expect(queryClient.getQueryData(reviewLikeQueryKey(mode, propertyId))).toMatchObject({
         liked: true,
         totalLikes: 2,
       });
@@ -158,17 +167,14 @@ describe('useCommunityReviewLike', () => {
       expect(result.current.toggleLike.isSuccess).toBe(true);
     });
 
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['agent-profile'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['agent-profile', mode] });
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: reviewLikeQueryKey(propertyId),
+      queryKey: reviewLikeQueryKey(mode, propertyId),
     });
 
-    // invalidateQueries 不會立即更新 cache，它只是標記 stale
-    // 實際使用時 React Query 會在下次 query mount 時重新 fetch
-    // 這裡驗證 optimistic update 的值仍然存在
-    expect(queryClient.getQueryData(reviewLikeQueryKey(propertyId))).toMatchObject({
+    expect(queryClient.getQueryData(reviewLikeQueryKey(mode, propertyId))).toMatchObject({
       liked: true,
-      totalLikes: 2, // optimistic 值
+      totalLikes: 2,
     });
   });
 
@@ -183,7 +189,7 @@ describe('useCommunityReviewLike', () => {
 
     const queryClient = createQueryClient();
     const propertyId = 'MH-100001';
-    queryClient.setQueryData(reviewLikeQueryKey(propertyId), {
+    queryClient.setQueryData(reviewLikeQueryKey(mode, propertyId), {
       success: true,
       liked: true,
       totalLikes: 4,
@@ -201,7 +207,7 @@ describe('useCommunityReviewLike', () => {
       expect(result.current.toggleLike.isError).toBe(true);
     });
 
-    expect(queryClient.getQueryData(reviewLikeQueryKey(propertyId))).toMatchObject({
+    expect(queryClient.getQueryData(reviewLikeQueryKey(mode, propertyId))).toMatchObject({
       liked: true,
       totalLikes: 4,
     });

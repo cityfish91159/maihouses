@@ -17,14 +17,15 @@ import { MOCK_DB } from '../mockData';
 import { logger } from '../../../lib/logger';
 import { notify } from '../../../lib/notify';
 import { useAuth } from '../../../hooks/useAuth';
+import type { PageMode } from '../../../hooks/usePageMode';
 import { useUAGModeStore, selectUseMock } from '../../../stores/uagModeStore';
+import { resolveUAGQueryMode, uagDataQueryKey } from './queryKeys';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-/** React Query 快取鍵 */
-export const UAG_QUERY_KEY = 'uagData' as const;
+export { UAG_QUERY_KEY } from './queryKeys';
 
 /** Query 配置：staleTime 與 refetchInterval 保持一致避免不必要的 refetch */
 const QUERY_CONFIG = {
@@ -80,6 +81,7 @@ export function useUAGData(): UseUAGDataReturn {
   const { setUseMock, initializeMode } = useUAGModeStore.getState();
 
   const queryClient = useQueryClient();
+  const mode: PageMode = resolveUAGQueryMode(useMock, userId);
 
   // 初始化模式（根據 URL 參數）
   useEffect(() => {
@@ -106,7 +108,7 @@ export function useUAGData(): UseUAGDataReturn {
    * React Query：獲取 UAG 數據
    */
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: [UAG_QUERY_KEY, useMock, userId],
+    queryKey: uagDataQueryKey(mode, userId),
     queryFn: async (): Promise<AppData> => {
       if (useMock) {
         // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as unknown as AppData

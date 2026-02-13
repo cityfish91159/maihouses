@@ -7,6 +7,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
+import { usePageMode } from './usePageMode';
 import { logger } from '../lib/logger';
 import {
   ConversationStatusSchema,
@@ -26,9 +27,10 @@ interface UseAgentConversationsResult {
  */
 export function useAgentConversations(): UseAgentConversationsResult {
   const { user } = useAuth();
+  const mode = usePageMode();
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['agentConversations', user?.id],
+    queryKey: ['agentConversations', mode, user?.id],
     queryFn: async (): Promise<ConversationListItem[]> => {
       if (!user?.id) return [];
 

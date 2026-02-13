@@ -3,6 +3,7 @@ import type { AgentProfile } from '../types/uag.types';
 import { MOCK_AGENT_PROFILE } from '../../../constants/mockData';
 import { useUAGModeStore } from '../../../stores/uagModeStore';
 import { fetchAgentMe } from '../../../services/agentService';
+import { resolveUAGQueryMode, uagAgentProfileQueryKey } from './queryKeys';
 
 interface UseAgentProfileResult {
   profile: AgentProfile | null;
@@ -18,9 +19,10 @@ interface UseAgentProfileResult {
 export function useAgentProfile(userId: string | undefined): UseAgentProfileResult {
   // 使用統一的 store 取得模式狀態
   const useMock = useUAGModeStore((state) => state.useMock);
+  const mode = resolveUAGQueryMode(useMock, userId);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['agentProfile', userId, useMock],
+    queryKey: uagAgentProfileQueryKey(mode, userId),
     queryFn: async (): Promise<AgentProfile | null> => {
       // Mock 模式：直接回傳 mock 資料
       if (useMock) {

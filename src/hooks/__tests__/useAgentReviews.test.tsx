@@ -1,11 +1,23 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+﻿import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
-import { postAgentReview, useAgentReviewList, useSubmitReview } from '../useAgentReviews';
+import {
+  agentProfileQueryKey,
+  agentReviewsQueryPrefix,
+  postAgentReview,
+  useAgentReviewList,
+  useSubmitReview,
+} from '../useAgentReviews';
+
+const mockUsePageMode = vi.fn();
 
 const { mockGetSession } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
+}));
+
+vi.mock('../usePageMode', () => ({
+  usePageMode: () => mockUsePageMode(),
 }));
 
 vi.mock('../../lib/supabase', () => ({
@@ -25,8 +37,12 @@ function createWrapper(queryClient: QueryClient) {
 }
 
 describe('useAgentReviews', () => {
+  const mode = 'demo' as const;
+  const agentId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUsePageMode.mockReturnValue(mode);
     mockGetSession.mockResolvedValue({
       data: {
         session: {
@@ -65,10 +81,9 @@ describe('useAgentReviews', () => {
       defaultOptions: { queries: { retry: false } },
     });
 
-    const { result } = renderHook(
-      () => useAgentReviewList('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', true),
-      { wrapper: createWrapper(queryClient) }
-    );
+    const { result } = renderHook(() => useAgentReviewList(agentId, true), {
+      wrapper: createWrapper(queryClient),
+    });
 
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
@@ -78,7 +93,7 @@ describe('useAgentReviews', () => {
     expect(result.current.data?.avgRating).toBe(5);
   });
 
-  it('useSubmitReview posts review and invalidates related queries', async () => {
+  it('useSubmitReview posts review and invalidates mode-aware keys', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -101,7 +116,7 @@ describe('useAgentReviews', () => {
 
     await act(async () => {
       await result.current.mutateAsync({
-        agentId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        agentId,
         rating: 5,
         comment: 'excellent service',
         trustCaseId: '12b4af9b-8985-4329-bdcf-3569f9878f56',
@@ -118,17 +133,17 @@ describe('useAgentReviews', () => {
       })
     );
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['agent-reviews', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],
+      queryKey: agentReviewsQueryPrefix(mode, agentId),
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['agent-profile', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],
+      queryKey: agentProfileQueryKey(mode, agentId),
     });
   });
 
   it('postAgentReview rejects payload without trustCaseId', async () => {
     await expect(
       postAgentReview({
-        agentId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        agentId,
         rating: 5,
       } as never)
     ).rejects.toThrow('Invalid review payload');
