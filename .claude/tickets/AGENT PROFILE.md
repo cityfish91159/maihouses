@@ -124,7 +124,7 @@
 - [x] 19e-M8
 
 ### Mock System
-- [x] MOCK-1A-P0（`usePageMode` + localStorage TTL + 跨分頁同步 + demo 靜默追蹤）
+- [x] MOCK-1A-P0（`usePageMode` + localStorage TTL + 跨分頁同步 + demo 靜默追蹤）`r`n- [x] MOCK-1B-P0（`useModeAwareAction` + mode-aware query keys + 快取隔離）
 - [x] MOCK-15-P0（`getAuthUrl` 統一跳轉 + `?return=` + `?role=` + 舊路徑清理）
 - [x] MOCK-18-P1（3 檔 catch 統一 `getErrorMessage()` + 空 catch 清除 + 邊界測試）
 - [x] MOCK-19-P1（`/api/uag-track` → `/api/uag/track`，deprecated JS endpoint 下線）
@@ -6007,3 +6007,50 @@ npm run gate
 - `UTF-8` / `Mojibake`：通過
 - `gate`：QUALITY GATE PASSED
 
+
+
+---
+
+## MOCK-SYSTEM #1b 完成（2026-02-13）
+
+### 摘要
+
+- [x] 新增 `useModeAwareAction`，統一 visitor/demo/live 行為派發
+- [x] 社區牆、評價按讚、房仲評價列表改為 mode-aware query key
+- [x] UAG `useAgentProfile`、`useUAGData`、`useLeadPurchase` 改為 `[key, mode, userId]`
+- [x] 首頁 `featured-reviews` query key 加入 mode，避免跨模式 cache 汙染
+- [x] 補齊/更新測試並完成 `typecheck`、`lint`、`check:utf8`、`gate`
+
+### 施工紀錄
+
+1. `src/hooks/useModeAwareAction.ts`、`src/hooks/__tests__/useModeAwareAction.test.tsx`
+   - 建立三模式派發 hook，統一回傳 `ModeAwareResult`，異常統一走 `getErrorMessage`。
+2. `src/hooks/useCommunityWallQuery.ts`、`src/hooks/useCommunityReviewLike.ts`、`src/hooks/useAgentReviews.ts`
+   - 三個核心 hook 的 query key 全部加入 `mode`。
+   - 同步調整 invalidation 前綴，避免不同模式間共用快取。
+3. `src/pages/UAG/hooks/queryKeys.ts`、`src/pages/UAG/hooks/useUAGData.ts`、`src/pages/UAG/hooks/useLeadPurchase.ts`、`src/pages/UAG/hooks/useAgentProfile.ts`
+   - 抽共用 key helper：`resolveUAGQueryMode` / `uagDataQueryKey` / `uagAgentProfileQueryKey`。
+   - `useUAGData` 與 `useLeadPurchase` 強制使用同一把 cache key。
+4. `src/features/home/sections/CommunityTeaser.tsx`
+   - `queryKey` 改為 `['featured-reviews', mode]`。
+5. 相依呼叫點與測試
+   - `src/components/AgentReviewListModal.tsx`、`src/components/Assure/ReviewPromptModal.tsx`、`src/components/AgentTrustCard.tsx` 同步切換 mode-aware key helper。
+   - 更新 `src/hooks/__tests__/useCommunityWallQuery.test.tsx`、`src/hooks/__tests__/useCommunityReviewLike.test.tsx`、`src/hooks/__tests__/useAgentReviews.test.tsx`、`src/features/home/sections/__tests__/CommunityTeaser.test.tsx`、`src/components/__tests__/AgentReviewListModal.test.tsx`。
+
+### 驗證結果
+
+```bash
+npm run test -- src/hooks/__tests__/useModeAwareAction.test.tsx src/hooks/__tests__/useCommunityWallQuery.test.tsx src/hooks/__tests__/useCommunityReviewLike.test.tsx src/hooks/__tests__/useAgentReviews.test.tsx src/features/home/sections/__tests__/CommunityTeaser.test.tsx src/components/__tests__/AgentReviewListModal.test.tsx
+npm run test -- src/pages/UAG/hooks/__tests__/useUAG.test.ts
+npm run lint -- src/hooks/useModeAwareAction.ts src/hooks/__tests__/useModeAwareAction.test.tsx src/hooks/useCommunityWallQuery.ts src/hooks/__tests__/useCommunityWallQuery.test.tsx src/hooks/useCommunityReviewLike.ts src/hooks/__tests__/useCommunityReviewLike.test.tsx src/hooks/useAgentReviews.ts src/hooks/__tests__/useAgentReviews.test.tsx src/hooks/useAgentConversations.ts src/components/AgentReviewListModal.tsx src/components/__tests__/AgentReviewListModal.test.tsx src/components/AgentTrustCard.tsx src/components/Assure/ReviewPromptModal.tsx src/components/Assure/__tests__/ReviewPromptModal.test.tsx src/features/home/sections/CommunityTeaser.tsx src/features/home/sections/__tests__/CommunityTeaser.test.tsx src/pages/UAG/hooks/queryKeys.ts src/pages/UAG/hooks/useUAGData.ts src/pages/UAG/hooks/useLeadPurchase.ts src/pages/UAG/hooks/useAgentProfile.ts
+npm run typecheck
+npm run check:utf8
+npm run gate
+```
+
+- 測試：`6 files / 30 tests` 全通過
+- UAG 回歸：`1 file / 39 tests` 全通過
+- lint：通過
+- typecheck：通過
+- UTF-8 / Mojibake：通過
+- gate：QUALITY GATE PASSED

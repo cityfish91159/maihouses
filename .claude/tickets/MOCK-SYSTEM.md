@@ -5,8 +5,8 @@
 ### P0 — 基礎建設
 
 - [x] **#1a** `usePageMode()` hook — 模式判斷 + localStorage TTL + 跨分頁同步（1 新檔案）✅ 2026-02-12
-- [ ] **#1b** `useModeAwareAction` hook — 三模式行為派發 + cache key 規範（1 新檔案）
-- [ ] **#1c** `DemoGate.tsx` — Logo 長按/連按觸發演示模式（1 新檔案）
+- [x] **#1b** `useModeAwareAction` hook — 三模式行為派發 + cache key 規範（1 新檔案）✅ 2026-02-13
+- [ ] **#1c** `DemoGate.tsx` — Logo 連按 5 次觸發演示模式（1 新檔案）
 - [ ] **#2** 全站靜態 HTML 連結改 React 路由 + `SEED_COMMUNITY_ID`（7 檔 16 處）
 - [ ] **#3** 按讚三模式行為分離 — mode guard 優先於 auth guard（2 檔）
 - [x] **#14a** 確認 Toast 支援 action button（前置條件）✅ 2026-02-12
@@ -34,6 +34,7 @@
 - [x] **#18** 3 檔 catch 改用 `getErrorMessage()`（config / track / MaiMaiContext）✅ 2026-02-13
 - [x] **#19** [P1] 砍舊路徑：前端 `tracker` 由 `/api/uag-track` 切到 `/api/uag/track`，下線 deprecated JS 版 ✅ 2026-02-12
 - [ ] **#20** 整合分散 Mock Data + seed 不可變 `Object.freeze`（10+ 檔）
+- [ ] **#28** 已完成工單防禦強化 — Zod 收緊 + SSR guard + `as` 斷言消除（5 檔）
 
 ### P1 — 社區牆三模式（極限測試升級）
 
@@ -75,7 +76,7 @@
                        ├→ #24 Chat / #25 Assure
                        └→ #26 登出清理
 
-#1b useModeAwareAction ┬→ #3 按讚 / #8a 社區牆按讚 / #5b UAG Lead
+#1b useModeAwareAction ✅ ┬→ #3 按讚 / #8a 社區牆按讚 / #5b UAG Lead
 #1c DemoGate ──────────→ #10a DemoBadge
 #14a Toast 確認 ───────→ #14b useRegisterGuide
 #14b useRegisterGuide ─┬→ #3 visitor 引導 / #8b handleUnlock / #6b Feed
@@ -93,8 +94,8 @@
 | 波次 | 工單 | 說明 |
 |------|------|------|
 | Wave 0 ✅ | #17、#19 | 基礎工具（已完成）|
-| Wave 1 | #1a ✅、#14a ✅、#15、#18 | 核心 hook + authUtils |
-| Wave 1B | #1b、#1c、#14b | useModeAwareAction + DemoGate + useRegisterGuide |
+| Wave 1 | #1a ✅、#1b ✅、#14a ✅、#15 ✅、#18 ✅ | 核心 hook + authUtils |
+| Wave 1B | #1c、#14b | DemoGate + useRegisterGuide |
 | Wave 2 | #2、#3、#5a、#12、#20 | 可平行 |
 | Wave 3 | #4a、#4b、#5b、#6a、#6b、#7、#8a、#27 | 逐頁接入（#8a 升 P1 併入）|
 | Wave 3B | #8b | 依賴 #8a |
@@ -136,7 +137,9 @@
 新增：`src/lib/pageMode.ts`、`src/hooks/usePageMode.ts`、`src/hooks/useDemoTimer.ts`
 修改：`src/App.tsx`、`src/analytics/track.ts`、`src/hooks/usePropertyTracker.ts`
 
-**已知缺口**：登入時 `clearDemoMode()` 未同步 `queryClient.clear()`，演示期間 cache 可能短暫殘留 → 歸 #10b 處理。
+**已知缺口**：
+- 登入時 `clearDemoMode()` 未同步 `queryClient.clear()`，演示期間 cache 可能短暫殘留 → 歸 #10b 處理。
+- `useDemoTimer.ts:45` warn 條件 `warnDelay > 0 || remaining > WARN_SKIP_THRESHOLD_MS` 在 remaining 介於 30s~5min 時會立即觸發 warn toast，應改為 `warnDelay > 0 && remaining > WARN_SKIP_THRESHOLD_MS`。
 
 ---
 
@@ -188,19 +191,17 @@ function useModeAwareAction<T>(handlers: {
 
 ### #1c `DemoGate.tsx` 觸發元件
 
-**目標**：首頁 Logo 長按 5 秒或連按 3 次進入演示模式
+**目標**：首頁 Logo 連按 5 次進入演示模式
 
 **依賴**：#1a
 
 **新增**：`src/components/DemoGate/DemoGate.tsx`
 
-- 長按 5 秒 → 倒數環回饋 → `setDemoMode()` + reload
-- 連按 3 次（500ms 內）→ shake + 確認 toast
-- `e.preventDefault()` 防瀏覽器選單
-- 未達 5 秒鬆開 → 正常 `<a>` 導航
+- 連按 5 次（1500ms 內）→ shake + 確認 toast → `setDemoMode()` + reload
 - 已在 demo → 不重複觸發
+- 不使用長按：iOS Safari 長按約 1 秒即觸發原生選單，無法達到 5 秒
 
-**驗收**：長按/連按可觸發、有視覺回饋、demo 下點「登入」被攔截
+**驗收**：連按可觸發、有視覺回饋、demo 下點「登入」被攔截
 
 ---
 
@@ -266,6 +267,7 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 | `AgentReviewListModal.tsx` | 60, 71-77 | 移除獨立 isDemo 判斷 |
 | `PropertyDetailActionLayer.tsx` | 86 | mode 判斷 isVerified |
 | `AgentTrustCard.tsx` | interface | 移除 `isDemo?` prop → 內部用 `usePageMode()` |
+| `usePropertyTracker.ts` | 92 | `isDemo` 一次性計算非 reactive → 改用 `usePageMode()` 即時判斷 |
 
 **驗收**：`grep -r "isDemoPropertyId" src/` 回傳 0 筆
 
@@ -479,6 +481,8 @@ function exitDemoMode(queryClient: QueryClient) {
 ```
 
 **跨分頁處理**：storage event handler 中也需呼叫 `queryClient.clear()` 再 reload，否則非觸發分頁的 cache 殘留。
+
+**多分頁競態**：分頁 A 到期 → `handleDemoExpire` → 清 localStorage → 分頁 B 的 storage event 收到刪除 → 但 B 可能正在 API 呼叫中。`handleDemoExpire` 需先檢查 `mode === 'demo'` 再清理，避免已登入分頁被誤清。
 
 **登入清理**：`usePageMode` 的 `clearDemoMode()` 需同步 `queryClient.clear()`。
 
@@ -874,6 +878,22 @@ App.tsx 加 `onAuthStateChange('SIGNED_IN')` → `queryClient.clear()`。
 
 UI 設計需 `/ui-ux-pro-max`。
 
+### #28 已完成工單防禦強化
+
+**目標**：收緊 #1a/#14a/#15/#18 已完成工單的型別安全與防禦邏輯
+
+**依賴**：無（獨立修復）
+
+| 檔案 | 改動 |
+|------|------|
+| `src/context/MaiMaiContext.tsx` | `JSON.parse` 改 Zod `safeParse` 驗證 |
+| `src/app/config.ts` | `fetchJson` 消除 implicit any + `window.location` SSR 安全 |
+| `api/uag/track.ts` | 移除冗餘 `getErrorMessage(err)` 傳參 |
+| `src/lib/__tests__/authUtils.test.ts` | `Reflect.apply` 改明確型別轉換 |
+| `src/lib/__tests__/notify.test.ts` | 測試描述改繁中 |
+
+**驗收**：`npm run gate` 通過、相關測試通過
+
 ---
 
 ## 核心原則
@@ -912,7 +932,7 @@ grep -r "usePageMode" src/pages/Chat/ src/pages/Assure/  # #24/#25 後有結果
 | Wave | 重點 |
 |------|------|
 | 1 | auth loading 中間態防 FOUC、Safari 隱私模式 localStorage 可能拋錯、`returnPath` 帶 `location.search` |
-| 1B | Toast duration 考慮 Infinity、`queryClient.clear()` vs `invalidateQueries`、Logo 長按/連按防衝突 |
+| 1B | Toast duration 考慮 Infinity、`queryClient.clear()` vs `invalidateQueries`、Logo 連按 5 次（1500ms 視窗）|
 | 2 | `SEED_COMMUNITY_ID` 必須先定值、SEO 勿索引 seed、seed 用 `Object.freeze` |
 | 3 | `getSafeReturnPath()` 加黑名單（`/uag`）、auth 角色統一用 `app_metadata`、`?mock=true` 做 301 |
 | 4 | `maimai-mood-v1` / `uag_last_aid` 加清理清單 |
