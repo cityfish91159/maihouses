@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { supabase } from '../lib/supabase';
 import { notify } from '../lib/notify';
 import { logger } from '../lib/logger';
+import { getLoginUrl } from '../lib/authUtils';
 import type { TrustTransaction, TrustStep } from '../types/trust.types';
 import { STEP_NAMES } from '../types/trust.types';
 import { ROUTES } from '../constants/routes';
@@ -254,7 +255,7 @@ export default function TrustManager({
         <h3 className="m-0 text-lg font-bold text-ink-900">請先登入</h3>
         <p className="mb-5 mt-0.5 text-sm text-ink-600">您需要登入才能管理案件</p>
         <a
-          href="/maihouses/auth.html?mode=login"
+          href={getLoginUrl('/maihouses/trust')}
           className="inline-block cursor-pointer rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white no-underline"
         >
           前往登入

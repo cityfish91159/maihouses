@@ -10,13 +10,14 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Bell, User, LogOut, ChevronDown, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { Logo } from '../Logo/Logo';
 import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
+import { getLoginUrl } from '../../lib/authUtils';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
@@ -61,8 +62,12 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     refresh,
   } = useNotifications();
   const navigate = useNavigate();
+  const location = useLocation();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
+
+  // 產生當前頁面的登入 URL（含 return 參數）
+  const loginUrl = getLoginUrl(`${location.pathname}${location.search}${location.hash}`);
 
   // 處理登出
   const handleSignOut = async () => {
@@ -280,7 +285,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
             </div>
           ) : (
             <a
-              href="/maihouses/auth.html?mode=login"
+              href={loginUrl}
               className="flex items-center gap-1 rounded-xl bg-brand-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md active:scale-95"
             >
               <User size={14} strokeWidth={2.5} />

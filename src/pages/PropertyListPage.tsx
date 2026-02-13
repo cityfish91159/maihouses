@@ -1,8 +1,9 @@
 ﻿import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import LegacyFeaturedCard from '../features/property/components/LegacyFeaturedCard';
 import LegacyHorizontalCard from '../features/property/components/LegacyHorizontalCard';
 import { SEED_DATA } from '../features/property/data/seed';
+import { getLoginUrl } from '../lib/authUtils';
 import type { PropertyPageData, ListingPropertyCard } from '../types/property-page';
 import '../styles/LegacyPropertyPage.css'; // Import strict legacy styles
 
@@ -72,41 +73,51 @@ async function preloadImages(data: PropertyPageData): Promise<void> {
 }
 
 // Legacy Header Component (Inline for strict structure matching)
-const LegacyHeader = () => (
-  <header className="legacy-header">
-    <a href="/maihouses/" className="logo-container no-underline">
-      <div className="logo-icon-box">
-        <svg
-          className="logo-icon-svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-          <polyline points="9 22 9 12 15 12 15 22" />
-        </svg>
-        <div className="logo-badge" />
-      </div>
-      <div className="logo-text-group">
-        <div className="logo-text-main">邁房子</div>
-        <div className="logo-separator">
-          <div className="logo-slogan">家，不只是地址</div>
+interface LegacyHeaderProps {
+  loginUrl: string;
+}
+
+function LegacyHeader({ loginUrl }: LegacyHeaderProps) {
+  return (
+    <header className="legacy-header">
+      <a href="/maihouses/" className="logo-container no-underline">
+        <div className="logo-icon-box">
+          <svg
+            className="logo-icon-svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <div className="logo-badge" />
         </div>
-      </div>
-    </a>
-    <a href="/maihouses/auth.html" className="auth-btn no-underline">
-      登入/註冊
-    </a>
-  </header>
-);
+        <div className="logo-text-group">
+          <div className="logo-text-main">邁房子</div>
+          <div className="logo-separator">
+            <div className="logo-slogan">家，不只是地址</div>
+          </div>
+        </div>
+      </a>
+      <a href={loginUrl} className="auth-btn no-underline">
+        登入/註冊
+      </a>
+    </header>
+  );
+}
 
 export default function PropertyListPage() {
   // URL 搜尋參數
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const urlQuery = searchParams.get('q') || '';
+
+  // 產生當前頁面的登入 URL（含 return 參數）
+  const loginUrl = getLoginUrl(`${location.pathname}${location.search}${location.hash}`);
 
   // S2: Instant Render with Mock Data (Legacy Behavior)
   const [data, setData] = useState<PropertyPageData>(SEED_DATA);
@@ -161,7 +172,7 @@ export default function PropertyListPage() {
 
   return (
     <div className="legacy-property-page">
-      <LegacyHeader />
+      <LegacyHeader loginUrl={loginUrl} />
 
       <div className="page">
         {/* Page Header */}

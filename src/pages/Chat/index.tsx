@@ -1,9 +1,10 @@
 ﻿import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { HEADER_MODES } from '../../constants/header';
 import { useAuth } from '../../hooks/useAuth';
 import { useConsumerSession } from '../../hooks/useConsumerSession';
+import { getLoginUrl } from '../../lib/authUtils';
 import { ChatHeader } from './ChatHeader';
 import { ChatErrorLayout } from './ErrorLayout';
 import { MessageInput } from './MessageInput';
@@ -12,6 +13,7 @@ import { useChat } from './useChat';
 
 export default function ChatPage() {
   const { conversationId } = useParams();
+  const location = useLocation();
   const { isAuthenticated, loading: authLoading, role } = useAuth();
   // 使用統一的 session hook（含過期檢查）
   const { hasValidSession, isExpired } = useConsumerSession();
@@ -27,6 +29,9 @@ export default function ChatPage() {
     isAgent,
   } = useChat(conversationId);
   const headerMode = role === 'agent' ? HEADER_MODES.AGENT : HEADER_MODES.CONSUMER;
+
+  // 產生當前頁面的登入 URL（含 return 參數）
+  const loginUrl = getLoginUrl(`${location.pathname}${location.search}${location.hash}`);
 
   useEffect(() => {
     document.title = '對話 | MaiHouses';
@@ -59,7 +64,7 @@ export default function ChatPage() {
       <ChatErrorLayout mode={headerMode}>
         <div className="rounded-2xl border border-brand-100 bg-white p-6 text-sm text-slate-600 shadow-sm">
           請先登入才能查看對話內容。
-          <a className="ml-2 font-bold text-brand-700" href="/maihouses/auth.html?mode=login">
+          <a className="ml-2 font-bold text-brand-700" href={loginUrl}>
             前往登入
           </a>
         </div>

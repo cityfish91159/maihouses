@@ -1,7 +1,8 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { ChevronRight, Lock, MessageSquare, Star, ThumbsUp } from 'lucide-react';
 import { logger } from '../../lib/logger';
+import { getLoginUrl } from '../../lib/authUtils';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import {
@@ -163,7 +164,7 @@ export const CommunityReviews = memo(function CommunityReviews({
   isDemo = false,
   onToggleLike,
 }: CommunityReviewsProps) {
-  const navigate = useNavigate();
+  const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const useMockData = isDemo && !communityId;
   const [totalReviews, setTotalReviews] = useState<number | null>(() =>
@@ -239,13 +240,16 @@ export const CommunityReviews = memo(function CommunityReviews({
   const publicReviews = useMemo(() => reviewPreviews.slice(0, 2), [reviewPreviews]);
   const lockedReview = reviewPreviews[2] ?? LOCKED_PREVIEW_PLACEHOLDER;
 
+  // 產生當前頁面的登入 URL（含 return 參數）
+  const loginUrl = getLoginUrl(`${location.pathname}${location.search}${location.hash}`);
+
   const handleAuthRedirect = useCallback(() => {
-    navigate('/maihouses/auth.html?mode=login');
-  }, [navigate]);
+    window.location.href = loginUrl;
+  }, [loginUrl]);
 
   const handleCommunityWall = useCallback(() => {
-    navigate('/maihouses/community-wall_mvp.html');
-  }, [navigate]);
+    window.location.href = '/maihouses/community-wall_mvp.html';
+  }, []);
 
   const handleToggleLike = useCallback(
     (propertyId: string) => {
