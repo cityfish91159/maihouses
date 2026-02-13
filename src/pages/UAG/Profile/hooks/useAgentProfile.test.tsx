@@ -3,12 +3,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { useAgentProfile } from './useAgentProfile';
+import type { PageMode } from '../../../../hooks/usePageMode';
 
 const mockFetchAgentMe = vi.fn();
 const mockUpdateAgentProfile = vi.fn();
 const mockUploadAgentAvatar = vi.fn();
 const mockNotifySuccess = vi.fn();
 const mockNotifyError = vi.fn();
+const mockUsePageMode = vi.fn<() => PageMode>();
+const mockUseAuth = vi.fn();
 
 vi.mock('../../../../services/agentService', () => ({
   fetchAgentMe: (...args: unknown[]) => mockFetchAgentMe(...args),
@@ -21,6 +24,14 @@ vi.mock('../../../../lib/notify', () => ({
     success: (...args: unknown[]) => mockNotifySuccess(...args),
     error: (...args: unknown[]) => mockNotifyError(...args),
   },
+}));
+
+vi.mock('../../../../hooks/usePageMode', () => ({
+  usePageMode: () => mockUsePageMode(),
+}));
+
+vi.mock('../../../../hooks/useAuth', () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 const createQueryClient = () =>
@@ -70,12 +81,33 @@ const makeLiveProfile = () => ({
 describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUsePageMode.mockReturnValue('live');
+    mockUseAuth.mockReturnValue({
+      user: { id: 'live-user-001' },
+      session: null,
+      role: 'guest',
+      isAuthenticated: true,
+      loading: false,
+      error: null,
+      signOut: vi.fn(),
+    });
     mockFetchAgentMe.mockResolvedValue(makeLiveProfile());
     mockUpdateAgentProfile.mockResolvedValue(undefined);
     mockUploadAgentAvatar.mockResolvedValue('https://example.com/avatar.png');
   });
 
   it('mock=true 時應回傳 mock 資料且不呼叫 fetchAgentMe', async () => {
+    mockUsePageMode.mockReturnValue('visitor');
+    mockUseAuth.mockReturnValue({
+      user: null,
+      session: null,
+      role: 'guest',
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+      signOut: vi.fn(),
+    });
+
     const queryClient = createQueryClient();
     const { result } = renderHook(() => useAgentProfile(), {
       wrapper: createWrapper(queryClient, '/uag/profile?mock=true'),
@@ -87,6 +119,17 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
   });
 
   it('mock=true 時 updateProfile 應更新本地快取，不呼叫 update API', async () => {
+    mockUsePageMode.mockReturnValue('visitor');
+    mockUseAuth.mockReturnValue({
+      user: null,
+      session: null,
+      role: 'guest',
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+      signOut: vi.fn(),
+    });
+
     const queryClient = createQueryClient();
     const { result } = renderHook(() => useAgentProfile(), {
       wrapper: createWrapper(queryClient, '/uag/profile?mock=true'),
@@ -113,6 +156,17 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
   });
 
   it('mock=true 時 company=null 應保留為 null（不強制回填）', async () => {
+    mockUsePageMode.mockReturnValue('visitor');
+    mockUseAuth.mockReturnValue({
+      user: null,
+      session: null,
+      role: 'guest',
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+      signOut: vi.fn(),
+    });
+
     const queryClient = createQueryClient();
     const { result } = renderHook(() => useAgentProfile(), {
       wrapper: createWrapper(queryClient, '/uag/profile?mock=true'),
@@ -133,12 +187,34 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
   it('同一 QueryClient 由 mock 切到 live 時，不應復用 mock 快取', async () => {
     const queryClient = createQueryClient();
 
+    mockUsePageMode.mockReturnValue('visitor');
+    mockUseAuth.mockReturnValue({
+      user: null,
+      session: null,
+      role: 'guest',
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+      signOut: vi.fn(),
+    });
+
     const mockRender = renderHook(() => useAgentProfile(), {
       wrapper: createWrapper(queryClient, '/uag/profile?mock=true'),
     });
     await waitFor(() => expect(mockRender.result.current.isLoading).toBe(false));
     expect(mockRender.result.current.profile?.id).toBe('mock-agent-001');
     mockRender.unmount();
+
+    mockUsePageMode.mockReturnValue('live');
+    mockUseAuth.mockReturnValue({
+      user: { id: 'live-user-001' },
+      session: null,
+      role: 'agent',
+      isAuthenticated: true,
+      loading: false,
+      error: null,
+      signOut: vi.fn(),
+    });
 
     const liveRender = renderHook(() => useAgentProfile(), {
       wrapper: createWrapper(queryClient, '/uag/profile'),

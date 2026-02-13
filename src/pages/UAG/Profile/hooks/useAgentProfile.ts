@@ -1,6 +1,8 @@
-﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { notify } from '../../../../lib/notify';
+import { useAuth } from '../../../../hooks/useAuth';
+import { usePageMode, type PageMode } from '../../../../hooks/usePageMode';
 import type { AgentProfileMe, UpdateAgentProfilePayload } from '../../../../types/agent.types';
 import {
   fetchAgentMe,
@@ -8,8 +10,8 @@ import {
   uploadAgentAvatar,
 } from '../../../../services/agentService';
 
-const getAgentProfileQueryKey = (isMockMode: boolean) =>
-  ['agent-profile-me', isMockMode ? 'mock' : 'live'] as const;
+const getAgentProfileQueryKey = (mode: PageMode, userId: string | undefined) =>
+  ['agent-profile-me', mode, userId] as const;
 
 // #7 Mock 資料
 const MOCK_PROFILE: AgentProfileMe = {
@@ -45,9 +47,13 @@ const MOCK_PROFILE: AgentProfileMe = {
 
 export function useAgentProfile() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const pageMode = usePageMode();
   const [searchParams] = useSearchParams();
-  const isMockMode = searchParams.get('mock') === 'true';
-  const profileQueryKey = getAgentProfileQueryKey(isMockMode);
+  const forceMockFromQuery = searchParams.get('mock') === 'true';
+  const mode: PageMode = pageMode === 'live' ? 'live' : forceMockFromQuery ? 'demo' : pageMode;
+  const isMockMode = mode === 'demo';
+  const profileQueryKey = getAgentProfileQueryKey(mode, user?.id);
 
   const { data, isLoading, error } = useQuery({
     queryKey: profileQueryKey,
@@ -58,6 +64,7 @@ export function useAgentProfile() {
       }
       return fetchAgentMe();
     },
+    enabled: isMockMode || mode === 'live',
     staleTime: 5 * 60 * 1000,
     retry: isMockMode ? 0 : 1, // Mock 模式不重試
   });

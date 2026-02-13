@@ -3,7 +3,8 @@ import type { AgentProfile } from '../types/uag.types';
 import { MOCK_AGENT_PROFILE } from '../../../constants/mockData';
 import { useUAGModeStore } from '../../../stores/uagModeStore';
 import { fetchAgentMe } from '../../../services/agentService';
-import { resolveUAGQueryMode, uagAgentProfileQueryKey } from './queryKeys';
+import { usePageMode } from '../../../hooks/usePageMode';
+import { uagAgentProfileQueryKey } from './queryKeys';
 
 interface UseAgentProfileResult {
   profile: AgentProfile | null;
@@ -14,18 +15,20 @@ interface UseAgentProfileResult {
 /**
  * 查詢房仲個人資料（用於 UAG Header 房仲資訊條）
  * 從 agents 表查詢：信任分、帶看數、成交數等
- * 使用統一的 Zustand store 判斷 Mock/Live 模式
+ * 以 usePageMode 為主，舊版 UAG store 僅作過渡 fallback
  */
 export function useAgentProfile(userId: string | undefined): UseAgentProfileResult {
-  // 使用統一的 store 取得模式狀態
-  const useMock = useUAGModeStore((state) => state.useMock);
-  const mode = resolveUAGQueryMode(useMock, userId);
+  const pageMode = usePageMode();
+  // #5b 遷移前兼容：若仍有舊版 UAG Mock store，visitor 模式時允許 fallback 為 demo。
+  const useMockFallback = useUAGModeStore((state) => state.useMock);
+  const mode = pageMode === 'visitor' && useMockFallback ? 'demo' : pageMode;
+  const isDemoMode = mode === 'demo';
 
   const { data, isLoading, error } = useQuery({
     queryKey: uagAgentProfileQueryKey(mode, userId),
     queryFn: async (): Promise<AgentProfile | null> => {
       // Mock 模式：直接回傳 mock 資料
-      if (useMock) {
+      if (isDemoMode) {
         return MOCK_AGENT_PROFILE;
       }
 
@@ -45,7 +48,7 @@ export function useAgentProfile(userId: string | undefined): UseAgentProfileResu
         dealCount: data.dealCount ?? 0,
       };
     },
-    enabled: useMock || !!userId,
+    enabled: isDemoMode || !!userId,
     staleTime: 5 * 60 * 1000, // 5 分鐘快取
     retry: 1,
   });

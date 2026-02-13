@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { getErrorMessage } from '../lib/error';
 import { usePageMode } from './usePageMode';
 
@@ -14,16 +14,21 @@ export interface ModeAwareHandlers<TData> {
 
 export function useModeAwareAction<TData>(handlers: ModeAwareHandlers<TData>) {
   const mode = usePageMode();
+  const handlersRef = useRef(handlers);
+
+  useEffect(() => {
+    handlersRef.current = handlers;
+  }, [handlers]);
 
   return useCallback(
     async (data: TData): Promise<ModeAwareResult> => {
       try {
-        await handlers[mode](data);
+        await handlersRef.current[mode](data);
         return { ok: true };
       } catch (error) {
         return { ok: false, error: getErrorMessage(error) };
       }
     },
-    [handlers, mode]
+    [mode]
   );
 }

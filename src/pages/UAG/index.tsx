@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
+import { getErrorMessage } from '../../lib/error';
 import { createPost } from '../../services/communityService';
 import type { AppData } from './types/uag.types';
 
@@ -217,8 +218,8 @@ function UAGPageContent() {
         // 成功後重新載入資料
         queryClient.invalidateQueries({ queryKey: uagCacheKey });
       } catch (err) {
-        const message = err instanceof Error ? err.message : '發文失敗';
-        logger.error('[UAG] handleCreatePost failed', { error: message });
+        const message = getErrorMessage(err);
+        logger.error('[UAG] 建立貼文失敗', { error: message });
         throw err; // 讓 ListingFeed 顯示錯誤
       }
     },

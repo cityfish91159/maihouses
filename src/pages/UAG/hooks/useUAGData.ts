@@ -17,9 +17,9 @@ import { MOCK_DB } from '../mockData';
 import { logger } from '../../../lib/logger';
 import { notify } from '../../../lib/notify';
 import { useAuth } from '../../../hooks/useAuth';
-import type { PageMode } from '../../../hooks/usePageMode';
+import { usePageMode, type PageMode } from '../../../hooks/usePageMode';
 import { useUAGModeStore, selectUseMock } from '../../../stores/uagModeStore';
-import { resolveUAGQueryMode, uagDataQueryKey } from './queryKeys';
+import { uagDataQueryKey } from './queryKeys';
 
 // ============================================================================
 // Constants
@@ -73,15 +73,17 @@ export interface UseUAGDataReturn {
  */
 export function useUAGData(): UseUAGDataReturn {
   const { session } = useAuth();
+  const pageMode = usePageMode();
   const userId = session?.user?.id;
 
-  // Selector 優化：useMock 是狀態，需要訂閱變化觸發 re-render
-  const useMock = useUAGModeStore(selectUseMock);
+  // #5b 遷移前兼容：以 pageMode 為主，舊 store 僅在 visitor 時作 fallback。
+  const storeUseMock = useUAGModeStore(selectUseMock);
+  const useMock = pageMode === 'demo' || (pageMode === 'visitor' && storeUseMock);
   // 函數引用穩定，用 getState() 取得即可，無需 selector 訂閱
   const { setUseMock, initializeMode } = useUAGModeStore.getState();
 
   const queryClient = useQueryClient();
-  const mode: PageMode = resolveUAGQueryMode(useMock, userId);
+  const mode: PageMode = useMock ? 'demo' : pageMode;
 
   // 初始化模式（根據 URL 參數）
   useEffect(() => {
@@ -93,6 +95,11 @@ export function useUAGData(): UseUAGDataReturn {
    * Live 模式需要已登入
    */
   const toggleMode = useCallback(() => {
+    if (pageMode === 'live') {
+      notify.info('目前為 Live 模式', '登入狀態下不支援切換到 Mock 模式');
+      return;
+    }
+
     const newMode = !useMock;
 
     // 切換到 Live 模式時，檢查是否已登入
@@ -102,7 +109,7 @@ export function useUAGData(): UseUAGDataReturn {
     }
 
     setUseMock(newMode);
-  }, [useMock, userId, setUseMock]);
+  }, [pageMode, useMock, userId, setUseMock]);
 
   /**
    * React Query：獲取 UAG 數據
