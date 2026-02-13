@@ -4,7 +4,7 @@ interface LogoProps {
   showSlogan?: boolean;
   className?: string;
   onClick?: () => void;
-  href?: string;
+  href?: string | undefined;
   showBadge?: boolean;
   ariaLabel?: string;
 }
