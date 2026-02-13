@@ -35,6 +35,7 @@
 - [x] **#19** [P1] 砍舊路徑：前端 `tracker` 由 `/api/uag-track` 切到 `/api/uag/track`，下線 deprecated JS 版 ✅ 2026-02-12
 - [ ] **#20** 整合分散 Mock Data + seed 不可變 `Object.freeze`（10+ 檔）
 - [ ] **#28** 已完成工單防禦強化 — Zod 收緊 + SSR guard + `as` 斷言消除（5 檔）
+- [ ] **#29** 跨裝置三模式驗證修復 — iOS Safari + 手機版 + 私隱模式（12 檔）
 
 ### P1 — 社區牆三模式（極限測試升級）
 
@@ -139,7 +140,10 @@
 
 **已知缺口**：
 - 登入時 `clearDemoMode()` 未同步 `queryClient.clear()`，演示期間 cache 可能短暫殘留 → 歸 #10b 處理。
-- `useDemoTimer.ts:45` warn 條件 `warnDelay > 0 || remaining > WARN_SKIP_THRESHOLD_MS` 在 remaining 介於 30s~5min 時會立即觸發 warn toast，應改為 `warnDelay > 0 && remaining > WARN_SKIP_THRESHOLD_MS`。
+- `useDemoTimer.ts:45` warn 條件 `warnDelay > 0 || remaining > WARN_SKIP_THRESHOLD_MS` 在 remaining 介於 30s~5min 時會立即觸發 warn toast，應改為 `warnDelay > 0 && remaining > WARN_SKIP_THRESHOLD_MS` → 歸 #29。
+- iOS Safari 私隱模式 `safeStorage` 探測可能通過但後續寫入失敗，`setDemoMode()` 靜默失敗 → 歸 #29。
+- iOS Safari 背景分頁 `setTimeout` 暫停，`useDemoTimer` 到期不觸發 → 歸 #29。
+- iOS Safari `StorageEvent` 在 App 背景回前景時不觸發，跨分頁同步失效 → 歸 #29。
 
 ---
 
@@ -308,6 +312,7 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 | `propertyService.ts` | 5, 366 | 移除 import + `isDemo` 判斷 |
 | `PropertyDetailPage.tsx` | 29, 127, 249, 292-294, 679-713, 774-785, 813 | 全部改 mode 判斷 |
 | `AgentReviewListModal.tsx` | 60, 71-77 | 移除獨立 isDemo 判斷 |
+| `PropertyDetailPage.tsx` | 294 | `window.location.href = '/maihouses/assure?mock=true'` 繞過三模式 → 改用 `usePageMode()` |
 | `PropertyDetailActionLayer.tsx` | 86 | mode 判斷 isVerified |
 | `AgentTrustCard.tsx` | interface | 移除 `isDemo?` prop → 內部用 `usePageMode()` |
 | `usePropertyTracker.ts` | 92 | `isDemo` 一次性計算非 reactive → 改用 `usePageMode()` 即時判斷 |
@@ -499,7 +504,9 @@ function useEffectiveRole(urlRole?: Role): Role {
 
 **新增**：`src/components/DemoGate/DemoBadge.tsx`
 
-App.tsx 根據 `mode === 'demo'` 條件渲染。手機版避免遮擋 MobileActionBar。
+App.tsx 根據 `mode === 'demo'` 條件渲染。
+
+**手機版定位**：`lg:hidden` 時 `bottom-[calc(80px+env(safe-area-inset-bottom,20px))]`，避免遮擋 Feed MobileActionBar（`Consumer.tsx:72`）。桌面版照常右下角。
 
 UI 設計需 `/ui-ux-pro-max`。
 
@@ -526,6 +533,8 @@ function exitDemoMode(queryClient: QueryClient) {
 **跨分頁處理**：storage event handler 中也需呼叫 `queryClient.clear()` 再 reload，否則非觸發分頁的 cache 殘留。
 
 **多分頁競態**：分頁 A 到期 → `handleDemoExpire` → 清 localStorage → 分頁 B 的 storage event 收到刪除 → 但 B 可能正在 API 呼叫中。`handleDemoExpire` 需先檢查 `mode === 'demo'` 再清理，避免已登入分頁被誤清。
+
+**iOS reload 延遲**：`location.reload()` 在 iOS Safari 有 500ms+ 延遲，期間 React Query `onError` 可能對已清空 cache 觸發 visitor API 呼叫。reload 前先設 `window.__DEMO_EXPIRING = true` flag 或改用 `location.replace('/')` 避免返回鍵回到失效頁。
 
 **登入清理**：`usePageMode` 的 `clearDemoMode()` 需同步 `queryClient.clear()`。
 
@@ -615,6 +624,8 @@ function useRegisterGuide() {
 | 8 | Feed 私密牆 | 註冊後查看私密動態 | `PrivateWallLocked.tsx:23` | #6a |
 
 現有多處 toast「請先登入」無 action button → 施工時全部改用 `useRegisterGuide()`。
+
+**手機版觸控目標**：Sonner action button 預設高度約 28px，不符 Apple HIG 44px 最小觸控目標。`notify` 的 `mapOptions` 需覆寫 action button className 加 `min-h-[44px] min-w-[44px]`。手機版 toast position 改 `top-center`（避免虛擬鍵盤遮擋底部 toast）。
 
 **驗收**：8 個場景全部接入、所有跳轉帶 `?return=`
 
