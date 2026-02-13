@@ -26,6 +26,7 @@ import { useUAGData } from './useUAGData';
 import { useLeadPurchase, type BuyLeadResult } from './useLeadPurchase';
 import { useRealtimeUpdates } from './useRealtimeUpdates';
 import type { AppData } from '../types/uag.types';
+import type { PageMode } from '../../../hooks/usePageMode';
 
 // ============================================================================
 // Re-exports
@@ -57,6 +58,8 @@ export interface UseUAGReturn {
   toggleMode: () => void;
   /** 手動刷新數據 */
   refetch: () => Promise<unknown>;
+  /** 已解析的頁面模式（唯一 mode 來源） */
+  mode: PageMode;
 }
 
 // ============================================================================
@@ -73,13 +76,14 @@ export interface UseUAGReturn {
  */
 export function useUAG(): UseUAGReturn {
   // 1. 數據獲取
-  const { data, isLoading, error, refetch, useMock, toggleMode, userId } = useUAGData();
+  const { data, isLoading, error, refetch, useMock, toggleMode, userId, mode } = useUAGData();
 
   // 2. 購買邏輯
   const { buyLead, isBuying } = useLeadPurchase({
     data,
     useMock,
     userId,
+    mode,
   });
 
   // 3. Realtime 訂閱
@@ -98,5 +102,6 @@ export function useUAG(): UseUAGReturn {
     useMock,
     toggleMode,
     refetch,
+    mode,
   };
 }

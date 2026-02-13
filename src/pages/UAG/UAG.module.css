@@ -1960,6 +1960,7 @@
   place-items: center;
   font-weight: 900;
   font-size: 11px;
+  color: #fff;
 }
 
 /* ====== Footer ====== */
@@ -2252,4 +2253,103 @@
 }
 .modal-char-count-over-limit {
   color: var(--uag-danger);
+}
+
+/* ====== #5a Landing Page ====== */
+.landing-hero {
+  text-align: center;
+  padding: 48px 16px 32px;
+}
+.landing-title {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--ink-100);
+  margin: 0 0 12px;
+}
+.landing-subtitle {
+  font-size: 16px;
+  color: var(--ink-300);
+  max-width: 480px;
+  margin: 0 auto 32px;
+  line-height: 1.6;
+}
+.landing-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.landing-features {
+  padding: 0 16px 32px;
+}
+.landing-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.landing-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--uag-brand);
+}
+.landing-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink-100);
+  margin: 0;
+}
+.landing-card-desc {
+  font-size: 14px;
+  color: var(--ink-300);
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+}
+.landing-steps {
+  padding: 0 16px 32px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.landing-steps-title {
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink-100);
+  margin: 0 0 24px;
+}
+.landing-steps-row {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.landing-step {
+  text-align: center;
+  min-width: 120px;
+}
+.landing-step-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-200);
+}
+.landing-cta {
+  text-align: center;
+  padding: 32px 16px 48px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.landing-cta-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink-100);
+  margin: 0 0 8px;
+}
+.landing-cta-desc {
+  font-size: 14px;
+  color: var(--ink-300);
+  margin: 0 0 24px;
 }

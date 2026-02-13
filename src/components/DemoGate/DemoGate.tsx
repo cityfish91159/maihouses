@@ -42,14 +42,16 @@ export function DemoGate({ children, className = '' }: DemoGateProps) {
 
   const handleActivateDemoMode = () => {
     notify.dismiss(CONFIRM_TOAST_ID);
-    setDemoMode();
+    const ok = setDemoMode();
+    if (!ok) {
+      notify.error('無法進入演示模式', '您的瀏覽器不支援本地儲存，請關閉私密瀏覽後重試。');
+      return;
+    }
     reloadPage();
   };
 
   const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
     if (mode !== 'visitor') return;
-
-    event.preventDefault();
 
     const now = Date.now();
     const threshold = now - CLICK_WINDOW_MS;
@@ -59,6 +61,8 @@ export function DemoGate({ children, className = '' }: DemoGateProps) {
 
     if (recentClicks.length < REQUIRED_CLICKS) return;
 
+    // 只在 5 連按觸發時才攔截事件，避免阻擋子元件正常點擊
+    event.preventDefault();
     clickTimestampsRef.current = [];
     triggerShake();
     notify.info('已解鎖演示模式', '點擊「進入演示」後會重新整理頁面。', {

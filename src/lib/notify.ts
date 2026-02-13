@@ -27,7 +27,10 @@ export type NotifyOptions = {
 };
 
 /** 內部 toast 映射選項（排除 legacy 欄位），非 Sonner 原生 ExternalToast */
-export type ToastOptions = Omit<NotifyOptions, 'actionLabel' | 'onAction'>;
+export type ToastOptions = Omit<NotifyOptions, 'actionLabel' | 'onAction'> & {
+  /** Action button 的 inline style（Apple HIG 44px 觸控目標） */
+  actionButtonStyle?: Record<string, string | number>;
+};
 
 const DEFAULT_DISMISSIBLE = true;
 const DEFAULT_DEV_DURATION = 2200;
@@ -86,6 +89,8 @@ function mapOptions(
   const action = resolveAction(options);
   if (action) {
     mapped.action = action;
+    // Apple HIG 44px 最小觸控目標
+    mapped.actionButtonStyle = { minHeight: 44, minWidth: 44 };
   }
 
   return mapped;

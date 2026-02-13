@@ -52,6 +52,8 @@ export interface UseUAGDataReturn {
   toggleMode: () => void;
   /** 當前用戶 ID */
   userId: string | undefined;
+  /** 已解析的頁面模式（唯一 mode 來源，禁止重新推導） */
+  mode: PageMode;
   /** Query Client（供其他 hooks 使用） */
   queryClient: ReturnType<typeof useQueryClient>;
 }
@@ -146,6 +148,7 @@ export function useUAGData(): UseUAGDataReturn {
     useMock,
     toggleMode,
     userId,
+    mode,
     queryClient,
   };
 }

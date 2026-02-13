@@ -71,7 +71,9 @@ async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
 
   // 2) remote app.config.json
   const baseUrl = import.meta.env.BASE_URL || '/';
-  const url = `${window.location.origin}${baseUrl}app.config.json`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const safeOrigin = !origin || origin === 'null' ? '' : origin;
+  const url = `${safeOrigin}${baseUrl}app.config.json`;
   try {
     const remote = await fetchJson(url);
     if (isValidConfig(remote)) return remote;

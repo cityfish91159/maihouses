@@ -13,11 +13,12 @@ import { useCallback, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UAGService, type PurchaseLeadResult } from '../services/uagService';
 import type { AppData, Grade, Lead } from '../types/uag.types';
+import type { PageMode } from '../../../hooks/usePageMode';
 import { isUnpurchasedLead, LeadStatusSchema } from '../types/uag.types';
 import { notify } from '../../../lib/notify';
 import { GRADE_PROTECTION_HOURS } from '../uag-config';
 import { validateQuota } from '../utils/validation';
-import { resolveUAGQueryMode, uagDataQueryKey } from './queryKeys';
+import { uagDataQueryKey } from './queryKeys';
 
 // ============================================================================
 // Types
@@ -51,6 +52,8 @@ export interface UseLeadPurchaseParams {
   useMock: boolean;
   /** 用戶 ID */
   userId: string | undefined;
+  /** 已解析的頁面模式（由 useUAGData 提供，禁止重新推導） */
+  mode: PageMode;
 }
 
 /** Hook 返回值 */
@@ -85,9 +88,9 @@ export function useLeadPurchase({
   data,
   useMock,
   userId,
+  mode,
 }: UseLeadPurchaseParams): UseLeadPurchaseReturn {
   const queryClient = useQueryClient();
-  const mode = resolveUAGQueryMode(useMock, userId);
   const cacheKey = useMemo(() => uagDataQueryKey(mode, userId), [mode, userId]);
 
   /**
@@ -122,8 +125,8 @@ export function useLeadPurchase({
      * 樂觀更新：在請求發送前先更新 UI
      */
     onMutate: async ({ leadId, cost, grade }): Promise<MutationContext> => {
-      // 取消進行中的查詢
-      await queryClient.cancelQueries({ queryKey: [cacheKey[0]] });
+      // 取消當前 mode + userId 的進行中查詢
+      await queryClient.cancelQueries({ queryKey: cacheKey });
 
       // 保存當前數據（用於 rollback）
       const previousData = queryClient.getQueryData<AppData>(cacheKey);

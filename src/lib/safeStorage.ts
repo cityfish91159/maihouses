@@ -43,10 +43,16 @@ function getStorage(type: 'localStorage' | 'sessionStorage'): SafeStorage {
       return noopStorage;
     }
 
-    // Test storage to verify it actually works
-    const x = '__storage_test__';
-    storage.setItem(x, x);
-    storage.removeItem(x);
+    // 探測 storage 是否真正可用
+    // 使用較長值模擬實際寫入，iOS 私隱模式探測寫入可能通過但後續配額超限
+    const testKey = '__storage_test__';
+    const testValue = 'x'.repeat(64);
+    storage.setItem(testKey, testValue);
+    const readBack = storage.getItem(testKey);
+    storage.removeItem(testKey);
+    if (readBack !== testValue) {
+      return noopStorage;
+    }
     return storage;
   } catch {
     // 靜默失敗，直接返回 noopStorage

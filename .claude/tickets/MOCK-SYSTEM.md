@@ -371,9 +371,12 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 - [x] `useComments` 三個 API 回應改用 Zod `safeParse` 驗證（add/toggle/delete）
 - [x] `useComments` 錯誤訊息統一改用 `getErrorMessage()`，移除重複 `instanceof Error`
 - [x] `useComments.deleteComment` 回滾移除 `deletedComment!` non-null assertion
+- [x] `useComments` 移除 hook 內直接 Supabase 呼叫，改由 `commentService` 封裝
 - [x] `AgentReviewListModal` 修正分頁累積（load more 不再覆蓋上一頁）
+- [x] `AgentReviewListModal` 移除 render 階段 `setState`（避免 React 行為回歸）
 - [x] `AgentReviewListModal` loading spinner 加入 `motion-reduce:animate-none`
 - [x] 新增 `AgentReviewListModal` 分頁累積測試案例
+- [x] 新增 `CommunityReviews` live error path 的 `notify.error` 驗證
 
 **本次修改**
 
@@ -384,17 +387,23 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 2. `src/pages/PropertyDetailPage.tsx`
    - 呼叫 `CommunityReviews` 時移除 `isDemo` 傳遞。
 3. `src/hooks/useComments.ts`
-   - 新增 `AddCommentResponseSchema` / `ToggleLikeResponseSchema` / `DeleteCommentResponseSchema`。
-   - `response.json()` 改為 `unknown` + `safeParse`，不再直接信任 payload。
-   - 錯誤訊息改為 `getErrorMessage()`，並以 `toError()` 統一 fallback。
-   - 回滾邏輯改用 `rollbackComment` 區域變數，移除 `deletedComment!`。
-4. `src/components/AgentReviewListModal.tsx`
+    - 新增 `AddCommentResponseSchema` / `ToggleLikeResponseSchema` / `DeleteCommentResponseSchema`。
+    - `response.json()` 改為 `unknown` + `safeParse`，不再直接信任 payload。
+    - 錯誤訊息改為 `getErrorMessage()`，並以 `toError()` 統一 fallback。
+    - 回滾邏輯改用 `rollbackComment` 區域變數，移除 `deletedComment!`。
+4. `src/services/commentService.ts`
+   - 新增留言資料查詢 service，封裝 `fetchTopLevelComments` / `fetchReplies` / `getSession`。
+   - 將 Supabase query 與 row->`FeedComment` 轉換下沉到 service layer。
+5. `src/components/AgentReviewListModal.tsx`
    - 新增 `mergedData` 狀態累積多頁結果。
    - 開啟 modal / 切換 agent / 切換 mode 時重設頁碼與累積資料。
    - 「載入更多」改為 live mode 才顯示，按鈕 loading 與 disabled 狀態同步 `isFetching`。
    - Loader class 補 `motion-reduce:animate-none`。
-5. `src/components/__tests__/AgentReviewListModal.test.tsx`
+   - 使用 `key={agentId-mode}` + derived state，移除 render 階段 `setState`。
+6. `src/components/__tests__/AgentReviewListModal.test.tsx`
    - 新增 live mode 載入第二頁後仍保留第一頁資料的驗證。
+7. `src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx`
+   - 補 `onToggleLike` throw 後 `notify.error` 的錯誤路徑驗證。
 
 **收斂驗證**
 
@@ -403,6 +412,29 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 - [x] `rg -n "instanceof Error|deletedComment!" src/hooks/useComments.ts` 無結果
 - [x] `rg -n "disabled={!isLoggedIn}" src` 無結果
 - [x] `npm run test -- src/components/__tests__/AgentReviewListModal.test.tsx src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx src/hooks/__tests__/useComments.raceCondition.test.ts` 通過（31 tests，提權執行）
+
+#### 2026-02-13 #3 最終收斂（規範補齊）
+
+**摘要**
+
+- [x] `AgentReviewListModal.tsx` 移除主程式 `as` 型別斷言（`RefObject` cast、distribution cast）
+- [x] `CommunityReviews.test.tsx` 移除 `IntersectionObserver` mock 的 `as` 斷言
+- [x] `check:utf8` / `typecheck` / `gate` / #3 相關測試全數通過
+
+**本次修改**
+
+1. `src/components/AgentReviewListModal.tsx`
+   - `useFocusTrap` 改為直接傳入 `dialogRef` / `closeButtonRef`，移除 `as React.RefObject<HTMLElement>`。
+   - 新增 `STAR_LEVELS` 與 `getDistributionCount()`，移除 `String(star) as ...` 型別斷言。
+2. `src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx`
+   - `MockIntersectionObserver` 改用完整 `IntersectionObserverEntry` 物件建構，移除 `as` 斷言。
+
+**收斂驗證**
+
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `npm run typecheck` 通過
+- [x] `npm run test -- src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx src/components/__tests__/AgentReviewListModal.test.tsx src/hooks/__tests__/useComments.raceCondition.test.ts` 通過（31 tests）
+- [x] `npm run gate` 通過
 
 ---
 

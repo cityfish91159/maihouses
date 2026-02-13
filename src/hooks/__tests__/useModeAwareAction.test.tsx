@@ -115,6 +115,36 @@ describe('useModeAwareAction', () => {
     });
   });
 
+  it('handles async live handler resolve and reject', async () => {
+    mockUsePageMode.mockReturnValue('live');
+    const successLive = vi.fn().mockResolvedValue(undefined);
+    const failLive = vi.fn().mockRejectedValue(new Error('api-error'));
+
+    const successHook = renderHook(() =>
+      useModeAwareAction<string>({
+        visitor: vi.fn(),
+        demo: vi.fn(),
+        live: successLive,
+      })
+    );
+
+    const failHook = renderHook(() =>
+      useModeAwareAction<string>({
+        visitor: vi.fn(),
+        demo: vi.fn(),
+        live: failLive,
+      })
+    );
+
+    await act(async () => {
+      await expect(successHook.result.current('ok')).resolves.toEqual({ ok: true });
+      await expect(failHook.result.current('ng')).resolves.toEqual({
+        ok: false,
+        error: 'api-error',
+      });
+    });
+  });
+
   it('returns normalized error for non-Error throws', async () => {
     mockUsePageMode.mockReturnValue('visitor');
 

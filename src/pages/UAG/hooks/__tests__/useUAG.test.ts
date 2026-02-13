@@ -17,8 +17,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient } from '@tanstack/react-query';
 import { useUAG } from '../useUAG';
 import type { AppData } from '../../types/uag.types';
+import type { UseUAGDataReturn } from '../useUAGData';
 
 // ============================================================================
 // Mocks
@@ -52,6 +54,27 @@ const mockBuyLead = vi.fn();
 const mockRefetch = vi.fn();
 const mockToggleMode = vi.fn();
 
+/** 測試用 QueryClient 實例，避免 `as any` */
+const mockQueryClient = new QueryClient();
+
+/** 型別安全的 useUAGData mock 工廠 */
+function createMockUAGDataReturn(
+  overrides?: Partial<UseUAGDataReturn>,
+): UseUAGDataReturn {
+  return {
+    data: mockAppData,
+    isLoading: false,
+    error: null,
+    refetch: mockRefetch,
+    useMock: true,
+    toggleMode: mockToggleMode,
+    userId: 'test-user-id',
+    mode: 'demo',
+    queryClient: mockQueryClient,
+    ...overrides,
+  };
+}
+
 // ============================================================================
 // Tests
 // ============================================================================
@@ -61,16 +84,7 @@ describe('useUAG', () => {
     vi.clearAllMocks();
 
     // 設置默認 mock 返回值
-    vi.mocked(useUAGData).mockReturnValue({
-      data: mockAppData,
-      isLoading: false,
-      error: null,
-      refetch: mockRefetch,
-      useMock: true,
-      toggleMode: mockToggleMode,
-      userId: 'test-user-id',
-      queryClient: {} as any,
-    });
+    vi.mocked(useUAGData).mockReturnValue(createMockUAGDataReturn());
 
     vi.mocked(useLeadPurchase).mockReturnValue({
       buyLead: mockBuyLead,
@@ -127,6 +141,7 @@ describe('useUAG', () => {
         data: mockAppData,
         useMock: true,
         userId: 'test-user-id',
+        mode: 'demo',
       });
     });
 
@@ -147,16 +162,13 @@ describe('useUAG', () => {
 
   describe('載入狀態', () => {
     it('應正確傳遞 isLoading 狀態為 true', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: true,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: undefined,
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          isLoading: true,
+          userId: undefined,
+        }),
+      );
 
       const { result } = renderHook(() => useUAG());
 
@@ -165,16 +177,12 @@ describe('useUAG', () => {
     });
 
     it('載入中時 data 應為 undefined', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: true,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          isLoading: true,
+        }),
+      );
 
       const { result } = renderHook(() => useUAG());
 
@@ -183,16 +191,7 @@ describe('useUAG', () => {
     });
 
     it('載入完成後 isLoading 應為 false', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: mockAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(createMockUAGDataReturn());
 
       const { result } = renderHook(() => useUAG());
 
@@ -209,16 +208,14 @@ describe('useUAG', () => {
     it('應正確傳遞錯誤狀態', () => {
       const mockError = new Error('Failed to fetch data');
 
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: mockError,
-        refetch: mockRefetch,
-        useMock: false,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          error: mockError,
+          useMock: false,
+          mode: 'live',
+        }),
+      );
 
       const { result } = renderHook(() => useUAG());
 
@@ -229,16 +226,14 @@ describe('useUAG', () => {
     it('錯誤狀態下 data 應為 undefined', () => {
       const mockError = new Error('Network error');
 
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: mockError,
-        refetch: mockRefetch,
-        useMock: false,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          error: mockError,
+          useMock: false,
+          mode: 'live',
+        }),
+      );
 
       const { result } = renderHook(() => useUAG());
 
@@ -249,16 +244,14 @@ describe('useUAG', () => {
     it('應區分不同類型的錯誤', () => {
       const networkError = new Error('Network timeout');
 
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: networkError,
-        refetch: mockRefetch,
-        useMock: false,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          error: networkError,
+          useMock: false,
+          mode: 'live',
+        }),
+      );
 
       const { result } = renderHook(() => useUAG());
 
@@ -272,16 +265,9 @@ describe('useUAG', () => {
 
   describe('Mock/Live 模式', () => {
     it('Mock 模式下 useMock 應為 true', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: mockAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: undefined,
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({ userId: undefined }),
+      );
 
       const { result } = renderHook(() => useUAG());
 
@@ -289,16 +275,12 @@ describe('useUAG', () => {
     });
 
     it('Live 模式下 useMock 應為 false', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: mockAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: false,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          useMock: false,
+          mode: 'live',
+        }),
+      );
 
       const { result } = renderHook(() => useUAG());
 
@@ -306,16 +288,9 @@ describe('useUAG', () => {
     });
 
     it('Mock 模式下 userId 可能為 undefined', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: mockAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: undefined,
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({ userId: undefined }),
+      );
 
       renderHook(() => useUAG());
 
@@ -327,16 +302,13 @@ describe('useUAG', () => {
     });
 
     it('Live 模式下 userId 應為有效 ID', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: mockAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: false,
-        toggleMode: mockToggleMode,
-        userId: 'authenticated-user',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          useMock: false,
+          userId: 'authenticated-user',
+          mode: 'live',
+        }),
+      );
 
       renderHook(() => useUAG());
 
@@ -393,16 +365,14 @@ describe('useUAG', () => {
         feed: [],
       };
 
-      vi.mocked(useUAGData).mockReturnValue({
-        data: customAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: false,
-        toggleMode: mockToggleMode,
-        userId: 'custom-user',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: customAppData,
+          useMock: false,
+          userId: 'custom-user',
+          mode: 'live',
+        }),
+      );
 
       renderHook(() => useUAG());
 
@@ -410,6 +380,7 @@ describe('useUAG', () => {
         data: customAppData,
         useMock: false,
         userId: 'custom-user',
+        mode: 'live',
       });
     });
   });
@@ -430,16 +401,9 @@ describe('useUAG', () => {
     });
 
     it('Mock 模式下應傳遞 useMock: true', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: mockAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: undefined,
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({ userId: undefined }),
+      );
 
       renderHook(() => useUAG());
 
@@ -451,16 +415,13 @@ describe('useUAG', () => {
     });
 
     it('Live 模式下應傳遞 useMock: false 和 userId', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: mockAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: false,
-        toggleMode: mockToggleMode,
-        userId: 'authenticated-user',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          useMock: false,
+          userId: 'authenticated-user',
+          mode: 'live',
+        }),
+      );
 
       renderHook(() => useUAG());
 
@@ -475,16 +436,9 @@ describe('useUAG', () => {
     it('應傳遞 refetch 函數給 Realtime 訂閱', () => {
       const customRefetch = vi.fn();
 
-      vi.mocked(useUAGData).mockReturnValue({
-        data: mockAppData,
-        isLoading: false,
-        error: null,
-        refetch: customRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({ refetch: customRefetch }),
+      );
 
       renderHook(() => useUAG());
 
@@ -539,6 +493,7 @@ describe('useUAG', () => {
         data: mockAppData,
         useMock: true,
         userId: 'test-user-id',
+        mode: 'demo',
       });
 
       // 更新 mock 返回值
@@ -552,16 +507,14 @@ describe('useUAG', () => {
         feed: [],
       };
 
-      vi.mocked(useUAGData).mockReturnValue({
-        data: newAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: false,
-        toggleMode: mockToggleMode,
-        userId: 'new-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: newAppData,
+          useMock: false,
+          userId: 'new-user-id',
+          mode: 'live',
+        }),
+      );
 
       // 重新渲染
       rerender();
@@ -571,6 +524,7 @@ describe('useUAG', () => {
         data: newAppData,
         useMock: false,
         userId: 'new-user-id',
+        mode: 'live',
       });
     });
   });
@@ -581,16 +535,12 @@ describe('useUAG', () => {
 
   describe('邊界條件', () => {
     it('userId 為 undefined 時應正確傳遞', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: undefined,
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          userId: undefined,
+        }),
+      );
 
       renderHook(() => useUAG());
 
@@ -608,16 +558,12 @@ describe('useUAG', () => {
     });
 
     it('data 為 undefined 時應正確傳遞', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: true,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          isLoading: true,
+        }),
+      );
 
       renderHook(() => useUAG());
 
@@ -629,16 +575,7 @@ describe('useUAG', () => {
     });
 
     it('error 為 null 時應正確處理', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: mockAppData,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(createMockUAGDataReturn());
 
       const { result } = renderHook(() => useUAG());
 
@@ -646,16 +583,12 @@ describe('useUAG', () => {
     });
 
     it('所有狀態為 undefined/null 時應能正常運行', () => {
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: undefined,
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          userId: undefined,
+        }),
+      );
 
       const { result } = renderHook(() => useUAG());
 
@@ -685,6 +618,7 @@ describe('useUAG', () => {
       expect(result.current).toHaveProperty('useMock');
       expect(result.current).toHaveProperty('toggleMode');
       expect(result.current).toHaveProperty('refetch');
+      expect(result.current).toHaveProperty('mode');
     });
 
     it('返回值類型應正確', () => {
@@ -707,16 +641,13 @@ describe('useUAG', () => {
       expect(result.current.data).toHaveProperty('leads');
 
       // 無數據時
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: true,
-        error: null,
-        refetch: mockRefetch,
-        useMock: true,
-        toggleMode: mockToggleMode,
-        userId: undefined,
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          isLoading: true,
+          userId: undefined,
+        }),
+      );
 
       const { result: result2 } = renderHook(() => useUAG());
       expect(result2.current.data).toBeUndefined();
@@ -730,16 +661,14 @@ describe('useUAG', () => {
 
       // Error 情況
       const testError = new Error('Test error');
-      vi.mocked(useUAGData).mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: testError,
-        refetch: mockRefetch,
-        useMock: false,
-        toggleMode: mockToggleMode,
-        userId: 'test-user-id',
-        queryClient: {} as any,
-      });
+      vi.mocked(useUAGData).mockReturnValue(
+        createMockUAGDataReturn({
+          data: undefined,
+          error: testError,
+          useMock: false,
+          mode: 'live',
+        }),
+      );
 
       const { result: result2 } = renderHook(() => useUAG());
       expect(result2.current.error).toBeInstanceOf(Error);

@@ -1,10 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Loader2, Star, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import type { AgentReviewListData } from '../types/agent-review';
 import { agentReviewsQueryKey, fetchAgentReviews } from '../hooks/useAgentReviews';
 import { useFocusTrap } from '../hooks/useFocusTrap';
-import { usePageMode } from '../hooks/usePageMode';
+import { usePageMode, type PageMode } from '../hooks/usePageMode';
 
 interface AgentReviewListModalProps {
   open: boolean;
@@ -20,21 +20,21 @@ const MOCK_REVIEWS: AgentReviewListData = {
       rating: 5,
       comment: '帶看很仔細，解說清楚，推薦！',
       createdAt: '2026-01-15T10:00:00Z',
-      reviewerName: '林**',
+      reviewerName: '林*',
     },
     {
       id: 'mock-2',
       rating: 5,
       comment: '回覆很快，態度親切。',
       createdAt: '2026-01-10T14:30:00Z',
-      reviewerName: '王**',
+      reviewerName: '王*',
     },
     {
       id: 'mock-3',
       rating: 4,
       comment: '專業度不錯，但文件準備稍微等了一下。',
       createdAt: '2026-01-05T09:15:00Z',
-      reviewerName: '陳**',
+      reviewerName: '陳*',
     },
   ],
   total: 32,
@@ -48,40 +48,118 @@ const MOCK_REVIEWS: AgentReviewListData = {
   },
 };
 
-export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
-  open,
+const STAR_LEVELS: Array<5 | 4 | 3 | 2 | 1> = [5, 4, 3, 2, 1];
+
+/**
+ * 外層元件：用 key 控制內層重掛，使 open/agentId/mode 變化時自動重置所有內部 state。
+ */
+export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = (props) => {
+  const mode = usePageMode();
+
+  if (!props.open) return null;
+
+  return (
+    <AgentReviewListModalInner
+      key={`${props.agentId}-${mode}`}
+      {...props}
+      mode={mode}
+    />
+  );
+};
+
+interface InnerProps extends AgentReviewListModalProps {
+  mode: PageMode;
+}
+
+const AgentReviewListModalInner: React.FC<InnerProps> = ({
   agentId,
   agentName,
   onClose,
+  mode,
 }) => {
   const [page, setPage] = useState(1);
-  const mode = usePageMode();
+  const [accumulatedReviews, setAccumulatedReviews] = useState<AgentReviewListData['reviews']>([]);
   const useMockReviews = mode === 'demo';
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useFocusTrap({
-    containerRef: dialogRef as React.RefObject<HTMLElement>,
-    initialFocusRef: closeButtonRef as React.RefObject<HTMLElement>,
-    isActive: open,
+    containerRef: dialogRef,
+    initialFocusRef: closeButtonRef,
+    isActive: true,
     onEscape: onClose,
   });
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: agentReviewsQueryKey(mode, agentId, page),
     queryFn: () => (useMockReviews ? Promise.resolve(MOCK_REVIEWS) : fetchAgentReviews(agentId, page)),
-    enabled: open && Boolean(agentId),
+    enabled: Boolean(agentId),
     staleTime: 2 * 60 * 1000,
     retry: 1,
   });
 
-  if (!open) return null;
+  // 用 useMemo derived state：合併已累積的 reviews 與當前頁面 data
+  const reviewData = useMemo<AgentReviewListData | null>(() => {
+    if (!data) return null;
+    if (useMockReviews || (page === 1 && accumulatedReviews.length === 0)) return data;
+    const merged: AgentReviewListData['reviews'] = [];
+    const seen = new Set<string>();
+    for (const review of accumulatedReviews) {
+      if (!seen.has(review.id)) {
+        seen.add(review.id);
+        merged.push(review);
+      }
+    }
+    for (const review of data.reviews) {
+      if (!seen.has(review.id)) {
+        seen.add(review.id);
+        merged.push(review);
+      }
+    }
+    return {
+      ...data,
+      reviews: merged.length > 0 ? merged : data.reviews,
+    };
+  }, [accumulatedReviews, data, page, useMockReviews]);
 
-  const reviewData = data;
-  const hasReviews = reviewData && reviewData.total > 0;
+  // 點擊「載入更多」時：先把當前已知的所有 reviews 快照到 accumulated，再翻頁
+  const handleLoadMore = useCallback(() => {
+    setAccumulatedReviews((prev) => {
+      if (!data) return prev;
+      const existingIds = new Set(prev.map((r) => r.id));
+      const newReviews = data.reviews.filter((r) => !existingIds.has(r.id));
+      return newReviews.length > 0 ? [...prev, ...newReviews] : prev;
+    });
+    setPage((prevPage) => prevPage + 1);
+  }, [data]);
+
+  const hasReviews = Boolean(reviewData && reviewData.total > 0);
+  const isInitialLoading = isLoading && !reviewData;
+  const isLoadingMore = isFetching && page > 1;
+  const loadedCount = reviewData?.reviews.length ?? 0;
+  const totalCount = reviewData?.total ?? 0;
+  const canLoadMore = !useMockReviews && totalCount > loadedCount;
+
+  const getDistributionCount = (star: 5 | 4 | 3 | 2 | 1): number => {
+    if (!reviewData) return 0;
+    switch (star) {
+      case 5:
+        return reviewData.distribution['5'];
+      case 4:
+        return reviewData.distribution['4'];
+      case 3:
+        return reviewData.distribution['3'];
+      case 2:
+        return reviewData.distribution['2'];
+      case 1:
+        return reviewData.distribution['1'];
+      default:
+        return 0;
+    }
+  };
 
   const renderStarBar = (star: 5 | 4 | 3 | 2 | 1) => {
-    const count = reviewData?.distribution[String(star) as '5' | '4' | '3' | '2' | '1'] || 0;
+    const count = getDistributionCount(star);
     const percentage = reviewData && reviewData.total > 0 ? (count / reviewData.total) * 100 : 0;
     const filledSegments = Math.round(percentage / 5);
 
@@ -131,6 +209,7 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
       >
         <div className="sticky top-0 z-10 flex items-center border-b border-border bg-white px-6 py-4">
           <button
+            type="button"
             ref={closeButtonRef}
             onClick={onClose}
             className="mr-3 rounded-full p-1 text-text-muted transition-colors hover:bg-bg-base"
@@ -144,9 +223,9 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
         </div>
 
         <div className="h-[calc(80vh-73px)] overflow-y-auto p-6">
-          {isLoading && (
+          {isInitialLoading && (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="size-8 animate-spin text-brand-500" />
+              <Loader2 className="size-8 animate-spin text-brand-500 motion-reduce:animate-none" />
             </div>
           )}
 
@@ -156,14 +235,14 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
             </div>
           )}
 
-          {!isLoading && !error && !hasReviews && (
+          {!isInitialLoading && !error && !hasReviews && (
             <div className="py-12 text-center">
               <Star size={48} className="mx-auto mb-3 fill-none text-border" />
               <p className="text-sm text-text-muted">尚無評價</p>
             </div>
           )}
 
-          {!isLoading && !error && hasReviews && reviewData && (
+          {!isInitialLoading && !error && hasReviews && reviewData && (
             <>
               <div className="mb-6 rounded-lg border border-border bg-bg-base p-4">
                 <div className="mb-4 flex items-baseline gap-2">
@@ -175,7 +254,7 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
                 </div>
 
                 <div className="space-y-1.5">
-                  {([5, 4, 3, 2, 1] as const).map((star) => renderStarBar(star))}
+                  {STAR_LEVELS.map((star) => renderStarBar(star))}
                 </div>
               </div>
 
@@ -216,13 +295,15 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
                 })}
               </div>
 
-              {reviewData.reviews.length < reviewData.total && (
+              {canLoadMore && (
                 <div className="mt-6 text-center">
                   <button
-                    onClick={() => setPage((p) => p + 1)}
-                    className="rounded-lg border border-border px-6 py-2 text-sm font-medium text-ink-900 transition hover:bg-bg-base"
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={isFetching}
+                    className="rounded-lg border border-border px-6 py-2 text-sm font-medium text-ink-900 transition hover:bg-bg-base disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    載入更多...
+                    {isLoadingMore ? '載入中...' : '載入更多...'}
                   </button>
                 </div>
               )}

@@ -103,7 +103,7 @@ export function getAuthUrl(mode: AuthMode, returnPath?: string, role?: AuthRole)
   }
 
   const origin = window.location.origin;
-  if (!origin) {
+  if (!origin || origin === 'null') {
     return toRelativeAuthUrl(params);
   }
 

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * useComments Hook
  *
  * 統一留言操作邏輯
@@ -9,9 +9,11 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { z } from 'zod';
+import { getErrorMessage } from '../lib/error';
 import { logger } from '../lib/logger';
 import { notify } from '../lib/notify';
+import { commentService } from '../services/commentService';
 import type { FeedComment } from '../types/comment';
 import { transformApiComment } from '../types/comment';
 
@@ -26,13 +28,76 @@ interface UseCommentsReturn {
   isLoading: boolean;
   isLoadingReplies: boolean;
   error: Error | null;
-
-  // 操作
   addComment: (content: string, parentId?: string) => Promise<void>;
   toggleLike: (commentId: string) => Promise<void>;
   deleteComment: (commentId: string) => Promise<void>;
   loadReplies: (commentId: string) => Promise<void>;
   refresh: () => Promise<void>;
+}
+
+const ApiErrorResponseSchema = z.object({
+  success: z.literal(false),
+  error: z.unknown(),
+});
+
+const CommentApiPayloadSchema = z.record(z.string(), z.unknown());
+
+const AddCommentResponseSchema = z.discriminatedUnion('success', [
+  z.object({
+    success: z.literal(true),
+    data: CommentApiPayloadSchema,
+  }),
+  ApiErrorResponseSchema,
+]);
+
+const ToggleLikeResultSchema = z.object({
+  likes_count: z.coerce.number(),
+  liked: z.boolean(),
+});
+
+const ToggleLikeResponseSchema = z.discriminatedUnion('success', [
+  z.object({
+    success: z.literal(true),
+    data: ToggleLikeResultSchema.optional(),
+  }),
+  ApiErrorResponseSchema,
+]);
+
+const DeleteCommentResponseSchema = z.discriminatedUnion('success', [
+  z.object({
+    success: z.literal(true),
+  }),
+  ApiErrorResponseSchema,
+]);
+
+function toError(error: unknown, fallbackMessage: string): Error {
+  const message = getErrorMessage(error);
+  if (!message || message === 'Unknown error') {
+    return new Error(fallbackMessage);
+  }
+  return new Error(message);
+}
+
+async function parseCommentApiResponse<T extends { success: boolean }>(
+  response: Response,
+  schema: z.ZodType<T>,
+  invalidPayloadMessage: string
+): Promise<T> {
+  const payload: unknown = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const errorPayload = ApiErrorResponseSchema.safeParse(payload);
+    if (errorPayload.success) {
+      throw new Error(getErrorMessage(errorPayload.data.error));
+    }
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const parsed = schema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error(invalidPayloadMessage);
+  }
+  return parsed.data;
 }
 
 export function useComments({
@@ -46,52 +111,15 @@ export function useComments({
   const [error, setError] = useState<Error | null>(null);
   const inFlightLikeIdsRef = useRef<Set<string>>(new Set());
 
-  // 載入頂層留言
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('community_comments')
-        .select(
-          `
-          id,
-          post_id,
-          parent_id,
-          content,
-          likes_count,
-          liked_by,
-          replies_count,
-          created_at,
-          updated_at,
-          author:profiles(id, name, avatar_url, role, floor)
-        `
-        )
-        .eq('post_id', postId)
-        .eq('community_id', communityId)
-        .is('parent_id', null) // 只取頂層留言
-        .order('created_at', { ascending: true });
-
-      if (fetchError) throw fetchError;
-
-      // 每次 refresh 都重新取得 userId，確保最新狀態
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const userId = user?.id;
-
-      const transformed = (data || []).map((raw) => {
-        const comment = transformApiComment(raw);
-        // 檢查當前用戶是否已按讚
-        const likedBy = (raw.liked_by as string[]) || [];
-        comment.isLiked = userId ? likedBy.includes(userId) : false;
-        return comment;
-      });
-
-      setComments(transformed);
+      const nextComments = await commentService.fetchTopLevelComments(postId, communityId);
+      setComments(nextComments);
     } catch (err) {
-      const e = err instanceof Error ? err : new Error('載入留言失敗');
+      const e = toError(err, '載入留言失敗');
       setError(e);
       logger.error('[useComments] refresh failed', { error: err });
       notify.error('載入留言失敗', '請稍後再試');
@@ -100,12 +128,9 @@ export function useComments({
     }
   }, [postId, communityId]);
 
-  // 新增留言/回覆
   const addComment = useCallback(
     async (content: string, parentId?: string) => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const session = await commentService.getSession();
       if (!session) {
         notify.error('請先登入', '登入後才能留言');
         return;
@@ -126,37 +151,40 @@ export function useComments({
           }),
         });
 
-        const result = await response.json();
-        if (!result.success) throw new Error(result.error);
+        const result = await parseCommentApiResponse(
+          response,
+          AddCommentResponseSchema,
+          '留言 API 回傳格式錯誤'
+        );
+        if (!result.success) {
+          throw new Error(getErrorMessage(result.error));
+        }
 
         const newComment = transformApiComment(result.data);
 
         if (parentId) {
-          // 回覆：使用 functional update 檢查父留言是否存在（避免閉包陷阱）
           let parentFound = false;
           setComments((prev) => {
-            const parentExists = prev.some((c) => c.id === parentId);
+            const parentExists = prev.some((comment) => comment.id === parentId);
             if (!parentExists) {
-              return prev; // 不變更，稍後 refresh
+              return prev;
             }
             parentFound = true;
-            return prev.map((c) => {
-              if (c.id === parentId) {
+            return prev.map((comment) => {
+              if (comment.id === parentId) {
                 return {
-                  ...c,
-                  repliesCount: c.repliesCount + 1,
-                  replies: [...(c.replies || []), newComment],
+                  ...comment,
+                  repliesCount: comment.repliesCount + 1,
+                  replies: [...(comment.replies || []), newComment],
                 };
               }
-              return c;
+              return comment;
             });
           });
-          // 如果找不到父留言，重新載入整個列表
           if (!parentFound) {
             await refresh();
           }
         } else {
-          // 頂層留言
           setComments((prev) => [...prev, newComment]);
         }
 
@@ -170,21 +198,12 @@ export function useComments({
     [postId, communityId, refresh]
   );
 
-  /**
-   * 按讚留言
-   *
-   * AUDIT-01 Phase 6: 競態條件修復
-   * - 使用「反向操作」回滾，而非「捕獲舊狀態」
-   * - 避免快速連擊時丟失中間操作
-   */
   const toggleLike = useCallback(async (commentId: string) => {
     if (inFlightLikeIdsRef.current.has(commentId)) {
       return;
     }
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const session = await commentService.getSession();
     if (!session) {
       notify.error('請先登入', '登入後才能按讚');
       return;
@@ -192,42 +211,38 @@ export function useComments({
 
     inFlightLikeIdsRef.current.add(commentId);
 
-    /**
-     * 輔助函數：套用按讚切換（可用於樂觀更新和回滾）
-     * 反向操作 = 再次調用同一函數
-     */
-    const applyLikeToggle = (comments: FeedComment[]): FeedComment[] => {
-      return comments.map((c) => {
-        if (c.id === commentId) {
-          const newIsLiked = !c.isLiked;
+    const applyLikeToggle = (current: FeedComment[]): FeedComment[] => {
+      return current.map((comment) => {
+        if (comment.id === commentId) {
+          const nextLiked = !comment.isLiked;
           return {
-            ...c,
-            isLiked: newIsLiked,
-            likesCount: newIsLiked ? c.likesCount + 1 : Math.max(0, c.likesCount - 1),
+            ...comment,
+            isLiked: nextLiked,
+            likesCount: nextLiked ? comment.likesCount + 1 : Math.max(0, comment.likesCount - 1),
           };
         }
-        // 檢查 replies
-        if (c.replies?.length) {
+        if (comment.replies?.length) {
           return {
-            ...c,
-            replies: c.replies.map((r) => {
-              if (r.id === commentId) {
-                const newIsLiked = !r.isLiked;
+            ...comment,
+            replies: comment.replies.map((reply) => {
+              if (reply.id === commentId) {
+                const nextLiked = !reply.isLiked;
                 return {
-                  ...r,
-                  isLiked: newIsLiked,
-                  likesCount: newIsLiked ? r.likesCount + 1 : Math.max(0, r.likesCount - 1),
+                  ...reply,
+                  isLiked: nextLiked,
+                  likesCount: nextLiked
+                    ? reply.likesCount + 1
+                    : Math.max(0, reply.likesCount - 1),
                 };
               }
-              return r;
+              return reply;
             }),
           };
         }
-        return c;
+        return comment;
       });
     };
 
-    // 1. 樂觀更新
     setComments(applyLikeToggle);
 
     try {
@@ -240,111 +255,97 @@ export function useComments({
         body: JSON.stringify({ action: 'like', commentId }),
       });
 
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error);
+      const result = await parseCommentApiResponse(
+        response,
+        ToggleLikeResponseSchema,
+        '按讚 API 回傳格式錯誤'
+      );
+      if (!result.success) {
+        throw new Error(getErrorMessage(result.error));
+      }
 
-      // 2. 使用伺服器回傳的實際值同步（確保數據一致性）
-      if (result.data?.likes_count !== undefined) {
+      const likeResult = result.data;
+      if (likeResult) {
         setComments((prev) =>
-          prev.map((c) => {
-            if (c.id === commentId) {
+          prev.map((comment) => {
+            if (comment.id === commentId) {
               return {
-                ...c,
-                likesCount: result.data.likes_count,
-                isLiked: result.data.liked,
+                ...comment,
+                likesCount: likeResult.likes_count,
+                isLiked: likeResult.liked,
               };
             }
-            if (c.replies?.length) {
+            if (comment.replies?.length) {
               return {
-                ...c,
-                replies: c.replies.map((r) => {
-                  if (r.id === commentId) {
+                ...comment,
+                replies: comment.replies.map((reply) => {
+                  if (reply.id === commentId) {
                     return {
-                      ...r,
-                      likesCount: result.data.likes_count,
-                      isLiked: result.data.liked,
+                      ...reply,
+                      likesCount: likeResult.likes_count,
+                      isLiked: likeResult.liked,
                     };
                   }
-                  return r;
+                  return reply;
                 }),
               };
             }
-            return c;
+            return comment;
           })
         );
       }
     } catch (err) {
-      // 3. 回滾：使用反向操作（再次 toggle = 還原）
-      // 這種方式不依賴閉包捕獲的舊狀態，避免競態條件
       setComments(applyLikeToggle);
       logger.warn('[useComments] toggleLike rollback', {
         commentId,
-        error: err instanceof Error ? err.message : String(err),
+        error: getErrorMessage(err),
         reason: 'API_FAILURE',
       });
       notify.error('按讚失敗', '請稍後再試');
     } finally {
       inFlightLikeIdsRef.current.delete(commentId);
     }
-  }, []); // 空依賴：不依賴任何外部狀態，完全使用 functional update
+  }, []);
 
-  /**
-   * 刪除留言
-   *
-   * AUDIT-01 Phase 6: 競態條件修復
-   * - 刪除操作無法用「反向操作」回滾（已刪除的資料無法復原）
-   * - 改用 useRef 捕獲刪除前的完整留言資料
-   * - 回滾時將該留言重新插入原位置
-   */
   const deleteComment = useCallback(async (commentId: string) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const session = await commentService.getSession();
     if (!session) {
       notify.error('請先登入', '登入後才能刪除');
       return;
     }
 
-    // 捕獲要刪除的留言資料（用於回滾）
-    // 注意：這裡用閉包變數在 functional update 內賦值
     let deletedComment: FeedComment | null = null;
     let deletedFromParentId: string | null = null;
     let deletedIndex = -1;
 
     setComments((prev) => {
-      // 先找出要刪除的留言
-      const topLevelIndex = prev.findIndex((c) => c.id === commentId);
+      const topLevelIndex = prev.findIndex((comment) => comment.id === commentId);
       if (topLevelIndex !== -1) {
         deletedComment = prev[topLevelIndex] ?? null;
         deletedIndex = topLevelIndex;
       } else {
-        // 在 replies 中尋找
-        for (const c of prev) {
-          if (c.replies) {
-            const replyIndex = c.replies.findIndex((r) => r.id === commentId);
-            if (replyIndex !== -1) {
-              deletedComment = c.replies[replyIndex] ?? null;
-              deletedFromParentId = c.id;
-              deletedIndex = replyIndex;
-              break;
-            }
+        for (const comment of prev) {
+          if (!comment.replies) continue;
+          const replyIndex = comment.replies.findIndex((reply) => reply.id === commentId);
+          if (replyIndex !== -1) {
+            deletedComment = comment.replies[replyIndex] ?? null;
+            deletedFromParentId = comment.id;
+            deletedIndex = replyIndex;
+            break;
           }
         }
       }
 
-      // 執行刪除
-      const filtered = prev.filter((c) => c.id !== commentId);
-      return filtered.map((c) => {
-        if (c.replies) {
-          const filteredReplies = c.replies.filter((r) => r.id !== commentId);
-          const deletedCount = c.replies.length - filteredReplies.length;
-          return {
-            ...c,
-            replies: filteredReplies,
-            repliesCount: Math.max(0, c.repliesCount - deletedCount),
-          };
-        }
-        return c;
+      const filtered = prev.filter((comment) => comment.id !== commentId);
+      return filtered.map((comment) => {
+        if (!comment.replies) return comment;
+        const filteredReplies = comment.replies.filter((reply) => reply.id !== commentId);
+        const deletedCount = comment.replies.length - filteredReplies.length;
+        return {
+          ...comment,
+          replies: filteredReplies,
+          repliesCount: Math.max(0, comment.repliesCount - deletedCount),
+        };
       });
     });
 
@@ -358,109 +359,81 @@ export function useComments({
         body: JSON.stringify({ commentId }),
       });
 
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error);
+      const result = await parseCommentApiResponse(
+        response,
+        DeleteCommentResponseSchema,
+        '刪除留言 API 回傳格式錯誤'
+      );
+      if (!result.success) {
+        throw new Error(getErrorMessage(result.error));
+      }
 
       notify.success('留言已刪除');
     } catch (err) {
-      // 回滾：將刪除的留言重新插入
-      if (deletedComment) {
+      const rollbackComment = deletedComment;
+      if (rollbackComment) {
         setComments((prev) => {
           if (deletedFromParentId) {
-            // 回滾到 replies
-            return prev.map((c) => {
-              if (c.id === deletedFromParentId) {
-                const newReplies = [...(c.replies || [])];
-                // 嘗試插入原位置，若超出範圍則 push 到末尾
-                if (deletedIndex >= 0 && deletedIndex <= newReplies.length) {
-                  newReplies.splice(deletedIndex, 0, deletedComment!);
-                } else {
-                  newReplies.push(deletedComment!);
-                }
-                return {
-                  ...c,
-                  replies: newReplies,
-                  repliesCount: c.repliesCount + 1,
-                };
+            return prev.map((comment) => {
+              if (comment.id !== deletedFromParentId) {
+                return comment;
               }
-              return c;
+              const newReplies = [...(comment.replies || [])];
+              if (deletedIndex >= 0 && deletedIndex <= newReplies.length) {
+                newReplies.splice(deletedIndex, 0, rollbackComment);
+              } else {
+                newReplies.push(rollbackComment);
+              }
+              return {
+                ...comment,
+                replies: newReplies,
+                repliesCount: comment.repliesCount + 1,
+              };
             });
-          } else {
-            // 回滾到頂層
-            const newComments = [...prev];
-            if (deletedIndex >= 0 && deletedIndex <= newComments.length) {
-              newComments.splice(deletedIndex, 0, deletedComment!);
-            } else {
-              newComments.push(deletedComment!);
-            }
-            return newComments;
           }
+
+          const newComments = [...prev];
+          if (deletedIndex >= 0 && deletedIndex <= newComments.length) {
+            newComments.splice(deletedIndex, 0, rollbackComment);
+          } else {
+            newComments.push(rollbackComment);
+          }
+          return newComments;
         });
       }
+
       logger.warn('[useComments] deleteComment rollback', {
         commentId,
-        error: err instanceof Error ? err.message : String(err),
+        error: getErrorMessage(err),
         reason: 'API_FAILURE',
       });
       notify.error('刪除失敗', '請稍後再試');
     }
-  }, []); // 空依賴：完全使用 functional update
+  }, []);
 
-  // 載入回覆
   const loadReplies = useCallback(async (commentId: string) => {
-    setIsLoadingReplies(true); // 使用獨立的 loading 狀態
+    setIsLoadingReplies(true);
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from('community_comments')
-        .select(
-          `
-          id,
-          post_id,
-          parent_id,
-          content,
-          likes_count,
-          liked_by,
-          replies_count,
-          created_at,
-          author:profiles(id, name, avatar_url, role, floor)
-        `
-        )
-        .eq('parent_id', commentId)
-        .order('created_at', { ascending: true });
+      const replies = await commentService.fetchReplies(commentId);
 
-      if (fetchError) throw fetchError;
-
-      // 每次 loadReplies 都重新取得 userId，確保最新狀態
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const userId = user?.id;
-
-      const replies = (data || []).map((raw) => {
-        const comment = transformApiComment(raw);
-        const likedBy = (raw.liked_by as string[]) || [];
-        comment.isLiked = userId ? likedBy.includes(userId) : false;
-        return comment;
-      });
-
-      // 合併策略：保留本地新增的回覆（避免覆蓋樂觀更新）
       setComments((prev) =>
-        prev.map((c) => {
-          if (c.id === commentId) {
-            const serverIds = new Set(replies.map((r) => r.id));
-            // 保留本地有但伺服器沒有的回覆（可能是剛新增的樂觀更新）
-            const localOnlyReplies = (c.replies || []).filter((r) => !serverIds.has(r.id));
-            return {
-              ...c,
-              replies: [...replies, ...localOnlyReplies],
-            };
+        prev.map((comment) => {
+          if (comment.id !== commentId) {
+            return comment;
           }
-          return c;
+          const serverIds = new Set(replies.map((reply) => reply.id));
+          const localOnlyReplies = (comment.replies || []).filter(
+            (reply) => !serverIds.has(reply.id)
+          );
+          return {
+            ...comment,
+            replies: [...replies, ...localOnlyReplies],
+          };
         })
       );
     } catch (err) {
-      const e = err instanceof Error ? err : new Error('載入回覆失敗');
+      const e = toError(err, '載入回覆失敗');
       setError(e);
       logger.error('[useComments] loadReplies failed', { error: err });
       notify.error('載入回覆失敗', '請稍後再試');

@@ -15,6 +15,8 @@ vi.mock('../../../hooks/usePageMode', () => ({
 
 vi.mock('../../../hooks/useAgentReviews', () => ({
   postAgentReview: vi.fn().mockResolvedValue({ reviewId: 'mock-review-1' }),
+  agentReviewsQueryPrefix: vi.fn().mockReturnValue(['agent-reviews', 'demo']),
+  agentProfileQueryKey: vi.fn().mockReturnValue(['agent-profile', 'demo']),
 }));
 
 const mockedUseFocusTrap = vi.mocked(useFocusTrap);

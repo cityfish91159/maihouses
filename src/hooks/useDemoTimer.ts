@@ -42,7 +42,7 @@ export function useDemoTimer(): void {
 
     // 剩餘時間 > 30 秒才顯示 warn toast，避免 warn 和 expire 幾乎同時觸發
     const warnDelay = remaining - DEMO_WARN_BEFORE_MS;
-    if (warnDelay > 0 || remaining > WARN_SKIP_THRESHOLD_MS) {
+    if (warnDelay > 0 && remaining > WARN_SKIP_THRESHOLD_MS) {
       timers.push(
         setTimeout(() => {
           const minutes = Math.max(1, getDemoRemainingMinutes());
@@ -57,10 +57,22 @@ export function useDemoTimer(): void {
       }, remaining)
     );
 
+    // iOS Safari 背景分頁 setTimeout 暫停補償
+    // 回前景時檢查 TTL 是否已過期
+    const visibilityHandler = () => {
+      if (document.visibilityState !== 'visible') return;
+      const nowRemaining = getDemoTimeRemaining();
+      if (nowRemaining <= 0) {
+        handleDemoExpire();
+      }
+    };
+    document.addEventListener('visibilitychange', visibilityHandler);
+
     return () => {
       for (const timer of timers) {
         clearTimeout(timer);
       }
+      document.removeEventListener('visibilitychange', visibilityHandler);
     };
   }, [mode]);
 }

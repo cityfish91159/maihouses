@@ -772,7 +772,6 @@ export const PropertyDetailPage: React.FC = () => {
               <CommunityReviews
                 isLoggedIn={isLoggedIn}
                 communityId={property.communityId}
-                {...(property.isDemo !== undefined && { isDemo: property.isDemo })}
                 onToggleLike={(propertyId) => toggleLike.mutate(propertyId)}
               />
             </div>

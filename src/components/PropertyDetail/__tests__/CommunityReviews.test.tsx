@@ -29,11 +29,22 @@ class MockIntersectionObserver implements IntersectionObserver {
     this.callback = callback;
   }
 
+  private createIntersectingEntry(): IntersectionObserverEntry {
+    const target = document.createElement('div');
+    const rect = target.getBoundingClientRect();
+    return {
+      time: 0,
+      target,
+      rootBounds: null,
+      boundingClientRect: rect,
+      intersectionRect: rect,
+      isIntersecting: true,
+      intersectionRatio: 1,
+    };
+  }
+
   observe = () => {
-    this.callback(
-      [{ isIntersecting: true } as IntersectionObserverEntry],
-      this as unknown as IntersectionObserver
-    );
+    this.callback([this.createIntersectingEntry()], this);
   };
 
   disconnect = vi.fn();

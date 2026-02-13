@@ -40,9 +40,16 @@ export function readDemoTimestamp(): number | null {
   return null;
 }
 
-export function setDemoMode(timestamp = Date.now()): void {
+/**
+ * 寫入演示模式時間戳
+ * @returns true 寫入成功，false 寫入失敗（iOS 私隱模式配額超限）
+ */
+export function setDemoMode(timestamp = Date.now()): boolean {
   const payload = JSON.stringify({ t: timestamp });
   safeLocalStorage.setItem(DEMO_STORAGE_KEY, payload);
+  // 回讀驗證：防止 iOS 私隱模式靜默失敗
+  const readBack = safeLocalStorage.getItem(DEMO_STORAGE_KEY);
+  return readBack === payload;
 }
 
 export function clearDemoMode(): void {
@@ -87,13 +94,23 @@ export function subscribeDemoModeStorageSync(onSync: () => void): () => void {
     }, DEMO_STORAGE_SYNC_DEBOUNCE_MS);
   };
 
+  // iOS Safari 背景回前景時 StorageEvent 不一定觸發
+  // 用 visibilitychange 作為補充：回前景時主動重算
+  const visibilityHandler = () => {
+    if (document.visibilityState === 'visible') {
+      onSync();
+    }
+  };
+
   window.addEventListener('storage', handler);
+  document.addEventListener('visibilitychange', visibilityHandler);
 
   return () => {
     if (reloadTimer) {
       clearTimeout(reloadTimer);
     }
     window.removeEventListener('storage', handler);
+    document.removeEventListener('visibilitychange', visibilityHandler);
   };
 }
 
