@@ -6,10 +6,8 @@ import { HomeCard } from '../components/HomeCard';
 import { ReviewCard } from '../components/ReviewCard';
 import { getFeaturedHomeReviews } from '../../../services/communityService';
 import { usePageMode } from '../../../hooks/usePageMode';
+import { SEED_COMMUNITY_ID } from '../../../constants/seed';
 import type { ReviewForUI } from '../../../types/review';
-
-// V4: Extract hardcoded URL
-const SEED_REVIEWS_URL = '/maihouses/community-wall_mvp.html';
 
 /**
  * 將 ReviewForUI 轉換為 ReviewCard 所需格式
@@ -76,6 +74,7 @@ function mapBackupToReviewWithNavigation(
 export default function CommunityTeaser() {
   const navigate = useNavigate();
   const mode = usePageMode();
+  const seedWallPath = `/community/${SEED_COMMUNITY_ID}/wall`;
 
   // V2: Use React Query instead of useEffect + useState
   const {
@@ -102,10 +101,10 @@ export default function CommunityTeaser() {
       if (review.source === 'real' && review.communityId) {
         navigate(`/community/${review.communityId}/wall`);
       } else {
-        window.location.href = SEED_REVIEWS_URL; // V4: Use constant
+        navigate(seedWallPath);
       }
     },
-    [navigate]
+    [navigate, seedWallPath]
   );
 
   // Loading skeleton
@@ -202,9 +201,10 @@ export default function CommunityTeaser() {
         ))}
       </div>
 
-      <a
+      <button
+        type="button"
         className="hover:border-brand-700/20 group relative mt-4 flex items-center gap-2.5 rounded-xl border border-brand-100 bg-gradient-to-b from-white to-brand-50 p-3.5 font-black text-brand-700 no-underline transition-all duration-200 hover:shadow-brand-md active:translate-y-px lg:justify-center lg:text-center"
-        href={SEED_REVIEWS_URL}
+        onClick={() => navigate(seedWallPath)}
         aria-label="點我看更多社區評價"
       >
         <span className="text-[15px] tracking-wide transition-colors group-hover:text-brand-600 lg:mx-auto">
@@ -213,7 +213,7 @@ export default function CommunityTeaser() {
         <span className="ml-auto rounded-lg bg-brand-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors group-hover:bg-brand-600 lg:absolute lg:right-[14px] lg:top-1/2 lg:ml-0 lg:-translate-y-1/2">
           前往社區牆 →
         </span>
-      </a>
+      </button>
     </HomeCard>
   );
 }

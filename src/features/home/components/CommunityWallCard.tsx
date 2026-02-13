@@ -1,4 +1,6 @@
 ﻿import { ExternalLink, Star, MessageSquare } from 'lucide-react';
+import { ROUTES } from '../../../constants/routes';
+import { SEED_COMMUNITY_ID } from '../../../constants/seed';
 
 /**
  * ============================================
@@ -67,7 +69,7 @@ export default function CommunityWallCard({
   const finalReviewCount = reviewCount ?? mockData?.reviewCount ?? 10;
   const finalRating = rating ?? mockData?.rating ?? 4.0;
 
-  const communityWallUrl = '/maihouses/community-wall_mvp.html';
+  const communityWallUrl = ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
 
   return (
     <a

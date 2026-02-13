@@ -13,6 +13,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronRight, Lock, MessageSquare, Star, ThumbsUp } from 'lucide-react';
 import { getLoginUrl, getCurrentPath } from '../../lib/authUtils';
 import { ROUTES } from '../../constants/routes';
+import { SEED_COMMUNITY_ID } from '../../constants/seed';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
 import { INTERSECTION_THRESHOLD, REVIEW_KEY_PREVIEW_LENGTH } from './constants';
@@ -187,14 +188,23 @@ export const CommunityReviews = memo(function CommunityReviews({
   }, []);
 
   // Use custom hook for data fetching and state
-  const { publicReviews, lockedReview, reviewButtonText, handleToggleLike } = useCommunityReviews({
+  const { publicReviews, lockedReview, reviewButtonText, toggleLocalLike } = useCommunityReviews({
     communityId,
     isDemo,
     isVisible,
-    onToggleLike,
   });
 
   const canInteract = isLoggedIn;
+  const handleToggleLike = useCallback(
+    (propertyId: string) => {
+      if (isDemo) {
+        toggleLocalLike(propertyId);
+        return;
+      }
+      onToggleLike?.(propertyId);
+    },
+    [isDemo, onToggleLike, toggleLocalLike]
+  );
 
   // Auth redirect handler
   const loginUrl = getLoginUrl(getCurrentPath());
@@ -204,8 +214,8 @@ export const CommunityReviews = memo(function CommunityReviews({
 
   // Community wall navigation
   const handleCommunityWall = useCallback(() => {
-    window.location.href = ROUTES.COMMUNITY_WALL_MVP;
-  }, []);
+    window.location.href = ROUTES.COMMUNITY_WALL(communityId ?? SEED_COMMUNITY_ID);
+  }, [communityId]);
 
   return (
     <div ref={ref} className="rounded-2xl border border-border bg-bg-card p-4 shadow-sm">

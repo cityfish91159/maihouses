@@ -7,7 +7,7 @@
 - [x] **#1a** `usePageMode()` hook — 模式判斷 + localStorage TTL + 跨分頁同步（1 新檔案）✅ 2026-02-12
 - [x] **#1b** `useModeAwareAction` hook — 三模式行為派發 + cache key 規範（1 新檔案）✅ 2026-02-13
 - [x] **#1c** `DemoGate.tsx` — Logo 連按 5 次觸發演示模式（1 新檔案）✅ 2026-02-13
-- [ ] **#2** 全站靜態 HTML 連結改 React 路由 + `SEED_COMMUNITY_ID`（7 檔 16 處）
+- [x] **#2** 全站靜態 HTML 連結改 React 路由 + `SEED_COMMUNITY_ID`（7 檔 16 處）✅ 2026-02-13
 - [ ] **#3** 按讚三模式行為分離 — mode guard 優先於 auth guard（2 檔）
 - [x] **#14a** 確認 Toast 支援 action button（前置條件）✅ 2026-02-12
 - [ ] **#14b** `useRegisterGuide()` hook — 訪客引導註冊 8 場景（1 新檔案）
@@ -88,6 +88,7 @@
 #2 連結清理 ───────────→ #9 移除 HTML 頁
 #5a UAG Landing ───────┬→ #5b 遷移 / #27 空狀態
 #12 Header ────────────→ #26 登出清理
+#1a + #10b + #14b ─────→ #29 跨裝置驗證修復
 ```
 
 ## 施工順序
@@ -101,7 +102,7 @@
 | Wave 3 | #4a、#4b、#5b、#6a、#6b、#7、#8a、#27 | 逐頁接入（#8a 升 P1 併入）|
 | Wave 3B | #8b | 依賴 #8a |
 | Wave 4 | #9、#10a、#13、#16、#21、#22、#23 | 收尾清理 |
-| Wave 4B | #10b、#24、#25 | 退出清理 + Chat/Assure |
+| Wave 4B | #10b、#24、#25、#29 | 退出清理 + Chat/Assure + 跨裝置修復 |
 | Wave 4C | #26 | 登出清理（依賴 #12 + #10b）|
 | Wave 5 | #11 | 產品方向確認 |
 
@@ -252,24 +253,48 @@ function useModeAwareAction<T>(handlers: {
 
 ---
 
-### #2 靜態 HTML 連結改 React 路由
+### #2 ✅ 靜態 HTML 連結改 React 路由
 
-**目標**：消滅 `community-wall_mvp.html` 死路
+**已完成** 2026-02-13
 
-**依賴**：無（需先定值 `SEED_COMMUNITY_ID`）
+**目標**：消滅 `community-wall_mvp.html` 死路，統一導向 React 社區牆路由
 
-**新增**：`src/constants/seed.ts`
+**依賴**：無（已定值 `SEED_COMMUNITY_ID`）
 
-| 檔案 | 行號 | 改動 |
-|------|------|------|
-| `CommunityTeaser.tsx` | 11, 103, 205 | seed 卡片 + 查看更多 → `/community/{SEED_ID}/wall` |
-| `Header.tsx` | 262 | 膠囊「社區評價」→ 同上 |
-| `CommunityWallCard.tsx` | 70 | 同上 |
-| `routes.ts` | 31 | `COMMUNITY_WALL_MVP` 常數移除 |
+**摘要**
 
-**Blocker**：`SEED_COMMUNITY_ID` 未定值前禁止合併
+- [x] 新增 `SEED_COMMUNITY_ID` 並集中管理，消除硬編碼
+- [x] 首頁 `CommunityTeaser` 的 seed 卡片與「查看更多」改走 React 路由
+- [x] `Header` 社區評價入口（手機選單 + 膠囊）改走 React 路由
+- [x] `CommunityWallCard` 靜態 HTML 連結改走 React 路由
+- [x] `PropertyDetail/CommunityReviews` 前往社區牆改為動態路由（無 id 時 fallback `SEED_COMMUNITY_ID`）
+- [x] 移除 `ROUTES.COMMUNITY_WALL_MVP`
 
-**驗收**：`grep -r "community-wall_mvp" src/` 回傳 0 筆
+**本次修改**
+
+1. `src/constants/seed.ts`（新增）
+   - 新增 `SEED_COMMUNITY_ID = 'test-uuid'`（`Object.freeze` 防止意外修改）。
+2. `src/features/home/sections/CommunityTeaser.tsx`
+   - 移除 `SEED_REVIEWS_URL = '/maihouses/community-wall_mvp.html'`。
+   - 點擊 seed 評價與「查看更多真實住戶評價」統一改為 `navigate('/community/${SEED_COMMUNITY_ID}/wall')`。
+   - 「查看更多」由 `<a>` 改為 `<button>`，避免靜態 HTML 導流。
+3. `src/components/Header/Header.tsx`
+   - `ROUTES.COMMUNITY_WALL_MVP` 改為 `ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)`。
+4. `src/features/home/components/CommunityWallCard.tsx`
+   - `communityWallUrl` 改為 `ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)`。
+5. `src/components/PropertyDetail/CommunityReviews.tsx`
+   - `handleCommunityWall` 改為 `ROUTES.COMMUNITY_WALL(communityId ?? SEED_COMMUNITY_ID)`。
+6. `src/constants/routes.ts`
+   - 移除 `COMMUNITY_WALL_MVP` 常數。
+7. `src/features/home/sections/__tests__/CommunityTeaser.test.tsx`
+   - seed 評價導向測試改為驗證 `mockNavigate('/community/test-uuid/wall')`。
+
+**驗證結果**
+
+- [x] `rg -n "COMMUNITY_WALL_MVP|community-wall_mvp" src` 無結果
+- [x] `npm run test -- src/features/home/sections/__tests__/CommunityTeaser.test.tsx src/components/Header/Header.demoGate.integration.test.tsx` 通過
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `npm run gate` 通過
 
 ---
 
@@ -950,6 +975,78 @@ UI 設計需 `/ui-ux-pro-max`。
 
 ---
 
+### #29 跨裝置三模式驗證修復
+
+**目標**：修復 iOS Safari / 手機版 / 私隱模式下三模式運作的 18 項問題
+
+**依賴**：#1a、#10b、#14b
+
+**分類**：
+
+#### P0 — 功能不可用
+
+| # | 檔案 | 行號 | 問題 | 修復 | 狀態 |
+|---|------|------|------|------|------|
+| 1 | `src/lib/safeStorage.ts` | 47-49 | iOS 私隱模式探測寫入通過但後續 `setItem` 配額超限靜默失敗 | 探測改 64 字元回讀驗證 + `setDemoMode` 回傳 boolean | ✅ |
+| 2 | `src/hooks/useDemoTimer.ts` | 45 | `\|\|` 邏輯錯誤：remaining 30s~5min 立即觸發 warn | 改為 `&&` | ✅ |
+| 3 | `src/hooks/useDemoTimer.ts` | 54-58 | iOS 背景分頁 `setTimeout` 暫停，到期不觸發 | 加 `visibilitychange` 補償 | ✅ |
+| 4 | `src/hooks/usePageMode.ts` | 29-35 | iOS `StorageEvent` 背景回前景不觸發 | 透過 `subscribeDemoModeStorageSync` 的 `visibilitychange` 補償 | ✅ |
+
+#### P1 — 體驗降級
+
+| # | 檔案 | 行號 | 問題 | 修復 | 狀態 |
+|---|------|------|------|------|------|
+| 5 | `src/lib/pageMode.ts` | 73-98 | `subscribeDemoModeStorageSync` iOS 可能漏觸發 | 加 `visibilitychange` 回前景主動 `onSync()` | ✅ |
+| 6 | `src/lib/authUtils.ts` | 105-108 | `origin` 在 iOS WebView 回傳 `"null"` 字串 | `!origin \|\| origin === 'null'` | ✅ |
+| 7 | `src/app/config.ts` | 74 | 同上 `origin` 問題 | SSR guard + `origin === 'null'` fallback | ✅ |
+| 8 | `LegacyPropertyPage.css` | 60 | `100vh` iOS 包含 URL bar | 改 `100dvh` | |
+| 9 | `UAG-deai-v2.module.css` | 105 | 同上 | 改 `100dvh` | |
+| 10 | `UIUXDemo.module.css` | 11 | 同上 | 改 `100dvh` | |
+| 11 | `src/pages/UAG/Profile/index.tsx` | 114 | `env(safe-area-inset-bottom)` 無 fallback | 加 fallback `20px` | |
+| 12 | `src/lib/notify.ts` | `mapOptions` | Sonner action button 預設 28px 不符 Apple HIG 44px | `actionButtonStyle: { minHeight: 44, minWidth: 44 }` | ✅ |
+
+#### P2 — 可優化（歸入對應工單）
+
+| # | 檔案 | 行號 | 問題 | 修復 | 歸屬 |
+|---|------|------|------|------|------|
+| 13 | `CommunityReviews.tsx` | 207 | 仍引用 `ROUTES.COMMUNITY_WALL_MVP` | 改 React 路由 | #2 |
+| 14 | `FeedPostCard.tsx` | 110 | `disabled={!isLoggedIn}` 殘留 | useModeAwareAction | #3/#6b |
+| 15 | `CommentList.tsx` | 184 | 同上 | 同上 | #3/#8b |
+| 16 | `PostsSection.tsx` | 279 | 同上 | 同上 | #8b |
+| 17 | `Wall.tsx` | 215-227 | 獨立 `StorageEvent` 重複 | 移除，用 `subscribeDemoModeStorageSync` | #8a |
+| 18 | `PropertyUploadPage.tsx` | 80-86 | 同上 | 同上 | #5b |
+
+**施工紀錄 2026-02-13**：
+
+已完成 P0 全部（#1-4）+ P1 部分（#5-7, #12），共 8 項。
+
+修改檔案：
+1. `src/lib/safeStorage.ts` — 探測改 64 字元回讀驗證
+2. `src/lib/pageMode.ts` — `setDemoMode` 回傳 boolean（回讀驗證）、`subscribeDemoModeStorageSync` 加 `visibilitychange`
+3. `src/hooks/useDemoTimer.ts` — `||` → `&&`、加 `visibilitychange` 補償
+4. `src/lib/authUtils.ts` — `origin === 'null'` 防禦
+5. `src/app/config.ts` — SSR guard + `origin === 'null'` fallback
+6. `src/lib/notify.ts` — `actionButtonStyle: { minHeight: 44, minWidth: 44 }`
+
+驗證：
+- [x] `npm run gate` 通過
+- [x] `notify.test.ts` 13 tests 通過
+- [x] `authUtils.test.ts` 27 tests 通過
+- [x] `pageMode.test.ts` 13 tests 通過
+- [x] `useDemoTimer.test.tsx` 3 tests 通過
+- [x] `usePageMode.test.tsx` 4 tests 通過
+
+未完成：P1 #8-11（CSS `100vh` → `dvh` + safe-area fallback）歸 Wave 4 施工。P2 歸各對應工單。
+
+**驗收**：
+- iOS Safari 私隱模式：DemoGate 觸發後正確進入演示
+- iOS 背景分頁 30 秒後回前景：`useDemoTimer` 補償觸發
+- 跨分頁同步：分頁 A 退出 → 分頁 B 即時反應
+- `100vh` 無殘留：`grep -r "100vh" src/ --include="*.css" --include="*.module.css"` 回傳 0 筆
+- `env(safe-area-inset-bottom)` 全部有 fallback
+
+---
+
 ## 核心原則
 
 1. **訪客 ≠ Mock** — 正式頁面的「未登入視角」
@@ -991,3 +1088,4 @@ grep -r "usePageMode" src/pages/Chat/ src/pages/Assure/  # #24/#25 後有結果
 | 3 | `getSafeReturnPath()` 加黑名單（`/uag`）、auth 角色統一用 `app_metadata`、`?mock=true` 做 301 |
 | 4 | `maimai-mood-v1` / `uag_last_aid` 加清理清單 |
 | 4B/C | `exitDemoMode()` 順序：clear cache → 清 storage → `location.replace('/')`、跨分頁 storage handler 需清 cache |
+| 4B (#29) | iOS Safari：`setTimeout` 背景暫停需 `visibilitychange` 補償、`StorageEvent` 背景不觸發、私隱模式 `setItem` 靜默失敗、`100vh` → `dvh`、`origin === 'null'` WebView 邊界 |

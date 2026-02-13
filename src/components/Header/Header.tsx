@@ -3,6 +3,7 @@ import { Search, LogIn, UserPlus, List, Menu, X } from 'lucide-react';
 import { Logo } from '../Logo/Logo';
 import { DemoGate } from '../DemoGate/DemoGate';
 import { ROUTES, RouteUtils } from '../../constants/routes';
+import { SEED_COMMUNITY_ID } from '../../constants/seed';
 import { getCurrentPath, getLoginUrl, getSignupUrl } from '../../lib/authUtils';
 import { notify } from '../../lib/notify';
 import { MaiMaiBase } from '../MaiMai';
@@ -166,7 +167,7 @@ export default function Header() {
                 <span>房地產列表</span>
               </a>
               <a
-                href={ROUTES.COMMUNITY_WALL_MVP}
+                href={ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)}
                 className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -283,7 +284,7 @@ export default function Header() {
             <div className="relative z-10 mt-6 grid grid-cols-3 gap-2">
               {['社區評價', '房仲專區', '邁鄰居'].map((text) => {
                 const getHref = (label: string) => {
-                  if (label === '社區評價') return ROUTES.COMMUNITY_WALL_MVP;
+                  if (label === '社區評價') return ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
                   if (label === '房仲專區') return ROUTES.UAG;
                   return '#';
                 };

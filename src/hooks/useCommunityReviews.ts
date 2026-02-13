@@ -151,7 +151,6 @@ interface UseCommunityReviewsOptions {
   communityId: string | undefined;
   isDemo: boolean | undefined;
   isVisible: boolean;
-  onToggleLike: ((propertyId: string) => void) | undefined;
 }
 
 interface UseCommunityReviewsReturn {
@@ -160,14 +159,13 @@ interface UseCommunityReviewsReturn {
   lockedReview: ReviewPreview;
   totalReviews: number | null;
   reviewButtonText: string;
-  handleToggleLike: (propertyId: string) => void;
+  toggleLocalLike: (propertyId: string) => void;
 }
 
 export function useCommunityReviews({
   communityId,
   isDemo = false,
   isVisible,
-  onToggleLike,
 }: UseCommunityReviewsOptions): UseCommunityReviewsReturn {
   const useMockData = isDemo && !communityId;
 
@@ -229,27 +227,22 @@ export function useCommunityReviews({
     return () => controller.abort();
   }, [communityId, isVisible]);
 
-  // Toggle like handler
-  const handleToggleLike = useCallback(
-    (propertyId: string) => {
-      if (isDemo) {
-        setReviewPreviews((prev) =>
-          prev.map((review) =>
-            review.propertyId === propertyId
-              ? {
-                  ...review,
-                  liked: !review.liked,
-                  totalLikes: review.liked ? review.totalLikes - 1 : review.totalLikes + 1,
-                }
-              : review
-          )
-        );
-        return;
-      }
-      onToggleLike?.(propertyId);
-    },
-    [isDemo, onToggleLike]
-  );
+  // Demo 模式按讚：僅做本地狀態切換，不寫入 API/DB
+  const toggleLocalLike = useCallback((propertyId: string) => {
+    setReviewPreviews((prev) =>
+      prev.map((review) =>
+        review.propertyId === propertyId
+          ? {
+              ...review,
+              liked: !review.liked,
+              totalLikes: review.liked
+                ? Math.max(0, review.totalLikes - 1)
+                : review.totalLikes + 1,
+            }
+          : review
+      )
+    );
+  }, []);
 
   // Computed values
   const publicReviews = useMemo(() => reviewPreviews.slice(0, 2), [reviewPreviews]);
@@ -266,6 +259,6 @@ export function useCommunityReviews({
     lockedReview,
     totalReviews,
     reviewButtonText,
-    handleToggleLike,
+    toggleLocalLike,
   };
 }

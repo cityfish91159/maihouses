@@ -148,7 +148,7 @@ describe('CommunityTeaser', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/community/comm-123/wall');
   });
 
-  it('redirects to static page when clicking seed review', () => {
+  it('navigates to seed community wall when clicking seed review', () => {
     const mockData = [
       {
         id: 'seed-1',
@@ -173,6 +173,6 @@ describe('CommunityTeaser', () => {
     const card = screen.getByText('Seed User: Seed content').closest('div[role="button"]');
     fireEvent.click(card!);
 
-    expect(window.location.href).toBe('/maihouses/community-wall_mvp.html');
+    expect(mockNavigate).toHaveBeenCalledWith('/community/test-uuid/wall');
   });
 });
