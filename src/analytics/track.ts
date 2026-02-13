@@ -7,6 +7,8 @@ export async function track(event: string, payload?: Record<string, unknown>) {
   if (isDemoMode()) return;
 
   try {
+    // keepalive + await：確保頁面離開時請求不中斷，
+    // 同時 await 讓呼叫端可選擇等待完成後再執行後續邏輯
     const response = await fetch('/api/analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

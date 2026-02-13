@@ -94,4 +94,23 @@ describe('useDemoTimer', () => {
     expect(clearSpy).toHaveBeenCalledTimes(1);
     expect(pageModeMocks.reloadPage).toHaveBeenCalledTimes(1);
   });
+
+  it('remaining < 30 秒時應跳過 warn，直接到期清理', () => {
+    const queryClient = new QueryClient();
+    const clearSpy = vi.spyOn(queryClient, 'clear');
+
+    modeState.value = 'demo';
+    pageModeMocks.getDemoTimeRemaining.mockReturnValue(10_000); // 10 秒
+
+    renderHook(() => useDemoTimer(), { wrapper: createWrapper(queryClient) });
+
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+
+    expect(notifyMocks.info).not.toHaveBeenCalled();
+    expect(pageModeMocks.clearDemoMode).toHaveBeenCalledTimes(1);
+    expect(clearSpy).toHaveBeenCalledTimes(1);
+    expect(pageModeMocks.reloadPage).toHaveBeenCalledTimes(1);
+  });
 });

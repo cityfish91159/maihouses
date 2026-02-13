@@ -6,18 +6,28 @@
  * This wrapper catches these errors to prevent the app from crashing.
  */
 
+import { getErrorMessage } from './error';
 import { logger } from './logger';
 
-const noopStorage = {
+interface SafeStorage {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
+  clear: () => void;
+  length: number;
+  key: (index: number) => string | null;
+}
+
+const noopStorage: SafeStorage = Object.freeze({
   getItem: (_key: string) => null,
   setItem: (_key: string, _value: string) => {},
   removeItem: (_key: string) => {},
   clear: () => {},
   length: 0,
   key: (_index: number) => null,
-};
+});
 
-function getStorage(type: 'localStorage' | 'sessionStorage') {
+function getStorage(type: 'localStorage' | 'sessionStorage'): SafeStorage {
   // 1. 先檢查 window 是否存在（SSR 安全）
   if (typeof window === 'undefined') {
     return noopStorage;
@@ -47,15 +57,26 @@ function getStorage(type: 'localStorage' | 'sessionStorage') {
 export const safeLocalStorage = getStorage('localStorage');
 export const safeSessionStorage = getStorage('sessionStorage');
 
-// Helper for type-safe usage (optional)
-export const storage = {
+interface StorageHelper {
+  get: (key: string) => string | null;
+  set: (key: string, value: string) => void;
+  remove: (key: string) => void;
+}
+
+export const storage: StorageHelper = {
   get: (key: string) => safeLocalStorage.getItem(key),
   set: (key: string, value: string) => {
     try {
       safeLocalStorage.setItem(key, value);
-    } catch (e) {
-      logger.warn('[safeStorage] Storage setItem failed', { error: e });
+    } catch (error) {
+      logger.warn('[safeStorage] Storage setItem failed', { error: getErrorMessage(error) });
     }
   },
-  remove: (key: string) => safeLocalStorage.removeItem(key),
+  remove: (key: string) => {
+    try {
+      safeLocalStorage.removeItem(key);
+    } catch (error) {
+      logger.warn('[safeStorage] Storage removeItem failed', { error: getErrorMessage(error) });
+    }
+  },
 };

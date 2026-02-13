@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { z } from 'zod';
 import { track } from '../analytics/track';
 import { getErrorMessage } from '../lib/error';
 import { logger } from '../lib/logger';
@@ -31,9 +32,18 @@ const UAG_GRADE_RANK = {
   F: 1,
 } as const;
 
+const TrackResponseSchema = z.object({
+  success: z.boolean(),
+  grade: z.string().optional(),
+  reason: z.string().optional(),
+});
+
+const VALID_GRADES = new Set(Object.keys(UAG_GRADE_RANK));
+
 const getGradeRank = (grade: unknown): number => {
   if (typeof grade !== 'string') return DEFAULT_GRADE_RANK;
-  return UAG_GRADE_RANK[grade as keyof typeof UAG_GRADE_RANK] ?? DEFAULT_GRADE_RANK;
+  if (!VALID_GRADES.has(grade)) return DEFAULT_GRADE_RANK;
+  return UAG_GRADE_RANK[grade as keyof typeof UAG_GRADE_RANK];
 };
 
 /**
@@ -79,6 +89,7 @@ export const usePropertyTracker = (
   district: string,
   onGradeUpgrade?: (newGrade: string, reason?: string) => void
 ) => {
+  const isDemo = isDemoMode();
   // 使用 useState 惰性初始化，避免在 render 中調用 Date.now()
   const [enterTime] = useState(() => Date.now());
   const actions = useRef({
@@ -139,7 +150,7 @@ export const usePropertyTracker = (
   // 發送追蹤事件 (支援 S 級回調)
   const sendEvent = useCallback(
     async (eventType: string, useBeacon = false) => {
-      if (isDemoMode()) return;
+      if (isDemo) return;
 
       const payload = buildPayload(eventType);
 
@@ -175,18 +186,22 @@ export const usePropertyTracker = (
           body: JSON.stringify(payload),
           keepalive: true, // 防止頁面切換時中斷
         });
-        const data = await res.json();
+        const raw: unknown = await res.json();
+        const parsed = TrackResponseSchema.safeParse(raw);
 
-        // 檢查是否升級到 S 級
-        if (data.success && data.grade) {
-          const newRank = getGradeRank(data.grade);
+        if (!parsed.success) {
+          logger.warn('[UAG] Track response 格式驗證失敗', {
+            error: parsed.error.message,
+          });
+        } else if (parsed.data.success && parsed.data.grade) {
+          const newRank = getGradeRank(parsed.data.grade);
           const oldRank = getGradeRank(currentGrade.current);
 
           if (newRank > oldRank) {
-            currentGrade.current = data.grade;
+            currentGrade.current = parsed.data.grade;
             // S 級即時通知 (含 reason)
-            if (data.grade === 'S' && onGradeUpgrade) {
-              onGradeUpgrade('S', data.reason);
+            if (parsed.data.grade === 'S' && onGradeUpgrade) {
+              onGradeUpgrade('S', parsed.data.reason);
             }
           }
         }
@@ -203,7 +218,7 @@ export const usePropertyTracker = (
         navigator.sendBeacon(UAG_TRACK_ENDPOINT, blob);
       }
     },
-    [buildPayload, onGradeUpgrade, propertyId]
+    [buildPayload, isDemo, onGradeUpgrade, propertyId]
   );
 
   // 追蹤滾動深度
@@ -231,7 +246,7 @@ export const usePropertyTracker = (
 
   // 初始化：發送 page_view，離開時發送 page_exit
   useEffect(() => {
-    if (!propertyId || isDemoMode()) return;
+    if (!propertyId || isDemo) return;
 
     // 發送 page_view (用 beacon，不需等回應)
     sendEventRef.current('page_view', true);
@@ -261,16 +276,16 @@ export const usePropertyTracker = (
         handleUnload();
       }
     };
-  }, [propertyId]);
+  }, [isDemo, propertyId]);
 
   // 暴露追蹤方法
   return {
     trackPhotoClick: () => {
-      if (isDemoMode()) return;
+      if (isDemo) return;
       actions.current.click_photos++;
     },
     trackLineClick: async () => {
-      if (isDemoMode()) return;
+      if (isDemo) return;
       if (clickSent.current.line) return; // 防重複點擊
       clickSent.current.line = true;
 
@@ -291,7 +306,7 @@ export const usePropertyTracker = (
       }
     },
     trackCallClick: async () => {
-      if (isDemoMode()) return;
+      if (isDemo) return;
       if (clickSent.current.call) return; // 防重複點擊
       clickSent.current.call = true;
 
@@ -311,7 +326,7 @@ export const usePropertyTracker = (
       }
     },
     trackMapClick: async () => {
-      if (isDemoMode()) return;
+      if (isDemo) return;
       if (clickSent.current.map) return; // 防重複點擊
       clickSent.current.map = true;
 

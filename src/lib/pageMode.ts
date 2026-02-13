@@ -4,19 +4,19 @@ import { safeLocalStorage } from './safeStorage';
 export type PageMode = 'visitor' | 'demo' | 'live';
 
 export const DEMO_STORAGE_KEY = 'mai-demo-verified';
-export const DEMO_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
-export const DEMO_WARN_BEFORE_MS = 5 * 60 * 1000; // 5 minutes
+export const DEMO_TTL_MS = 2 * 60 * 60 * 1000; // 2 小時
+export const DEMO_WARN_BEFORE_MS = 5 * 60 * 1000; // 5 分鐘
 export const DEMO_STORAGE_SYNC_DEBOUNCE_MS = 120;
 
 const DemoStorageSchema = z.object({
-  t: z.number().finite().nonnegative(),
+  t: z.number().finite().positive(),
 });
 
 const parseDemoTimestamp = (raw: string | null): number | null => {
   if (!raw) return null;
 
   try {
-    const parsed = JSON.parse(raw) as unknown;
+    const parsed: unknown = JSON.parse(raw);
     const validated = DemoStorageSchema.safeParse(parsed);
     return validated.success ? validated.data.t : null;
   } catch {
@@ -64,9 +64,9 @@ export function isDemoMode(now = Date.now()): boolean {
   return getDemoTimeRemaining(now) > 0;
 }
 
-export function resolvePageMode(isAuthenticated: boolean): PageMode {
+export function resolvePageMode(isAuthenticated: boolean, now = Date.now()): PageMode {
   if (isAuthenticated) return 'live';
-  if (isDemoMode()) return 'demo';
+  if (isDemoMode(now)) return 'demo';
   return 'visitor';
 }
 

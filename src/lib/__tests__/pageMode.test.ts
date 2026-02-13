@@ -4,9 +4,11 @@ import {
   DEMO_STORAGE_KEY,
   DEMO_STORAGE_SYNC_DEBOUNCE_MS,
   DEMO_TTL_MS,
+  getDemoRemainingMinutes,
   getDemoTimeRemaining,
   isDemoMode,
   readDemoTimestamp,
+  reloadPage,
   resolvePageMode,
   setDemoMode,
   subscribeDemoModeStorageSync,
@@ -79,5 +81,71 @@ describe('pageMode utils (#1a)', () => {
     setDemoMode();
     clearDemoMode();
     expect(localStorage.getItem(DEMO_STORAGE_KEY)).toBeNull();
+  });
+
+  describe('getDemoRemainingMinutes 邊界值', () => {
+    it('remaining = 0 → 回傳 0', () => {
+      expect(getDemoRemainingMinutes(Date.now())).toBe(0);
+    });
+
+    it('remaining = 1ms → 回傳 1（無條件進位）', () => {
+      const now = new Date('2026-02-12T10:00:00.000Z').getTime();
+      vi.setSystemTime(now);
+      setDemoMode(now);
+
+      const almostExpired = now + DEMO_TTL_MS - 1;
+      expect(getDemoRemainingMinutes(almostExpired)).toBe(1);
+    });
+
+    it('remaining = 59999ms → 回傳 1', () => {
+      const now = new Date('2026-02-12T10:00:00.000Z').getTime();
+      vi.setSystemTime(now);
+      setDemoMode(now);
+
+      const target = now + DEMO_TTL_MS - 59_999;
+      expect(getDemoRemainingMinutes(target)).toBe(1);
+    });
+
+    it('remaining = 60001ms → 回傳 2', () => {
+      const now = new Date('2026-02-12T10:00:00.000Z').getTime();
+      vi.setSystemTime(now);
+      setDemoMode(now);
+
+      const target = now + DEMO_TTL_MS - 60_001;
+      expect(getDemoRemainingMinutes(target)).toBe(2);
+    });
+
+    it('remaining = 60000ms → 回傳 1', () => {
+      const now = new Date('2026-02-12T10:00:00.000Z').getTime();
+      vi.setSystemTime(now);
+      setDemoMode(now);
+
+      const target = now + DEMO_TTL_MS - 60_000;
+      expect(getDemoRemainingMinutes(target)).toBe(1);
+    });
+  });
+
+  describe('resolvePageMode now 參數注入', () => {
+    it('透過 now 參數可控制 demo 判斷', () => {
+      const now = new Date('2026-02-12T10:00:00.000Z').getTime();
+      setDemoMode(now);
+
+      expect(resolvePageMode(false, now)).toBe('demo');
+      expect(resolvePageMode(false, now + DEMO_TTL_MS + 1)).toBe('visitor');
+    });
+  });
+
+  describe('reloadPage SSR 安全', () => {
+    it('在 browser 環境呼叫不拋錯', () => {
+      const reloadMock = vi.fn();
+      Object.defineProperty(window, 'location', {
+        value: { ...window.location, reload: reloadMock },
+        writable: true,
+        configurable: true,
+      });
+
+      expect(() => reloadPage()).not.toThrow();
+      expect(reloadMock).toHaveBeenCalledTimes(1);
+    });
   });
 });

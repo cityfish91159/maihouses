@@ -10,8 +10,12 @@ import {
 } from '../lib/pageMode';
 import { usePageMode } from './usePageMode';
 
+const WARN_SKIP_THRESHOLD_MS = 30_000;
+
 export function useDemoTimer(): void {
   const queryClient = useQueryClient();
+  // ref 追蹤最新 queryClient，避免 effect 閉包捕獲過時實例
+  // queryClient 通常是 app 生命週期不變的單例，但 ref 確保安全
   const queryClientRef = useRef(queryClient);
   const mode = usePageMode();
 
@@ -34,19 +38,29 @@ export function useDemoTimer(): void {
       return;
     }
 
-    const warnDelay = Math.max(0, remaining - DEMO_WARN_BEFORE_MS);
-    const warnTimer = setTimeout(() => {
-      const minutes = Math.max(1, getDemoRemainingMinutes());
-      notify.info('演示即將結束', `剩餘 ${minutes} 分鐘`);
-    }, warnDelay);
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-    const expireTimer = setTimeout(() => {
-      handleDemoExpire();
-    }, remaining);
+    // 剩餘時間 > 30 秒才顯示 warn toast，避免 warn 和 expire 幾乎同時觸發
+    const warnDelay = remaining - DEMO_WARN_BEFORE_MS;
+    if (warnDelay > 0 || remaining > WARN_SKIP_THRESHOLD_MS) {
+      timers.push(
+        setTimeout(() => {
+          const minutes = Math.max(1, getDemoRemainingMinutes());
+          notify.info('演示即將結束', `剩餘 ${minutes} 分鐘`);
+        }, Math.max(0, warnDelay))
+      );
+    }
+
+    timers.push(
+      setTimeout(() => {
+        handleDemoExpire();
+      }, remaining)
+    );
 
     return () => {
-      clearTimeout(warnTimer);
-      clearTimeout(expireTimer);
+      for (const timer of timers) {
+        clearTimeout(timer);
+      }
     };
   }, [mode]);
 }
