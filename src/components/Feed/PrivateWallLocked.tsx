@@ -10,8 +10,7 @@ import { Lock } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
-
-import { ROUTES } from '../../constants/routes';
+import { navigateToAuth } from '../../lib/authUtils';
 
 const PrivateWallLocked = memo(function PrivateWallLocked() {
   const { isAuthenticated } = useAuth();
@@ -20,7 +19,7 @@ const PrivateWallLocked = memo(function PrivateWallLocked() {
     if (!isAuthenticated) {
       // P7-Audit-C12: Notify first, then redirect
       notify.info(STRINGS.COMMUNITY.NOTIFY_LOGIN_TITLE, STRINGS.COMMUNITY.NOTIFY_LOGIN_DESC);
-      window.location.href = ROUTES.AUTH;
+      navigateToAuth('login');
     } else {
       // 已登入但無權限 (需驗證)
       notify.info(

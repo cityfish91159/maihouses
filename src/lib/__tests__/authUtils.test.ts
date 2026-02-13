@@ -13,6 +13,7 @@ import {
 vi.mock('../logger', () => ({
   logger: {
     debug: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -171,6 +172,35 @@ describe('authUtils (#15)', () => {
 
       expect(url).toContain('return=');
     });
+
+    it('should fallback to default return path for unsafe absolute returnPath', () => {
+      const url = getAuthUrl('login', 'https://malicious.example.com');
+
+      expect(url).toContain('mode=login');
+      expect(url).toContain('return=%2Fmaihouses%2F');
+    });
+
+    it('should fallback to default return path for protocol-relative URL (//)', async () => {
+      const { logger } = await import('../logger');
+      const url = getAuthUrl('login', '//malicious.example.com');
+
+      expect(url).toContain('mode=login');
+      expect(url).toContain('return=%2Fmaihouses%2F');
+      expect(logger.warn).toHaveBeenCalledWith(
+        '[authUtils] Invalid returnPath, fallback to default',
+        expect.objectContaining({ returnPath: '//malicious.example.com' })
+      );
+    });
+
+    it('should log warning when returnPath does not start with /', async () => {
+      const { logger } = await import('../logger');
+      getAuthUrl('login', 'relative/path');
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        '[authUtils] Invalid returnPath, fallback to default',
+        expect.objectContaining({ returnPath: 'relative/path' })
+      );
+    });
   });
 
   describe('type safety', () => {
@@ -188,6 +218,16 @@ describe('authUtils (#15)', () => {
       validRoles.forEach((role) => {
         expect(() => getAuthUrl('signup', '/test', role)).not.toThrow();
       });
+    });
+
+    it('should throw on invalid AuthMode at runtime', () => {
+      expect(() => getAuthUrl('invalid' as AuthMode)).toThrow('[authUtils] Invalid auth mode');
+    });
+
+    it('should throw on invalid AuthRole at runtime', () => {
+      expect(() => getAuthUrl('signup', '/test', 'invalid' as AuthRole)).toThrow(
+        '[authUtils] Invalid auth role'
+      );
     });
   });
 });

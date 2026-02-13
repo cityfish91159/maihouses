@@ -20,7 +20,6 @@ import Consumer from '../Consumer';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFeedData } from '../../../hooks/useFeedData';
 import { STRINGS } from '../../../constants/strings';
-import { ROUTES } from '../../../constants/routes';
 
 // Define mocks using hoisting to avoid ReferenceError
 const mocks = vi.hoisted(() => ({
@@ -161,7 +160,9 @@ describe('P7 Scenario Verification (L7+ Standard)', () => {
     });
     fireEvent.click(unlockBtn);
 
-    expect(window.location.href).toBe(ROUTES.AUTH);
+    expect(window.location.href).toContain('/maihouses/auth.html');
+    expect(window.location.href).toContain('mode=login');
+    expect(window.location.href).toContain('return=');
   });
 
   it('Scenario 2: Viewer is Member', async () => {

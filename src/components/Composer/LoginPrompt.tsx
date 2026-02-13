@@ -1,7 +1,8 @@
 import { memo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FocusTrap } from '../ui/FocusTrap';
 import { STRINGS } from '../../constants/strings';
-import { ROUTES } from '../../constants/routes';
+import { getLoginUrl } from '../../lib/authUtils';
 
 interface LoginPromptProps {
   readonly isOpen: boolean;
@@ -9,9 +10,13 @@ interface LoginPromptProps {
 }
 
 export const LoginPrompt = memo(function LoginPrompt({ isOpen, onClose }: LoginPromptProps) {
+  const location = useLocation();
+
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);
+
+  const loginUrl = getLoginUrl(`${location.pathname}${location.search}${location.hash}`);
 
   if (!isOpen) return null;
 
@@ -37,7 +42,7 @@ export const LoginPrompt = memo(function LoginPrompt({ isOpen, onClose }: LoginP
               {STRINGS.COMPOSER.CANCEL}
             </button>
             <a
-              href={ROUTES.AUTH}
+              href={loginUrl}
               className="rounded-lg bg-brand-600 px-4 py-2 text-white transition-colors hover:bg-brand-700"
             >
               {STRINGS.COMPOSER.GO_LOGIN}

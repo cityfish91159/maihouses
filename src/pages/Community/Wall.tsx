@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 
@@ -27,6 +27,7 @@ import { MockToggle } from '../../components/common/MockToggle';
 import { mhEnv } from '../../lib/mhEnv';
 import { safeLocalStorage } from '../../lib/safeStorage';
 import { logger } from '../../lib/logger';
+import { navigateToAuth } from '../../lib/authUtils';
 
 // Types
 import type { Role, WallTab } from './types';
@@ -68,7 +69,6 @@ const updateURLParam = (params: URLSearchParams, key: string, value: string | nu
 function WallInner() {
   const params = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const communityId = params.id;
   const searchParamsRef = useRef(searchParams);
 
@@ -216,8 +216,7 @@ function WallInner() {
   }, [role, setRoleInternal]);
 
   const handleLogin = useCallback(() => {
-    // 導向登入頁
-    window.location.href = ROUTES.AUTH;
+    navigateToAuth('login');
   }, []);
 
   // Tab 切換
@@ -393,7 +392,7 @@ function WallInner() {
           </div>
           {isAuthError ? (
             <button
-              onClick={() => (window.location.href = '/auth')}
+              onClick={handleLogin}
               className="rounded-lg bg-brand px-4 py-2 text-sm text-white"
             >
               前往登入

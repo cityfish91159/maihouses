@@ -2,6 +2,7 @@
 import { Search, LogIn, UserPlus, List, Menu, X } from 'lucide-react';
 import { Logo } from '../Logo/Logo';
 import { ROUTES, RouteUtils } from '../../constants/routes';
+import { getCurrentPath, getLoginUrl, getSignupUrl } from '../../lib/authUtils';
 import { MaiMaiBase } from '../MaiMai';
 import { useMaiMai } from '../../context/MaiMaiContext';
 import { TUTORIAL_CONFIG } from '../../constants/tutorial';
@@ -11,6 +12,9 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [clickCount, setClickCount] = useState(0);
   const { setMood, addMessage } = useMaiMai();
+  const authReturnPath = getCurrentPath();
+  const loginUrl = getLoginUrl(authReturnPath);
+  const signupUrl = getSignupUrl(authReturnPath);
 
   /** 執行搜尋:導航到房源列表頁帶上搜尋參數 */
   const handleSearch = useCallback(() => {
@@ -78,7 +82,7 @@ export default function Header() {
 
             {/* Column 2: Login */}
             <a
-              href={`${ROUTES.AUTH}?mode=login`}
+              href={loginUrl}
               className="hover:bg-brand-50/80 flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:text-brand-600 active:scale-[0.98]"
             >
               <LogIn size={18} strokeWidth={2.5} className="opacity-80" />
@@ -87,7 +91,7 @@ export default function Header() {
 
             {/* Column 3: Register (CTA) */}
             <a
-              href={`${ROUTES.AUTH}?mode=signup`}
+              href={signupUrl}
               className="shadow-brand-700/10 hover:shadow-brand-700/20 ml-1 flex items-center gap-2 rounded-xl border border-transparent bg-brand-700 px-5 py-2.5 text-[15px] font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg active:scale-[0.98]"
             >
               <UserPlus size={18} strokeWidth={2.5} />
@@ -99,7 +103,7 @@ export default function Header() {
           <div className="flex items-center gap-2 md:hidden">
             {/* 登入按鈕 - 手機版精簡 */}
             <a
-              href={`${ROUTES.AUTH}?mode=login`}
+              href={loginUrl}
               className="flex items-center justify-center rounded-lg px-3 py-2 text-sm font-bold text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
             >
               <LogIn size={18} strokeWidth={2.5} />
@@ -107,7 +111,7 @@ export default function Header() {
 
             {/* 註冊按鈕 - 手機版精簡 */}
             <a
-              href={`${ROUTES.AUTH}?mode=signup`}
+              href={signupUrl}
               className="flex items-center gap-1.5 rounded-lg bg-brand-700 px-3 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-600 active:scale-95"
             >
               <UserPlus size={16} strokeWidth={2.5} />

@@ -644,10 +644,50 @@ function getAuthUrl(
 
 ```bash
 npm run typecheck                              # 0 errors
-npx vitest run src/lib/__tests__/authUtils.test.ts  # 18 tests passed
+npx vitest run src/lib/__tests__/authUtils.test.ts  # 21 tests passed
 npm run gate                                   # QUALITY GATE PASSED
 grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts comment)
 ```
+
+#### 2026-02-13 補強紀錄（1b 對齊）
+
+**目標**：補齊遺漏的 auth 跳轉入口，並加強 `authUtils` 防禦邏輯（SRP / Early Return / Fail Fast / Explicit）。
+
+**本次修改**
+
+1. `src/lib/authUtils.ts`
+   - 新增 `normalizeReturnPath()` 與 `buildAuthSearchParams()`，拆分 URL 組裝責任。
+   - 針對不安全 `returnPath`（非 `/` 開頭或 `//`）做 fail-fast 防禦，回退到 `/maihouses/`。
+   - `window.location.origin` 無效時回退相對路徑，避免測試與特殊環境 `Invalid URL`。
+
+2. `src/components/Composer/LoginPrompt.tsx`
+   - `href={ROUTES.AUTH}` 改為 `getLoginUrl(currentPath)`，統一帶 `?return=`.
+
+3. `src/components/Header/Header.tsx`
+   - 四處 `auth.html?mode=*` 改為 `getLoginUrl/getSignupUrl`，移除硬編碼 query string。
+
+4. `src/components/Feed/PrivateWallLocked.tsx`
+   - `window.location.href = ROUTES.AUTH` 改為 `navigateToAuth('login')`。
+
+5. `src/pages/Community/Wall.tsx`
+   - 移除 `'/auth'` 舊路徑，錯誤態登入按鈕改走 `navigateToAuth('login')`。
+   - 同步移除未使用的 `useNavigate`。
+
+6. `src/lib/__tests__/authUtils.test.ts`
+   - 新增不安全 `returnPath` 邊界測試與 runtime fail-fast（無效 mode/role）測試。
+
+7. `src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx`
+   - 更新預期為新版 auth URL（含 `mode=login` + `return=`）。
+
+**補強驗收**
+
+- [x] `ROUTES.AUTH` 直接跳轉在 `src/` 清零（測試斷言除外）
+- [x] `window.location.href = '/auth'` 清零
+- [x] `authUtils` 邊界測試通過（21 tests）
+- [x] `P7_ScenarioVerification` 4 個情境測試通過
+- [x] `npm run typecheck` 通過
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `npm run gate` 通過
 
 ---
 

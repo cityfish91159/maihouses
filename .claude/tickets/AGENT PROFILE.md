@@ -125,6 +125,7 @@
 
 ### Mock System
 - [x] MOCK-1A-P0（`usePageMode` + localStorage TTL + 跨分頁同步 + demo 靜默追蹤）
+- [x] MOCK-15-P0（`getAuthUrl` 統一跳轉 + `?return=` + `?role=` + 舊路徑清理）
 - [x] MOCK-18-P1（3 檔 catch 統一 `getErrorMessage()` + 空 catch 清除 + 邊界測試）
 - [x] MOCK-19-P1（`/api/uag-track` → `/api/uag/track`，deprecated JS endpoint 下線）
 
@@ -5739,6 +5740,54 @@ npm run check:utf8
 - `typecheck`：通過
 - 新增測試：全部通過
 - `UTF-8` / `Mojibake`：通過
+
+---
+
+## MOCK-SYSTEM #15 [P0] `getAuthUrl()` 工具函數統一 auth 跳轉
+
+### 驗收標準
+
+- [x] `authUtils` 具備 Fail Fast 輸入驗證（mode/role）與明確 `returnPath` 安全檢查
+- [x] `src/` 內移除 `ROUTES.AUTH` 直接跳轉（改用 `getLoginUrl/getSignupUrl/navigateToAuth`）
+- [x] `src/` 內移除 `window.location.href = '/auth'` 舊路徑
+- [x] `authUtils` 邊界測試補齊（含不安全 `returnPath`）
+- [x] 受影響場景測試、typecheck、UTF-8、gate 全部通過
+
+### 施工紀錄（2026-02-13）
+
+1. `src/lib/authUtils.ts`
+   - 拆分 `normalizeReturnPath()`、`buildAuthSearchParams()`、`toRelativeAuthUrl()`，一函式一職責。
+   - 新增 Fail Fast 驗證：`mode`/`role` 非法值直接 throw。
+   - `returnPath` 防禦：非 `/` 開頭或 `//` 一律回退 `/maihouses/`。
+   - `window.location.origin` 缺失或無效時，回退相對路徑避免 `Invalid URL`。
+2. `src/components/Composer/LoginPrompt.tsx`
+   - 登入連結由 `ROUTES.AUTH` 改為 `getLoginUrl(currentPath)`，統一附帶 `?return=`。
+3. `src/components/Header/Header.tsx`
+   - 四處 `auth.html?mode=*` 改為 `getLoginUrl/getSignupUrl`，移除硬編碼 query string。
+4. `src/components/Feed/PrivateWallLocked.tsx`
+   - 未登入跳轉由 `ROUTES.AUTH` 改為 `navigateToAuth('login')`。
+5. `src/pages/Community/Wall.tsx`
+   - Auth error 按鈕由 `'/auth'` 改為 `navigateToAuth('login')`。
+   - 移除未使用 `useNavigate`，減少隱性依賴。
+6. `src/lib/__tests__/authUtils.test.ts`
+   - 新增不安全 `returnPath` fallback 與 runtime fail-fast（無效 mode/role）測試，並補齊 `logger.warn` mock。
+7. `src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx`
+   - 斷言更新為新 auth URL（`mode=login` + `return=`）。
+
+### 驗證結果
+
+```bash
+npm run test -- src/lib/__tests__/authUtils.test.ts src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx
+npm run typecheck
+npm run check:utf8
+npm run gate
+```
+
+- `src/lib/__tests__/authUtils.test.ts`：21/21 通過
+- `src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx`：4/4 通過
+- `typecheck`：通過
+- `UTF-8` / `Mojibake`：通過
+- `gate`：QUALITY GATE PASSED
 
 ---
 

@@ -29,6 +29,62 @@ export interface AuthUrlParams {
 
 /** Auth 頁面基礎路徑 */
 const AUTH_BASE_PATH = '/maihouses/auth.html';
+const DEFAULT_RETURN_PATH = '/maihouses/';
+
+function assertValidAuthMode(mode: AuthMode): void {
+  if (mode !== 'login' && mode !== 'signup') {
+    throw new Error(`[authUtils] Invalid auth mode: ${String(mode)}`);
+  }
+}
+
+function assertValidAuthRole(role?: AuthRole): void {
+  if (role === undefined) return;
+  if (role !== 'agent' && role !== 'consumer') {
+    throw new Error(`[authUtils] Invalid auth role: ${String(role)}`);
+  }
+}
+
+function normalizeReturnPath(returnPath?: string): string | undefined {
+  if (returnPath === undefined) return undefined;
+  const trimmedPath = returnPath.trim();
+  if (!trimmedPath) return undefined;
+
+  const hasInvalidPrefix = !trimmedPath.startsWith('/') || trimmedPath.startsWith('//');
+  if (hasInvalidPrefix) {
+    logger.warn('[authUtils] Invalid returnPath, fallback to default', {
+      returnPath: trimmedPath,
+    });
+    return DEFAULT_RETURN_PATH;
+  }
+
+  return trimmedPath;
+}
+
+function buildAuthSearchParams(
+  mode: AuthMode,
+  returnPath?: string,
+  role?: AuthRole
+): URLSearchParams {
+  assertValidAuthMode(mode);
+  assertValidAuthRole(role);
+
+  const params = new URLSearchParams({ mode });
+  const normalizedReturnPath = normalizeReturnPath(returnPath);
+
+  if (normalizedReturnPath) {
+    params.set('return', normalizedReturnPath);
+  }
+
+  if (role) {
+    params.set('role', role);
+  }
+
+  return params;
+}
+
+function toRelativeAuthUrl(params: URLSearchParams): string {
+  return `${AUTH_BASE_PATH}?${params.toString()}`;
+}
 
 /**
  * 產生 auth.html URL
@@ -49,32 +105,24 @@ const AUTH_BASE_PATH = '/maihouses/auth.html';
  * // => '/maihouses/auth.html?mode=signup&return=%2Fmaihouses%2Fuag&role=agent'
  */
 export function getAuthUrl(mode: AuthMode, returnPath?: string, role?: AuthRole): string {
+  const params = buildAuthSearchParams(mode, returnPath, role);
+
+  if (typeof window === 'undefined') {
+    return toRelativeAuthUrl(params);
+  }
+
+  const origin = window.location.origin;
+  if (!origin) {
+    return toRelativeAuthUrl(params);
+  }
+
   try {
-    const url = new URL(AUTH_BASE_PATH, window.location.origin);
-    url.searchParams.set('mode', mode);
-
-    if (returnPath) {
-      url.searchParams.set('return', returnPath);
-    }
-
-    if (role) {
-      url.searchParams.set('role', role);
-    }
-
+    const url = new URL(AUTH_BASE_PATH, origin);
+    url.search = params.toString();
     return url.toString();
   } catch {
-    // fallback: SSR 或異常 origin 下硬拼路徑
-    const params = new URLSearchParams({ mode });
-
-    if (returnPath) {
-      params.set('return', returnPath);
-    }
-
-    if (role) {
-      params.set('role', role);
-    }
-
-    return `${AUTH_BASE_PATH}?${params.toString()}`;
+    logger.warn('[authUtils] Invalid window.location.origin, fallback to relative URL', { origin });
+    return toRelativeAuthUrl(params);
   }
 }
 
@@ -100,6 +148,15 @@ export function getCurrentPath(): string {
  * @param role - 使用者角色
  */
 export function navigateToAuth(mode: AuthMode, returnPath?: string, role?: AuthRole): void {
+  if (typeof window === 'undefined') {
+    logger.warn('[authUtils] navigateToAuth called in non-browser environment', {
+      mode,
+      returnPath,
+      role,
+    });
+    return;
+  }
+
   const targetPath = returnPath ?? getCurrentPath();
   const authUrl = getAuthUrl(mode, targetPath, role);
 
