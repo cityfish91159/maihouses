@@ -22,7 +22,7 @@ import { SEED_COMMUNITY_ID } from '../../../constants/seed';
  *    - 評價數量
  *    - 平均評分
  *    - 熱門討論話題
- * 4. 修改連結為動態：/maihouses/community-wall.html?id={communityId}
+ * 4. 連結改為 React 路由：ROUTES.COMMUNITY_WALL(communityId)
  *
  * 【觸發格式】
  * AI 在回覆中使用：[[社區牆:社區名稱:討論話題]]

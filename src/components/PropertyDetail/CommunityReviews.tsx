@@ -213,8 +213,15 @@ export const CommunityReviews = memo(function CommunityReviews({
 
   // Community wall navigation
   const handleCommunityWall = useCallback(() => {
-    window.location.href = ROUTES.COMMUNITY_WALL(communityId ?? SEED_COMMUNITY_ID);
-  }, [communityId]);
+    if (communityId) {
+      window.location.href = ROUTES.COMMUNITY_WALL(communityId);
+      return;
+    }
+
+    if (isDemoMode) {
+      window.location.href = ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
+    }
+  }, [communityId, isDemoMode]);
 
   const dispatchToggleLike = useModeAwareAction<string>({
     visitor: () => {

@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { BACKUP_REVIEWS } from '../../../constants/data';
+import { ROUTES } from '../../../constants/routes';
 import { HomeCard } from '../components/HomeCard';
 import { ReviewCard } from '../components/ReviewCard';
 import { getFeaturedHomeReviews } from '../../../services/communityService';
@@ -74,7 +75,7 @@ function mapBackupToReviewWithNavigation(
 export default function CommunityTeaser() {
   const navigate = useNavigate();
   const mode = usePageMode();
-  const seedWallPath = `/community/${SEED_COMMUNITY_ID}/wall`;
+  const seedWallPath = ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
 
   // V2: Use React Query instead of useEffect + useState
   const {
@@ -99,7 +100,7 @@ export default function CommunityTeaser() {
   const handleReviewClick = useCallback(
     (review: ReviewWithNavigation) => {
       if (review.source === 'real' && review.communityId) {
-        navigate(`/community/${review.communityId}/wall`);
+        navigate(ROUTES.COMMUNITY_WALL(review.communityId));
       } else {
         navigate(seedWallPath);
       }

@@ -3,6 +3,8 @@ import '@testing-library/jest-dom';
 import type { ReactNode } from 'react';
 import CommunityTeaser from '../CommunityTeaser';
 import { BACKUP_REVIEWS } from '../../../../constants/data';
+import { ROUTES } from '../../../../constants/routes';
+import { SEED_COMMUNITY_ID } from '../../../../constants/seed';
 
 const mockNavigate = vi.fn();
 const mockUsePageMode = vi.fn();
@@ -145,7 +147,7 @@ describe('CommunityTeaser', () => {
     const card = screen.getByText('Real User: Real content').closest('div[role="button"]');
     fireEvent.click(card!);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/community/comm-123/wall');
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.COMMUNITY_WALL('comm-123'));
   });
 
   it('navigates to seed community wall when clicking seed review', () => {
@@ -173,6 +175,21 @@ describe('CommunityTeaser', () => {
     const card = screen.getByText('Seed User: Seed content').closest('div[role="button"]');
     fireEvent.click(card!);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/community/test-uuid/wall');
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
+  });
+
+  it('navigates to seed community wall when clicking see more button', () => {
+    mockUseQuery.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<CommunityTeaser />);
+
+    const ctaButton = screen.getByRole('button', { name: '點我看更多社區評價' });
+    fireEvent.click(ctaButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
   });
 });
