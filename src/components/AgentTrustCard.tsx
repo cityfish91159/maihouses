@@ -11,6 +11,8 @@ import {
 import { Agent } from '../lib/types';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAgentProfile } from '../services/agentService';
+import { agentProfileQueryKey } from '../hooks/useAgentReviews';
+import { usePageMode } from '../hooks/usePageMode';
 
 interface AgentTrustCardProps {
   agent: Agent;
@@ -30,12 +32,13 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   const [showTrustTooltip, setShowTrustTooltip] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const trustTooltipId = useId();
+  const mode = usePageMode();
 
   const isTestEnv = import.meta.env.MODE === 'test' || import.meta.env.VITEST;
   const shouldFetchProfile = Boolean(agent.id) && !isDemo && !isTestEnv;
 
   const { data: profile } = useQuery({
-    queryKey: ['agent-profile', agent.id],
+    queryKey: agentProfileQueryKey(mode, agent.id),
     queryFn: () => fetchAgentProfile(agent.id),
     enabled: shouldFetchProfile,
     staleTime: 5 * 60 * 1000,

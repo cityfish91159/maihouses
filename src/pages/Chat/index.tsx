@@ -1,10 +1,10 @@
 ﻿import { useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { HEADER_MODES } from '../../constants/header';
 import { useAuth } from '../../hooks/useAuth';
 import { useConsumerSession } from '../../hooks/useConsumerSession';
-import { getLoginUrl } from '../../lib/authUtils';
+import { getLoginUrl, getCurrentPath } from '../../lib/authUtils';
 import { ChatHeader } from './ChatHeader';
 import { ChatErrorLayout } from './ErrorLayout';
 import { MessageInput } from './MessageInput';
@@ -13,7 +13,6 @@ import { useChat } from './useChat';
 
 export default function ChatPage() {
   const { conversationId } = useParams();
-  const location = useLocation();
   const { isAuthenticated, loading: authLoading, role } = useAuth();
   // 使用統一的 session hook（含過期檢查）
   const { hasValidSession, isExpired } = useConsumerSession();
@@ -31,21 +30,24 @@ export default function ChatPage() {
   const headerMode = role === 'agent' ? HEADER_MODES.AGENT : HEADER_MODES.CONSUMER;
 
   // 產生當前頁面的登入 URL（含 return 參數）
-  const loginUrl = getLoginUrl(`${location.pathname}${location.search}${location.hash}`);
+  const loginUrl = getLoginUrl(getCurrentPath());
 
   useEffect(() => {
     document.title = '對話 | MaiHouses';
   }, []);
 
+  // ========== Guard Clauses (Early Return Pattern) ==========
+  // Guard 1: 無效連結
   if (!conversationId) {
     return <ChatErrorLayout mode={headerMode}>無效的對話連結。</ChatErrorLayout>;
   }
 
+  // Guard 2: 載入中
   if (authLoading) {
     return <ChatErrorLayout mode={headerMode}>載入中...</ChatErrorLayout>;
   }
 
-  // Session 過期提示
+  // Guard 3: Session 過期
   if (isExpired) {
     return (
       <ChatErrorLayout mode={headerMode}>
@@ -58,7 +60,7 @@ export default function ChatPage() {
     );
   }
 
-  // 有 session 或已登入都允許進入
+  // Guard 4: 未登入且無有效 session
   if (!isAuthenticated && !hasValidSession) {
     return (
       <ChatErrorLayout mode={headerMode}>

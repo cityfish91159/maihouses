@@ -9,6 +9,10 @@ vi.mock('../../../hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn(),
 }));
 
+vi.mock('../../../hooks/usePageMode', () => ({
+  usePageMode: () => 'demo',
+}));
+
 vi.mock('../../../hooks/useAgentReviews', () => ({
   postAgentReview: vi.fn().mockResolvedValue({ reviewId: 'mock-review-1' }),
 }));

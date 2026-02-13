@@ -1,28 +1,31 @@
 ﻿import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom'; // Fix: Import jest-dom for matchers
+import '@testing-library/jest-dom';
+import type { ReactNode } from 'react';
 import CommunityTeaser from '../CommunityTeaser';
 import { BACKUP_REVIEWS } from '../../../../constants/data';
 
-// Mock dependencies
 const mockNavigate = vi.fn();
+const mockUsePageMode = vi.fn();
+
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-// Mock React Query
 const mockUseQuery = vi.fn();
 vi.mock('@tanstack/react-query', () => ({
   useQuery: (options: unknown) => mockUseQuery(options),
 }));
 
-// Mock Service
 vi.mock('../../../../services/communityService', () => ({
   getFeaturedHomeReviews: vi.fn(),
 }));
 
-// Mock Components to simplify testing
+vi.mock('../../../../hooks/usePageMode', () => ({
+  usePageMode: () => mockUsePageMode(),
+}));
+
 vi.mock('../../components/HomeCard', () => ({
-  HomeCard: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+  HomeCard: ({ children, className }: { children: ReactNode; className?: string }) => (
     <div data-testid="home-card" className={className}>
       {children}
     </div>
@@ -40,11 +43,27 @@ vi.mock('../../components/ReviewCard', () => ({
 describe('CommunityTeaser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset window.location.href mock
+    mockUsePageMode.mockReturnValue('demo');
     Object.defineProperty(window, 'location', {
       value: { href: '' },
       writable: true,
     });
+  });
+
+  it('passes mode-aware query key to useQuery', () => {
+    mockUseQuery.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+    });
+
+    render(<CommunityTeaser />);
+
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ['featured-reviews', 'demo'],
+      })
+    );
   });
 
   it('renders loading skeleton when loading', () => {
@@ -56,8 +75,6 @@ describe('CommunityTeaser', () => {
 
     render(<CommunityTeaser />);
 
-    // Check for skeleton elements (using class names or structure)
-    // In the component, skeleton has "animate-pulse" class
     const skeletons = document.getElementsByClassName('animate-pulse');
     expect(skeletons.length).toBeGreaterThan(0);
   });
@@ -97,12 +114,9 @@ describe('CommunityTeaser', () => {
 
     render(<CommunityTeaser />);
 
-    // Should show backup reviews
     expect(
       screen.getByText(`${BACKUP_REVIEWS[0]?.name}: ${BACKUP_REVIEWS[0]?.content}`)
     ).toBeInTheDocument();
-
-    // Should show error badge
     expect(screen.getByText('使用備用資料')).toBeInTheDocument();
   });
 

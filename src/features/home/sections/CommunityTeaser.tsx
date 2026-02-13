@@ -5,6 +5,7 @@ import { BACKUP_REVIEWS } from '../../../constants/data';
 import { HomeCard } from '../components/HomeCard';
 import { ReviewCard } from '../components/ReviewCard';
 import { getFeaturedHomeReviews } from '../../../services/communityService';
+import { usePageMode } from '../../../hooks/usePageMode';
 import type { ReviewForUI } from '../../../types/review';
 
 // V4: Extract hardcoded URL
@@ -74,6 +75,7 @@ function mapBackupToReviewWithNavigation(
  */
 export default function CommunityTeaser() {
   const navigate = useNavigate();
+  const mode = usePageMode();
 
   // V2: Use React Query instead of useEffect + useState
   const {
@@ -81,7 +83,7 @@ export default function CommunityTeaser() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['featured-reviews'],
+    queryKey: ['featured-reviews', mode],
     queryFn: getFeaturedHomeReviews,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1, // U2: Retry once (handled by React Query now)

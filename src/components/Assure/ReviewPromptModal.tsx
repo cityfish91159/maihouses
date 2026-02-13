@@ -4,8 +4,13 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '../../lib/logger';
 import type { CreateReviewPayload } from '../../types/agent-review';
-import { postAgentReview } from '../../hooks/useAgentReviews';
+import {
+  agentProfileQueryKey,
+  agentReviewsQueryPrefix,
+  postAgentReview,
+} from '../../hooks/useAgentReviews';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { usePageMode } from '../../hooks/usePageMode';
 
 interface ReviewPromptModalProps {
   open: boolean;
@@ -33,6 +38,7 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const queryClient = useQueryClient();
+  const mode = usePageMode();
 
   useFocusTrap({
     containerRef: dialogRef as React.RefObject<HTMLElement>,
@@ -79,8 +85,8 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
         propertyId,
       });
 
-      queryClient.invalidateQueries({ queryKey: ['agent-reviews', agentId] });
-      queryClient.invalidateQueries({ queryKey: ['agent-profile', agentId] });
+      queryClient.invalidateQueries({ queryKey: agentReviewsQueryPrefix(mode, agentId) });
+      queryClient.invalidateQueries({ queryKey: agentProfileQueryKey(mode, agentId) });
 
       onSubmitted();
       onClose();
@@ -106,7 +112,18 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
     } finally {
       setIsBusy(false);
     }
-  }, [rating, comment, agentId, agentName, trustCaseId, propertyId, onSubmitted, onClose, queryClient]);
+  }, [
+    rating,
+    comment,
+    agentId,
+    agentName,
+    trustCaseId,
+    propertyId,
+    onSubmitted,
+    onClose,
+    queryClient,
+    mode,
+  ]);
 
   const handleLater = useCallback(() => {
     logger.info('Agent review prompt dismissed', { agentId });

@@ -2,8 +2,9 @@ import React, { useRef, useState } from 'react';
 import { Loader2, Star, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import type { AgentReviewListData } from '../types/agent-review';
-import { fetchAgentReviews } from '../hooks/useAgentReviews';
+import { agentReviewsQueryKey, fetchAgentReviews } from '../hooks/useAgentReviews';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { usePageMode } from '../hooks/usePageMode';
 
 /** Seed agent（演示用），DB 無評價時改走 mock 路徑 */
 const SEED_AGENT_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -58,6 +59,7 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
 }) => {
   const [page, setPage] = useState(1);
   const isDemo = agentId.startsWith('mock-') || agentId === SEED_AGENT_ID;
+  const mode = usePageMode();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -69,7 +71,7 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
   });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['agent-reviews', agentId, page],
+    queryKey: agentReviewsQueryKey(mode, agentId, page),
     queryFn: () => (isDemo ? Promise.resolve(MOCK_REVIEWS) : fetchAgentReviews(agentId, page)),
     enabled: open && Boolean(agentId),
     staleTime: 2 * 60 * 1000,
