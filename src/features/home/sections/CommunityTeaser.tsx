@@ -130,7 +130,7 @@ export default function CommunityTeaser() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="animate-pulse rounded-2xl border border-brand-100 bg-white p-3.5"
+              className="animate-pulse motion-reduce:animate-none rounded-2xl border border-brand-100 bg-white p-3.5"
             >
               <div className="flex gap-3">
                 <div className="size-[38px] rounded-full bg-gray-200" />
@@ -145,7 +145,7 @@ export default function CommunityTeaser() {
           ))}
         </div>
 
-        <div className="mt-4 h-12 animate-pulse rounded-xl bg-gray-100" />
+        <div className="mt-4 h-12 animate-pulse motion-reduce:animate-none rounded-xl bg-gray-100" />
       </HomeCard>
     );
   }

@@ -95,11 +95,46 @@ describe('CommunityReviews', () => {
   it('renders community wall button as pill style', async () => {
     renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
 
-    const button = await screen.findByRole('button', { name: /前往社區牆/i });
+    const button = await waitFor(() =>
+      screen
+        .getAllByRole('button')
+        .find(
+          (candidate) =>
+            candidate.className.includes('bg-brand-50') &&
+            candidate.className.includes('px-4') &&
+            candidate.className.includes('py-2')
+        )
+    );
+    expect(button).toBeDefined();
+    if (!button) throw new Error('community wall button not found');
     expect(button.className).toContain('rounded-full');
     expect(button.className).toContain('bg-brand-50');
     expect(button.className).toContain('px-4');
     expect(button.className).toContain('py-2');
+  });
+
+  it('shows notice when live mode has no communityId for wall navigation', async () => {
+    mockUsePageMode.mockReturnValue('live');
+    const user = userEvent.setup();
+
+    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={false} onToggleLike={onToggleLike} />);
+
+    const wallButton = await waitFor(() =>
+      screen
+        .getAllByRole('button')
+        .find(
+          (candidate) =>
+            candidate.className.includes('bg-brand-50') &&
+            candidate.className.includes('px-4') &&
+            candidate.className.includes('py-2')
+        )
+    );
+    expect(wallButton).toBeDefined();
+    if (!wallButton) throw new Error('community wall button not found');
+    await user.click(wallButton);
+
+    expect(mockNotifyInfo).toHaveBeenCalledTimes(1);
+    expect(mockNotifyInfo).toHaveBeenCalledWith(expect.any(String), expect.any(String));
   });
 
   it('keeps like buttons enabled in demo mode for logged-out users', async () => {

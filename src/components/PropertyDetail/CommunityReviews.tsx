@@ -11,6 +11,7 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronRight, Lock, MessageSquare, Star, ThumbsUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getCurrentPath, getLoginUrl, getSignupUrl } from '../../lib/authUtils';
 import { ROUTES } from '../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../constants/seed';
@@ -169,6 +170,7 @@ export const CommunityReviews = memo(function CommunityReviews({
 }: CommunityReviewsProps) {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const mode = usePageMode();
   const isDemoMode = mode === 'demo' || isDemo;
   const canViewFullReview = mode !== 'visitor' || isDemoMode;
@@ -214,14 +216,17 @@ export const CommunityReviews = memo(function CommunityReviews({
   // Community wall navigation
   const handleCommunityWall = useCallback(() => {
     if (communityId) {
-      window.location.href = ROUTES.COMMUNITY_WALL(communityId);
+      navigate(ROUTES.COMMUNITY_WALL(communityId));
       return;
     }
 
     if (isDemoMode) {
-      window.location.href = ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
+      navigate(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
+      return;
     }
-  }, [communityId, isDemoMode]);
+
+    notify.info('暫時無法前往社區牆', '目前缺少社區識別資料，請稍後再試。');
+  }, [communityId, isDemoMode, navigate]);
 
   const dispatchToggleLike = useModeAwareAction<string>({
     visitor: () => {

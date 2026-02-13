@@ -1,4 +1,5 @@
 ﻿import { ExternalLink, Star, MessageSquare } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../../constants/seed';
 
@@ -15,15 +16,13 @@ import { SEED_COMMUNITY_ID } from '../../../constants/seed';
  * ⚠️ MOCK 模式 - 社區牆功能尚未完善，目前使用假資料
  *
  * 【TODO: 接入真實社區牆】
- * 1. 建立社區牆 API：GET /api/community-wall/:communityId
+ * 1. 建立社區牆 API：GET /api/community/wall?communityId={communityId}
  * 2. 修改 props 從 name/topic 改為 communityId
  * 3. 用 communityId 查詢真實的：
  *    - 社區名稱
  *    - 評價數量
  *    - 平均評分
  *    - 熱門討論話題
- * 4. 連結改為 React 路由：ROUTES.COMMUNITY_WALL(communityId)
- *
  * 【觸發格式】
  * AI 在回覆中使用：[[社區牆:社區名稱:討論話題]]
  * ChatMessage.tsx 會解析並渲染此卡片
@@ -54,7 +53,7 @@ const MOCK_COMMUNITY_DATA: Record<string, { reviewCount: number; rating: number 
 };
 
 function getMockData(name: string) {
-  return MOCK_COMMUNITY_DATA[name] || MOCK_COMMUNITY_DATA['default'];
+  return MOCK_COMMUNITY_DATA[name] ?? MOCK_COMMUNITY_DATA['default'];
 }
 // ============================================
 
@@ -64,19 +63,21 @@ export default function CommunityWallCard({
   reviewCount,
   rating,
 }: CommunityWallCardProps) {
+  const navigate = useNavigate();
+
   // 使用 mock 資料（之後改為 API 查詢）
   const mockData = getMockData(name);
   const finalReviewCount = reviewCount ?? mockData?.reviewCount ?? 10;
   const finalRating = rating ?? mockData?.rating ?? 4.0;
 
   const communityWallUrl = ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
+  const handleNavigate = () => navigate(communityWallUrl);
 
   return (
-    <a
-      href={communityWallUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group mt-3 block rounded-xl border-2 border-brand-100 bg-gradient-to-br from-brand-50 to-white p-4 transition-all hover:border-brand-300 hover:shadow-md"
+    <button
+      type="button"
+      onClick={handleNavigate}
+      className="group mt-3 block w-full rounded-xl border-2 border-brand-100 bg-gradient-to-br from-brand-50 to-white p-4 text-left transition-all hover:border-brand-300 hover:shadow-md"
     >
       {/* Header */}
       <div className="mb-2 flex items-center justify-between">
@@ -111,6 +112,6 @@ export default function CommunityWallCard({
       <div className="mt-3 rounded-lg bg-brand-700 px-3 py-2 text-center text-xs font-bold text-white transition-colors group-hover:bg-brand-600">
         去看看住戶怎麼說 →
       </div>
-    </a>
+    </button>
   );
 }

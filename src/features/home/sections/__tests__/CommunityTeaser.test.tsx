@@ -190,6 +190,7 @@ describe('CommunityTeaser', () => {
     const ctaButton = screen.getByRole('button', { name: '點我看更多社區評價' });
     fireEvent.click(ctaButton);
 
+    expect(ctaButton.tagName).toBe('BUTTON');
     expect(mockNavigate).toHaveBeenCalledWith(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
   });
 });
