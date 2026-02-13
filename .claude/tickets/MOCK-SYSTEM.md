@@ -712,6 +712,27 @@ grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts
 - [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
 - [x] `npm run gate` 通過
 
+#### 2026-02-13 1c 一致化修復（#15 最終收斂）
+
+**摘要**
+
+- [x] `GlobalHeader` 登入 returnPath 生成改為統一使用 `getCurrentPath()`，移除手動字串組裝
+- [x] 保持行為一致：仍會帶入 `pathname + search + hash`，但改由單一工具函式負責
+- [x] #15 工單紀錄補齊 1c 施作與驗證結果
+
+**本次修改**
+
+1. `src/components/layout/GlobalHeader.tsx`
+   - `getLoginUrl(\`${location.pathname}${location.search}${location.hash}\`)` 改為 `getLoginUrl(getCurrentPath())`。
+   - 匯入由 `getLoginUrl` 擴充為 `getCurrentPath, getLoginUrl`。
+   - 對齊 `Explicit over Implicit`：路徑拼接責任集中在 `authUtils`，避免分散實作。
+
+**收斂驗證**
+
+- [x] `npm run test -- src/lib/__tests__/authUtils.test.ts src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx` 通過
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `npm run gate` 通過
+
 ---
 
 ### #16 全站 UTF-8/文案健康檢查

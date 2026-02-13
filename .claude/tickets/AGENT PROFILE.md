@@ -5819,6 +5819,33 @@ npm run gate
 - `UTF-8` / `Mojibake`：通過
 - `gate`：QUALITY GATE PASSED
 
+### #15 1c 一致化修復（2026-02-13）
+
+#### 摘要
+
+- [x] `GlobalHeader` 登入導向的 returnPath 生成統一改用 `getCurrentPath()`
+- [x] 移除手動 `${location.pathname}${location.search}${location.hash}` 字串拼接
+- [x] 維持既有導向行為與 `?return=` 規格，不改變 UI/UX
+
+#### 施工紀錄
+
+1. `src/components/layout/GlobalHeader.tsx`
+   - `authUtils` 匯入改為 `getCurrentPath, getLoginUrl`。
+   - `loginUrl` 生成改為 `getLoginUrl(getCurrentPath())`，遵循單一來源策略。
+   - 對齊 `CLAUDE.md` / `.context/CONVENTIONS.md` 的 `Explicit over Implicit`，避免各元件自行拼接路徑。
+
+#### 驗證結果
+
+```bash
+npm run test -- src/lib/__tests__/authUtils.test.ts src/pages/Feed/__tests__/P7_ScenarioVerification.test.tsx
+npm run check:utf8
+npm run gate
+```
+
+- 測試：31/31 通過（authUtils 27 + P7 4）
+- `UTF-8` / `Mojibake`：通過
+- `gate`：QUALITY GATE PASSED
+
 ---
 
 ## MOCK-SYSTEM #19 [P1] 砍舊路徑：`/api/uag-track` → `/api/uag/track`
