@@ -7,6 +7,7 @@
  * 1. 優先從 Supabase community_reviews 撈取真實資料
  * 2. 不足 6 筆時用 SERVER_SEEDS 補位
  * 3. 保證永遠回傳 6 筆資料（零天窗）
+ * 4. 社區名稱由資料源修正，不在 API runtime 進行資料補丁
  *
  * P9-1 修復清單：
  * - P1: displayId 改為從 name 提取首字 (相容 ReviewCard)
@@ -123,7 +124,7 @@ const SERVER_SEEDS: ServerSeed[] = [
 // ============================================
 
 const REQUIRED_COUNT = 6;
-const DISPLAY_ID_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Fix Lie 12: Extract constant (Exclude I, O)
+const DISPLAY_ID_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Exclude ambiguous letters I and O
 
 // 延遲初始化 Supabase client
 let supabase: SupabaseClient | null = null;
@@ -199,13 +200,7 @@ function calculateRating(hasDisadvantage: boolean): number {
 }
 
 // ============================================
-// 5. SERVER_SEEDS - 官方精選示範資料
-// ============================================
-
-// Moved to src/constants/server-seeds.ts
-
-// ============================================
-// 6. 資料適配器 (Adapter Pattern)
+// 5. 資料適配器 (Adapter Pattern)
 // ============================================
 
 /**
@@ -257,15 +252,8 @@ function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
   // H1 修復：使用穩定的字母生成，同一 review.id 永遠對應同一字母
   const letter = generateStableLetter(review.id);
   const roleLabel = review.source === 'agent' ? '房仲' : '住戶';
-  // H4 修復：fallback 從「認證社區」改為「已認證」
-  // 將測試用社區名稱映射為正常名稱（資料庫測試資料保持不變，顯示時替換）
-  let communityLabel = review.community_name || '已認證';
-
-  // Fix Lie 11: Explicitly acknowledge this is a dirty data patch
-  // TODO: Clean up test data in database and remove this patch
-  if (communityLabel.includes('測試社區') || communityLabel.includes('API 穩定性')) {
-    communityLabel = '明湖水岸'; // 正常社區名稱，實際上是測試資料
-  }
+  // 名稱來源直接使用資料庫資料，僅保留空值 fallback
+  const communityLabel = review.community_name || '已認證';
   const name = `${letter}***｜${communityLabel} ${roleLabel}`;
 
   // displayId 就是那個字母
@@ -450,3 +438,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 }
+
+// 🧪 測試用導出（僅純函數與常數）
+export const __testHelpers = {
+  calculateRating,
+  generateStableLetter,
+  adaptRealReviewForUI,
+  adaptSeedForUI,
+  SERVER_SEEDS,
+  REQUIRED_COUNT,
+  DISPLAY_ID_LETTERS,
+};
