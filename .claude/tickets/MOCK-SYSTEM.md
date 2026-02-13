@@ -17,7 +17,7 @@
 
 - [ ] **#4a** 房產詳情頁：移除 `isDemoPropertyId` 改用 usePageMode（5 檔）
 - [ ] **#4b** 房產詳情頁：社區牆 + 註冊查看連結修正（2 檔）
-- [ ] **#5a** UAG：訪客 Landing Page + 角色守衛（1 新檔案 + App.tsx）
+- [x] **#5a** UAG：訪客 Landing Page + 角色守衛（6 新檔案 + 2 修改）✅ 2026-02-13
 - [ ] **#5b** UAG：移除 `uagModeStore`，改用 usePageMode（6 檔）
 - [ ] **#6a** Feed：Logo 導航修復 + 廢棄路由清理（3 檔）
 - [ ] **#6b** Feed：移除 `DEMO_IDS` + 新增 `/feed/demo` 路由（4 檔）
@@ -267,8 +267,9 @@ function useModeAwareAction<T>(handlers: {
 - [x] 首頁 `CommunityTeaser` 的 seed 卡片與「查看更多」改走 React 路由
 - [x] `Header` 社區評價入口（手機選單 + 膠囊）改走 React 路由
 - [x] `CommunityWallCard` 靜態 HTML 連結改走 React 路由
-- [x] `PropertyDetail/CommunityReviews` 前往社區牆改為動態路由（無 id 時 fallback `SEED_COMMUNITY_ID`）
+- [x] `PropertyDetail/CommunityReviews` 前往社區牆改為動態路由（demo 無 id fallback `SEED_COMMUNITY_ID`，live 無 id 顯示提示）
 - [x] 移除 `ROUTES.COMMUNITY_WALL_MVP`
+- [x] 補強 basename 相容：`navigate` 改走 `RouteUtils.toNavigatePath()`，避免 `/maihouses/maihouses/...` 雙前綴
 
 **本次修改**
 
@@ -276,18 +277,19 @@ function useModeAwareAction<T>(handlers: {
    - 新增 `SEED_COMMUNITY_ID = 'test-uuid'`（`Object.freeze` 防止意外修改）。
 2. `src/features/home/sections/CommunityTeaser.tsx`
    - 移除 `SEED_REVIEWS_URL = '/maihouses/community-wall_mvp.html'`。
-   - 點擊 seed 評價與「查看更多真實住戶評價」統一改為 `navigate('/community/${SEED_COMMUNITY_ID}/wall')`。
+   - 點擊 seed / real 評價與「查看更多真實住戶評價」統一改為 `navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(...)))`。
    - 「查看更多」由 `<a>` 改為 `<button>`，避免靜態 HTML 導流。
 3. `src/components/Header/Header.tsx`
    - `ROUTES.COMMUNITY_WALL_MVP` 改為 `ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)`。
 4. `src/features/home/components/CommunityWallCard.tsx`
-   - `communityWallUrl` 改為 `ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)`。
+   - 改為 `button + navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)))`。
 5. `src/components/PropertyDetail/CommunityReviews.tsx`
-   - `handleCommunityWall` 改為 `ROUTES.COMMUNITY_WALL(communityId ?? SEED_COMMUNITY_ID)`。
+   - `handleCommunityWall` 依模式路由：有 `communityId` 直達；demo fallback seed；live 無 id 顯示 `notify.info`。
 6. `src/constants/routes.ts`
    - 移除 `COMMUNITY_WALL_MVP` 常數。
+   - 新增 `RouteUtils.toNavigatePath()`，處理 `useNavigate + basename` 相容。
 7. `src/features/home/sections/__tests__/CommunityTeaser.test.tsx`
-   - seed 評價導向測試改為驗證 `mockNavigate('/community/test-uuid/wall')`。
+   - 導向測試改為驗證 `mockNavigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(...)))`。
 
 **驗證結果**
 
@@ -360,6 +362,48 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 - [x] `rg -n "disabled={!isLoggedIn}" src/components/PropertyDetail/CommunityReviews.tsx` 無結果
 - [x] `rg -n "disabled={!isLoggedIn}" src` 無結果（原先兩筆 `FeedPostCard.tsx`、`PostsSection.tsx` 已清除）
 
+#### 2026-02-13 #3 追修（單一模式來源 + API Schema + 分頁）
+
+**摘要**
+
+- [x] `CommunityReviews` 移除 `isDemo` prop，模式來源統一為 `usePageMode()`
+- [x] `canViewFullReview` 簡化為 `mode !== 'visitor'`，移除冗餘條件
+- [x] `useComments` 三個 API 回應改用 Zod `safeParse` 驗證（add/toggle/delete）
+- [x] `useComments` 錯誤訊息統一改用 `getErrorMessage()`，移除重複 `instanceof Error`
+- [x] `useComments.deleteComment` 回滾移除 `deletedComment!` non-null assertion
+- [x] `AgentReviewListModal` 修正分頁累積（load more 不再覆蓋上一頁）
+- [x] `AgentReviewListModal` loading spinner 加入 `motion-reduce:animate-none`
+- [x] 新增 `AgentReviewListModal` 分頁累積測試案例
+
+**本次修改**
+
+1. `src/components/PropertyDetail/CommunityReviews.tsx`
+   - 刪除 `isDemo?: boolean` 介面與預設參數。
+   - `isDemoMode` 改為 `mode === 'demo'`。
+   - `canViewFullReview` 改為 `mode !== 'visitor'`。
+2. `src/pages/PropertyDetailPage.tsx`
+   - 呼叫 `CommunityReviews` 時移除 `isDemo` 傳遞。
+3. `src/hooks/useComments.ts`
+   - 新增 `AddCommentResponseSchema` / `ToggleLikeResponseSchema` / `DeleteCommentResponseSchema`。
+   - `response.json()` 改為 `unknown` + `safeParse`，不再直接信任 payload。
+   - 錯誤訊息改為 `getErrorMessage()`，並以 `toError()` 統一 fallback。
+   - 回滾邏輯改用 `rollbackComment` 區域變數，移除 `deletedComment!`。
+4. `src/components/AgentReviewListModal.tsx`
+   - 新增 `mergedData` 狀態累積多頁結果。
+   - 開啟 modal / 切換 agent / 切換 mode 時重設頁碼與累積資料。
+   - 「載入更多」改為 live mode 才顯示，按鈕 loading 與 disabled 狀態同步 `isFetching`。
+   - Loader class 補 `motion-reduce:animate-none`。
+5. `src/components/__tests__/AgentReviewListModal.test.tsx`
+   - 新增 live mode 載入第二頁後仍保留第一頁資料的驗證。
+
+**收斂驗證**
+
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `rg -n "isDemo\\?|isDemo =|mode === 'demo' \\|\\|" src/components/PropertyDetail/CommunityReviews.tsx src/pages/PropertyDetailPage.tsx` 僅剩 `canViewFullReview`，無雙來源判斷
+- [x] `rg -n "instanceof Error|deletedComment!" src/hooks/useComments.ts` 無結果
+- [x] `rg -n "disabled={!isLoggedIn}" src` 無結果
+- [x] `npm run test -- src/components/__tests__/AgentReviewListModal.test.tsx src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx src/hooks/__tests__/useComments.raceCondition.test.ts` 通過（31 tests，提權執行）
+
 ---
 
 ### #4a 房產詳情頁：移除 `isDemoPropertyId`
@@ -399,20 +443,49 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 
 ---
 
-### #5a UAG：訪客 Landing Page + 角色守衛
+### #5a ✅ UAG：訪客 Landing Page + 角色守衛
+
+**已完成** 2026-02-13
 
 **目標**：訪客看產品介紹，consumer 被導回首頁
 
-**新增**：`src/pages/UAG/UAGLandingPage.tsx`
+**路由守衛邏輯**（`UAGGuard` 元件，位於 ErrorBoundary 內層）：
 
 ```
-visitor                    → UAGLandingPage（功能介紹 + 截圖 + 「成為合作房仲」CTA）
-demo                       → 現有 UAG 後台（seed）
-live + agent               → 現有 UAG 後台（API）
-live + consumer            → 「僅限合作房仲」→ 引導回首頁
+visitor                        → <UAGLandingPage />（功能介紹 + CTA）
+demo                           → 現有 <UAGPageContent />（seed 資料）
+live + agent/admin/official    → 現有 <UAGPageContent />（API 資料）
+live + 其他角色                → notify.warning + navigate 回首頁
 ```
 
-**驗收**：訪客進 `/uag` 看不到任何 mock 資料
+**新增檔案**
+
+1. `src/pages/UAG/UAGLandingPage.tsx` — 頁面外殼，組合 Hero + Features + Steps + CTA
+2. `src/pages/UAG/components/landing/UAGLandingHero.tsx` — 標題 + 副標題 + 註冊/登入 CTA
+3. `src/pages/UAG/components/landing/UAGLandingFeatures.tsx` — 3 張功能卡片
+4. `src/pages/UAG/components/landing/UAGFeatureCard.tsx` — 功能卡片子元件
+5. `src/pages/UAG/components/landing/UAGLandingSteps.tsx` — 3 步驟流程
+6. `src/pages/UAG/components/landing/UAGLandingCTA.tsx` — 底部 CTA（註冊 + 免費體驗 Demo）
+
+**修改檔案**
+
+1. `src/pages/UAG/index.tsx` — 新增 `UAGGuard` 元件 + imports（`usePageMode`、`UAGLandingPage`）
+2. `src/pages/UAG/index.test.tsx` — mock `usePageMode`、新增 visitor landing 測試、調整既有測試為 demo 模式
+
+**重用工具**
+
+- `getSignupUrl(ROUTES.UAG, 'agent')` / `getAuthUrl('login', ROUTES.UAG)` — CTA 連結
+- `setDemoMode()` + `reloadPage()` — 免費體驗 Demo 按鈕
+- `usePageMode()` — 模式判斷
+- `useAuth()` — 角色判斷
+- CSS Module `UAG.module.css` — `.uag-page`、`.uag-card`、`.uag-container`、`.flow-stage`
+
+**收斂驗證**
+
+- [x] `npx tsc --noEmit` 通過
+- [x] `npx vitest run src/pages/UAG/index.test.tsx` 4 tests 通過
+- [x] 訪客進 `/uag` 看到 Landing Page，看不到任何 mock 資料
+- [x] ESLint 新增/修改檔案零錯誤（gate ESLint 2 errors 來自既有 `AgentReviewListModal.tsx`）
 
 ---
 
@@ -1047,9 +1120,9 @@ UI 設計需 `/ui-ux-pro-max`。
 | # | 檔案 | 行號 | 問題 | 修復 | 歸屬 |
 |---|------|------|------|------|------|
 | 13 | `CommunityReviews.tsx` | 207 | 仍引用 `ROUTES.COMMUNITY_WALL_MVP` | 改 React 路由 | #2 |
-| 14 | `FeedPostCard.tsx` | 110 | `disabled={!isLoggedIn}` 殘留 | useModeAwareAction | #3/#6b |
+| 14 | `FeedPostCard.tsx` | 110 | （歷史觀察，已過期）`disabled={!isLoggedIn}` 殘留 | 現況已清零，見 #3 追修與全局驗證 | #3/#6b |
 | 15 | `CommentList.tsx` | 184 | 同上 | 同上 | #3/#8b |
-| 16 | `PostsSection.tsx` | 279 | 同上 | 同上 | #8b |
+| 16 | `PostsSection.tsx` | 279 | （歷史觀察，已過期）同上 | 現況已清零，見 #3 追修與全局驗證 | #8b |
 | 17 | `Wall.tsx` | 215-227 | 獨立 `StorageEvent` 重複 | 移除，用 `subscribeDemoModeStorageSync` | #8a |
 | 18 | `PropertyUploadPage.tsx` | 80-86 | 同上 | 同上 | #5b |
 

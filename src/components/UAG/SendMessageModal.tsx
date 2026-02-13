@@ -11,7 +11,7 @@ import type { Lead } from '../../pages/UAG/types/uag.types';
 import { messagingService } from '../../services/messagingService';
 import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, RouteUtils } from '../../constants/routes';
 
 const S = {
   TITLE: '發送訊息給客戶',
@@ -119,7 +119,7 @@ export function SendMessageModal({
 
         notify.success(S.SUCCESS, S.SUCCESS_DESC);
         onClose();
-        navigate(ROUTES.CHAT(safeConversationId));
+        navigate(RouteUtils.toNavigatePath(ROUTES.CHAT(safeConversationId)));
         return;
       }
 
@@ -168,7 +168,7 @@ export function SendMessageModal({
       onClose();
 
       if (result.conversationId) {
-        navigate(ROUTES.CHAT(result.conversationId));
+        navigate(RouteUtils.toNavigatePath(ROUTES.CHAT(result.conversationId)));
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '請稍後再試';

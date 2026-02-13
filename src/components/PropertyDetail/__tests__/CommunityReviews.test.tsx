@@ -6,6 +6,7 @@ import type { PageMode } from '../../../hooks/usePageMode';
 
 const mockUsePageMode = vi.fn<() => PageMode>();
 const mockNotifyInfo = vi.fn();
+const mockNotifyError = vi.fn();
 
 vi.mock('../../../hooks/usePageMode', () => ({
   usePageMode: () => mockUsePageMode(),
@@ -14,6 +15,7 @@ vi.mock('../../../hooks/usePageMode', () => ({
 vi.mock('../../../lib/notify', () => ({
   notify: {
     info: (...args: unknown[]) => mockNotifyInfo(...args),
+    error: (...args: unknown[]) => mockNotifyError(...args),
   },
 }));
 
@@ -59,7 +61,7 @@ describe('CommunityReviews', () => {
   });
 
   it('renders mock reviews in demo mode', async () => {
-    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
+    renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
       expect(screen.getByText('社區評價')).toBeInTheDocument();
@@ -69,7 +71,7 @@ describe('CommunityReviews', () => {
   });
 
   it('renders SVG star ratings instead of plain text stars', async () => {
-    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
+    renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
       const ratings = screen.getAllByLabelText('4 星評價');
@@ -80,7 +82,7 @@ describe('CommunityReviews', () => {
   });
 
   it('applies card motion classes and gradient avatar', async () => {
-    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
+    renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
     const nameNode = await screen.findByText('林***');
     const card = nameNode.closest('.rounded-2xl');
@@ -93,7 +95,7 @@ describe('CommunityReviews', () => {
   });
 
   it('renders community wall button as pill style', async () => {
-    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
+    renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
     const button = await waitFor(() =>
       screen
@@ -117,7 +119,7 @@ describe('CommunityReviews', () => {
     mockUsePageMode.mockReturnValue('live');
     const user = userEvent.setup();
 
-    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={false} onToggleLike={onToggleLike} />);
+    renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
     const wallButton = await waitFor(() =>
       screen
@@ -138,7 +140,7 @@ describe('CommunityReviews', () => {
   });
 
   it('keeps like buttons enabled in demo mode for logged-out users', async () => {
-    renderWithRouter(<CommunityReviews isLoggedIn={false} isDemo={true} onToggleLike={onToggleLike} />);
+    renderWithRouter(<CommunityReviews isLoggedIn={false} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
       const likeButtons = screen.getAllByLabelText(/鼓勵這則評價/);
@@ -150,7 +152,7 @@ describe('CommunityReviews', () => {
 
   it('toggles likes locally in demo mode', async () => {
     const user = userEvent.setup();
-    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
+    renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
     const firstLikeButton = await screen.findByLabelText('鼓勵這則評價');
     expect(firstLikeButton).toHaveTextContent('3');
@@ -187,7 +189,6 @@ describe('CommunityReviews', () => {
     renderWithRouter(
       <CommunityReviews
         isLoggedIn={true}
-        isDemo={false}
         communityId="community-1"
         onToggleLike={onToggleLike}
       />
@@ -206,8 +207,27 @@ describe('CommunityReviews', () => {
   it('prioritizes mode guard before auth guard in visitor mode', async () => {
     mockUsePageMode.mockReturnValue('visitor');
     const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          data: [
+            {
+              id: 'review-visitor-1',
+              content: { pros: ['安靜'] },
+              agent: { name: '訪客測試房仲' },
+            },
+          ],
+          total: 1,
+        },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
 
-    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
+    renderWithRouter(
+      <CommunityReviews isLoggedIn={true} communityId="community-visitor" onToggleLike={onToggleLike} />
+    );
 
     const likeButton = await screen.findByLabelText('鼓勵這則評價');
     await user.click(likeButton);
@@ -217,7 +237,7 @@ describe('CommunityReviews', () => {
   });
 
   it('keeps like button touch target >=44px', async () => {
-    renderWithRouter(<CommunityReviews isLoggedIn={true} isDemo={true} onToggleLike={onToggleLike} />);
+    renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
     await waitFor(() => {
       const likeButtons = screen.getAllByLabelText(/鼓勵這則評價/);
@@ -229,9 +249,62 @@ describe('CommunityReviews', () => {
 
   it('shows locked CTA for logged-out users', async () => {
     mockUsePageMode.mockReturnValue('visitor');
-    renderWithRouter(<CommunityReviews isLoggedIn={false} isDemo={false} onToggleLike={onToggleLike} />);
+    renderWithRouter(<CommunityReviews isLoggedIn={false} onToggleLike={onToggleLike} />);
 
     const cta = await screen.findByRole('button', { name: /註冊查看全部|註冊查看更多評價/ });
     expect(within(cta).getByText(/註冊/)).toBeInTheDocument();
+  });
+
+  it('restores like count after two rapid demo toggles', async () => {
+    const user = userEvent.setup();
+    renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
+
+    const likeButton = await screen.findByLabelText('鼓勵這則評價');
+    expect(likeButton).toHaveTextContent('3');
+
+    await user.click(likeButton);
+    await user.click(likeButton);
+
+    expect(likeButton).toHaveTextContent('3');
+    expect(onToggleLike).not.toHaveBeenCalled();
+  });
+
+  it('keeps UI stable when live onToggleLike throws', async () => {
+    mockUsePageMode.mockReturnValue('live');
+    const user = userEvent.setup();
+    const throwingToggleLike = vi.fn(() => {
+      throw new Error('toggle like failed');
+    });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          data: [
+            {
+              id: 'review-live-throw',
+              content: { pros: ['採光好'] },
+              agent: { name: '錯誤路徑測試房仲' },
+            },
+          ],
+          total: 1,
+        },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderWithRouter(
+      <CommunityReviews
+        isLoggedIn={true}
+        communityId="community-live-throw"
+        onToggleLike={throwingToggleLike}
+      />
+    );
+
+    const likeButton = await screen.findByLabelText('鼓勵這則評價');
+    await user.click(likeButton);
+
+    expect(throwingToggleLike).toHaveBeenCalledWith('review-live-throw');
+    expect(mockNotifyError).toHaveBeenCalledWith('鼓勵失敗', 'toggle like failed');
   });
 });

@@ -1,8 +1,8 @@
-﻿import React, { useCallback, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, RouteUtils } from '../../constants/routes';
 import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
 import { getErrorMessage } from '../../lib/error';
@@ -13,8 +13,10 @@ import styles from './UAG.module.css';
 import { useUAG } from './hooks/useUAG';
 import { useLeadSelection } from './hooks/useLeadSelection';
 import { useAgentProfile } from './hooks/useAgentProfile';
-import { resolveUAGQueryMode, uagDataQueryKey } from './hooks/queryKeys';
+import { uagDataQueryKey } from './hooks/queryKeys';
 import { useAuth } from '../../hooks/useAuth';
+import { usePageMode } from '../../hooks/usePageMode';
+import { UAGLandingPage } from './UAGLandingPage';
 
 import { UAGHeader } from './components/UAGHeader';
 import { UAGFooter } from './components/UAGFooter';
@@ -35,13 +37,12 @@ import type { Lead } from './types/uag.types';
 function UAGPageContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode } = useUAG();
+  const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode, mode } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
   const { user, loading: authLoading, error: authError, signOut } = useAuth();
   const { profile: agentProfile } = useAgentProfile(user?.id);
   const actionPanelRef = useRef<HTMLDivElement>(null);
-  const uagMode = resolveUAGQueryMode(useMock, user?.id);
-  const uagCacheKey = useMemo(() => uagDataQueryKey(uagMode, user?.id), [uagMode, user?.id]);
+  const uagCacheKey = useMemo(() => uagDataQueryKey(mode, user?.id), [mode, user?.id]);
 
   // MSG-5: Modal 狀態
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -70,7 +71,7 @@ function UAGPageContent() {
         notify.info('Mock 模式', '聊天室功能需要切換到 Live 模式');
         return;
       }
-      navigate(ROUTES.CHAT(conversationId));
+      navigate(RouteUtils.toNavigatePath(ROUTES.CHAT(conversationId)));
     },
     [navigate, useMock]
   );
@@ -340,15 +341,46 @@ function UAGPageContent() {
   );
 }
 
+/** 允許存取 UAG 後台的角色 */
+const UAG_ALLOWED_ROLES = new Set(['agent', 'admin', 'official']);
+
+function UAGGuard() {
+  const mode = usePageMode();
+  const { role, loading } = useAuth();
+  const navigate = useNavigate();
+  const isUnauthorized = mode === 'live' && !UAG_ALLOWED_ROLES.has(role);
+
+  useEffect(() => {
+    if (loading) return;
+    if (isUnauthorized) {
+      notify.warning('權限不足', '你的帳號角色無法存取 UAG 後台');
+      navigate(RouteUtils.toNavigatePath(ROUTES.HOME), { replace: true });
+    }
+  }, [isUnauthorized, loading, navigate]);
+
+  if (mode === 'visitor') {
+    return <UAGLandingPage />;
+  }
+
+  if (loading) {
+    return <UAGLoadingSkeleton />;
+  }
+
+  if (isUnauthorized) {
+    return null;
+  }
+
+  return <UAGPageContent />;
+}
+
 export default function UAGPage() {
   return (
     <QueryErrorResetBoundary>
       {({ reset }) => (
         <ErrorBoundary onReset={reset} FallbackComponent={UAGErrorState}>
-          <UAGPageContent />
+          <UAGGuard />
         </ErrorBoundary>
       )}
     </QueryErrorResetBoundary>
   );
 }
-

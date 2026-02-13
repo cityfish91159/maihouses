@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { BACKUP_REVIEWS } from '../../../constants/data';
-import { ROUTES } from '../../../constants/routes';
+import { ROUTES, RouteUtils } from '../../../constants/routes';
 import { HomeCard } from '../components/HomeCard';
 import { ReviewCard } from '../components/ReviewCard';
 import { getFeaturedHomeReviews } from '../../../services/communityService';
@@ -75,7 +75,7 @@ function mapBackupToReviewWithNavigation(
 export default function CommunityTeaser() {
   const navigate = useNavigate();
   const mode = usePageMode();
-  const seedWallPath = ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
+  const seedWallPath = RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
 
   // V2: Use React Query instead of useEffect + useState
   const {
@@ -100,7 +100,7 @@ export default function CommunityTeaser() {
   const handleReviewClick = useCallback(
     (review: ReviewWithNavigation) => {
       if (review.source === 'real' && review.communityId) {
-        navigate(ROUTES.COMMUNITY_WALL(review.communityId));
+        navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(review.communityId)));
       } else {
         navigate(seedWallPath);
       }
@@ -130,7 +130,7 @@ export default function CommunityTeaser() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="animate-pulse motion-reduce:animate-none rounded-2xl border border-brand-100 bg-white p-3.5"
+              className="animate-pulse rounded-2xl border border-brand-100 bg-white p-3.5 motion-reduce:animate-none"
             >
               <div className="flex gap-3">
                 <div className="size-[38px] rounded-full bg-gray-200" />
@@ -145,7 +145,7 @@ export default function CommunityTeaser() {
           ))}
         </div>
 
-        <div className="mt-4 h-12 animate-pulse motion-reduce:animate-none rounded-xl bg-gray-100" />
+        <div className="mt-4 h-12 animate-pulse rounded-xl bg-gray-100 motion-reduce:animate-none" />
       </HomeCard>
     );
   }

@@ -1,7 +1,14 @@
-﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import UAGPage from './index';
+import { ROUTES, RouteUtils } from '../../constants/routes';
+
+const mockedNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return { ...actual, useNavigate: () => mockedNavigate };
+});
 
 const mockedNotify = vi.hoisted(() => ({
   success: vi.fn(),
@@ -16,6 +23,50 @@ const mockedNotify = vi.hoisted(() => ({
 vi.mock('../../lib/notify', () => ({
   notify: mockedNotify,
 }));
+
+/**
+ * #5a: usePageMode mock
+ * 預設 'demo'，讓既有的 seed 資料測試正常運作
+ */
+type PageMode = 'visitor' | 'demo' | 'live';
+const mockedUsePageMode = vi.hoisted(() =>
+  vi.fn<() => PageMode>().mockReturnValue('demo')
+);
+vi.mock('../../hooks/usePageMode', () => ({
+  usePageMode: mockedUsePageMode,
+}));
+
+/**
+ * #5a: useAuth mock — 控制 role 和 loading
+ */
+const mockedUseAuth = vi.hoisted(() =>
+  vi.fn().mockReturnValue({
+    session: null,
+    user: null,
+    role: 'guest',
+    isAuthenticated: false,
+    loading: false,
+    error: null,
+    signOut: vi.fn(),
+  })
+);
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: mockedUseAuth,
+}));
+
+/**
+ * #5a #10: setDemoMode / reloadPage mock — 驗證 CTA 互動
+ */
+const mockedSetDemoMode = vi.hoisted(() => vi.fn(() => true));
+const mockedReloadPage = vi.hoisted(() => vi.fn());
+vi.mock('../../lib/pageMode', async () => {
+  const actual = await vi.importActual('../../lib/pageMode');
+  return {
+    ...actual,
+    setDemoMode: mockedSetDemoMode,
+    reloadPage: mockedReloadPage,
+  };
+});
 
 // Mock Supabase client to avoid environment variable issues
 vi.mock('../../lib/supabase', () => ({
@@ -66,6 +117,20 @@ beforeAll(() => {
 beforeEach(() => {
   mockedNotify.success.mockClear();
   mockedNotify.error.mockClear();
+  mockedNotify.warning.mockClear();
+  mockedNavigate.mockClear();
+  mockedSetDemoMode.mockClear();
+  mockedReloadPage.mockClear();
+  mockedUsePageMode.mockReturnValue('demo');
+  mockedUseAuth.mockReturnValue({
+    session: null,
+    user: null,
+    role: 'guest',
+    isAuthenticated: false,
+    loading: false,
+    error: null,
+    signOut: vi.fn(),
+  });
 });
 
 const renderWithQueryClient = () => {
@@ -109,6 +174,101 @@ describe('UAGPage', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('S級｜買家 B218')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('#5a visitor landing page', () => {
+    beforeEach(() => {
+      mockedUsePageMode.mockReturnValue('visitor');
+    });
+
+    it('shows landing page with CTA for visitor mode', () => {
+      renderWithQueryClient();
+
+      expect(screen.getByText('UAG 精準導客雷達')).toBeInTheDocument();
+      expect(screen.getByText('AI 分析消費者瀏覽行為，為你精準配對潛力買家')).toBeInTheDocument();
+      // Hero + CTA 各有一個「成為合作房仲」
+      expect(screen.getAllByText('成為合作房仲')).toHaveLength(2);
+      expect(screen.getByText('已有帳號？登入')).toBeInTheDocument();
+      expect(screen.getByText('免費體驗 Demo')).toBeInTheDocument();
+    });
+
+    it('does not render radar or action panel for visitor', () => {
+      renderWithQueryClient();
+
+      expect(screen.queryByText(/請點擊上方雷達泡泡/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /匯出報表/ })).not.toBeInTheDocument();
+    });
+
+    it('calls setDemoMode and reloadPage when clicking demo CTA', () => {
+      renderWithQueryClient();
+
+      fireEvent.click(screen.getByText('免費體驗 Demo'));
+
+      expect(mockedSetDemoMode).toHaveBeenCalledOnce();
+      expect(mockedReloadPage).toHaveBeenCalledOnce();
+    });
+
+    it('shows error toast when setDemoMode fails', () => {
+      mockedSetDemoMode.mockReturnValue(false);
+      renderWithQueryClient();
+
+      fireEvent.click(screen.getByText('免費體驗 Demo'));
+
+      expect(mockedSetDemoMode).toHaveBeenCalledOnce();
+      expect(mockedReloadPage).not.toHaveBeenCalled();
+      expect(mockedNotify.error).toHaveBeenCalledWith(
+        '無法進入演示模式',
+        '您的瀏覽器不支援本地儲存，請關閉私密瀏覽後重試。'
+      );
+    });
+  });
+
+  describe('#5a live mode role guard', () => {
+    it('does not redirect live + agent role', () => {
+      mockedUsePageMode.mockReturnValue('live');
+      mockedUseAuth.mockReturnValue({
+        session: {},
+        user: { id: 'test-uid', email: 'agent@test.com' },
+        role: 'agent',
+        isAuthenticated: true,
+        loading: false,
+        error: null,
+        signOut: vi.fn(),
+      });
+
+      renderWithQueryClient();
+
+      // agent 不應被 redirect，也不應看到 Landing Page
+      expect(mockedNavigate).not.toHaveBeenCalled();
+      expect(mockedNotify.warning).not.toHaveBeenCalled();
+      expect(screen.queryByText('免費體驗 Demo')).not.toBeInTheDocument();
+    });
+
+    it('redirects live + consumer role to home with warning', async () => {
+      mockedUsePageMode.mockReturnValue('live');
+      mockedUseAuth.mockReturnValue({
+        session: {},
+        user: { id: 'test-uid', email: 'consumer@test.com' },
+        role: 'consumer',
+        isAuthenticated: true,
+        loading: false,
+        error: null,
+        signOut: vi.fn(),
+      });
+
+      renderWithQueryClient();
+
+      await waitFor(() => {
+        expect(mockedNotify.warning).toHaveBeenCalledWith(
+          '權限不足',
+          '你的帳號角色無法存取 UAG 後台'
+        );
+      });
+      expect(mockedNavigate).toHaveBeenCalledWith(
+        RouteUtils.toNavigatePath(ROUTES.HOME),
+        { replace: true }
+      );
     });
   });
 });

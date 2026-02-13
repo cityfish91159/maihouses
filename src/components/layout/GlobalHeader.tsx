@@ -20,7 +20,7 @@ import { logger } from '../../lib/logger';
 import { getCurrentPath, getLoginUrl } from '../../lib/authUtils';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 import { STRINGS } from '../../constants/strings';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, RouteUtils } from '../../constants/routes';
 import { MESSAGING_CONFIG } from '../../constants/messaging';
 import { NotificationDropdown } from './NotificationDropdown';
 import { NotificationErrorBoundary } from './NotificationErrorBoundary';
@@ -75,7 +75,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
       await signOut();
       notify.success(HEADER_STRINGS.MSG_LOGOUT_SUCCESS, HEADER_STRINGS.MSG_LOGOUT_DESC);
       setUserMenuOpen(false);
-      navigate(ROUTES.HOME);
+      navigate(RouteUtils.toNavigatePath(ROUTES.HOME));
     } catch (error) {
       logger.error('GlobalHeader.handleSignOut.failed', {
         error,
@@ -106,7 +106,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
   // 處理通知點擊跳轉（使用 React Router）
   const handleNotificationClick = (conversationId: string) => {
     setNotificationMenuOpen(false);
-    navigate(ROUTES.CHAT(conversationId));
+    navigate(RouteUtils.toNavigatePath(ROUTES.CHAT(conversationId)));
   };
 
   // 渲染左側區域 (Logo)

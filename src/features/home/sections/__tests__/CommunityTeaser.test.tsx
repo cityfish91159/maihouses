@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import type { ReactNode } from 'react';
 import CommunityTeaser from '../CommunityTeaser';
 import { BACKUP_REVIEWS } from '../../../../constants/data';
-import { ROUTES } from '../../../../constants/routes';
+import { ROUTES, RouteUtils } from '../../../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../../../constants/seed';
 
 const mockNavigate = vi.fn();
@@ -147,7 +147,9 @@ describe('CommunityTeaser', () => {
     const card = screen.getByText('Real User: Real content').closest('div[role="button"]');
     fireEvent.click(card!);
 
-    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.COMMUNITY_WALL('comm-123'));
+    expect(mockNavigate).toHaveBeenCalledWith(
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL('comm-123'))
+    );
   });
 
   it('navigates to seed community wall when clicking seed review', () => {
@@ -175,7 +177,9 @@ describe('CommunityTeaser', () => {
     const card = screen.getByText('Seed User: Seed content').closest('div[role="button"]');
     fireEvent.click(card!);
 
-    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
+    expect(mockNavigate).toHaveBeenCalledWith(
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID))
+    );
   });
 
   it('navigates to seed community wall when clicking see more button', () => {
@@ -191,6 +195,8 @@ describe('CommunityTeaser', () => {
     fireEvent.click(ctaButton);
 
     expect(ctaButton.tagName).toBe('BUTTON');
-    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
+    expect(mockNavigate).toHaveBeenCalledWith(
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID))
+    );
   });
 });

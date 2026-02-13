@@ -2,6 +2,8 @@
  * 應用程式路由常數
  * 集中管理所有路由路徑，避免硬編碼
  */
+const APP_BASENAME = '/maihouses';
+
 export const ROUTES = {
   /** 首頁 */
   HOME: '/maihouses/',
@@ -66,5 +68,19 @@ export const RouteUtils = {
   withQuery: (route: string, params: Record<string, string>): string => {
     const query = new URLSearchParams(params).toString();
     return query ? `${route}?${query}` : route;
+  },
+
+  /**
+   * 將含 basename 的完整路徑轉為 useNavigate 可用的相對路徑
+   * 例：/maihouses/community/test/wall -> /community/test/wall
+   */
+  toNavigatePath: (route: string): string => {
+    if (!route.startsWith('/')) return `/${route}`;
+    if (route === APP_BASENAME) return '/';
+    if (route.startsWith(`${APP_BASENAME}/`)) {
+      const relativePath = route.slice(APP_BASENAME.length);
+      return relativePath || '/';
+    }
+    return route;
   },
 } as const;

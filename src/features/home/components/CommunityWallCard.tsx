@@ -1,6 +1,6 @@
 ﻿import { ExternalLink, Star, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../constants/routes';
+import { ROUTES, RouteUtils } from '../../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../../constants/seed';
 
 /**
@@ -70,8 +70,8 @@ export default function CommunityWallCard({
   const finalReviewCount = reviewCount ?? mockData?.reviewCount ?? 10;
   const finalRating = rating ?? mockData?.rating ?? 4.0;
 
-  const communityWallUrl = ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
-  const handleNavigate = () => navigate(communityWallUrl);
+  const communityWallPath = RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
+  const handleNavigate = () => navigate(communityWallPath);
 
   return (
     <button
