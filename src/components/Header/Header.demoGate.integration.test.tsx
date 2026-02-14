@@ -8,6 +8,10 @@ const notifyMocks = vi.hoisted(() => ({
   info: vi.fn(),
 }));
 
+const demoExitMocks = vi.hoisted(() => ({
+  requestDemoExit: vi.fn(),
+}));
+
 const maimaiContextMocks = vi.hoisted(() => ({
   addMessage: vi.fn(),
   setMood: vi.fn(),
@@ -15,6 +19,10 @@ const maimaiContextMocks = vi.hoisted(() => ({
 
 vi.mock('../../hooks/usePageMode', () => ({
   usePageMode: () => mockUsePageMode(),
+}));
+
+vi.mock('../../hooks/useDemoExit', () => ({
+  useDemoExit: () => demoExitMocks,
 }));
 
 vi.mock('../../lib/notify', () => ({
@@ -52,6 +60,7 @@ describe('Header + DemoGate integration', () => {
     mockUsePageMode.mockReset();
     mockUsePageMode.mockReturnValue('visitor');
     notifyMocks.info.mockReset();
+    demoExitMocks.requestDemoExit.mockReset();
     maimaiContextMocks.addMessage.mockReset();
     maimaiContextMocks.setMood.mockReset();
 
@@ -90,22 +99,31 @@ describe('Header + DemoGate integration', () => {
     );
   });
 
-  it('demo 模式點登入應被攔截並顯示提示', () => {
+  it('demo 模式不應顯示登入/註冊按鈕', () => {
     mockUsePageMode.mockReturnValue('demo');
     const { container } = render(<Header />);
 
     const loginAnchor = container.querySelector('a[href*="auth.html?mode=login"]');
-    expect(loginAnchor).not.toBeNull();
+    const signupAnchor = container.querySelector('a[href*="auth.html?mode=signup"]');
+    expect(loginAnchor).toBeNull();
+    expect(signupAnchor).toBeNull();
+  });
 
-    if (!loginAnchor) {
-      throw new Error('login anchor not found');
-    }
+  it('demo 模式應顯示退出演示按鈕', () => {
+    mockUsePageMode.mockReturnValue('demo');
+    const { getByRole } = render(<Header />);
 
-    const isCanceled = wasCanceledByHandler(loginAnchor);
-    expect(isCanceled).toBe(true);
-    expect(notifyMocks.info).toHaveBeenCalledWith(
-      '演示模式中暫停登入',
-      '演示期間不開放登入，請先完成體驗。'
-    );
+    const exitButton = getByRole('button', { name: /退出演示/ });
+    expect(exitButton).toBeDefined();
+  });
+
+  it('點擊退出演示按鈕應呼叫 requestDemoExit', () => {
+    mockUsePageMode.mockReturnValue('demo');
+    const { getByRole } = render(<Header />);
+
+    const exitButton = getByRole('button', { name: /退出演示/ });
+    fireEvent.click(exitButton);
+
+    expect(demoExitMocks.requestDemoExit).toHaveBeenCalledTimes(1);
   });
 });

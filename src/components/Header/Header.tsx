@@ -1,5 +1,5 @@
 ﻿import React, { useState, useCallback } from 'react';
-import { Search, LogIn, UserPlus, List, Menu, X } from 'lucide-react';
+import { Search, LogIn, LogOut, UserPlus, List, Menu, X } from 'lucide-react';
 import { Logo } from '../Logo/Logo';
 import { DemoGate } from '../DemoGate/DemoGate';
 import { ROUTES, RouteUtils } from '../../constants/routes';
@@ -10,12 +10,14 @@ import { MaiMaiBase } from '../MaiMai';
 import { useMaiMai } from '../../context/MaiMaiContext';
 import { TUTORIAL_CONFIG } from '../../constants/tutorial';
 import { usePageMode } from '../../hooks/usePageMode';
+import { useDemoExit } from '../../hooks/useDemoExit';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [clickCount, setClickCount] = useState(0);
   const mode = usePageMode();
+  const { requestDemoExit } = useDemoExit();
   const { setMood, addMessage } = useMaiMai();
   const authReturnPath = getCurrentPath();
   const loginUrl = getLoginUrl(authReturnPath);
@@ -98,47 +100,73 @@ export default function Header() {
               <span>房地產列表</span>
             </a>
 
-            {/* Column 2: Login */}
-            <a
-              href={loginUrl}
-              onClick={handleAuthEntryClick}
-              className="hover:bg-brand-50/80 flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:text-brand-600 active:scale-[0.98]"
-            >
-              <LogIn size={18} strokeWidth={2.5} className="opacity-80" />
-              <span>登入</span>
-            </a>
+            {mode === 'demo' ? (
+              <button
+                type="button"
+                onClick={requestDemoExit}
+                className="ml-1 flex items-center gap-2 rounded-xl border border-brand-700 bg-white px-5 py-2.5 text-[15px] font-bold text-brand-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-brand-50 hover:shadow-md active:scale-[0.98]"
+              >
+                <LogOut size={18} strokeWidth={2.5} />
+                <span>退出演示</span>
+              </button>
+            ) : (
+              <>
+                {/* Column 2: Login */}
+                <a
+                  href={loginUrl}
+                  onClick={handleAuthEntryClick}
+                  className="hover:bg-brand-50/80 flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:text-brand-600 active:scale-[0.98]"
+                >
+                  <LogIn size={18} strokeWidth={2.5} className="opacity-80" />
+                  <span>登入</span>
+                </a>
 
-            {/* Column 3: Register (CTA) */}
-            <a
-              href={signupUrl}
-              onClick={handleAuthEntryClick}
-              className="shadow-brand-700/10 hover:shadow-brand-700/20 ml-1 flex items-center gap-2 rounded-xl border border-transparent bg-brand-700 px-5 py-2.5 text-[15px] font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg active:scale-[0.98]"
-            >
-              <UserPlus size={18} strokeWidth={2.5} />
-              <span>免費註冊</span>
-            </a>
+                {/* Column 3: Register (CTA) */}
+                <a
+                  href={signupUrl}
+                  onClick={handleAuthEntryClick}
+                  className="shadow-brand-700/10 hover:shadow-brand-700/20 ml-1 flex items-center gap-2 rounded-xl border border-transparent bg-brand-700 px-5 py-2.5 text-[15px] font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg active:scale-[0.98]"
+                >
+                  <UserPlus size={18} strokeWidth={2.5} />
+                  <span>免費註冊</span>
+                </a>
+              </>
+            )}
           </nav>
 
           {/* Mobile Nav - 手機版 */}
           <div className="flex items-center gap-2 md:hidden">
-            {/* 登入按鈕 - 手機版精簡 */}
-            <a
-              href={loginUrl}
-              onClick={handleAuthEntryClick}
-              className="flex items-center justify-center rounded-lg px-3 py-2 text-sm font-bold text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
-            >
-              <LogIn size={18} strokeWidth={2.5} />
-            </a>
+            {mode === 'demo' ? (
+              <button
+                type="button"
+                onClick={requestDemoExit}
+                className="flex items-center gap-1.5 rounded-lg border border-brand-700 bg-white px-3 py-2 text-sm font-bold text-brand-700 shadow-sm transition-all hover:bg-brand-50 active:scale-95"
+              >
+                <LogOut size={16} strokeWidth={2.5} />
+                <span>退出</span>
+              </button>
+            ) : (
+              <>
+                {/* 登入按鈕 - 手機版精簡 */}
+                <a
+                  href={loginUrl}
+                  onClick={handleAuthEntryClick}
+                  className="flex items-center justify-center rounded-lg px-3 py-2 text-sm font-bold text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
+                >
+                  <LogIn size={18} strokeWidth={2.5} />
+                </a>
 
-            {/* 註冊按鈕 - 手機版精簡 */}
-            <a
-              href={signupUrl}
-              onClick={handleAuthEntryClick}
-              className="flex items-center gap-1.5 rounded-lg bg-brand-700 px-3 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-600 active:scale-95"
-            >
-              <UserPlus size={16} strokeWidth={2.5} />
-              <span>註冊</span>
-            </a>
+                {/* 註冊按鈕 - 手機版精簡 */}
+                <a
+                  href={signupUrl}
+                  onClick={handleAuthEntryClick}
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-700 px-3 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-600 active:scale-95"
+                >
+                  <UserPlus size={16} strokeWidth={2.5} />
+                  <span>註冊</span>
+                </a>
+              </>
+            )}
 
             {/* 漢堡選單按鈕 */}
             <button
