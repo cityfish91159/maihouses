@@ -2255,23 +2255,41 @@
   color: var(--uag-danger);
 }
 
-/* ====== #5a Landing Page ====== */
+/* ====== #5a Landing Page (Minimalism redesign) ====== */
+
+/* Landing 專用頁面容器 — 不繼承 uag-page 的漸層和網格 */
+.uag-landing-page {
+  font-family: var(--font);
+  background: #F6F9FF; /* brand-50 */
+  color: #0A2246; /* ink-900 */
+  line-height: 1.6;
+  min-height: 100dvh;
+}
+.uag-landing-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0;
+}
+
 .landing-hero {
   text-align: center;
-  padding: 48px 16px 32px;
+  padding: 64px 16px 48px;
+  max-width: 640px;
+  margin: 0 auto;
 }
 .landing-title {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 900;
-  color: var(--ink-100);
-  margin: 0 0 12px;
+  color: #0A2246;
+  margin: 0 0 16px;
+  letter-spacing: -0.5px;
 }
 .landing-subtitle {
-  font-size: 16px;
-  color: var(--ink-300);
+  font-size: 17px;
+  color: #6C7B91; /* ink-600 */
   max-width: 480px;
   margin: 0 auto 32px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 .landing-actions {
   display: flex;
@@ -2280,37 +2298,53 @@
   flex-wrap: wrap;
 }
 .landing-features {
-  padding: 0 16px 32px;
+  padding: 0 16px 48px;
 }
 .landing-features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   max-width: 960px;
   margin: 0 auto;
+}
+/* Landing 專用卡片 — 白底 + brand-100 邊框，非 Glassmorphism */
+.landing-card {
+  background: #fff;
+  border: 1px solid #E6EDF7; /* brand-100 */
+  border-radius: 12px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 4px rgba(0, 56, 90, 0.05);
+  transition: box-shadow 200ms, transform 200ms;
+}
+.landing-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 56, 90, 0.1);
+  transform: translateY(-2px);
 }
 .landing-card-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--uag-brand);
+  color: #00385a; /* brand-700 */
 }
 .landing-card-title {
   font-size: 18px;
   font-weight: 800;
   text-align: center;
-  color: var(--ink-100);
+  color: #0A2246;
   margin: 0;
 }
 .landing-card-desc {
   font-size: 14px;
-  color: var(--ink-300);
+  color: #6C7B91;
   text-align: center;
-  line-height: 1.6;
+  line-height: 1.7;
   margin: 0;
 }
 .landing-steps {
-  padding: 0 16px 32px;
+  padding: 0 16px 48px;
   max-width: 720px;
   margin: 0 auto;
 }
@@ -2318,38 +2352,100 @@
   font-size: 22px;
   font-weight: 800;
   text-align: center;
-  color: var(--ink-100);
-  margin: 0 0 24px;
+  color: #0A2246;
+  margin: 0 0 28px;
 }
 .landing-steps-row {
   display: flex;
   justify-content: center;
-  gap: 32px;
+  align-items: flex-start;
+  gap: 0;
   flex-wrap: wrap;
 }
+.landing-step-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
 .landing-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  min-width: 120px;
+  min-width: 140px;
+}
+.landing-step-number {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #00385a; /* brand-700 — 全部單色 */
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
 }
 .landing-step-label {
   font-size: 14px;
   font-weight: 700;
-  color: var(--ink-200);
+  color: #0A2246;
+}
+.landing-step-desc {
+  font-size: 12px;
+  color: #6C7B91;
+  margin-top: 4px;
+}
+.landing-step-arrow {
+  color: #E6EDF7; /* brand-100 */
+  font-size: 24px;
+  margin-top: 6px;
+  user-select: none;
 }
 .landing-cta {
   text-align: center;
-  padding: 32px 16px 48px;
+  padding: 32px 16px 64px;
   max-width: 480px;
   margin: 0 auto;
 }
 .landing-cta-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
-  color: var(--ink-100);
+  color: #0A2246;
   margin: 0 0 8px;
 }
 .landing-cta-desc {
   font-size: 14px;
-  color: var(--ink-300);
+  color: #6C7B91;
   margin: 0 0 24px;
+}
+
+/* Landing RWD */
+@media (max-width: 768px) {
+  .landing-hero {
+    padding: 48px 16px 32px;
+  }
+  .landing-title {
+    font-size: 28px;
+  }
+  .landing-subtitle {
+    font-size: 15px;
+  }
+  .landing-features-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .landing-steps-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .landing-step-group {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .landing-step-arrow {
+    transform: rotate(90deg);
+  }
 }

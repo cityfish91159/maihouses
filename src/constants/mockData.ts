@@ -20,7 +20,7 @@ const MOCK_CONTRIBUTIONS = 15;
 export const MOCK_AGENT_IDENTITIES = {
   primaryAgentName: '游傑倫',
   secondaryAgentName: '林筱婷',
-  defaultCompanyName: '邁房屋',
+  defaultCompanyName: '',
   defaultCommunityName: '惠宇上晴',
 } as const;
 

@@ -10,7 +10,7 @@ interface UAGFeatureCardProps {
 
 export function UAGFeatureCard({ icon: Icon, title, description }: UAGFeatureCardProps) {
   return (
-    <div className={styles['uag-card']}>
+    <div className={styles['landing-card']}>
       <div className={styles['landing-card-icon']}>
         <Icon size={28} />
       </div>

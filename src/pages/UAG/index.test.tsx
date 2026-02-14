@@ -185,12 +185,10 @@ describe('UAGPage', () => {
     it('shows landing page with CTA for visitor mode', () => {
       renderWithQueryClient();
 
-      expect(screen.getByText('UAG 精準導客雷達')).toBeInTheDocument();
-      expect(screen.getByText('AI 分析消費者瀏覽行為，為你精準配對潛力買家')).toBeInTheDocument();
-      // Hero + CTA 各有一個「成為合作房仲」
-      expect(screen.getAllByText('成為合作房仲')).toHaveLength(2);
+      expect(screen.getByText('房仲專區')).toBeInTheDocument();
+      expect(screen.getByText('成為合作房仲')).toBeInTheDocument();
       expect(screen.getByText('已有帳號？登入')).toBeInTheDocument();
-      expect(screen.getByText('免費體驗 Demo')).toBeInTheDocument();
+      expect(screen.getByText('免費體驗演示')).toBeInTheDocument();
     });
 
     it('does not render radar or action panel for visitor', () => {
@@ -203,7 +201,7 @@ describe('UAGPage', () => {
     it('calls setDemoMode and reloadPage when clicking demo CTA', () => {
       renderWithQueryClient();
 
-      fireEvent.click(screen.getByText('免費體驗 Demo'));
+      fireEvent.click(screen.getByText('免費體驗演示'));
 
       expect(mockedSetDemoMode).toHaveBeenCalledOnce();
       expect(mockedReloadPage).toHaveBeenCalledOnce();
@@ -213,7 +211,7 @@ describe('UAGPage', () => {
       mockedSetDemoMode.mockReturnValue(false);
       renderWithQueryClient();
 
-      fireEvent.click(screen.getByText('免費體驗 Demo'));
+      fireEvent.click(screen.getByText('免費體驗演示'));
 
       expect(mockedSetDemoMode).toHaveBeenCalledOnce();
       expect(mockedReloadPage).not.toHaveBeenCalled();
@@ -242,7 +240,7 @@ describe('UAGPage', () => {
       // agent 不應被 redirect，也不應看到 Landing Page
       expect(mockedNavigate).not.toHaveBeenCalled();
       expect(mockedNotify.warning).not.toHaveBeenCalled();
-      expect(screen.queryByText('免費體驗 Demo')).not.toBeInTheDocument();
+      expect(screen.queryByText('免費體驗演示')).not.toBeInTheDocument();
     });
 
     it('redirects live + consumer role to home with warning', async () => {

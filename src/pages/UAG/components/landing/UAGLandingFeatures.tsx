@@ -1,4 +1,4 @@
-import { Radar, ShieldCheck, Trophy } from 'lucide-react';
+import { BarChart3, Radar, ShieldCheck } from 'lucide-react';
 
 import styles from '../../UAG.module.css';
 import { UAGFeatureCard } from './UAGFeatureCard';
@@ -6,18 +6,18 @@ import { UAGFeatureCard } from './UAGFeatureCard';
 const FEATURES = [
   {
     icon: Radar,
-    title: '即時雷達匹配',
-    description: '即時追蹤消費者瀏覽軌跡，AI 自動匹配意向最高的潛力買家給你。',
+    title: '買家行為追蹤',
+    description: '買家瀏覽了哪些房源、停留多久、有沒有點 LINE 或電話，系統自動記錄並整理成清單。',
   },
   {
-    icon: Trophy,
-    title: '智慧評級系統',
-    description: '根據瀏覽頻率、停留時間、互動深度，自動評定 S/A/B/C/F 等級。',
+    icon: BarChart3,
+    title: '自動意願分級',
+    description: '根據瀏覽時間和互動深度，買家被分為 S · A · B · C 四個等級，S 級代表已主動想聯絡你。',
   },
   {
     icon: ShieldCheck,
-    title: '獨佔保護期',
-    description: '購買線索後享有獨佔保護期，確保你的投資不被其他房仲搶走。',
+    title: '獨家保護期',
+    description: '購買 S 級買家後，你有 72 小時獨家聯絡權，這段時間其他房仲看不到這位買家。',
   },
 ] as const;
 
