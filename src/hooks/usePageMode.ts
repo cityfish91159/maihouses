@@ -10,8 +10,7 @@ import {
 
 export type { PageMode };
 
-export function usePageMode(): PageMode {
-  const { isAuthenticated } = useAuth();
+export function usePageModeWithAuthState(isAuthenticated: boolean): PageMode {
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
   const mode = resolvePageMode(isAuthenticated);
@@ -35,4 +34,9 @@ export function usePageMode(): PageMode {
   }, []);
 
   return mode;
+}
+
+export function usePageMode(): PageMode {
+  const { isAuthenticated } = useAuth();
+  return usePageModeWithAuthState(isAuthenticated);
 }

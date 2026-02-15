@@ -15,7 +15,7 @@ import { useLeadSelection } from './hooks/useLeadSelection';
 import { useAgentProfile } from './hooks/useAgentProfile';
 import { uagDataQueryKey } from './hooks/queryKeys';
 import { useAuth } from '../../hooks/useAuth';
-import { usePageMode } from '../../hooks/usePageMode';
+import { usePageModeWithAuthState } from '../../hooks/usePageMode';
 import { UAGLandingPage } from './UAGLandingPage';
 
 import { UAGHeader } from './components/UAGHeader';
@@ -37,7 +37,7 @@ import type { Lead } from './types/uag.types';
 function UAGPageContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode, mode } = useUAG();
+  const { data: appData, isLoading, buyLead, isBuying, useMock, mode } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
   const { user, loading: authLoading, error: authError, signOut } = useAuth();
   const { profile: agentProfile } = useAgentProfile(user?.id);
@@ -297,7 +297,7 @@ function UAGPageContent() {
           <ReportGenerator listings={appData.listings} agentName={agentName} />
 
           {/* [6] Trust Flow */}
-          <TrustFlow toggleMode={toggleMode} />
+          <TrustFlow />
         </div>
       </main>
 
@@ -345,8 +345,8 @@ function UAGPageContent() {
 const UAG_ALLOWED_ROLES = new Set(['agent', 'admin', 'official']);
 
 function UAGGuard() {
-  const mode = usePageMode();
-  const { role, loading } = useAuth();
+  const { role, loading, isAuthenticated } = useAuth();
+  const mode = usePageModeWithAuthState(isAuthenticated);
   const navigate = useNavigate();
   const isUnauthorized = mode === 'live' && !UAG_ALLOWED_ROLES.has(role);
 

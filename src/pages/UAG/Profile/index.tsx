@@ -1,6 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { ROUTES, RouteUtils } from '../../../constants/routes';
@@ -47,11 +47,25 @@ const SectionErrorFallback: React.FC<SectionErrorFallbackProps> = ({
 
 export default function UAGProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const mode = usePageMode();
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY, true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
   const uagRoute = RouteUtils.toNavigatePath(ROUTES.UAG);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('mock') !== 'true') return;
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: '',
+      },
+      { replace: true }
+    );
+  }, [location.pathname, location.search, navigate]);
 
   const handleBackToUAG = useCallback(() => {
     navigate(uagRoute, { replace: mode === 'visitor' });

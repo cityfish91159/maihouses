@@ -17,7 +17,7 @@ import { MOCK_DB } from '../mockData';
 import { logger } from '../../../lib/logger';
 import { notify } from '../../../lib/notify';
 import { useAuth } from '../../../hooks/useAuth';
-import { usePageMode, type PageMode } from '../../../hooks/usePageMode';
+import { usePageModeWithAuthState, type PageMode } from '../../../hooks/usePageMode';
 import { uagDataQueryKey } from './queryKeys';
 
 // ============================================================================
@@ -73,8 +73,8 @@ export interface UseUAGDataReturn {
  * ```
  */
 export function useUAGData(): UseUAGDataReturn {
-  const { session } = useAuth();
-  const mode = usePageMode();
+  const { session, isAuthenticated } = useAuth();
+  const mode = usePageModeWithAuthState(isAuthenticated);
   const userId = session?.user?.id;
   const useMock = mode === 'demo';
 

@@ -34,6 +34,8 @@ const mockedUsePageMode = vi.hoisted(() =>
 );
 vi.mock('../../hooks/usePageMode', () => ({
   usePageMode: mockedUsePageMode,
+  usePageModeWithAuthState: (isAuthenticated: boolean) =>
+    isAuthenticated ? 'live' : mockedUsePageMode(),
 }));
 
 /**

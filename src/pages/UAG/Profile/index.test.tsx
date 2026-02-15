@@ -1,15 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import UAGProfilePage from './index';
 
 const mockNavigate = vi.fn();
 const mockUseAgentProfile = vi.fn();
 const mockUsePageMode = vi.fn();
+const mockUseLocation = vi.fn();
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
+    useLocation: () => mockUseLocation(),
   };
 });
 
@@ -51,6 +53,36 @@ describe('UAGProfilePage return navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUsePageMode.mockReturnValue('live');
+    mockUseLocation.mockReturnValue({
+      pathname: '/uag/profile',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'profile',
+    });
+  });
+
+  it('legacy mock query 參數應在載入時移除', async () => {
+    mockUseAgentProfile.mockReturnValue(makeHookResult());
+    mockUseLocation.mockReturnValue({
+      pathname: '/uag/profile',
+      search: `?${new URLSearchParams({ mock: 'true' }).toString()}`,
+      hash: '',
+      state: null,
+      key: 'profile-mock',
+    });
+
+    render(<UAGProfilePage />);
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        {
+          pathname: '/uag/profile',
+          search: '',
+        },
+        { replace: true }
+      );
+    });
   });
 
   it('demo 模式正常頁面點返回 UAG 應導向 /uag', () => {

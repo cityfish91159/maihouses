@@ -89,7 +89,7 @@ describe('UAGHeader', () => {
     try {
       Object.defineProperty(window, 'location', {
         configurable: true,
-        value: { href: '' } as unknown as Location,
+        value: { href: '' },
       });
 
       renderHeader({ user: null, useMock: true });

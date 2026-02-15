@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, RefreshCw, Plus, AlertCircle, Zap } from 'lucide-react';
+import { ChevronRight, RefreshCw, Plus, AlertCircle } from 'lucide-react';
 import styles from '../../UAG.module.css';
 import { logger } from '../../../../lib/logger';
 import { usePageMode } from '../../../../hooks/usePageMode';
@@ -25,12 +25,7 @@ import { ProgressSteps } from './ProgressSteps';
 import { EventTimeline } from './EventTimeline';
 import { MOCK_CASES } from './mockData';
 
-// ==================== Component ====================
-interface TrustFlowProps {
-  toggleMode: () => void;
-}
-
-export default function TrustFlow({ toggleMode }: TrustFlowProps) {
+export default function TrustFlow() {
   const mode = usePageMode();
   const useMock = mode === 'demo';
   const [cases, setCases] = useState<TrustCase[]>([]);
@@ -160,14 +155,13 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
           </div>
         </div>
         <div className={styles['uag-actions']}>
-          <button
+          <span
             className={styles['uag-btn']}
-            onClick={toggleMode}
             title={useMock ? '目前為 Demo 模式' : '目前為 Live 模式'}
+            aria-label={useMock ? '目前為 Demo 模式' : '目前為 Live 模式'}
           >
-            <Zap size={14} className="mr-1" />
             {useMock ? 'Mock' : 'Live'}
-          </button>
+          </span>
           <button className={styles['uag-btn']} onClick={loadCases} disabled={loading}>
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>

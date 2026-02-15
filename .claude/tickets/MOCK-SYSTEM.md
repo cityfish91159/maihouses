@@ -473,6 +473,7 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 - [x] `CommunityReviews` 註冊 / 登入跳轉統一使用 `navigateToAuth`（`return` 帶當前路徑）
 - [x] `CommunityReviews` 補路由行為測試：demo 無 `communityId` 走 seed，live 有 `communityId` 走對應社區
 - [x] `CommunityReviews` 補 auth 導流測試：訪客 CTA 觸發 `signup`、live 未登入按讚可觸發 `login`
+- [x] `ChatMessage` 社區牆標記解析支援新舊雙格式，並可透傳 `communityId`
 - [x] `CommunityWallCard` 支援可選 `communityId`，未提供時 fallback `SEED_COMMUNITY_ID`
 - [x] 房產詳情與社區牆相關檔案已無 `community-wall_mvp` / `auth.html` 靜態字串
 
@@ -488,11 +489,15 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
    - 新增 live 模式未登入按讚後，toast action 應呼叫 `navigateToAuth('login', getCurrentPath())`。
 3. `src/features/home/components/CommunityWallCard.tsx`
    - 新增 `communityId?: string`，優先導向目標社區，缺值時 fallback `SEED_COMMUNITY_ID`。
+4. `src/features/home/components/ChatMessage.tsx`
+   - 社區牆標記解析支援舊版 `[[社區牆:社區名稱:討論話題]]` 與新版 `[[社區牆:communityId:社區名稱:討論話題]]`。
+   - 新版格式可透傳 `communityId` 至 `CommunityWallCard`，導向目標社區牆。
 
 **驗證結果**
 
 - [x] `rg -n "community-wall_mvp|community-wall\\.html|auth\\.html" src/components/PropertyDetail src/features/home/components/CommunityWallCard.tsx src/pages/PropertyDetailPage.tsx` 無結果
 - [x] `npm run test -- src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx` 通過（16 tests）
+- [x] `npm run test -- src/features/home/components/__tests__/CommunityWallCard.test.tsx src/features/home/components/__tests__/ChatMessage.test.tsx` 通過
 - [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
 
 ---
@@ -606,6 +611,42 @@ live + 其他角色                → notify.warning + navigate 回首頁
 - [x] `cmd /c npm run test -- src/pages/UAG/components/UAGHeader.test.tsx src/pages/UAG/Profile/index.test.tsx src/pages/UAG/Profile/basename-navigation.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx src/pages/UAG/hooks/__tests__/useUAG.test.ts src/pages/UAG/index.test.tsx` 通過（6 files / 70 tests）
 - [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
 - [x] `npm run gate` 通過
+
+#### 2026-02-15 #5b strict-audit phase4 收斂
+
+**摘要**
+
+- [x] `useUAGData` / `UAGGuard` 改為共用同一份 auth 狀態推導 mode，降低雙來源競態風險
+- [x] `TrustFlow` 移除可點擊 `toggleMode` 控制，改為唯讀模式標示（Mock/Live）
+- [x] `UAG/Profile/index.tsx` 新增舊網址 `?mock=true` 相容清洗（replace 移除 query）
+- [x] `UAGHeader.test.tsx` 移除 `as unknown as Location` 斷言
+- [x] 本次 #5b 收斂修改檔案均通過 UTF-8（無 BOM / 無 Mojibake）檢查
+
+**本次修改**
+
+1. `src/hooks/usePageMode.ts`
+   - 新增 `usePageModeWithAuthState(isAuthenticated)`，讓 mode 推導可重用且不重複訂閱 auth。
+   - `usePageMode()` 改為薄封裝，內部呼叫 `usePageModeWithAuthState`。
+2. `src/pages/UAG/hooks/useUAGData.ts`
+   - 改用 `usePageModeWithAuthState(isAuthenticated)`；`session` 與 `mode` 以同一份 auth 狀態為基準。
+3. `src/pages/UAG/index.tsx`
+   - `UAGGuard` 改為 `useAuth()` + `usePageModeWithAuthState(isAuthenticated)` 組合。
+   - `TrustFlow` 呼叫移除 `toggleMode` prop（避免 UI 顯示可切換但實際不可切換）。
+4. `src/pages/UAG/components/TrustFlow/index.tsx`
+   - 移除 `toggleMode` prop 與點擊事件。
+   - Mock/Live 改為唯讀狀態標示，保留 refresh 行為。
+5. `src/pages/UAG/Profile/index.tsx`
+   - 新增 mount 相容邏輯：若 URL 含 `mock=true`，立即 `replace` 成無 query 路徑。
+6. 測試調整
+   - `src/pages/UAG/index.test.tsx`：補 `usePageModeWithAuthState` mock。
+   - `src/pages/UAG/Profile/index.test.tsx`：補 `useLocation` mock 與 `?mock=true` 清洗測試。
+   - `src/pages/UAG/components/UAGHeader.test.tsx`：移除 `as unknown as Location`。
+
+**收斂驗證**
+
+- [x] `npm run check:utf8` 通過（UTF-8 / Mojibake）
+- [x] `cmd /c npm run test -- src/pages/UAG/components/UAGHeader.test.tsx src/pages/UAG/Profile/index.test.tsx src/pages/UAG/Profile/basename-navigation.test.tsx src/pages/UAG/hooks/__tests__/useUAG.test.ts src/pages/UAG/index.test.tsx` 通過（5 files / 65 tests）
+- [x] `npm run typecheck` 通過
 
 ---
 
