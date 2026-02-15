@@ -1,4 +1,4 @@
-﻿import { ExternalLink, Star, MessageSquare } from 'lucide-react';
+import { ExternalLink, MessageCircle, MessageSquare, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES, RouteUtils } from '../../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../../constants/seed';
@@ -9,27 +9,13 @@ import { getCommunityWallSummaryMock } from '../../../constants/mock';
  * 社區牆推薦卡片 (CommunityWallCard)
  * ============================================
  *
- * 【功能說明】
  * 當 AI 偵測到用戶需求後，會在聊天中插入這個卡片，
- * 引導用戶去社區牆研究評價，而不是直接推薦物件。
+ * 引導用戶去社區牆研究評價。
  *
- * 【目前狀態】
- * ⚠️ MOCK 模式 - 社區牆功能尚未完善，目前使用假資料
- *
- * 【TODO: 接入真實社區牆】
- * 1. 建立社區牆 API：GET /api/community/wall?communityId={communityId}
- * 2. 修改 props 從 name/topic 改為 communityId
- * 3. 用 communityId 查詢真實的：
- *    - 社區名稱
- *    - 評價數量
- *    - 平均評分
- *    - 熱門討論話題
- * 【觸發格式】
- * AI 在回覆中使用：[[社區牆:社區名稱:討論話題]]
- * ChatMessage.tsx 會解析並渲染此卡片
- *
- * @see ChatMessage.tsx - 解析社區牆標記
- * @see maimai-persona.ts - AI Prompt 設定
+ * 觸發格式：
+ * - 舊版：[[社區牆:社區名稱:討論話題]]
+ * - 新版：[[社區牆:communityId:社區名稱:討論話題]]
+ * - 若缺少 communityId 或為空白，fallback SEED_COMMUNITY_ID
  */
 
 type CommunityWallCardProps = {
@@ -82,7 +68,10 @@ export default function CommunityWallCard({
       </div>
 
       {/* Topic */}
-      <p className="mb-3 line-clamp-2 text-xs font-medium text-ink-600">💬 {topic}</p>
+      <div className="mb-3 flex items-start gap-1 text-xs font-medium text-ink-600">
+        <MessageCircle size={12} className="mt-0.5 shrink-0 text-brand-500" aria-hidden="true" />
+        <p className="line-clamp-2">{topic}</p>
+      </div>
 
       {/* Stats */}
       <div className="text-ink-500 flex items-center gap-4 text-[11px]">

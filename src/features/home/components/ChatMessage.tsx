@@ -1,125 +1,19 @@
-﻿import React from 'react';
+import React from 'react';
+import { Sparkles } from 'lucide-react';
 import CommunityWallCard from './CommunityWallCard';
 import ChatPropertyCard from './ChatPropertyCard';
+import {
+  parseCommunityWallTags,
+  parsePropertyTags,
+  parseScenarioTags,
+  stripAllTags,
+} from './chatMessageParser';
 
 type ChatMessageProps = {
-  role: 'user' | 'assistant';
+  sender: 'user' | 'assistant';
   content: string;
   timestamp?: string;
 };
-
-/**
- * 解析訊息中的社區牆標記
- * 格式：
- * - 舊版：[[社區牆:社區名稱:討論話題]]
- * - 新版：[[社區牆:communityId:社區名稱:討論話題]]
- */
-type CommunityWallTag = {
-  communityId?: string;
-  name: string;
-  topic: string;
-};
-
-function isLikelyCommunityId(value: string): boolean {
-  return /^(?=.*[-0-9])[a-z0-9-]{8,}$/i.test(value);
-}
-
-function parseCommunityWallTags(content: string): CommunityWallTag[] {
-  const regex = /\[\[社區牆:([^\]]+)\]\]/g;
-  const cards: CommunityWallTag[] = [];
-  let match;
-
-  while ((match = regex.exec(content)) !== null) {
-    const rawPayload = match[1];
-    if (!rawPayload) {
-      continue;
-    }
-
-    const segments = rawPayload
-      .split(':')
-      .map((segment) => segment.trim())
-      .filter((segment) => segment.length > 0);
-
-    if (segments.length < 2) {
-      continue;
-    }
-
-    const first = segments[0];
-    const second = segments[1];
-    const rest = segments.slice(2);
-    if (!first || !second) {
-      continue;
-    }
-
-    const useNewFormat = rest.length > 0 && isLikelyCommunityId(first);
-
-    const communityId = useNewFormat ? first : undefined;
-    const name = useNewFormat ? second : first;
-    const topic = useNewFormat ? rest.join(':').trim() : [second, ...rest].join(':').trim();
-
-    if (name && topic) {
-      if (communityId) {
-        cards.push({ communityId, name, topic });
-      } else {
-        cards.push({ name, topic });
-      }
-    }
-  }
-
-  return cards;
-}
-
-/**
- * 解析訊息中的物件標記
- * 格式：[[物件:社區名稱:物件ID]]
- */
-function parsePropertyTags(content: string): { community: string; propertyId: string }[] {
-  const regex = /\[\[物件:([^:]+):([^\]]+)\]\]/g;
-  const properties: { community: string; propertyId: string }[] = [];
-  let match;
-
-  while ((match = regex.exec(content)) !== null) {
-    const community = match[1];
-    const propertyId = match[2];
-    if (community && propertyId) {
-      properties.push({
-        community: community.trim(),
-        propertyId: propertyId.trim(),
-      });
-    }
-  }
-
-  return properties;
-}
-
-/**
- * 解析情境描述標記
- * 格式：[[情境:描述內容]]
- */
-function parseScenarioTags(content: string): string[] {
-  const regex = /\[\[情境:([^\]]+)\]\]/g;
-  const scenarios: string[] = [];
-  let match;
-
-  while ((match = regex.exec(content)) !== null) {
-    if (match[1]) {
-      scenarios.push(match[1].trim());
-    }
-  }
-
-  return scenarios;
-}
-
-/**
- * 移除所有標記，保留純文字
- */
-function stripAllTags(content: string): string {
-  return content
-    .replace(/\[\[社區牆:[^\]]+\]\]/g, '')
-    .replace(/\[\[物件:[^:]+:[^\]]+\]\]/g, '')
-    .replace(/\[\[情境:[^\]]+\]\]/g, '')
-    .trim();
-}
 
 /**
  * 情境描述卡片組件 - 增加溫度感
@@ -127,24 +21,24 @@ function stripAllTags(content: string): string {
 function ScenarioCard({ description }: { description: string }) {
   return (
     <div className="my-3 rounded-r-lg border-l-4 border-orange-300 bg-gradient-to-r from-orange-50/80 to-amber-50/50 p-3 italic text-gray-600">
-      <span className="mr-2 text-lg">✨</span>
+      <Sparkles size={16} className="mr-2 inline-block text-amber-500" aria-hidden="true" />
       <span className="leading-relaxed">{description}</span>
     </div>
   );
 }
 
-export default function ChatMessage({ role, content, timestamp }: ChatMessageProps) {
+export default function ChatMessage({ sender, content, timestamp }: ChatMessageProps) {
   // 只有 assistant 訊息才解析標記
-  const communityCards = role === 'assistant' ? parseCommunityWallTags(content) : [];
-  const propertyCards = role === 'assistant' ? parsePropertyTags(content) : [];
-  const scenarios = role === 'assistant' ? parseScenarioTags(content) : [];
-  const text = role === 'assistant' ? stripAllTags(content) : content;
+  const communityCards = sender === 'assistant' ? parseCommunityWallTags(content) : [];
+  const propertyCards = sender === 'assistant' ? parsePropertyTags(content) : [];
+  const scenarios = sender === 'assistant' ? parseScenarioTags(content) : [];
+  const text = sender === 'assistant' ? stripAllTags(content) : content;
 
   return (
-    <div className={`flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
+    <div className={`flex ${sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
       <div
         className={`max-w-[85%] rounded-2xl px-5 py-3.5 text-[15px] font-medium leading-relaxed shadow-sm ${
-          role === 'user'
+          sender === 'user'
             ? 'rounded-br-sm bg-brand-700 text-white'
             : 'rounded-bl-sm border border-brand-100 bg-white text-ink-900'
         }`}
@@ -154,8 +48,8 @@ export default function ChatMessage({ role, content, timestamp }: ChatMessagePro
         {/* 情境描述卡片（在社區牆卡片前顯示）*/}
         {scenarios.length > 0 && (
           <div className="mt-2 space-y-2">
-            {scenarios.map((scenario, i) => (
-              <ScenarioCard key={`scenario-${i}`} description={scenario} />
+            {scenarios.map((scenario) => (
+              <ScenarioCard key={scenario.key} description={scenario.description} />
             ))}
           </div>
         )}
@@ -193,7 +87,7 @@ export default function ChatMessage({ role, content, timestamp }: ChatMessagePro
 
         {timestamp && (
           <div
-            className={`mt-1.5 text-[11px] font-bold ${role === 'user' ? 'text-brand-300' : 'text-brand-600/60'} text-right`}
+            className={`mt-1.5 text-[11px] font-bold ${sender === 'user' ? 'text-brand-300' : 'text-brand-600/60'} text-right`}
           >
             {new Date(timestamp).toLocaleTimeString('zh-TW', {
               hour: '2-digit',

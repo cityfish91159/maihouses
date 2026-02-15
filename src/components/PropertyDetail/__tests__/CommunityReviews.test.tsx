@@ -103,6 +103,20 @@ function renderWithRouter(ui: React.ReactElement) {
   return render(<MemoryRouter>{ui}</MemoryRouter>);
 }
 
+function isCommunityWallButton(candidate: HTMLElement): boolean {
+  return (
+    candidate.className.includes('bg-brand-50') &&
+    candidate.className.includes('px-4') &&
+    candidate.className.includes('py-2')
+  );
+}
+
+async function getCommunityWallButton(): Promise<HTMLElement> {
+  const button = await waitFor(() => screen.getAllByRole('button').find(isCommunityWallButton));
+  if (!button) throw new Error('community wall button not found');
+  return button;
+}
+
 describe('CommunityReviews', () => {
   const onToggleLike = vi.fn();
 
@@ -157,18 +171,7 @@ describe('CommunityReviews', () => {
   it('renders community wall button as pill style', async () => {
     renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
-    const button = await waitFor(() =>
-      screen
-        .getAllByRole('button')
-        .find(
-          (candidate) =>
-            candidate.className.includes('bg-brand-50') &&
-            candidate.className.includes('px-4') &&
-            candidate.className.includes('py-2')
-        )
-    );
-    expect(button).toBeDefined();
-    if (!button) throw new Error('community wall button not found');
+    const button = await getCommunityWallButton();
     expect(button.className).toContain('rounded-full');
     expect(button.className).toContain('bg-brand-50');
     expect(button.className).toContain('px-4');
@@ -181,18 +184,7 @@ describe('CommunityReviews', () => {
 
     renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
-    const wallButton = await waitFor(() =>
-      screen
-        .getAllByRole('button')
-        .find(
-          (candidate) =>
-            candidate.className.includes('bg-brand-50') &&
-            candidate.className.includes('px-4') &&
-            candidate.className.includes('py-2')
-        )
-    );
-    expect(wallButton).toBeDefined();
-    if (!wallButton) throw new Error('community wall button not found');
+    const wallButton = await getCommunityWallButton();
     await user.click(wallButton);
 
     expect(mockNotifyInfo).toHaveBeenCalledTimes(1);
@@ -205,18 +197,7 @@ describe('CommunityReviews', () => {
 
     renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
 
-    const wallButton = await waitFor(() =>
-      screen
-        .getAllByRole('button')
-        .find(
-          (candidate) =>
-            candidate.className.includes('bg-brand-50') &&
-            candidate.className.includes('px-4') &&
-            candidate.className.includes('py-2')
-        )
-    );
-    expect(wallButton).toBeDefined();
-    if (!wallButton) throw new Error('community wall button not found');
+    const wallButton = await getCommunityWallButton();
     await user.click(wallButton);
 
     expect(mockNavigate).toHaveBeenCalledWith(
@@ -236,18 +217,7 @@ describe('CommunityReviews', () => {
       />
     );
 
-    const wallButton = await waitFor(() =>
-      screen
-        .getAllByRole('button')
-        .find(
-          (candidate) =>
-            candidate.className.includes('bg-brand-50') &&
-            candidate.className.includes('px-4') &&
-            candidate.className.includes('py-2')
-        )
-    );
-    expect(wallButton).toBeDefined();
-    if (!wallButton) throw new Error('community wall button not found');
+    const wallButton = await getCommunityWallButton();
     await user.click(wallButton);
 
     expect(mockNavigate).toHaveBeenCalledWith(

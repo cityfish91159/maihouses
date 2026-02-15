@@ -9,29 +9,24 @@
  * - Zod schema 移至 hook
  */
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { ChevronRight, Lock, MessageSquare, Star, ThumbsUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { getCurrentPath, navigateToAuth } from '../../lib/authUtils';
-import { ROUTES, RouteUtils } from '../../constants/routes';
-import { SEED_COMMUNITY_ID } from '../../constants/seed';
-import { notify } from '../../lib/notify';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
-import { INTERSECTION_THRESHOLD, REVIEW_KEY_PREVIEW_LENGTH } from './constants';
-import { useModeAwareAction } from '../../hooks/useModeAwareAction';
+import { INTERSECTION_THRESHOLD } from './constants';
 import { usePageMode } from '../../hooks/usePageMode';
 import { useCommunityReviews } from '../../hooks/useCommunityReviews';
 import type { ReviewPreview } from '../../hooks/useCommunityReviews';
+import {
+  useCommunityReviewActions,
+  type UseCommunityReviewActionsOptions,
+} from './useCommunityReviewActions';
 
 // ========== Constants ==========
 
 const STAR_COUNT = 5;
 const FILLED_STAR_COUNT = 4;
 const LOCKED_CONTENT_PREVIEW_LENGTH = 36;
-const REGISTER_GUIDE_TITLE = '註冊後即可鼓勵評價';
-const REGISTER_GUIDE_DESCRIPTION = '免費註冊即可解鎖完整社區評價與互動。';
-const LIKE_ACTION_ERROR_TITLE = '鼓勵失敗';
 
 // ========== Sub-components ==========
 
@@ -61,10 +56,7 @@ interface ReviewCardProps {
 
 function ReviewCard({ review, onToggleLike }: ReviewCardProps) {
   return (
-    <div
-      key={`${review.name}-${review.content.slice(0, REVIEW_KEY_PREVIEW_LENGTH)}`}
-      className="flex gap-3 rounded-2xl bg-bg-base p-3 transition-all duration-200 hover:shadow-md active:scale-[0.98] motion-reduce:transform-none"
-    >
+    <div className="flex gap-3 rounded-2xl bg-bg-base p-3 transition-all duration-200 hover:shadow-md active:scale-[0.98] motion-reduce:transform-none">
       <div
         className={cn(
           'flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white',
@@ -186,11 +178,7 @@ function CommunityReviewsBody({
       <div className="space-y-3">
         {publicReviews.length > 0 ? (
           publicReviews.map((review) => (
-            <ReviewCard
-              key={`${review.name}-${review.content.slice(0, REVIEW_KEY_PREVIEW_LENGTH)}`}
-              review={review}
-              onToggleLike={onToggleLike}
-            />
+            <ReviewCard key={review.propertyId} review={review} onToggleLike={onToggleLike} />
           ))
         ) : (
           <div className="rounded-2xl border border-dashed border-border bg-bg-base p-3 text-sm text-text-muted">
@@ -221,89 +209,6 @@ function CommunityReviewsBody({
       </div>
     </>
   );
-}
-
-interface UseCommunityReviewActionsOptions {
-  communityId?: string | undefined;
-  isDemoMode: boolean;
-  isLoggedIn: boolean;
-  onToggleLike?: (propertyId: string) => void;
-  toggleLocalLike: (propertyId: string) => void;
-}
-
-function useCommunityReviewActions({
-  communityId,
-  isDemoMode,
-  isLoggedIn,
-  onToggleLike,
-  toggleLocalLike,
-}: UseCommunityReviewActionsOptions) {
-  const navigate = useNavigate();
-
-  const handleAuthRedirect = useCallback(() => {
-    navigateToAuth('login', getCurrentPath());
-  }, []);
-
-  const handleSignupRedirect = useCallback(() => {
-    navigateToAuth('signup', getCurrentPath());
-  }, []);
-
-  const handleCommunityWall = useCallback(() => {
-    if (communityId) {
-      navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(communityId)));
-      return;
-    }
-
-    if (isDemoMode) {
-      navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)));
-      return;
-    }
-
-    notify.info('暫時無法前往社區牆', '目前缺少社區識別資料，請稍後再試。');
-  }, [communityId, isDemoMode, navigate]);
-
-  const dispatchToggleLike = useModeAwareAction<string>({
-    visitor: () => {
-      notify.info(REGISTER_GUIDE_TITLE, REGISTER_GUIDE_DESCRIPTION, {
-        action: {
-          label: '免費註冊',
-          onClick: handleSignupRedirect,
-        },
-      });
-    },
-    demo: (propertyId) => {
-      toggleLocalLike(propertyId);
-    },
-    live: (propertyId) => {
-      if (!isLoggedIn) {
-        notify.info('請先登入', '登入後即可鼓勵評價。', {
-          action: {
-            label: '前往登入',
-            onClick: handleAuthRedirect,
-          },
-        });
-        return;
-      }
-      onToggleLike?.(propertyId);
-    },
-  });
-
-  const handleToggleLike = useCallback(
-    (propertyId: string) => {
-      void dispatchToggleLike(propertyId).then((result) => {
-        if (!result.ok) {
-          notify.error(LIKE_ACTION_ERROR_TITLE, result.error);
-        }
-      });
-    },
-    [dispatchToggleLike]
-  );
-
-  return {
-    handleSignupRedirect,
-    handleCommunityWall,
-    handleToggleLike,
-  };
 }
 
 // ========== Main Component ==========
