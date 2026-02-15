@@ -7,17 +7,20 @@ const FEATURES = [
   {
     icon: Radar,
     title: '買家行為追蹤',
-    description: '買家瀏覽了哪些房源、停留多久、有沒有點 LINE 或電話，系統自動記錄並整理成清單。',
+    description: '誰在看你的房子、停了多久、有沒有想聯絡——全部自動記錄。',
+    step: { number: 1, label: '註冊房仲帳號' },
   },
   {
     icon: BarChart3,
     title: '自動意願分級',
-    description: '根據瀏覽時間和互動深度，買家被分為 S · A · B · C 四個等級，S 級代表已主動想聯絡你。',
+    description: '系統依瀏覽深度分 S · A · B · C 等級，S 級是主動想聯絡你的人。',
+    step: { number: 2, label: '查看買家雷達' },
   },
   {
     icon: ShieldCheck,
     title: '獨家保護期',
-    description: '購買 S 級買家後，你有 72 小時獨家聯絡權，這段時間其他房仲看不到這位買家。',
+    description: '用點數取得聯絡方式，72 小時內只有你能聯絡這位買家。',
+    step: { number: 3, label: '用點數取得聯絡方式' },
   },
 ] as const;
 
@@ -31,6 +34,7 @@ export function UAGLandingFeatures() {
             icon={feature.icon}
             title={feature.title}
             description={feature.description}
+            step={feature.step}
           />
         ))}
       </div>

@@ -2264,6 +2264,7 @@
   color: #0A2246; /* ink-900 */
   line-height: 1.6;
   min-height: 100dvh;
+  overscroll-behavior: contain; /* iOS Safari 防橡皮筋滾動 */
 }
 .uag-landing-container {
   max-width: 1120px;
@@ -2273,7 +2274,7 @@
 
 .landing-hero {
   text-align: center;
-  padding: 64px 16px 48px;
+  padding: 56px 16px 40px;
   max-width: 640px;
   margin: 0 auto;
 }
@@ -2290,6 +2291,48 @@
   max-width: 480px;
   margin: 0 auto 32px;
   line-height: 1.7;
+}
+/* 邁邁介紹區 — 嵌在 Hero 內 */
+.landing-maimai {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid #E6EDF7;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin: 0 auto 24px;
+  max-width: 480px;
+  box-shadow: 0 1px 4px rgba(0, 56, 90, 0.04);
+  text-align: left;
+}
+.landing-maimai-figure {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  color: #00385a;
+}
+.landing-maimai-bubble {
+  flex: 1;
+  min-width: 0;
+}
+.landing-maimai-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #00385a;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+.landing-maimai-text {
+  font-size: 13px;
+  color: #6C7B91;
+  line-height: 1.55;
+  font-weight: 500;
+  margin: 0;
+}
+.landing-maimai-text strong {
+  color: #0A2246;
+  font-weight: 700;
 }
 .landing-actions {
   display: flex;
@@ -2342,6 +2385,33 @@
   text-align: center;
   line-height: 1.7;
   margin: 0;
+}
+/* Feature card 內嵌步驟提示 */
+.landing-card-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #E6EDF7;
+}
+.landing-card-step-number {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #00385a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.landing-card-step-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0A2246;
 }
 .landing-steps {
   padding: 0 16px 48px;
@@ -2404,7 +2474,7 @@
 }
 .landing-cta {
   text-align: center;
-  padding: 32px 16px 64px;
+  padding: 24px 16px 48px;
   max-width: 480px;
   margin: 0 auto;
 }
@@ -2423,18 +2493,66 @@
 /* Landing RWD */
 @media (max-width: 768px) {
   .landing-hero {
-    padding: 48px 16px 32px;
+    padding: 24px 16px 20px;
   }
   .landing-title {
-    font-size: 28px;
+    font-size: 26px;
+    margin-bottom: 12px;
   }
   .landing-subtitle {
     font-size: 15px;
+    margin-bottom: 24px;
+  }
+  /* 邁邁手機版 — 與桌機共用結構，微調間距 */
+  .landing-maimai {
+    margin-bottom: 20px;
+  }
+  .landing-features {
+    padding: 0 16px 24px;
   }
   .landing-features-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
+  /* 手機版卡片：水平排列（圓點 + 內容），垂直置中 */
+  .landing-card {
+    flex-direction: row;
+    align-items: center;
+    padding: 16px;
+    gap: 14px;
+    position: relative;
+    padding-left: 30px; /* 留空間給 ::before 圓點 */
+  }
+  .landing-card::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00385a;
+    flex-shrink: 0;
+  }
+  .landing-card-icon {
+    display: none;
+  }
+  .landing-card-title {
+    font-size: 15px;
+    text-align: left;
+  }
+  .landing-card-desc {
+    font-size: 13px;
+    text-align: left;
+  }
+  .landing-card-step {
+    display: none; /* 手機版隱藏步驟區塊，圓點由 ::before 取代 */
+  }
+  .landing-cta {
+    padding: 4px 16px 40px;
+  }
+  /* Steps section — 手機板已合併進 Feature cards */
   .landing-steps-row {
     flex-direction: column;
     align-items: center;

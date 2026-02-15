@@ -1,3 +1,4 @@
+import { MaiMaiBase } from '../../../../components/MaiMai';
 import { ROUTES } from '../../../../constants/routes';
 import { getSignupUrl, getAuthUrl } from '../../../../lib/authUtils';
 import styles from '../../UAG.module.css';
@@ -9,11 +10,21 @@ export function UAGLandingHero() {
   return (
     <section className={styles['landing-hero']}>
       <h1 className={styles['landing-title']}>房仲專區</h1>
-      <p className={styles['landing-subtitle']}>
-        買家在看哪間房、看了多久、有沒有點聯絡，
-        <br className="hidden sm:inline" />
-        系統幫你整理好，直接告訴你該聯絡誰。
-      </p>
+
+      {/* 邁邁介紹 — 嵌在 Hero 區內 */}
+      <div className={styles['landing-maimai']}>
+        <div className={styles['landing-maimai-figure']}>
+          <MaiMaiBase mood="wave" size="sm" animated={false} />
+        </div>
+        <div className={styles['landing-maimai-bubble']}>
+          <div className={styles['landing-maimai-name']}>買家雷達—邁邁</div>
+          <p className={styles['landing-maimai-text']}>
+            <strong>有人在看你的房子</strong>，我幫你盯著。
+            <br className="sm:hidden" />
+            看了多久、想不想聯絡，整理好通知你。
+          </p>
+        </div>
+      </div>
 
       <div className={styles['landing-actions']}>
         <a
