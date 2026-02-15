@@ -2,7 +2,7 @@
 import { Agent, Imported591Data } from '../lib/types';
 import { computeAddressFingerprint, normalizeCommunityName } from '../utils/address';
 import { logger } from '../lib/logger';
-import { isDemoPropertyId } from '../constants/property';
+import type { PageMode } from '../lib/pageMode';
 import { z } from 'zod';
 
 /**
@@ -75,8 +75,6 @@ export interface PropertyData {
   disadvantage?: string;
   // 安心留痕：房仲上傳時選擇是否開啟，影響詳情頁徽章顯示
   trustEnabled?: boolean;
-  // 演示用物件（mock/demo）
-  isDemo?: boolean;
   // 社區 ID（用於社區評價查詢）
   communityId?: string;
 }
@@ -294,7 +292,10 @@ async function createNewCommunity(
 // 定義 Service 介面 (Explicit Interface)
 // NOTE: linkCommunityReview 已移至 RPC fn_create_property_with_review
 export interface PropertyService {
-  getPropertyByPublicId(publicId: string): Promise<PropertyData | null>;
+  getPropertyByPublicId(
+    publicId: string,
+    options?: { mode?: PageMode | undefined }
+  ): Promise<PropertyData | null>;
   createProperty(data: Imported591Data, agentId: string): Promise<CreatePropertyResult>;
   uploadImages(
     files: File[],
@@ -339,7 +340,6 @@ export const DEFAULT_PROPERTY: PropertyData = {
   advantage2: '',
   disadvantage: '',
   trustEnabled: true,
-  isDemo: false,
   agent: {
     id: 'mock-agent-001',
     internalCode: 88001,
@@ -362,8 +362,11 @@ export const DEFAULT_PROPERTY: PropertyData = {
 
 export const propertyService: PropertyService = {
   // 1. 獲取物件詳情
-  getPropertyByPublicId: async (publicId: string): Promise<PropertyData | null> => {
-    const isDemo = isDemoPropertyId(publicId);
+  getPropertyByPublicId: async (
+    publicId: string,
+    options?: { mode?: PageMode | undefined }
+  ): Promise<PropertyData | null> => {
+    const isDemoMode = options?.mode === 'demo';
     const coerceNumber = (value: unknown): number | null => {
       if (value == null) return null;
       if (typeof value === 'number') return Number.isFinite(value) ? value : null;
@@ -411,8 +414,8 @@ export const propertyService: PropertyService = {
       if (error || !data) {
         logger.warn('查無正式資料，使用預設資料', { error });
         // 如果是開發環境或特定 ID，回傳預設資料以維持畫面
-        if (isDemo || import.meta.env.DEV) {
-          return { ...DEFAULT_PROPERTY, publicId, isDemo };
+        if (isDemoMode || import.meta.env.DEV) {
+          return { ...DEFAULT_PROPERTY, publicId };
         }
         return null;
       }
@@ -496,7 +499,6 @@ export const propertyService: PropertyService = {
         images: data.images || [],
         sourcePlatform: data.source_platform,
         agent,
-        isDemo,
       };
 
       const size = coerceNumber(data.size);
@@ -530,7 +532,7 @@ export const propertyService: PropertyService = {
       }
 
       // 針對 Demo 物件：若 DB 有資料但缺少結構化欄位，回退到 DEFAULT_PROPERTY（只補缺的欄位）
-      if (isDemo) {
+      if (isDemoMode) {
         if (result.size == null && DEFAULT_PROPERTY.size != null)
           result.size = DEFAULT_PROPERTY.size;
         if (result.rooms == null && DEFAULT_PROPERTY.rooms != null)
@@ -556,7 +558,7 @@ export const propertyService: PropertyService = {
       return result;
     } catch (e) {
       logger.error('Service Error', { error: e });
-      return { ...DEFAULT_PROPERTY, publicId, isDemo };
+      return { ...DEFAULT_PROPERTY, publicId };
     }
   },
 

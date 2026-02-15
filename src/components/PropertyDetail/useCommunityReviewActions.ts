@@ -1,9 +1,3 @@
-/**
- * CommunityReviews 操作 Hook
- *
- * 處理社區評價的使用者互動：鼓勵評價、導向社區牆、認證引導
- */
-
 import { useCallback } from 'react';
 import * as ReactRouterDom from 'react-router-dom';
 import { getCurrentPath, navigateToAuth } from '../../lib/authUtils';
@@ -11,10 +5,11 @@ import { ROUTES, RouteUtils } from '../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../constants/seed';
 import { notify } from '../../lib/notify';
 import { useModeAwareAction } from '../../hooks/useModeAwareAction';
-
-const REGISTER_GUIDE_TITLE = '註冊後即可鼓勵評價';
-const REGISTER_GUIDE_DESCRIPTION = '免費註冊即可解鎖完整社區評價與互動。';
-const LIKE_ACTION_ERROR_TITLE = '鼓勵失敗';
+import {
+  REGISTER_GUIDE_TITLE,
+  REGISTER_GUIDE_DESCRIPTION,
+  LIKE_ACTION_ERROR_TITLE,
+} from '../../constants/communityReview';
 
 export interface UseCommunityReviewActionsOptions {
   communityId?: string | undefined;
@@ -33,26 +28,16 @@ export function useCommunityReviewActions({
 }: UseCommunityReviewActionsOptions) {
   const navigate = ReactRouterDom.useNavigate();
 
-  const handleAuthRedirect = useCallback(() => {
-    navigateToAuth('login', getCurrentPath());
-  }, []);
-
-  const handleSignupRedirect = useCallback(() => {
-    navigateToAuth('signup', getCurrentPath());
-  }, []);
+  const handleAuthRedirect = useCallback(() => navigateToAuth('login', getCurrentPath()), []);
+  const handleSignupRedirect = useCallback(() => navigateToAuth('signup', getCurrentPath()), []);
 
   const handleCommunityWall = useCallback(() => {
-    if (communityId) {
-      navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(communityId)));
-      return;
+    const targetId = communityId ?? (isDemoMode ? SEED_COMMUNITY_ID : null);
+    if (targetId) {
+      navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(targetId)));
+    } else {
+      notify.info('暫時無法前往社區牆', '目前缺少社區識別資料，請稍後再試。');
     }
-
-    if (isDemoMode) {
-      navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)));
-      return;
-    }
-
-    notify.info('暫時無法前往社區牆', '目前缺少社區識別資料，請稍後再試。');
   }, [communityId, isDemoMode, navigate]);
 
   const dispatchToggleLike = useModeAwareAction<string>({
@@ -64,9 +49,7 @@ export function useCommunityReviewActions({
         },
       });
     },
-    demo: (propertyId) => {
-      toggleLocalLike(propertyId);
-    },
+    demo: (propertyId) => toggleLocalLike(propertyId),
     live: (propertyId) => {
       if (!isLoggedIn) {
         notify.info('請先登入', '登入後即可鼓勵評價。', {
@@ -92,9 +75,5 @@ export function useCommunityReviewActions({
     [dispatchToggleLike]
   );
 
-  return {
-    handleSignupRedirect,
-    handleCommunityWall,
-    handleToggleLike,
-  };
+  return { handleSignupRedirect, handleCommunityWall, handleToggleLike };
 }

@@ -1,8 +1,8 @@
 import { ArrowLeft, Hash, Home } from 'lucide-react';
+import { usePageMode } from '../../hooks/usePageMode';
 
 interface PropertyDetailHeaderProps {
   propertyPublicId: string;
-  isDemo?: boolean;
   mockTrustEnabled: boolean | null;
   onToggleMockTrustEnabled: () => void;
   onBack?: () => void;
@@ -10,11 +10,12 @@ interface PropertyDetailHeaderProps {
 
 export function PropertyDetailHeader({
   propertyPublicId,
-  isDemo,
   mockTrustEnabled,
   onToggleMockTrustEnabled,
   onBack,
 }: PropertyDetailHeaderProps) {
+  const isDemoMode = usePageMode() === 'demo';
+
   const handleBackClick = () => {
     if (onBack) {
       onBack();
@@ -49,7 +50,7 @@ export function PropertyDetailHeader({
         </div>
       </nav>
 
-      {isDemo && (
+      {isDemoMode && (
         <div className="mx-auto max-w-4xl px-4 pt-4">
           <div className="flex items-center gap-2 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 p-3">
             <div className="flex-1">

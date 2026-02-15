@@ -6,6 +6,7 @@ import {
   VipModal,
 } from '../../components/PropertyDetail';
 import type { PropertyData } from '../../services/propertyService';
+import { usePageMode } from '../../hooks/usePageMode';
 
 interface SocialProof {
   socialProof: {
@@ -76,6 +77,8 @@ export function PropertyDetailActionLayer({
   contactModalLayer,
   vipLayer,
 }: PropertyDetailActionLayerProps) {
+  const isDemoMode = usePageMode() === 'demo';
+
   return (
     <>
       <MobileActionBar
@@ -83,7 +86,7 @@ export function PropertyDetailActionLayer({
         onCallClick={mobileActions.onMobileCallClick}
         socialProof={mobileActions.socialProof}
         trustEnabled={property.trustEnabled ?? false}
-        isVerified={property.isDemo ? true : (property.agent?.isVerified ?? false)}
+        isVerified={isDemoMode ? true : (property.agent?.isVerified ?? false)}
         isActionLocked={mobileActions.isActionLocked}
       />
 

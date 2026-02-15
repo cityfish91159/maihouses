@@ -43,7 +43,10 @@ export const ROUTES = {
 
   /** 房源詳情頁 - 需要 propertyId 參數 */
   PROPERTY: (propertyId: string): string => `/maihouses/p/${propertyId}`,
-} as const;
+
+  /** 首頁對話區塊 */
+  HOME_CONVERSATIONS: '/maihouses/#conversations',
+};
 
 /** 路由輔助函數 */
 export const RouteUtils = {
@@ -71,4 +74,4 @@ export const RouteUtils = {
     }
     return route;
   },
-} as const;
+};

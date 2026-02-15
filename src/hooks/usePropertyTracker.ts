@@ -4,9 +4,9 @@ import { track } from '../analytics/track';
 import { getErrorMessage } from '../lib/error';
 import { logger } from '../lib/logger';
 import { safeLocalStorage } from '../lib/safeStorage';
-import { isDemoMode } from '../lib/pageMode';
 import { toast } from 'sonner';
 import { TOAST_DURATION } from '../constants/toast';
+import { usePageMode } from './usePageMode';
 
 /**
  * PropertyTracker 返回的追蹤方法介面
@@ -37,6 +37,8 @@ const TrackResponseSchema = z.object({
   grade: z.string().optional(),
   reason: z.string().optional(),
 });
+
+type ClickActionKey = 'line' | 'call' | 'map';
 
 const VALID_GRADES = new Set(Object.keys(UAG_GRADE_RANK));
 
@@ -89,7 +91,7 @@ export const usePropertyTracker = (
   district: string,
   onGradeUpgrade?: (newGrade: string, reason?: string) => void
 ) => {
-  const isDemo = isDemoMode();
+  const isDemo = usePageMode() === 'demo';
   // 使用 useState 惰性初始化，避免在 render 中調用 Date.now()
   const [enterTime] = useState(() => Date.now());
   const actions = useRef({
@@ -278,73 +280,53 @@ export const usePropertyTracker = (
     };
   }, [isDemo, propertyId]);
 
+  const createTracker = useCallback(
+    (actionKey: ClickActionKey) => async () => {
+      if (isDemo) return;
+      if (clickSent.current[actionKey]) return;
+      clickSent.current[actionKey] = true;
+
+      const clickEvent = `click_${actionKey}`;
+      const analyticsEvent = `uag.${actionKey}_clicked`;
+      const analyticsPayload =
+        actionKey === 'map' ? { property_id: propertyId, district } : { property_id: propertyId };
+
+      switch (actionKey) {
+        case 'line':
+          actions.current.click_line = 1;
+          break;
+        case 'call':
+          actions.current.click_call = 1;
+          break;
+        case 'map':
+          actions.current.click_map = 1;
+          break;
+        default:
+          break;
+      }
+
+      try {
+        await Promise.all([track(analyticsEvent, analyticsPayload), sendEvent(clickEvent)]);
+      } catch (error) {
+        logger.error(`[UAG] Track ${actionKey} click failed:`, { error: getErrorMessage(error) });
+        toast.warning('追蹤失敗', {
+          description: '您的操作已記錄,但追蹤系統暫時異常',
+          duration: TOAST_DURATION.WARNING,
+        });
+        sendEvent(clickEvent).catch(() => {});
+      }
+    },
+    [district, isDemo, propertyId, sendEvent]
+  );
+
   // 暴露追蹤方法
   return {
     trackPhotoClick: () => {
       if (isDemo) return;
       actions.current.click_photos++;
     },
-    trackLineClick: async () => {
-      if (isDemo) return;
-      if (clickSent.current.line) return; // 防重複點擊
-      clickSent.current.line = true;
-
-      try {
-        actions.current.click_line = 1;
-        await Promise.all([
-          track('uag.line_clicked', { property_id: propertyId }),
-          sendEvent('click_line'),
-        ]);
-      } catch (error) {
-        logger.error('[UAG] Track LINE click failed:', { error: getErrorMessage(error) });
-        toast.warning('追蹤失敗', {
-          description: '您的操作已記錄,但追蹤系統暫時異常',
-          duration: TOAST_DURATION.WARNING,
-        });
-        // 仍執行 sendEvent 確保核心追蹤不中斷
-        sendEvent('click_line').catch(() => {});
-      }
-    },
-    trackCallClick: async () => {
-      if (isDemo) return;
-      if (clickSent.current.call) return; // 防重複點擊
-      clickSent.current.call = true;
-
-      try {
-        actions.current.click_call = 1;
-        await Promise.all([
-          track('uag.call_clicked', { property_id: propertyId }),
-          sendEvent('click_call'),
-        ]);
-      } catch (error) {
-        logger.error('[UAG] Track call click failed:', { error: getErrorMessage(error) });
-        toast.warning('追蹤失敗', {
-          description: '您的操作已記錄,但追蹤系統暫時異常',
-          duration: TOAST_DURATION.WARNING,
-        });
-        sendEvent('click_call').catch(() => {});
-      }
-    },
-    trackMapClick: async () => {
-      if (isDemo) return;
-      if (clickSent.current.map) return; // 防重複點擊
-      clickSent.current.map = true;
-
-      try {
-        actions.current.click_map = 1;
-        await Promise.all([
-          track('uag.map_clicked', { property_id: propertyId, district }),
-          sendEvent('click_map'),
-        ]);
-      } catch (error) {
-        logger.error('[UAG] Track map click failed:', { error: getErrorMessage(error) });
-        toast.warning('追蹤失敗', {
-          description: '您的操作已記錄,但追蹤系統暫時異常',
-          duration: TOAST_DURATION.WARNING,
-        });
-        sendEvent('click_map').catch(() => {});
-      }
-    },
+    trackLineClick: createTracker('line'),
+    trackCallClick: createTracker('call'),
+    trackMapClick: createTracker('map'),
   };
 };
-

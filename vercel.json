@@ -43,13 +43,6 @@
       "continue": true
     },
     {
-      "src": "^/$",
-      "status": 308,
-      "headers": {
-        "Location": "/maihouses/"
-      }
-    },
-    {
       "handle": "filesystem"
     },
     {

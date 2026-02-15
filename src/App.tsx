@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
@@ -65,6 +65,9 @@ const queryClient = new QueryClient({
 // 🔒 私密功能開關 - deploy 分支強制啟用
 const ENABLE_PRIVATE_FEATURES = true;
 
+// 🎭 MUSE 獨立部署模式
+const MUSE_STANDALONE = import.meta.env.VITE_MUSE_STANDALONE === 'true';
+
 function DemoRuntimeBridge() {
   useDemoTimer();
   return null;
@@ -103,9 +106,11 @@ export default function App() {
               <Route
                 path="/"
                 element={
-                  <ErrorBoundary>
-                    <Home config={config} />
-                  </ErrorBoundary>
+                  MUSE_STANDALONE
+                    ? <Navigate to="/muse" replace />
+                    : <ErrorBoundary>
+                        <Home config={config} />
+                      </ErrorBoundary>
                 }
               />
               {/* 

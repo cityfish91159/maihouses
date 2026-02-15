@@ -33,6 +33,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const ALLOWED_ORIGINS = [
   'https://maihouses.com',
   'https://maihouses.vercel.app',
+  'https://muse-one-neon.vercel.app',
   'https://cityfish91159.github.io',
   'https://pchome-online.github.io',
   'http://localhost:5173',

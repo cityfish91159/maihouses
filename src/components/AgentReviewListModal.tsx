@@ -94,6 +94,7 @@ const AgentReviewListModalInner: React.FC<InnerProps> = ({
     setAccumulatedReviews((prev) => {
       if (!data) return prev;
       const existingIds = new Set(prev.map((r) => r.id));
+      // TypeScript strict mode: 需明確標註 filter callback 參數型別，因為 data.reviews 可能為 readonly
       const newReviews = data.reviews.filter((r: AgentReview) => !existingIds.has(r.id));
       return newReviews.length > 0 ? [...prev, ...newReviews] : prev;
     });

@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     switch (type) {
       case 'activity':
-        formattedMessage = `\n💕 資欣老師上線了！\n\n📝 ${message}\n\n⏰ ${timestamp}`;
+        formattedMessage = `\n💕 用戶上線了！\n\n📝 ${message}\n\n⏰ ${timestamp}`;
         break;
       case 'intimate':
         formattedMessage = `\n🔥 親密模式啟動！\n\n${message}\n\n⏰ ${timestamp}`;

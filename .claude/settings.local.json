@@ -174,7 +174,13 @@
       "Bash(git status:*)",
       "Bash(xargs cat:*)",
       "Bash(strings:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(del \"C:\\\\Users\\\\陳世瑜\\\\maihouses\\\\preview-uag-landing.html\")",
+      "Bash(del \"C:\\\\Users\\\\陳世瑜\\\\maihouses\\\\preview-landing-mobile.html\")",
+      "Bash(chmod:*)",
+      "Bash(CLAUDE_TOOL_INPUT='{\"file_path\":\"src/components/Header/Header.tsx\"}' bash:*)",
+      "Bash(CLAUDE_TOOL_INPUT='{\"\"command\"\":\"\"git commit -m test\"\"}' bash .claude/hooks/pre-commit-check.sh)",
+      "Bash(CLAUDE_TOOL_INPUT='{\"\"file_path\"\":\"\"src/components/Header/Header.tsx\"\"}' bash .claude/hooks/post-edit-check.sh)"
     ]
   },
   "model": "claude-opus-4-5-20251101",
@@ -182,5 +188,20 @@
   "enabledMcpjsonServers": [
     "filesystem",
     "puppeteer"
-  ]
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/post-edit-check.sh",
+            "timeout": 10,
+            "statusMessage": "掃描禁止項..."
+          }
+        ]
+      }
+    ]
+  }
 }

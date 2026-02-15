@@ -211,10 +211,6 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
     return () => window.removeEventListener('hashchange', handleNavigation);
   }, [data.posts]); // Re-run when posts load
 
-  const handleSearch = (_q: string) => {
-    // 搜尋功能待實作
-  };
-
   const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
 
   const filteredPosts = data.posts.filter((post) => {
@@ -236,7 +232,7 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
-      <GlobalHeader mode="consumer" onSearch={handleSearch} className="sticky top-0 z-30" />
+      <GlobalHeader mode="consumer" className="sticky top-0 z-30" />
       {/* MSG-3: 交易橫幅（現在也支援私訊提醒，私訊優先） */}
       {(latestNotification || activeTransaction.hasActive) && (
         <TxBanner

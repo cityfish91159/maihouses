@@ -17,8 +17,20 @@ const maimaiContextMocks = vi.hoisted(() => ({
   setMood: vi.fn(),
 }));
 
+const authMocks = vi.hoisted(() => ({
+  isAuthenticated: false,
+  user: null,
+  role: 'guest' as const,
+  signOut: vi.fn(),
+  loading: false,
+}));
+
 vi.mock('../../hooks/usePageMode', () => ({
   usePageMode: () => mockUsePageMode(),
+}));
+
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: () => authMocks,
 }));
 
 vi.mock('../../hooks/useDemoExit', () => ({

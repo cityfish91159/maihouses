@@ -4,6 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 
+// MUSE 獨立部署時替換標題
+if (import.meta.env.VITE_MUSE_STANDALONE === 'true') {
+  document.title = 'MUSE';
+}
+
 const rootElement = document.getElementById('root');
 if (rootElement) {
   // 智能判斷 basename：如果網址包含 /maihouses 則使用之，否則使用根目錄

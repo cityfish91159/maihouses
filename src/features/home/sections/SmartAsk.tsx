@@ -282,7 +282,7 @@ export default function SmartAsk() {
             </div>
           ) : (
             messages.map((m, i) => (
-              <ChatMessage key={i} role={m.role} content={m.content} timestamp={m.timestamp} />
+              <ChatMessage key={i} sender={m.role} content={m.content} timestamp={m.timestamp} />
             ))
           )}
           {loading && (

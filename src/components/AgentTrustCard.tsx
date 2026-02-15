@@ -16,7 +16,6 @@ import { usePageMode } from '../hooks/usePageMode';
 
 interface AgentTrustCardProps {
   agent: Agent;
-  isDemo?: boolean;
   onLineClick?: () => void;
   onCallClick?: () => void;
   onReviewClick?: () => void;
@@ -24,7 +23,6 @@ interface AgentTrustCardProps {
 
 export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function AgentTrustCard({
   agent,
-  isDemo = false,
   onLineClick,
   onCallClick,
   onReviewClick,
@@ -33,9 +31,10 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   const [avatarError, setAvatarError] = useState(false);
   const trustTooltipId = useId();
   const mode = usePageMode();
+  const isDemoMode = mode === 'demo';
 
   const isTestEnv = import.meta.env.MODE === 'test' || import.meta.env.VITEST;
-  const shouldFetchProfile = Boolean(agent.id) && !isDemo && !isTestEnv;
+  const shouldFetchProfile = Boolean(agent.id) && !isDemoMode && !isTestEnv;
 
   const { data: profile } = useQuery({
     queryKey: agentProfileQueryKey(mode, agent.id),
@@ -62,13 +61,13 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   const displayName = profile?.name ?? agent.name;
   const rawAvatar = profile?.avatarUrl ?? agent.avatarUrl;
   const displayCompany = profile?.company ?? agent.company ?? '邁房子';
-  const licenseNumber = isDemo ? null : (profile?.licenseNumber ?? agent.licenseNumber ?? null);
-  const isVerified = isDemo ? true : (profile?.isVerified ?? agent.isVerified ?? false);
+  const licenseNumber = isDemoMode ? null : (profile?.licenseNumber ?? agent.licenseNumber ?? null);
+  const isVerified = isDemoMode ? true : (profile?.isVerified ?? agent.isVerified ?? false);
   const platformCode =
     safeInternalCode === null ? 'MH-未設定' : `MH-${String(safeInternalCode).padStart(5, '0')}`;
 
   const agentMetrics = useMemo(() => {
-    if (isDemo) {
+    if (isDemoMode) {
       return {
         responseTime: isOnline ? '5 分鐘' : '2 小時',
         serviceRating: 4.8,
@@ -86,7 +85,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
       serviceYears: profile?.serviceYears ?? agent.serviceYears ?? 0,
     };
   }, [
-    isDemo,
+    isDemoMode,
     isOnline,
     profile?.serviceRating,
     profile?.reviewCount,

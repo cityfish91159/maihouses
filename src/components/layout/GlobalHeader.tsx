@@ -2,30 +2,22 @@
  * GlobalHeader Component
  *
  * 三分頁共用頂部導航列 (P3)
- * 適用範圍：社區牆 (Community Wall)、消費者信息流 (Consumer Feed)、房仲信息流 (Agent Feed)
+ * 適用範圍：社區牆 (Community Wall)、Feed 頁面
  * 注意：首頁 (Home) 使用獨立的 Header 組件，不在此組件管理範圍內。
- *
- * ⚠️ WARNING: 修改此組件時，請務必同步更新 public/feed-consumer.html 與 public/feed-agent.html
- * 靜態頁面的 Header 是手動複製的，若不同步會導致視覺與功能不一致。
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, User, LogOut, ChevronDown, ExternalLink } from 'lucide-react';
-import clsx from 'clsx';
+import { useNavigate } from 'react-router-dom';
+import { User, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
-import { Logo } from '../Logo/Logo';
-import { notify } from '../../lib/notify';
-import { logger } from '../../lib/logger';
 import { getCurrentPath, getLoginUrl } from '../../lib/authUtils';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES, RouteUtils } from '../../constants/routes';
-import { MESSAGING_CONFIG } from '../../constants/messaging';
-import { NotificationDropdown } from './NotificationDropdown';
-import { NotificationErrorBoundary } from './NotificationErrorBoundary';
-import type { Role } from '../../types/community';
+import { UserMenu } from './GlobalHeader/UserMenu';
+import { NotificationButton } from './GlobalHeader/NotificationButton';
+import { LeftSection } from './GlobalHeader/LeftSection';
+import { CenterSection } from './GlobalHeader/CenterSection';
 
 interface GlobalHeaderProps {
   /** 顯示模式：社區牆 | 消費者端 | 房仲端 */
@@ -34,18 +26,7 @@ interface GlobalHeaderProps {
   title?: string;
   /** 額外樣式 */
   className?: string;
-  /** 搜尋回調 (Optional) */
-  onSearch?: (query: string) => void;
 }
-
-/** 取得角色標籤文字（使用 Early Return Pattern） */
-const getRoleLabel = (role: Role | undefined): string => {
-  if (role === 'resident') return HEADER_STRINGS.ROLE_RESIDENT;
-  if (role === 'agent') return HEADER_STRINGS.ROLE_AGENT;
-  if (role === 'official') return HEADER_STRINGS.ROLE_OFFICIAL;
-  if (role === 'guest') return HEADER_STRINGS.ROLE_GUEST;
-  return HEADER_STRINGS.ROLE_MEMBER;
-};
 
 export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
   const { isAuthenticated, user, signOut, role } = useAuth();
@@ -57,78 +38,13 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     refresh,
   } = useNotifications();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
 
   // 產生當前頁面的登入 URL（含 return 參數）
   const loginUrl = getLoginUrl(getCurrentPath());
 
-  // 處理登出
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      notify.success(HEADER_STRINGS.MSG_LOGOUT_SUCCESS, HEADER_STRINGS.MSG_LOGOUT_DESC);
-      setUserMenuOpen(false);
-      navigate(RouteUtils.toNavigatePath(ROUTES.HOME));
-    } catch (error) {
-      logger.error('GlobalHeader.handleSignOut.failed', {
-        error,
-        userId: user?.id,
-      });
-      notify.error(HEADER_STRINGS.MSG_LOGOUT_ERROR, HEADER_STRINGS.MSG_LOGOUT_RETRY);
-    }
-  };
-
-  // 點擊外部關閉選單
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      // [NASA TypeScript Safety] 使用 instanceof 類型守衛驗證 DOM 元素
-      const target = e.target;
-      if (!(target instanceof HTMLElement)) return;
-
-      if (!target.closest('#gh-user-menu-btn') && !target.closest('#gh-user-menu-dropdown')) {
-        setUserMenuOpen(false);
-      }
-      if (!target.closest('#gh-notification-btn') && !target.closest('#gh-notification-dropdown')) {
-        setNotificationMenuOpen(false);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
   // 處理通知點擊跳轉（使用 React Router）
   const handleNotificationClick = (conversationId: string) => {
-    setNotificationMenuOpen(false);
     navigate(RouteUtils.toNavigatePath(ROUTES.CHAT(conversationId)));
-  };
-
-  // 渲染左側區域 (Logo)
-  const renderLeft = () => {
-    return (
-      <div className="flex items-center gap-2">
-        <Logo showSlogan={false} href={ROUTES.HOME} showBadge={true} />
-        {mode === 'agent' && (
-          <span className="rounded bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
-            {HEADER_STRINGS.AGENT_BADGE}
-          </span>
-        )}
-      </div>
-    );
-  };
-
-  // 渲染中間區域 (標題)
-  const renderCenter = () => {
-    if (mode === 'community' && title) {
-      return (
-        <div className="flex-1 text-center">
-          <h1 className="text-brand-900 m-0 text-base font-extrabold">{title}</h1>
-          <p className="text-ink-500 m-0 text-[11px]">{HEADER_STRINGS.SUBTITLE_WALL}</p>
-        </div>
-      );
-    }
-    return <div className="flex-1" />;
   };
 
   return (
@@ -137,10 +53,10 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     >
       <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between gap-2.5 px-4">
         {/* Left */}
-        {renderLeft()}
+        <LeftSection mode={mode} />
 
         {/* Center */}
-        {renderCenter()}
+        <CenterSection mode={mode} title={title} />
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
@@ -156,107 +72,20 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
               <ExternalLink size={14} strokeWidth={2.5} />
             </a>
           )}
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              id="gh-notification-btn"
-              onClick={() => setNotificationMenuOpen(!notificationMenuOpen)}
-              className="relative inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white p-2 text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
-              aria-label={HEADER_STRINGS.LABEL_NOTIFICATIONS}
-              aria-expanded={notificationMenuOpen}
-            >
-              <Bell size={18} strokeWidth={2.5} />
-              {notificationCount > 0 && (
-                <span
-                  className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm"
-                  aria-live="polite"
-                  aria-atomic="true"
-                >
-                  {notificationCount > MESSAGING_CONFIG.UNREAD_BADGE_MAX
-                    ? `${MESSAGING_CONFIG.UNREAD_BADGE_MAX}+`
-                    : notificationCount}
-                </span>
-              )}
-            </button>
 
-            {/* Notification Dropdown */}
-            {notificationMenuOpen && (
-              <div id="gh-notification-dropdown">
-                <NotificationErrorBoundary onClose={() => setNotificationMenuOpen(false)}>
-                  <NotificationDropdown
-                    notifications={notifications}
-                    isLoading={notificationsLoading}
-                    isStale={isStale}
-                    onClose={() => setNotificationMenuOpen(false)}
-                    onNotificationClick={handleNotificationClick}
-                    onRefresh={refresh}
-                  />
-                </NotificationErrorBoundary>
-              </div>
-            )}
-          </div>
+          {/* Notifications */}
+          <NotificationButton
+            notificationCount={notificationCount}
+            notifications={notifications}
+            isLoading={notificationsLoading}
+            isStale={isStale}
+            onNotificationClick={handleNotificationClick}
+            onRefresh={refresh}
+          />
 
           {/* User Menu */}
           {isAuthenticated ? (
-            <div className="relative">
-              <button
-                id="gh-user-menu-btn"
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-1.5 rounded-xl border border-brand-100 bg-white py-1 pl-1 pr-2.5 transition-all hover:bg-brand-50 hover:shadow-sm active:scale-95"
-                aria-label={HEADER_STRINGS.LABEL_AVATAR}
-                aria-expanded={userMenuOpen}
-              >
-                <div className="flex size-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
-                  {user?.email?.charAt(0).toUpperCase() || 'U'}
-                </div>
-                <span className="hidden max-w-[80px] truncate text-xs font-bold text-brand-700 md:block">
-                  {user?.user_metadata?.name || '我的'}
-                </span>
-                <ChevronDown
-                  size={14}
-                  className={clsx(
-                    'text-brand-400 transition-transform',
-                    userMenuOpen && 'rotate-180'
-                  )}
-                />
-              </button>
-
-              {/* Dropdown */}
-              {userMenuOpen && (
-                <div
-                  id="gh-user-menu-dropdown"
-                  className="animate-in fade-in zoom-in-95 absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl border border-brand-100 bg-white p-1 shadow-xl ring-1 ring-black/5 duration-100 focus:outline-none"
-                  role="menu"
-                >
-                  <div className="mb-1 border-b border-gray-50 px-3 py-2">
-                    <p className="text-brand-900 truncate text-xs font-bold">{user?.email}</p>
-                    <p className="text-[10px] text-gray-500">{getRoleLabel(role)}</p>
-                  </div>
-
-                  <button
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
-                    role="menuitem"
-                    onClick={() => {
-                      // 導向首頁並捲動回頂部
-                      window.location.href = ROUTES.HOME;
-                      setUserMenuOpen(false);
-                    }}
-                  >
-                    <User size={16} />
-                    {HEADER_STRINGS.MENU_PROFILE}
-                  </button>
-
-                  <button
-                    onClick={handleSignOut}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
-                    role="menuitem"
-                  >
-                    <LogOut size={16} />
-                    {HEADER_STRINGS.BTN_LOGOUT}
-                  </button>
-                </div>
-              )}
-            </div>
+            <UserMenu user={user} role={role} signOut={signOut} />
           ) : (
             <a
               href={loginUrl}

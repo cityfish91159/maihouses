@@ -5,4 +5,5 @@
  * 此檔案維持向後相容，實際實作在 ./TrustFlow/index.tsx
  */
 
-export { default, TrustFlow } from './TrustFlow/index';
+export { default } from './TrustFlow/index';
+export { default as TrustFlow } from './TrustFlow/index';

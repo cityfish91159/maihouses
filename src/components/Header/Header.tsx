@@ -1,5 +1,6 @@
-﻿import React, { useState, useCallback } from 'react';
-import { Search, LogIn, LogOut, UserPlus, List, Menu, X } from 'lucide-react';
+﻿import React, { useState, useCallback, useEffect } from 'react';
+import { Search, LogIn, LogOut, UserPlus, List, Menu, X, ChevronDown, User } from 'lucide-react';
+import clsx from 'clsx';
 import { Logo } from '../Logo/Logo';
 import { DemoGate } from '../DemoGate/DemoGate';
 import { ROUTES, RouteUtils } from '../../constants/routes';
@@ -11,14 +12,21 @@ import { useMaiMai } from '../../context/MaiMaiContext';
 import { TUTORIAL_CONFIG } from '../../constants/tutorial';
 import { usePageMode } from '../../hooks/usePageMode';
 import { useDemoExit } from '../../hooks/useDemoExit';
+import { useAuth } from '../../hooks/useAuth';
+import { HEADER_STRINGS } from '../../constants/header';
+import { getErrorMessage } from '../../lib/error';
+import { logger } from '../../lib/logger';
+import type { Role } from '../../types/community';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [clickCount, setClickCount] = useState(0);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const mode = usePageMode();
   const { requestDemoExit } = useDemoExit();
   const { setMood, addMessage } = useMaiMai();
+  const { isAuthenticated, user, role, signOut, loading } = useAuth();
   const authReturnPath = getCurrentPath();
   const loginUrl = getLoginUrl(authReturnPath);
   const signupUrl = getSignupUrl(authReturnPath);
@@ -32,6 +40,32 @@ export default function Header() {
     },
     [mode]
   );
+
+  /** 取得角色標籤文字 */
+  const getRoleLabel = (role: Role | undefined): string => {
+    if (role === 'resident') return HEADER_STRINGS.ROLE_RESIDENT;
+    if (role === 'agent') return HEADER_STRINGS.ROLE_AGENT;
+    if (role === 'official') return HEADER_STRINGS.ROLE_OFFICIAL;
+    if (role === 'guest') return HEADER_STRINGS.ROLE_GUEST;
+    return HEADER_STRINGS.ROLE_MEMBER;
+  };
+
+  /** 登出處理 */
+  const handleSignOut = useCallback(async (): Promise<void> => {
+    try {
+      await signOut();
+      notify.success(HEADER_STRINGS.MSG_LOGOUT_SUCCESS, HEADER_STRINGS.MSG_LOGOUT_DESC);
+      setUserMenuOpen(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      logger.error('Header.handleSignOut.failed', {
+        error: errorMessage,
+        userId: user?.id,
+      });
+      notify.error(HEADER_STRINGS.MSG_LOGOUT_ERROR, HEADER_STRINGS.MSG_LOGOUT_RETRY);
+    }
+  }, [signOut, user?.id]);
 
   /** 執行搜尋:導航到房源列表頁帶上搜尋參數 */
   const handleSearch = useCallback(() => {
@@ -74,6 +108,41 @@ export default function Header() {
     addMessage(TUTORIAL_CONFIG.MESSAGES.SEARCH_HINT);
   }, [setMood, addMessage]);
 
+  /** 使用者選單事件監聽：Escape 鍵與點擊外部關閉（無障礙功能） */
+  useEffect(() => {
+    if (!userMenuOpen) return;
+
+    const handleEscapeKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        setUserMenuOpen(false);
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent): void => {
+      const target = e.target;
+
+      // Type guard: 確保 target 是 HTMLElement
+      if (!(target instanceof HTMLElement)) return;
+
+      // 檢查點擊是否在選單內部
+      const isInsideMenu =
+        target.closest('#home-user-menu-btn') ||
+        target.closest('#home-user-menu-btn-mobile') ||
+        target.closest('#home-user-menu-dropdown');
+      if (!isInsideMenu) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [userMenuOpen]);
+
   return (
     <>
       {/* Navigation Bar */}
@@ -100,7 +169,7 @@ export default function Header() {
               <span>房地產列表</span>
             </a>
 
-            {mode === 'demo' ? (
+            {loading ? null : mode === 'demo' ? (
               <button
                 type="button"
                 onClick={requestDemoExit}
@@ -109,6 +178,74 @@ export default function Header() {
                 <LogOut size={18} strokeWidth={2.5} />
                 <span>退出演示</span>
               </button>
+            ) : mode === 'live' && isAuthenticated ? (
+              // Live 模式 UI（Glassmorphism + Real Estate Palette）
+              <div className="relative">
+                <button
+                  id="home-user-menu-btn"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/80 py-1.5 pl-1.5 pr-3 shadow-sm shadow-teal-100/50 backdrop-blur-md transition-all duration-200 hover:bg-white/90 hover:shadow-md hover:shadow-teal-100/60 active:scale-95"
+                  aria-label={HEADER_STRINGS.LABEL_AVATAR}
+                  aria-expanded={userMenuOpen}
+                >
+                  {/* 頭像圓形（Real Estate Teal） */}
+                  <div className="flex size-9 items-center justify-center rounded-full bg-teal-50 text-sm font-bold text-teal-700 ring-1 ring-teal-100/50">
+                    {user?.email?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+
+                  {/* 使用者名稱（桌面版才顯示，Teal 色系） */}
+                  <span className="hidden max-w-[90px] truncate text-sm font-semibold text-teal-800 md:block">
+                    {user?.user_metadata?.name || user?.email || '我的'}
+                  </span>
+
+                  {/* Chevron 圖標（Teal 色系） */}
+                  <ChevronDown
+                    size={16}
+                    className={clsx(
+                      'text-teal-600 transition-transform duration-200',
+                      userMenuOpen && 'rotate-180'
+                    )}
+                  />
+                </button>
+
+                {/* 下拉選單（Glassmorphism 毛玻璃效果） */}
+                {userMenuOpen && (
+                  <div
+                    id="home-user-menu-dropdown"
+                    className="animate-in fade-in zoom-in-95 absolute right-0 top-full mt-3 w-52 origin-top-right rounded-2xl border border-white/20 bg-white/95 p-2 shadow-xl shadow-teal-100/50 ring-1 ring-teal-100/20 backdrop-blur-lg duration-200"
+                    role="menu"
+                  >
+                    {/* Email 和角色標籤 */}
+                    <div className="mb-2 border-b border-teal-50 px-4 py-3">
+                      <p className="truncate text-sm font-semibold text-teal-900">{user?.email}</p>
+                      <p className="mt-0.5 text-xs text-teal-600">{getRoleLabel(role)}</p>
+                    </div>
+
+                    {/* 個人檔案按鈕 */}
+                    <button
+                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-teal-800 transition-all duration-150 hover:bg-teal-50/80 hover:text-teal-900"
+                      role="menuitem"
+                      onClick={() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setUserMenuOpen(false);
+                      }}
+                    >
+                      <User size={18} className="text-teal-600" />
+                      {HEADER_STRINGS.MENU_PROFILE}
+                    </button>
+
+                    {/* 登出按鈕 */}
+                    <button
+                      onClick={handleSignOut}
+                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-red-700 transition-all duration-150 hover:bg-red-50/80 hover:text-red-800"
+                      role="menuitem"
+                    >
+                      <LogOut size={18} className="text-red-600" />
+                      {HEADER_STRINGS.BTN_LOGOUT}
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 {/* Column 2: Login */}
@@ -136,7 +273,7 @@ export default function Header() {
 
           {/* Mobile Nav - 手機版 */}
           <div className="flex items-center gap-2 md:hidden">
-            {mode === 'demo' ? (
+            {loading ? null : mode === 'demo' ? (
               <button
                 type="button"
                 onClick={requestDemoExit}
@@ -145,6 +282,59 @@ export default function Header() {
                 <LogOut size={16} strokeWidth={2.5} />
                 <span>退出</span>
               </button>
+            ) : mode === 'live' && isAuthenticated ? (
+              // Live 模式簡化 UI（Glassmorphism + 44x44px 觸控友善）
+              <div className="relative">
+                <button
+                  id="home-user-menu-btn-mobile"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/80 shadow-sm shadow-teal-100/50 backdrop-blur-md transition-all duration-200 hover:bg-white/90 hover:shadow-md active:scale-95"
+                  aria-label={HEADER_STRINGS.LABEL_AVATAR}
+                  aria-expanded={userMenuOpen}
+                >
+                  <div className="flex size-9 items-center justify-center rounded-full bg-teal-50 text-sm font-bold text-teal-700 ring-1 ring-teal-100/50">
+                    {user?.email?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                </button>
+
+                {/* 下拉選單（Glassmorphism 毛玻璃效果，與桌面版一致） */}
+                {userMenuOpen && (
+                  <div
+                    id="home-user-menu-dropdown"
+                    className="animate-in fade-in zoom-in-95 absolute right-0 top-full mt-2 w-48 origin-top-right rounded-2xl border border-white/20 bg-white/95 p-2 shadow-xl shadow-teal-100/50 ring-1 ring-teal-100/20 backdrop-blur-lg duration-200"
+                    role="menu"
+                  >
+                    {/* Email 和角色標籤 */}
+                    <div className="mb-2 border-b border-teal-50 px-3 py-2">
+                      <p className="truncate text-xs font-semibold text-teal-900">{user?.email}</p>
+                      <p className="mt-0.5 text-[10px] text-teal-600">{getRoleLabel(role)}</p>
+                    </div>
+
+                    {/* 個人檔案按鈕 */}
+                    <button
+                      className="flex w-full items-center gap-2.5 rounded-xl p-3 text-sm font-semibold text-teal-800 transition-all duration-150 hover:bg-teal-50/80 hover:text-teal-900"
+                      role="menuitem"
+                      onClick={() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setUserMenuOpen(false);
+                      }}
+                    >
+                      <User size={16} className="text-teal-600" />
+                      {HEADER_STRINGS.MENU_PROFILE}
+                    </button>
+
+                    {/* 登出按鈕 */}
+                    <button
+                      onClick={handleSignOut}
+                      className="flex w-full items-center gap-2.5 rounded-xl p-3 text-sm font-semibold text-red-700 transition-all duration-150 hover:bg-red-50/80 hover:text-red-800"
+                      role="menuitem"
+                    >
+                      <LogOut size={16} className="text-red-600" />
+                      {HEADER_STRINGS.BTN_LOGOUT}
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 {/* 登入按鈕 - 手機版精簡 */}
