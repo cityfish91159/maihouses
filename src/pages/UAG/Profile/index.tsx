@@ -23,9 +23,12 @@ interface SectionErrorFallbackProps extends Pick<FallbackProps, 'resetErrorBound
 
 const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)';
 const PROFILE_STICKY_SAVE_BAR_HEIGHT_PX = 80;
-const PROFILE_LAYOUT_STYLE = {
+type ProfileLayoutStyle = CSSProperties & {
+  '--page-uag-profile-sticky-save-bar-height': string;
+};
+const PROFILE_LAYOUT_STYLE: ProfileLayoutStyle = {
   '--page-uag-profile-sticky-save-bar-height': `${PROFILE_STICKY_SAVE_BAR_HEIGHT_PX}px`,
-} as CSSProperties;
+};
 
 const SectionErrorFallback: React.FC<SectionErrorFallbackProps> = ({
   title,
@@ -55,6 +58,7 @@ export default function UAGProfilePage() {
   const uagRoute = RouteUtils.toNavigatePath(ROUTES.UAG);
 
   useEffect(() => {
+    // TODO(#28): 觀察一段時間後移除 legacy mock query 相容清洗
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.get('mock') !== 'true') return;
 

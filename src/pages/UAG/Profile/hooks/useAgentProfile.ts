@@ -8,41 +8,14 @@ import {
   updateAgentProfile,
   uploadAgentAvatar,
 } from '../../../../services/agentService';
+import { UAG_PROFILE_MOCK_DATA } from './mockProfile';
 
-const getAgentProfileQueryKey = (mode: PageMode, userId: string | undefined) =>
-  ['agent-profile-me', mode, userId] as const;
-
-// #7 Mock 資料
-const MOCK_PROFILE: AgentProfileMe = {
-  id: 'mock-agent-001',
-  internalCode: 88001,
-  name: '游杰倫',
-  avatarUrl: null,
-  company: '邁房子',
-  bio: '專注於大台北地區房地產買賣，擅長捷運宅與學區房。',
-  specialties: ['捷運宅', '學區房', '首購族諮詢'],
-  certifications: ['不動產經紀人', '地政士'],
-  phone: '0912345678',
-  lineId: 'maihouses_demo',
-  licenseNumber: '(113)北市經紀字第004521號',
-  isVerified: true,
-  verifiedAt: '2024-06-15T00:00:00Z',
-  trustScore: 87,
-  encouragementCount: 23,
-  serviceRating: 4.8,
-  reviewCount: 32,
-  completedCases: 45,
-  activeListings: 12,
-  serviceYears: 4,
-  joinedAt: '2021-02-01',
-  visitCount: 156,
-  dealCount: 45,
-  email: null,
-  points: 1200,
-  quotaS: 5,
-  quotaA: 10,
-  createdAt: '2021-02-01T00:00:00Z',
-};
+type AgentProfileQueryKey = ['agent-profile-me', PageMode, string | undefined];
+const getAgentProfileQueryKey = (mode: PageMode, userId: string | undefined): AgentProfileQueryKey => [
+  'agent-profile-me',
+  mode,
+  userId,
+];
 
 export function useAgentProfile() {
   const queryClient = useQueryClient();
@@ -56,7 +29,7 @@ export function useAgentProfile() {
     queryFn: async () => {
       // #7 Mock 模式：直接回傳假資料
       if (isMockMode) {
-        return MOCK_PROFILE;
+        return UAG_PROFILE_MOCK_DATA;
       }
       return fetchAgentMe();
     },

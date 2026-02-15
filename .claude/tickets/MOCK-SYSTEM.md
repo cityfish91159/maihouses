@@ -15,7 +15,7 @@
 
 ### P1 — 逐頁接入
 
-- [ ] **#4a** 房產詳情頁：移除 `isDemoPropertyId` 改用 usePageMode（5 檔）
+- [x] **#4a** 房產詳情頁：移除 `isDemoPropertyId` 改用 usePageMode（5 檔）✅ 2026-02-15
 - [x] **#4b** 房產詳情頁：社區牆 + 註冊查看連結修正（3 檔）✅ 2026-02-15
 - [x] **#5a** UAG：訪客 Landing Page + 角色守衛（6 新檔案 + 2 修改）✅ 2026-02-13
 - [x] **#5b** UAG：移除 `uagModeStore`，改用 usePageMode（6 檔）✅ 2026-02-15
@@ -438,7 +438,7 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 
 ---
 
-### #4a 房產詳情頁：移除 `isDemoPropertyId`
+### #4a ✅ 房產詳情頁：移除 `isDemoPropertyId`
 
 **目標**：消除雙重 demo 偵測（`isDemoPropertyId` vs `isDemoMode`），統一用 `usePageMode()`
 
@@ -646,6 +646,58 @@ live + 其他角色                → notify.warning + navigate 回首頁
 
 - [x] `npm run check:utf8` 通過（UTF-8 / Mojibake）
 - [x] `cmd /c npm run test -- src/pages/UAG/components/UAGHeader.test.tsx src/pages/UAG/Profile/index.test.tsx src/pages/UAG/Profile/basename-navigation.test.tsx src/pages/UAG/hooks/__tests__/useUAG.test.ts src/pages/UAG/index.test.tsx` 通過（5 files / 65 tests）
+- [x] `npm run typecheck` 通過
+
+#### 2026-02-15 #5b strict-audit phase4（程式碼衛生收斂）
+
+**摘要**
+
+- [x] `useUAGData.ts` 移除 `QUERY_CONFIG as const`（改用明確唯讀型別）
+- [x] `TrustFlow/index.tsx` 移除 magic number（`300ms` / `90天 TTL` 抽常數）
+- [x] `TrustFlow/index.tsx` 移除雙重匯出（保留 default export）
+- [x] `Profile/index.tsx` 移除 `as CSSProperties` 斷言（改 `ProfileLayoutStyle` 型別）
+- [x] `Profile/index.tsx` 為 legacy `mock` query 清洗補 `TODO(#28)` 註記
+- [x] `Profile/hooks/useAgentProfile.ts` 移除 query key `as const`
+- [x] `Profile/hooks/useAgentProfile.ts` 將 inline `MOCK_PROFILE` 抽離為 `mockProfile.ts`
+- [x] `UAGHeader.tsx` 清除已註解的 notification 殘碼
+- [x] `UAGHeader.tsx` `window.location.href` 改為 Router `navigate`
+- [x] `UAGHeader.test.tsx` 移除 `as User` 斷言、補 CSS 檔案讀取測試說明註解
+- [x] `UAGHeader.responsive.test.tsx` 同步移除 `as User` 斷言
+
+**本次修改**
+
+1. `src/pages/UAG/hooks/useUAGData.ts`
+   - `QUERY_CONFIG` 改為 `Readonly<{ staleTime: number; refetchInterval: number }>`。
+2. `src/pages/UAG/components/TrustFlow/index.tsx`
+   - 新增 `UI_DELAY_MS`、`CASE_TOKEN_TTL_MS` 常數。
+   - 移除尾端 `export { TrustFlow }`。
+3. `src/pages/UAG/Profile/index.tsx`
+   - 新增 `ProfileLayoutStyle` 型別，移除 `as CSSProperties`。
+   - legacy `mock` query 清洗段落補 `TODO(#28)`。
+4. `src/pages/UAG/Profile/hooks/mockProfile.ts`（新增）
+   - 抽出 `UAG_PROFILE_MOCK_DATA`。
+5. `src/pages/UAG/Profile/hooks/useAgentProfile.ts`
+   - query key 改成明確 tuple 型別 `AgentProfileQueryKey`。
+   - 引用 `UAG_PROFILE_MOCK_DATA` 取代 inline 常數。
+6. `src/pages/UAG/components/UAGHeader.tsx`
+   - 移除註解掉的 notification 區塊。
+   - profile 導向改為 `navigate(RouteUtils.toNavigatePath(ROUTES.UAG_PROFILE))`。
+7. 測試
+   - `src/pages/UAG/components/UAGHeader.test.tsx`：改驗證 `useNavigate`；補 CSS 讀檔註解。
+   - `src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx`：移除 `as User`。
+
+**未在本次 #5b 直接重構（保留 follow-up）**
+
+- [ ] `TrustFlow/index.tsx` 元件總行數 > 80（#2）
+- [ ] `Profile/index.tsx` 元件總行數 > 80（#6）
+- [ ] `UAGHeader.tsx` 元件總行數 > 80（#11）
+
+> 說明：三項皆屬結構性拆檔重構，會跨多檔與測試，為降低 #5b 收斂回歸風險，本次先完成行為一致性與規範違規（斷言/魔數/註解殘碼）修復；拆檔建議以獨立工單執行。
+
+**收斂驗證**
+
+- [x] `npm run check:utf8` 通過（UTF-8 / Mojibake）
+- [x] `cmd /c npm run test -- src/pages/UAG/components/UAGHeader.test.tsx src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx src/pages/UAG/Profile/index.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx src/pages/UAG/index.test.tsx` 通過（5 files / 32 tests）
 - [x] `npm run typecheck` 通過
 
 ---

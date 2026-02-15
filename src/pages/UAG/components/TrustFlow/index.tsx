@@ -25,6 +25,9 @@ import { ProgressSteps } from './ProgressSteps';
 import { EventTimeline } from './EventTimeline';
 import { MOCK_CASES } from './mockData';
 
+const UI_DELAY_MS = 300;
+const CASE_TOKEN_TTL_MS = 90 * 24 * 60 * 60 * 1000;
+
 export default function TrustFlow() {
   const mode = usePageMode();
   const useMock = mode === 'demo';
@@ -52,7 +55,7 @@ export default function TrustFlow() {
             status: 'active',
             lastUpdate: Date.now(),
             token: crypto.randomUUID(),
-            tokenExpiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
+            tokenExpiresAt: Date.now() + CASE_TOKEN_TTL_MS,
             events: [
               {
                 id: `${caseId}-e1`,
@@ -68,7 +71,7 @@ export default function TrustFlow() {
           setCases((prev) => [newCase, ...prev]);
         }
         setLoading(false);
-      }, 300);
+      }, UI_DELAY_MS);
     },
     [useMock]
   );
@@ -78,7 +81,7 @@ export default function TrustFlow() {
     setLoading(true);
     try {
       if (useMock) {
-        await new Promise((r) => setTimeout(r, 300));
+        await new Promise((r) => setTimeout(r, UI_DELAY_MS));
         setCases(MOCK_CASES);
         if (!isInitializedRef.current) {
           const firstCase = MOCK_CASES[0];
@@ -250,6 +253,3 @@ export default function TrustFlow() {
     </section>
   );
 }
-
-// 維持向後相容的 export
-export { TrustFlow };

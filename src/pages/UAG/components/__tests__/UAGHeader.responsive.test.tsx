@@ -30,7 +30,7 @@ const mockUser: User = {
   aud: 'authenticated',
   created_at: new Date().toISOString(),
   email: 'test@example.com',
-} as User;
+};
 
 const mockAgentProfile = {
   id: 'agent-1',

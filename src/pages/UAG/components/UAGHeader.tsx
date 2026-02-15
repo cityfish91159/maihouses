@@ -1,13 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
-// import { useNotifications } from '../../../hooks/useNotifications';
-// import { useNotificationDropdown } from '../../../hooks/useNotificationDropdown';
-// import { NotificationBell } from '../../../components/common/NotificationBell';
-// import { NotificationDropdown } from '../../../components/layout/NotificationDropdown';
-// import { NotificationErrorBoundary } from '../../../components/layout/NotificationErrorBoundary';
+import { useNavigate } from 'react-router-dom';
 import { Logo } from '../../../components/Logo/Logo';
-import { ROUTES } from '../../../constants/routes';
+import { ROUTES, RouteUtils } from '../../../constants/routes';
 import styles from '../UAG.module.css';
 import type { AgentProfile } from '../types/uag.types';
 
@@ -51,19 +47,10 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   isSigningOut = false,
   useMock = false, // #6 預設為 false
 }) => {
-  // const { count, notifications, isLoading: notificationsLoading, error: notificationsError, isStale, refresh } = useNotifications();
+  const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuDropdownRef = useRef<HTMLDivElement | null>(null);
-
-  // 使用共用 Hook 管理通知下拉選單
-  // const {
-  //   isOpen: notificationMenuOpen,
-  //   toggle: toggleNotificationMenu,
-  //   close: closeNotificationMenu,
-  //   triggerRef: notificationTriggerRef,
-  //   dropdownRef: notificationDropdownRef,
-  // } = useNotificationDropdown();
 
   // 點擊外部關閉用戶選單（通知選單由 Hook 處理）
   // 只在選單開啟時綁定監聽，避免不必要的全域事件處理
@@ -119,7 +106,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   const email = useMock ? null : (user?.email ?? null);
   const company = agentProfile?.company ?? null;
   const showSignOut = Boolean(user);
-  const profileHref = ROUTES.UAG_PROFILE;
+  const profilePath = RouteUtils.toNavigatePath(ROUTES.UAG_PROFILE);
 
   const handleUserMenuKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -151,34 +138,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
           <span className={`${styles['uag-badge']} ${styles['uag-badge--pro']}`}>專業版 PRO</span>
         </div>
         <div className={styles['uag-header-actions']}>
-          <div className={styles['uag-notification']}>
-            {/* Notification components temporarily disabled due to missing files */}
-            {/* <NotificationBell
-              ref={notificationTriggerRef}
-              unreadCount={count}
-              isLoading={notificationsLoading}
-              hasError={!!notificationsError}
-              isOpen={notificationMenuOpen}
-              onClick={toggleNotificationMenu}
-              ariaLabel="通知"
-              className={styles['uag-notification-btn'] || ''}
-            />
-
-            {notificationMenuOpen && (
-              <div ref={notificationDropdownRef}>
-                <NotificationErrorBoundary onClose={closeNotificationMenu}>
-                  <NotificationDropdown
-                    notifications={notifications}
-                    isLoading={notificationsLoading}
-                    isStale={isStale}
-                    onClose={closeNotificationMenu}
-                    onNotificationClick={handleNotificationClick}
-                    onRefresh={refresh}
-                  />
-                </NotificationErrorBoundary>
-              </div>
-            )} */}
-          </div>
+          <div className={styles['uag-notification']} />
           {/* #6 Mock 模式：即使 user 為 null 也顯示使用者區塊 */}
           {(user || useMock) && (
             <div className={styles['uag-user']}>
@@ -223,8 +183,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
                     role="menuitem"
                     onClick={() => {
                       setUserMenuOpen(false);
-                      // #5b：Profile 模式由 usePageMode 統一判定
-                      window.location.href = profileHref;
+                      navigate(profilePath);
                     }}
                   >
                     <UserIcon size={16} />

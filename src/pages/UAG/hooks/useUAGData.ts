@@ -27,10 +27,10 @@ import { uagDataQueryKey } from './queryKeys';
 export { UAG_QUERY_KEY } from './queryKeys';
 
 /** Query 配置：staleTime 與 refetchInterval 保持一致避免不必要的 refetch */
-const QUERY_CONFIG = {
+const QUERY_CONFIG: Readonly<{ staleTime: number; refetchInterval: number }> = {
   staleTime: 1000 * 30, // 30 秒
   refetchInterval: 30000, // 30 秒
-} as const;
+};
 
 // ============================================================================
 // Types

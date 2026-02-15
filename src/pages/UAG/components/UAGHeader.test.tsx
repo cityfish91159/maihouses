@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { UAGHeader } from './UAGHeader';
 
 const UAG_STYLES_PATH = resolve(process.cwd(), 'src/pages/UAG/UAG.module.css');
+const mockNavigate = vi.fn();
 
 vi.mock('lucide-react', () => ({
   ChevronDown: ({ className }: { className?: string }) => (
@@ -23,7 +24,19 @@ vi.mock('../../../components/Logo/Logo', () => ({
   Logo: ({ href }: { href?: string }) => <a href={href ?? '/maihouses/'}>邁房子</a>,
 }));
 
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 describe('UAGHeader', () => {
+  beforeEach(() => {
+    mockNavigate.mockClear();
+  });
+
   const mockUser: User = {
     id: 'user-123',
     app_metadata: {},
@@ -31,7 +44,7 @@ describe('UAGHeader', () => {
     aud: 'authenticated',
     created_at: new Date().toISOString(),
     email: 'test@example.com',
-  } as User;
+  };
 
   const renderHeader = (props: React.ComponentProps<typeof UAGHeader>) =>
     render(
@@ -84,25 +97,11 @@ describe('UAGHeader', () => {
   });
 
   it('navigates to profile route from menu in mock mode', () => {
-    const originalLocation = window.location;
+    renderHeader({ user: null, useMock: true });
+    fireEvent.click(screen.getByRole('button', { name: /用戶選單/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: '個人資料' }));
 
-    try {
-      Object.defineProperty(window, 'location', {
-        configurable: true,
-        value: { href: '' },
-      });
-
-      renderHeader({ user: null, useMock: true });
-      fireEvent.click(screen.getByRole('button', { name: /用戶選單/i }));
-      fireEvent.click(screen.getByRole('menuitem', { name: '個人資料' }));
-
-      expect(window.location.href).toBe('/maihouses/uag/profile');
-    } finally {
-      Object.defineProperty(window, 'location', {
-        configurable: true,
-        value: originalLocation,
-      });
-    }
+    expect(mockNavigate).toHaveBeenCalledWith('/uag/profile');
   });
 
   it('renders header elements with mobile-collapse classes', () => {
@@ -124,6 +123,7 @@ describe('UAGHeader', () => {
   });
 
   it('defines mobile hide rules and 44px user touch target in CSS', () => {
+    // 直接讀 CSS 原檔驗證 media query，避免 JSDOM 對計算後樣式的限制。
     const css = readFileSync(UAG_STYLES_PATH, 'utf8');
 
     expect(css).toContain('overscroll-behavior: contain;');
@@ -146,6 +146,7 @@ describe('UAGHeader', () => {
   });
 
   it('keeps agent bar stats readable on very narrow screens', () => {
+    // 直接讀 CSS 原檔驗證 media query，避免 JSDOM 對計算後樣式的限制。
     const css = readFileSync(UAG_STYLES_PATH, 'utf8');
 
     expect(css).toContain('@media (max-width: 380px)');
