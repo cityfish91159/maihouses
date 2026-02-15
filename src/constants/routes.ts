@@ -14,18 +14,6 @@ export const ROUTES = {
   /** 個人信息流 (React) - 需要 userId 參數 */
   FEED: (userId: string): string => `/maihouses/feed/${userId}`,
 
-  /** 房仲信息流 (React) - 已棄用，改用 FEED */
-  FEED_AGENT: '/maihouses/feed/agent',
-
-  /** 消費者信息流 (React) - 已棄用，改用 FEED */
-  FEED_CONSUMER: '/maihouses/feed/consumer',
-
-  /** 房仲信息流 (Legacy HTML) */
-  FEED_AGENT_LEGACY: '/maihouses/feed-agent.html',
-
-  /** 消費者信息流 (Legacy HTML) */
-  FEED_CONSUMER_LEGACY: '/maihouses/feed-consumer.html',
-
   /** ASSURE 交易戰情室 */
   ASSURE: '/maihouses/assure',
 

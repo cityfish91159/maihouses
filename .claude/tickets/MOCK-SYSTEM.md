@@ -19,7 +19,7 @@
 - [x] **#4b** 房產詳情頁：社區牆 + 註冊查看連結修正（3 檔）✅ 2026-02-15
 - [x] **#5a** UAG：訪客 Landing Page + 角色守衛（6 新檔案 + 2 修改）✅ 2026-02-13
 - [ ] **#5b** UAG：移除 `uagModeStore`，改用 usePageMode（6 檔）
-- [ ] **#6a** Feed：Logo 導航修復 + 廢棄路由清理（3 檔）
+- [x] **#6a** Feed：Logo 導航修復 + 廢棄路由清理（4 檔）✅ 2026-02-15
 - [ ] **#6b** Feed：移除 `DEMO_IDS` + 新增 `/feed/demo` 路由（4 檔）
 - [ ] **#7** 登入後重定向 — agent→UAG、consumer→首頁（auth.html）
 
@@ -557,20 +557,38 @@ live + 其他角色                → notify.warning + navigate 回首頁
 
 ---
 
-### #6a Feed：Logo 導航 + 廢棄路由
+### #6a ✅ Feed：Logo 導航 + 廢棄路由
 
-**目標**：修復 Feed Logo 死路
+**已完成** 2026-02-15
+
+**目標**：修復 Feed Logo 死路，移除廢棄路由常數
 
 **依賴**：#15
 
-| 檔案 | 行號 | 改動 |
-|------|------|------|
-| `GlobalHeader.tsx` | 109-115 | Logo → `ROUTES.HOME` |
-| `GlobalHeader.tsx` | 283 | `auth.html` → `getAuthUrl()` |
-| `PrivateWallLocked.tsx` | 23 | 同上 |
-| `routes.ts` | 16, 19, 22, 25 | 移除 `FEED_AGENT` / `FEED_CONSUMER` / legacy |
+**摘要**
 
-**驗收**：`grep -r "FEED_AGENT\|FEED_CONSUMER" src/` 回傳 0 筆
+- [x] `GlobalHeader.tsx` Logo 統一導向 `ROUTES.HOME`（移除角色判斷）
+- [x] `GlobalHeader.tsx` 個人檔案按鈕導向 `ROUTES.HOME`（移除 `FEED_CONSUMER` 邏輯）
+- [x] `AgentConversationList.tsx` 查看全部連結改為 `ROUTES.HOME`
+- [x] `routes.ts` 移除 `FEED_AGENT`、`FEED_CONSUMER`、`FEED_AGENT_LEGACY`、`FEED_CONSUMER_LEGACY`
+- [x] `PrivateWallLocked.tsx` 已使用 `navigateToAuth('login')` ✅（無需修改）
+
+**本次修改**
+
+1. `src/components/layout/GlobalHeader.tsx`
+   - L109-115: 移除角色判斷邏輯，Logo 統一導向 `ROUTES.HOME`
+   - L244-267: 個人檔案按鈕簡化為導向首頁（移除 `FEED_CONSUMER` + hash 邏輯）
+2. `src/components/Feed/AgentConversationList.tsx`
+   - L145: 查看全部連結從 `ROUTES.FEED_AGENT` 改為 `ROUTES.HOME`
+3. `src/constants/routes.ts`
+   - L18-27: 移除 `FEED_AGENT`、`FEED_CONSUMER`、`FEED_AGENT_LEGACY`、`FEED_CONSUMER_LEGACY`
+4. `src/components/Feed/PrivateWallLocked.tsx`
+   - 已符合規範（L22 使用 `navigateToAuth('login')`），無需修改
+
+**驗證結果**
+
+- [x] `grep -r "FEED_AGENT\|FEED_CONSUMER" src/` 回傳 0 筆 ✅
+- [x] `npm run gate` 通過（TypeScript + ESLint）✅
 
 ---
 

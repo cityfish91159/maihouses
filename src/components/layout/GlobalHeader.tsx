@@ -12,6 +12,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Bell, User, LogOut, ChevronDown, ExternalLink } from 'lucide-react';
+import clsx from 'clsx';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { Logo } from '../Logo/Logo';
@@ -24,6 +25,7 @@ import { ROUTES, RouteUtils } from '../../constants/routes';
 import { MESSAGING_CONFIG } from '../../constants/messaging';
 import { NotificationDropdown } from './NotificationDropdown';
 import { NotificationErrorBoundary } from './NotificationErrorBoundary';
+import type { Role } from '../../types/community';
 
 interface GlobalHeaderProps {
   /** 顯示模式：社區牆 | 消費者端 | 房仲端 */
@@ -36,20 +38,13 @@ interface GlobalHeaderProps {
   onSearch?: (query: string) => void;
 }
 
-// Helper to map role to display string
-const getRoleLabel = (role: string | undefined) => {
-  switch (role) {
-    case 'resident':
-      return HEADER_STRINGS.ROLE_RESIDENT;
-    case 'agent':
-      return HEADER_STRINGS.ROLE_AGENT;
-    case 'official':
-      return HEADER_STRINGS.ROLE_OFFICIAL;
-    case 'guest':
-      return HEADER_STRINGS.ROLE_GUEST;
-    default:
-      return HEADER_STRINGS.ROLE_MEMBER;
-  }
+/** 取得角色標籤文字（使用 Early Return Pattern） */
+const getRoleLabel = (role: Role | undefined): string => {
+  if (role === 'resident') return HEADER_STRINGS.ROLE_RESIDENT;
+  if (role === 'agent') return HEADER_STRINGS.ROLE_AGENT;
+  if (role === 'official') return HEADER_STRINGS.ROLE_OFFICIAL;
+  if (role === 'guest') return HEADER_STRINGS.ROLE_GUEST;
+  return HEADER_STRINGS.ROLE_MEMBER;
 };
 
 export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
@@ -111,17 +106,9 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
   // 渲染左側區域 (Logo)
   const renderLeft = () => {
-    // P3-AUDIT-FIX: Smart Home Link based on role
-    let homeLink: string = ROUTES.HOME;
-    if (role === 'agent') {
-      homeLink = ROUTES.FEED_AGENT;
-    } else if (role === 'resident' || role === 'member') {
-      homeLink = ROUTES.FEED_CONSUMER;
-    }
-
     return (
       <div className="flex items-center gap-2">
-        <Logo showSlogan={false} href={homeLink} showBadge={true} />
+        <Logo showSlogan={false} href={ROUTES.HOME} showBadge={true} />
         {mode === 'agent' && (
           <span className="rounded bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
             {HEADER_STRINGS.AGENT_BADGE}
@@ -227,7 +214,10 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
                 </span>
                 <ChevronDown
                   size={14}
-                  className={`text-brand-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                  className={clsx(
+                    'text-brand-400 transition-transform',
+                    userMenuOpen && 'rotate-180'
+                  )}
                 />
               </button>
 
@@ -247,24 +237,8 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
                     role="menuitem"
                     onClick={() => {
-                      // E5/F4 Fix: Robust Navigation
-                      const targetPath = ROUTES.FEED_CONSUMER;
-                      const targetHash = 'profile';
-
-                      if (
-                        location.pathname === targetPath ||
-                        location.pathname.includes('/feed/consumer')
-                      ) {
-                        // Already on page: force hash update and scroll
-                        window.location.hash = targetHash;
-                        // Dispatch event for listeners just in case
-                        window.dispatchEvent(new HashChangeEvent('hashchange'));
-                        // Fallback manual scroll if listener misses it
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      } else {
-                        // Navigate to page with hash
-                        window.location.href = `${targetPath}#${targetHash}`;
-                      }
+                      // 導向首頁並捲動回頂部
+                      window.location.href = ROUTES.HOME;
                       setUserMenuOpen(false);
                     }}
                   >

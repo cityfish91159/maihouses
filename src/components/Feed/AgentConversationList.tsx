@@ -142,7 +142,7 @@ export const AgentConversationList = memo(function AgentConversationList({
 
         {conversations.length > 5 && (
           <Link
-            to={`${ROUTES.FEED_AGENT}#conversations`}
+            to={`${ROUTES.HOME}#conversations`}
             className="mt-1 text-center text-[12px] text-brand-600 hover:underline"
           >
             查看全部 {conversations.length} 位客戶
