@@ -7,8 +7,9 @@
 import type { MockData } from './types';
 import { mockTimestampMinutesAgo } from '../../lib/time';
 import { MOCK_AGENT_IDENTITIES, MOCK_PROPERTY_TITLES } from '../../constants/mockData';
+import { deepFreeze } from '../../lib/deepFreeze';
 
-const publicPosts = [
+const publicPosts = deepFreeze([
   {
     id: 1,
     author: '陳小姐',
@@ -64,9 +65,9 @@ const publicPosts = [
     likes: 0,
     comments: 12,
   },
-];
+]);
 
-const privatePosts = [
+const privatePosts = deepFreeze([
   {
     id: 101,
     author: '管委會',
@@ -102,9 +103,9 @@ const privatePosts = [
     comments: 15,
     private: true,
   },
-];
+]);
 
-const reviews = [
+const reviews = deepFreeze([
   {
     id: 1,
     author: MOCK_AGENT_IDENTITIES.primaryAgentName,
@@ -150,9 +151,9 @@ const reviews = [
     pros: ['建商口碑好，用料實在', '公設比合理，實坪數划算'],
     cons: '車道坡度較陡，新手要小心',
   },
-];
+]);
 
-const questions = [
+const questions = deepFreeze([
   {
     id: 1,
     question: '請問社區停車位好停嗎？會不會常客滿？',
@@ -210,9 +211,9 @@ const questions = [
     answersCount: 0,
     answers: [],
   },
-];
+]);
 
-export const MOCK_DATA: MockData = {
+export const MOCK_DATA: MockData = deepFreeze({
   communityInfo: {
     name: MOCK_AGENT_IDENTITIES.defaultCommunityName,
     year: 2018,
@@ -238,7 +239,7 @@ export const MOCK_DATA: MockData = {
     items: questions,
     total: questions.length,
   },
-};
+});
 
 // ============ Mock Factories ============
 

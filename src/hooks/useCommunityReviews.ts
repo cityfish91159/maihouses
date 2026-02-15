@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { z } from 'zod';
 import { logger } from '../lib/logger';
 import { MOCK_TOTAL_REVIEWS } from '../components/PropertyDetail/constants';
+import { COMMUNITY_REVIEW_PREVIEWS } from '../constants/mock';
 
 // ========== Types ==========
 
@@ -72,38 +73,7 @@ const LOCKED_PREVIEW_PLACEHOLDER: ReviewPreview = {
   totalLikes: 0,
 };
 
-const MOCK_REVIEWS: ReviewPreview[] = [
-  {
-    initial: '林',
-    name: '林***',
-    residentLabel: '信義區住戶',
-    content: '透過平台不僅看到了真實的成交行情，還能直接與經紀人溝通，整體體驗非常順暢。',
-    avatarClass: 'bg-gradient-to-br from-brand-500 to-brand-700',
-    propertyId: 'MH-100001',
-    liked: false,
-    totalLikes: 3,
-  },
-  {
-    initial: '王',
-    name: '王***',
-    residentLabel: '住戶評價',
-    content: '社區管理很用心，公設維護良好，住戶素質也不錯，住起來很安心。',
-    avatarClass: 'bg-gradient-to-br from-brand-light to-brand-600',
-    propertyId: 'MH-100002',
-    liked: true,
-    totalLikes: 7,
-  },
-  {
-    initial: '住',
-    name: '住戶',
-    residentLabel: '社區住戶',
-    content: '樓下就有便利商店和公車站，生活機能很方便，唯一小缺點是假日停車位比較緊張。',
-    avatarClass: 'bg-gradient-to-br from-emerald-400 to-emerald-600',
-    propertyId: 'MH-100003',
-    liked: false,
-    totalLikes: 2,
-  },
-];
+const MOCK_REVIEWS: ReviewPreview[] = COMMUNITY_REVIEW_PREVIEWS.map((review) => ({ ...review }));
 
 // ========== Helper Functions ==========
 
@@ -226,7 +196,7 @@ export function useCommunityReviews({
   }, [communityId, isDemo, isVisible]);
 
   // 基底資料：mock 用常數，無 communityId 回空，其餘用 fetch 結果
-  const baseReviews = isDemo ? MOCK_REVIEWS : (!communityId ? [] : fetchedReviews);
+  const baseReviews: ReviewPreview[] = isDemo ? [...MOCK_REVIEWS] : (!communityId ? [] : fetchedReviews);
   const totalReviews = isDemo ? MOCK_TOTAL_REVIEWS : (!communityId ? null : fetchedTotal);
 
   // 套用本地按讚覆蓋（demo 模式按讚不寫 DB）

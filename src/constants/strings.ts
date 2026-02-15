@@ -1,4 +1,6 @@
-﻿export const STRINGS = {
+import { SEED_COMMUNITY_ID } from './seed';
+
+export const STRINGS = {
   FEED: {
     TITLE: '我的社區',
     PAGE_TITLE: '邁房子｜我的社區',
@@ -42,7 +44,7 @@
     // P5 Optimization Round 2
     DEFAULT_USER: 'Mike',
     DEFAULT_COMMUNITY_NAME: '惠宇上晴',
-    DEFAULT_COMMUNITY_ID: 'test-uuid',
+    DEFAULT_COMMUNITY_ID: SEED_COMMUNITY_ID,
     DEFAULT_COMMUNITY_LABEL: '社區',
     NOTIFY: {
       LOGIN_REQUIRED: '請先登入',

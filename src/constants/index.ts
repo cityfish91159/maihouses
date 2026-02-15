@@ -5,6 +5,7 @@
  */
 
 export { COMMUNITY_NAME_MAP, getCommunityName, isValidCommunityId } from './communities';
+export { SEED_CONSTANTS, SEED_COMMUNITY_ID } from './seed';
 export {
   PROFILE_CERTIFICATION_OPTIONS,
   PROFILE_MAX_BIO_LENGTH,

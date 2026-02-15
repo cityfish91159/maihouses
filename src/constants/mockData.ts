@@ -1,6 +1,7 @@
 ﻿import type { PerformanceStats, TodoItem, UagSummary } from '../types/agent';
 import type { ActiveTransaction, ProfileStats, SaleItem } from '../types/feed';
 import type { AgentProfile } from '../pages/UAG/types/uag.types';
+import { deepFreeze } from '../lib/deepFreeze';
 
 /**
  * Centralized Mock Data Constants
@@ -17,25 +18,25 @@ const MOCK_ACTIVE_DAYS = 128;
 const MOCK_LIKED_COUNT = 73;
 const MOCK_CONTRIBUTIONS = 15;
 
-export const MOCK_AGENT_IDENTITIES = {
+export const MOCK_AGENT_IDENTITIES = deepFreeze({
   primaryAgentName: '游傑倫',
   secondaryAgentName: '林筱婷',
   defaultCompanyName: '',
   defaultCommunityName: '惠宇上晴',
-} as const;
+} as const);
 
-export const MOCK_PROPERTY_TITLES = {
+export const MOCK_PROPERTY_TITLES = deepFreeze({
   huiyu12F: '惠宇上晴 12F',
   huiyu8F: '惠宇上晴 8F',
-} as const;
+} as const);
 
-export const MOCK_FEED_STATS: ProfileStats = {
+export const MOCK_FEED_STATS: ProfileStats = deepFreeze({
   days: MOCK_ACTIVE_DAYS,
   liked: MOCK_LIKED_COUNT,
   contributions: MOCK_CONTRIBUTIONS,
-};
+});
 
-export const MOCK_SALE_ITEMS: SaleItem[] = [
+export const MOCK_SALE_ITEMS: SaleItem[] = deepFreeze([
   {
     id: '1',
     title: MOCK_PROPERTY_TITLES.huiyu12F,
@@ -50,22 +51,22 @@ export const MOCK_SALE_ITEMS: SaleItem[] = [
     priceUnit: '萬',
     communityName: MOCK_AGENT_IDENTITIES.defaultCommunityName,
   },
-];
+]);
 
-export const MOCK_ACTIVE_TRANSACTION: ActiveTransaction = {
+export const MOCK_ACTIVE_TRANSACTION: ActiveTransaction = deepFreeze({
   hasActive: true,
   propertyName: MOCK_PROPERTY_TITLES.huiyu12F,
   stage: 'negotiation',
-};
+});
 
-export const MOCK_UAG_SUMMARY: UagSummary = {
+export const MOCK_UAG_SUMMARY: UagSummary = deepFreeze({
   grade: 'S',
   score: MOCK_SCORE,
   growth: MOCK_GROWTH,
   tags: ['回覆迅速', '社區熟悉', '協調力高'],
-};
+});
 
-export const MOCK_AGENT_PROFILE: AgentProfile = {
+export const MOCK_AGENT_PROFILE: AgentProfile = deepFreeze({
   id: 'mock-agent-001',
   internalCode: 12345,
   name: MOCK_AGENT_IDENTITIES.primaryAgentName,
@@ -75,9 +76,9 @@ export const MOCK_AGENT_PROFILE: AgentProfile = {
   encouragementCount: 18,
   visitCount: 45,
   dealCount: 8,
-};
+});
 
-export const MOCK_PERFORMANCE_STATS: PerformanceStats = {
+export const MOCK_PERFORMANCE_STATS: PerformanceStats = deepFreeze({
   score: 2560,
   days: MOCK_ACTIVE_DAYS,
   liked: MOCK_LIKED_COUNT,
@@ -87,9 +88,9 @@ export const MOCK_PERFORMANCE_STATS: PerformanceStats = {
   deals: 2,
   amount: 3280,
   clients: 18,
-};
+});
 
-export const MOCK_TODO_LIST: TodoItem[] = [
+export const MOCK_TODO_LIST: TodoItem[] = deepFreeze([
   {
     id: 't1',
     type: 'reply',
@@ -111,4 +112,4 @@ export const MOCK_TODO_LIST: TodoItem[] = [
     isDone: true,
     time: 'Yesterday',
   },
-];
+]);

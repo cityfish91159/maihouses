@@ -33,7 +33,7 @@
 - [x] **#17** `src/lib/error.ts` 統一錯誤處理工具（1 新檔案 + 17 測試）✅ 2026-02-12
 - [x] **#18** 3 檔 catch 改用 `getErrorMessage()`（config / track / MaiMaiContext）✅ 2026-02-13
 - [x] **#19** [P1] 砍舊路徑：前端 `tracker` 由 `/api/uag-track` 切到 `/api/uag/track`，下線 deprecated JS 版 ✅ 2026-02-12
-- [ ] **#20** 整合分散 Mock Data + seed 不可變 `Object.freeze`（10+ 檔）
+- [x] **#20** 整合分散 Mock Data + seed 不可變 `Object.freeze`（19 檔）✅ 2026-02-15
 - [ ] **#28** 已完成工單防禦強化 — Zod 收緊 + SSR guard + `as` 斷言消除（5 檔）
 - [ ] **#29** 跨裝置三模式驗證修復 — iOS Safari + 手機版 + 私隱模式（12 檔）
 
@@ -1019,9 +1019,51 @@ grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts
 
 ---
 
-### #20 整合分散 Mock Data
+### #20 ✅ 整合分散 Mock Data
 
-**目標**：`Object.freeze` 所有 seed，集中管理
+**已完成** 2026-02-15
+
+**目標**：集中分散 mock 常數，並以 `deepFreeze`（內部使用 `Object.freeze`）強化 seed/mock 不可變
+
+**摘要**
+
+- [x] 新增 `deepFreeze` 工具，作為全站 seed/mock 凍結入口
+- [x] 建立 `src/constants/mock/*` 集中模組，收斂社區牆卡片、房仲評價、聊天物件卡片 mock
+- [x] 移除 `useCommunityReviews` / `AgentReviewListModal` / `CommunityWallCard` / `ChatPropertyCard` 的分散內嵌 mock
+- [x] `SEED_COMMUNITY_ID` 改為單一來源：`strings.ts` 與 `communities.ts` 不再硬編碼 `'test-uuid'`
+- [x] `mockData.ts`、`server-seeds.ts`、`property seed`、`Community/UAG/TrustFlow` mock 全數加上不可變凍結
+
+**本次修改**
+
+1. 新增檔案（集中 mock 與不可變工具）
+   - `src/lib/deepFreeze.ts`
+   - `src/constants/mock/community.ts`
+   - `src/constants/mock/agentReviews.ts`
+   - `src/constants/mock/chatProperty.ts`
+   - `src/constants/mock/index.ts`
+2. 消費端改為讀取集中 mock
+   - `src/hooks/useCommunityReviews.ts`：改用 `COMMUNITY_REVIEW_PREVIEWS`
+   - `src/components/AgentReviewListModal.tsx`：改用 `AGENT_REVIEW_LIST_MOCK_DATA`
+   - `src/features/home/components/CommunityWallCard.tsx`：改用 `getCommunityWallSummaryMock`
+   - `src/features/home/components/ChatPropertyCard.tsx`：改用 `getChatPropertyMock`
+3. seed 與社區預設 ID 收斂
+   - `src/constants/seed.ts`：`SEED_CONSTANTS` 改為 `deepFreeze`
+   - `src/constants/strings.ts`：`DEFAULT_COMMUNITY_ID` 改為 `SEED_COMMUNITY_ID`
+   - `src/constants/communities.ts`：以 `[SEED_COMMUNITY_ID]` 建立 `COMMUNITY_NAME_MAP`
+   - `src/constants/index.ts`：補匯出 `SEED_CONSTANTS` / `SEED_COMMUNITY_ID`
+4. 既有 seed/mock 物件凍結
+   - `src/constants/mockData.ts`
+   - `src/constants/server-seeds.ts`
+   - `src/features/property/data/seed.ts`
+   - `src/pages/Community/mockData.ts`
+   - `src/pages/UAG/mockData.ts`
+   - `src/pages/UAG/components/TrustFlow/mockData.ts`
+
+**驗證結果**
+
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `npm run typecheck` 通過
+- [x] `npm run test -- src/components/__tests__/AgentReviewListModal.test.tsx src/features/home/sections/__tests__/CommunityTeaser.test.tsx src/pages/UAG/__tests__/ticket9d-regression.test.ts` 通過（20 tests）
 
 ---
 

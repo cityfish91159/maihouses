@@ -1,6 +1,7 @@
 ﻿import type { PropertyPageData } from '../../../types/property-page';
+import { deepFreeze } from '../../../lib/deepFreeze';
 
-export const SEED_DATA: PropertyPageData = {
+export const SEED_DATA: PropertyPageData = deepFreeze({
   featured: {
     main: {
       id: 'MH-100001',
@@ -276,4 +277,4 @@ export const SEED_DATA: PropertyPageData = {
       lockCount: 46,
     },
   ],
-};
+});

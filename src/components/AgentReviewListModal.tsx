@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Loader2, Star, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import type { AgentReviewListData } from '../types/agent-review';
+import type { AgentReviewListData, AgentReview } from '../types/agent-review';
 import { agentReviewsQueryKey, fetchAgentReviews } from '../hooks/useAgentReviews';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { usePageMode, type PageMode } from '../hooks/usePageMode';
+import { AGENT_REVIEW_LIST_MOCK_DATA } from '../constants/mock';
 
 interface AgentReviewListModalProps {
   open: boolean;
@@ -12,41 +13,6 @@ interface AgentReviewListModalProps {
   agentName: string;
   onClose: () => void;
 }
-
-const MOCK_REVIEWS: AgentReviewListData = {
-  reviews: [
-    {
-      id: 'mock-1',
-      rating: 5,
-      comment: '帶看很仔細，解說清楚，推薦！',
-      createdAt: '2026-01-15T10:00:00Z',
-      reviewerName: '林*',
-    },
-    {
-      id: 'mock-2',
-      rating: 5,
-      comment: '回覆很快，態度親切。',
-      createdAt: '2026-01-10T14:30:00Z',
-      reviewerName: '王*',
-    },
-    {
-      id: 'mock-3',
-      rating: 4,
-      comment: '專業度不錯，但文件準備稍微等了一下。',
-      createdAt: '2026-01-05T09:15:00Z',
-      reviewerName: '陳*',
-    },
-  ],
-  total: 32,
-  avgRating: 4.8,
-  distribution: {
-    '1': 0,
-    '2': 0,
-    '3': 2,
-    '4': 6,
-    '5': 24,
-  },
-};
 
 const STAR_LEVELS: Array<5 | 4 | 3 | 2 | 1> = [5, 4, 3, 2, 1];
 
@@ -92,7 +58,8 @@ const AgentReviewListModalInner: React.FC<InnerProps> = ({
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: agentReviewsQueryKey(mode, agentId, page),
-    queryFn: () => (useMockReviews ? Promise.resolve(MOCK_REVIEWS) : fetchAgentReviews(agentId, page)),
+    queryFn: () =>
+      useMockReviews ? Promise.resolve(AGENT_REVIEW_LIST_MOCK_DATA) : fetchAgentReviews(agentId, page),
     enabled: Boolean(agentId),
     staleTime: 2 * 60 * 1000,
     retry: 1,
@@ -127,7 +94,7 @@ const AgentReviewListModalInner: React.FC<InnerProps> = ({
     setAccumulatedReviews((prev) => {
       if (!data) return prev;
       const existingIds = new Set(prev.map((r) => r.id));
-      const newReviews = data.reviews.filter((r) => !existingIds.has(r.id));
+      const newReviews = data.reviews.filter((r: AgentReview) => !existingIds.has(r.id));
       return newReviews.length > 0 ? [...prev, ...newReviews] : prev;
     });
     setPage((prevPage) => prevPage + 1);

@@ -8,9 +8,10 @@
   LeadStatus,
 } from './types/uag.types';
 import { MOCK_AGENT_PROFILE as SHARED_MOCK_AGENT_PROFILE } from '../../constants/mockData';
+import { deepFreeze } from '../../lib/deepFreeze';
 
 // Mock IDs
-export const MOCK_IDS = {
+export const MOCK_IDS = deepFreeze({
   // leads.id 是 UUID（來自 uag_lead_purchases.id）
   leads: {
     S5566: '173ba3ba-7796-409c-8516-730227843687',
@@ -69,12 +70,12 @@ export const MOCK_IDS = {
     H009: 'sess-H009-tuv678',
     F778: 'sess-F778-wxy901',
   },
-};
+});
 
 // Mock 房仲個人資料（用於 UAG Header 房仲資訊條）
 export const MOCK_AGENT_PROFILE: AgentProfile = SHARED_MOCK_AGENT_PROFILE;
 
-export const MOCK_DB: AppData = {
+export const MOCK_DB: AppData = deepFreeze({
   user: { points: 1280, quota: { s: 2, a: 3 } },
   leads: [
     // 已購：只保留 S/A 四則
@@ -399,4 +400,4 @@ export const MOCK_DB: AppData = {
       commentsCount: 5,
     },
   ],
-};
+});

@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ROUTES, RouteUtils } from '../../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../../constants/seed';
+import { getCommunityWallSummaryMock } from '../../../constants/mock';
 
 /**
  * ============================================
@@ -38,25 +39,6 @@ type CommunityWallCardProps = {
   rating?: number;
 };
 
-// ============================================
-// 🎭 MOCK 資料 - 之後替換為 API 查詢
-// ============================================
-const MOCK_COMMUNITY_DATA: Record<string, { reviewCount: number; rating: number }> = {
-  快樂花園: { reviewCount: 28, rating: 4.3 },
-  遠雄二代宅: { reviewCount: 45, rating: 4.1 },
-  美河市: { reviewCount: 67, rating: 3.9 },
-  景安和院: { reviewCount: 19, rating: 4.5 },
-  松濤苑: { reviewCount: 32, rating: 4.2 },
-  華固名邸: { reviewCount: 24, rating: 4.4 },
-  // 預設值
-  default: { reviewCount: 12, rating: 4.2 },
-};
-
-function getMockData(name: string) {
-  return MOCK_COMMUNITY_DATA[name] ?? MOCK_COMMUNITY_DATA['default'];
-}
-// ============================================
-
 export default function CommunityWallCard({
   name,
   topic = '住戶真實評價',
@@ -66,9 +48,9 @@ export default function CommunityWallCard({
   const navigate = useNavigate();
 
   // 使用 mock 資料（之後改為 API 查詢）
-  const mockData = getMockData(name);
-  const finalReviewCount = reviewCount ?? mockData?.reviewCount ?? 10;
-  const finalRating = rating ?? mockData?.rating ?? 4.0;
+  const mockData = getCommunityWallSummaryMock(name);
+  const finalReviewCount = reviewCount ?? mockData.reviewCount;
+  const finalRating = rating ?? mockData.rating;
 
   const communityWallPath = RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
   const handleNavigate = () => navigate(communityWallPath);

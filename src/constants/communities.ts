@@ -5,6 +5,8 @@
  *
  * @module constants/communities
  */
+import { deepFreeze } from '../lib/deepFreeze';
+import { SEED_COMMUNITY_ID } from './seed';
 
 /**
  * 社區 ID 與名稱對照表
@@ -12,11 +14,11 @@
  *
  * TODO: P5 時從 API 取得社區列表，此處改為 fallback
  */
-export const COMMUNITY_NAME_MAP: Record<string, string> = {
-  'test-uuid': '惠宇上晴',
+export const COMMUNITY_NAME_MAP: Record<string, string> = deepFreeze({
+  [SEED_COMMUNITY_ID]: '惠宇上晴',
   'community-2': '遠雄中央公園',
   'community-3': '國泰建設',
-};
+});
 
 /**
  * 根據社區 ID 取得名稱

@@ -6,9 +6,10 @@
 
 import type { TrustCase } from './types';
 import { MOCK_PROPERTY_TITLES } from '../../../../constants/mockData';
+import { deepFreeze } from '../../../../lib/deepFreeze';
 
 /** Mock 案件資料 - 統一為 6 階段（M1-M6）[NASA TypeScript Safety] */
-export const MOCK_CASES: TrustCase[] = [
+export const MOCK_CASES: TrustCase[] = deepFreeze([
   {
     id: 'TR-2024-001',
     buyerId: 'A103',
@@ -206,4 +207,4 @@ export const MOCK_CASES: TrustCase[] = [
       },
     ],
   },
-];
+]);

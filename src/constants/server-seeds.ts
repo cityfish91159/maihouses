@@ -1,6 +1,7 @@
 ﻿import type { ServerSeed } from '../types/review';
+import { deepFreeze } from '../lib/deepFreeze';
 
-export const SERVER_SEEDS: ServerSeed[] = [
+export const SERVER_SEEDS: ServerSeed[] = deepFreeze([
   {
     id: 'seed-server-1',
     community_id: 'seed-c1',
@@ -55,4 +56,4 @@ export const SERVER_SEEDS: ServerSeed[] = [
     content: '致力於打造全台最透明的房產社群，讓每一個好評與負評都能成為重要參考。',
     source: 'seed',
   },
-];
+]);
