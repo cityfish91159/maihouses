@@ -56,21 +56,28 @@ export function buildKeyCapsuleTags(input: KeyCapsuleInput): string[] {
 let _supabase: SupabaseClient | null = null;
 function getSupabase(): SupabaseClient {
   if (!_supabase) {
-    _supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!);
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing SUPABASE_URL or SUPABASE key');
+    }
+
+    _supabase = createClient(supabaseUrl, supabaseKey);
   }
   return _supabase;
 }
 
 const REQUIRED_COUNT = 6;
 
-// 1. Seed Data (與前端 constants/data.ts 保持一致)
+// 1. Seed Data (與前端 constants/data.ts 的 PROPERTIES 完全一致)
 const SERVER_SEEDS = [
   {
     id: 1,
     image:
-      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=1600&auto=format&fit=crop',
-    badge: '捷運 5 分鐘',
-    title: '新板特區｜三房含車位，採光面中庭',
+      'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1600&auto=format&fit=crop',
+    badge: '捷運3分鐘',
+    title: '新板特區｜三房雙衛，捷運步行3分鐘',
     tags: ['34.2 坪', '3 房 2 廳', '高樓層'],
     price: '1,288',
     location: '新北市板橋區 · 中山路一段',
@@ -95,9 +102,9 @@ const SERVER_SEEDS = [
   {
     id: 2,
     image:
-      'https://images.unsplash.com/photo-1575517111478-7f6afd0973db?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1567496898669-ee935f5f647a?q=80&w=1600&auto=format&fit=crop',
     badge: '社區中庭',
-    title: '松山民生社區｜邊間大兩房，採光佳',
+    title: '民生社區｜邊間大兩房，綠蔭中庭',
     tags: ['28.6 坪', '2 房 2 廳', '可寵物'],
     price: '1,052',
     location: '台北市松山區 · 民生東路五段',
@@ -114,7 +121,7 @@ const SERVER_SEEDS = [
         name: '賴先生',
         role: '上班族',
         tag: '生活便利',
-        text: '走路 3 分鐘有超市與市場，下班買菜很方便。',
+        text: '走路3分鐘有超市與市場，下班買菜很方便。',
       },
     ],
     source: 'seed',
@@ -122,9 +129,9 @@ const SERVER_SEEDS = [
   {
     id: 3,
     image:
-      'https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=1600&auto=format&fit=crop',
-    badge: '學區宅',
-    title: '新店七張｜電梯二房，附機車位',
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1600&auto=format&fit=crop',
+    badge: '學區首選',
+    title: '七張站旁｜電梯兩房，近學區',
     tags: ['22.1 坪', '2 房 1 廳', '低公設比'],
     price: '838',
     location: '新北市新店區 · 北新路二段',
@@ -134,7 +141,7 @@ const SERVER_SEEDS = [
         name: '張小姐',
         role: '上班族',
         tag: '通勤方便',
-        text: '步行到捷運七張站約 6 分鐘，雨天也有騎樓遮蔽。',
+        text: '步行到捷運七張站約6分鐘，雨天也有騎樓遮蔽。',
       },
       {
         avatar: 'F',
@@ -149,12 +156,12 @@ const SERVER_SEEDS = [
   {
     id: 4,
     image:
-      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1460317442991-0ec209397118?q=80&w=1600&auto=format&fit=crop',
     badge: '河岸景觀',
-    title: '大直美堤｜景觀三房，沁涼通風',
+    title: '大直水岸｜景觀三房，高樓層邊間',
     tags: ['36.8 坪', '3 房 2 廳', '邊間'],
     price: '1,560',
-    location: '台北市中山區 · 敦化北路',
+    location: '台北市中山區 · 明水路',
     reviews: [
       {
         avatar: 'G',
@@ -168,7 +175,7 @@ const SERVER_SEEDS = [
         name: '高小姐',
         role: '通勤族',
         tag: '交通便利',
-        text: '離公車站 2 分鐘，轉乘捷運時間可控。',
+        text: '離公車站2分鐘，轉乘捷運時間可控。',
       },
     ],
     source: 'seed',
@@ -176,9 +183,9 @@ const SERVER_SEEDS = [
   {
     id: 5,
     image:
-      'https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=1600&auto=format&fit=crop',
-    badge: '社區花園',
-    title: '內湖東湖｜雙面採光，小家庭首選',
+      'https://images.unsplash.com/photo-1574362848149-11496d93a7c7?q=80&w=1600&auto=format&fit=crop',
+    badge: '公園第一排',
+    title: '東湖站旁｜雙面採光，小家庭首選',
     tags: ['27.4 坪', '2 房 2 廳', '含機車位'],
     price: '968',
     location: '台北市內湖區 · 康寧路三段',
@@ -203,9 +210,9 @@ const SERVER_SEEDS = [
   {
     id: 6,
     image:
-      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1600&auto=format&fit=crop',
     badge: '捷運生活圈',
-    title: '中和橋和站｜採光兩房，低管理費',
+    title: '橋和站旁｜採光兩房，新成屋低管理費',
     tags: ['24.9 坪', '2 房 1 廳', '社區新'],
     price: '898',
     location: '新北市中和區 · 中和路',
@@ -547,7 +554,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
   } catch (error) {
-    logger.error('[featured-properties] API Error', error);
+    // 防禦：記錄失敗不可影響 fallback 回應（避免 logger/Sentry 二次拋錯導致 500）
+    try {
+      logger.error('[featured-properties] API Error', error);
+    } catch {
+      // no-op
+    }
   }
 
   // 4. 自動補位 (Auto-fill)
