@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notify } from '../../../../lib/notify';
+import { getErrorMessage } from '../../../../lib/error';
 import { useAuth } from '../../../../hooks/useAuth';
 import { usePageMode, type PageMode } from '../../../../hooks/usePageMode';
 import type { AgentProfileMe, UpdateAgentProfilePayload } from '../../../../types/agent.types';
@@ -10,6 +11,9 @@ import {
   uploadAgentAvatar,
 } from '../../../../services/agentService';
 import { UAG_PROFILE_MOCK_DATA } from './mockProfile';
+
+const MOCK_PROFILE_UPDATE_DELAY_MS = 500;
+const MOCK_AVATAR_UPLOAD_DELAY_MS = 800;
 
 export function useAgentProfile() {
   const queryClient = useQueryClient();
@@ -36,7 +40,7 @@ export function useAgentProfile() {
     mutationFn: async (payload: UpdateAgentProfilePayload) => {
       // #7 Mock 模式：模擬更新
       if (isMockMode) {
-        await new Promise((resolve) => setTimeout(resolve, 500)); // 模擬網路延遲
+        await new Promise((resolve) => setTimeout(resolve, MOCK_PROFILE_UPDATE_DELAY_MS));
         return;
       }
       return updateAgentProfile(payload);
@@ -69,8 +73,7 @@ export function useAgentProfile() {
       }
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : '未知錯誤';
-      notify.error('儲存失敗', message);
+      notify.error('儲存失敗', getErrorMessage(err));
     },
   });
 
@@ -78,7 +81,7 @@ export function useAgentProfile() {
     mutationFn: async (file: File) => {
       // #7 Mock 模式：模擬上傳
       if (isMockMode) {
-        await new Promise((resolve) => setTimeout(resolve, 800)); // 模擬上傳延遲
+        await new Promise((resolve) => setTimeout(resolve, MOCK_AVATAR_UPLOAD_DELAY_MS));
         // P0-5 FIX: 先釋放舊的 URL，避免記憶體洩漏
         const oldProfile = queryClient.getQueryData<AgentProfileMe>(profileQueryKey);
         if (oldProfile?.avatarUrl && oldProfile.avatarUrl.startsWith('blob:')) {
@@ -99,15 +102,16 @@ export function useAgentProfile() {
       );
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : '上傳失敗';
-      notify.error('上傳失敗', message);
+      notify.error('上傳失敗', getErrorMessage(err));
     },
   });
+
+  const normalizedError = error ? new Error(getErrorMessage(error)) : null;
 
   return {
     profile: data ?? null,
     isLoading,
-    error: error instanceof Error ? error : null,
+    error: normalizedError,
     updateProfile: async (payload: UpdateAgentProfilePayload) => {
       await updateMutation.mutateAsync(payload);
     },

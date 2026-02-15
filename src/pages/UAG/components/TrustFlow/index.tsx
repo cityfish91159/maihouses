@@ -166,7 +166,10 @@ export default function TrustFlow() {
             {useMock ? 'Mock' : 'Live'}
           </span>
           <button className={styles['uag-btn']} onClick={loadCases} disabled={loading}>
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw
+              size={14}
+              className={loading ? 'animate-spin motion-reduce:animate-none' : ''}
+            />
           </button>
         </div>
       </div>
@@ -203,7 +206,7 @@ export default function TrustFlow() {
       {/* Loading State */}
       {loading && (
         <div className="text-ink-300 p-6 text-center">
-          <RefreshCw size={20} className="mx-auto mb-2 animate-spin" />
+          <RefreshCw size={20} className="mx-auto mb-2 animate-spin motion-reduce:animate-none" />
           <div className="text-xs">載入中...</div>
         </div>
       )}

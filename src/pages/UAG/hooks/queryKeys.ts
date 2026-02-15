@@ -1,9 +1,17 @@
 import type { PageMode } from '../../../hooks/usePageMode';
 
-export const UAG_QUERY_KEY = 'uagData' as const;
+export const UAG_QUERY_KEY = 'uagData';
 
-export const uagDataQueryKey = (mode: PageMode, userId: string | undefined) =>
-  [UAG_QUERY_KEY, mode, userId] as const;
+type UAGDataQueryKey = readonly [typeof UAG_QUERY_KEY, PageMode, string | undefined];
+type UAGAgentProfileQueryKey = readonly ['agentProfile', PageMode, string | undefined];
 
-export const uagAgentProfileQueryKey = (mode: PageMode, userId: string | undefined) =>
-  ['agentProfile', mode, userId] as const;
+export const uagDataQueryKey = (mode: PageMode, userId: string | undefined): UAGDataQueryKey => [
+  UAG_QUERY_KEY,
+  mode,
+  userId,
+];
+
+export const uagAgentProfileQueryKey = (
+  mode: PageMode,
+  userId: string | undefined
+): UAGAgentProfileQueryKey => ['agentProfile', mode, userId];

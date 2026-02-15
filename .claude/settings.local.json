@@ -180,7 +180,8 @@
       "Bash(chmod:*)",
       "Bash(CLAUDE_TOOL_INPUT='{\"file_path\":\"src/components/Header/Header.tsx\"}' bash:*)",
       "Bash(CLAUDE_TOOL_INPUT='{\"\"command\"\":\"\"git commit -m test\"\"}' bash .claude/hooks/pre-commit-check.sh)",
-      "Bash(CLAUDE_TOOL_INPUT='{\"\"file_path\"\":\"\"src/components/Header/Header.tsx\"\"}' bash .claude/hooks/post-edit-check.sh)"
+      "Bash(CLAUDE_TOOL_INPUT='{\"\"file_path\"\":\"\"src/components/Header/Header.tsx\"\"}' bash .claude/hooks/post-edit-check.sh)",
+      "WebFetch(domain:images.unsplash.com)"
     ]
   },
   "model": "claude-opus-4-5-20251101",
