@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import { notify } from '../../../../lib/notify';
 import { useAuth } from '../../../../hooks/useAuth';
 import { usePageMode, type PageMode } from '../../../../hooks/usePageMode';
@@ -48,10 +47,7 @@ const MOCK_PROFILE: AgentProfileMe = {
 export function useAgentProfile() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const pageMode = usePageMode();
-  const [searchParams] = useSearchParams();
-  const forceMockFromQuery = searchParams.get('mock') === 'true';
-  const mode: PageMode = pageMode === 'live' ? 'live' : forceMockFromQuery ? 'demo' : pageMode;
+  const mode: PageMode = usePageMode();
   const isMockMode = mode === 'demo';
   const profileQueryKey = getAgentProfileQueryKey(mode, user?.id);
 

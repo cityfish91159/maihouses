@@ -1,7 +1,6 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import type { AgentProfile } from '../types/uag.types';
 import { MOCK_AGENT_PROFILE } from '../../../constants/mockData';
-import { useUAGModeStore } from '../../../stores/uagModeStore';
 import { fetchAgentMe } from '../../../services/agentService';
 import { usePageMode } from '../../../hooks/usePageMode';
 import { uagAgentProfileQueryKey } from './queryKeys';
@@ -15,13 +14,10 @@ interface UseAgentProfileResult {
 /**
  * 查詢房仲個人資料（用於 UAG Header 房仲資訊條）
  * 從 agents 表查詢：信任分、帶看數、成交數等
- * 以 usePageMode 為主，舊版 UAG store 僅作過渡 fallback
+ * #5b：模式來源統一為 usePageMode
  */
 export function useAgentProfile(userId: string | undefined): UseAgentProfileResult {
-  const pageMode = usePageMode();
-  // #5b 遷移前兼容：若仍有舊版 UAG Mock store，visitor 模式時允許 fallback 為 demo。
-  const useMockFallback = useUAGModeStore((state) => state.useMock);
-  const mode = pageMode === 'visitor' && useMockFallback ? 'demo' : pageMode;
+  const mode = usePageMode();
   const isDemoMode = mode === 'demo';
 
   const { data, isLoading, error } = useQuery({

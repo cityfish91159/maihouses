@@ -1,4 +1,4 @@
-﻿/**
+/**
  * TrustFlow - 安心流程管理組件 (重構後)
  *
  * [code-simplifier] 主組件精簡版，子組件已抽取
@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, RefreshCw, Plus, AlertCircle, Zap } from 'lucide-react';
 import styles from '../../UAG.module.css';
 import { logger } from '../../../../lib/logger';
-import { useUAGModeStore, selectUseMock } from '../../../../stores/uagModeStore';
+import { usePageMode } from '../../../../hooks/usePageMode';
 import {
   TrustCasesApiResponseSchema,
   transformToLegacyCase,
@@ -31,7 +31,8 @@ interface TrustFlowProps {
 }
 
 export default function TrustFlow({ toggleMode }: TrustFlowProps) {
-  const useMock = useUAGModeStore(selectUseMock);
+  const mode = usePageMode();
+  const useMock = mode === 'demo';
   const [cases, setCases] = useState<TrustCase[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -162,7 +163,7 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
           <button
             className={styles['uag-btn']}
             onClick={toggleMode}
-            title={useMock ? '切換到真實模式' : '切換到模擬模式'}
+            title={useMock ? '目前為 Demo 模式' : '目前為 Live 模式'}
           >
             <Zap size={14} className="mr-1" />
             {useMock ? 'Mock' : 'Live'}

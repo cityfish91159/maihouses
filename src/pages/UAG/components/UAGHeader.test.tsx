@@ -83,7 +83,7 @@ describe('UAGHeader', () => {
     expect(screen.queryByRole('menuitem', { name: /登出/i })).not.toBeInTheDocument();
   });
 
-  it('navigates to mock profile route from menu in mock mode', () => {
+  it('navigates to profile route from menu in mock mode', () => {
     const originalLocation = window.location;
 
     try {
@@ -96,7 +96,7 @@ describe('UAGHeader', () => {
       fireEvent.click(screen.getByRole('button', { name: /用戶選單/i }));
       fireEvent.click(screen.getByRole('menuitem', { name: '個人資料' }));
 
-      expect(window.location.href).toBe('/maihouses/uag/profile?mock=true');
+      expect(window.location.href).toBe('/maihouses/uag/profile');
     } finally {
       Object.defineProperty(window, 'location', {
         configurable: true,

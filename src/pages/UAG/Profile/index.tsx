@@ -1,9 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ROUTES, RouteUtils } from '../../../constants/routes';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
+import { usePageMode } from '../../../hooks/usePageMode';
 import { AvatarUploader } from './AvatarUploader';
 import { MetricsDisplay } from './MetricsDisplay';
 import { BasicInfoSection } from './BasicInfoSection';
@@ -45,16 +47,15 @@ const SectionErrorFallback: React.FC<SectionErrorFallbackProps> = ({
 
 export default function UAGProfilePage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isMockMode = searchParams.get('mock') === 'true';
+  const mode = usePageMode();
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY, true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
+  const uagRoute = RouteUtils.toNavigatePath(ROUTES.UAG);
 
   const handleBackToUAG = useCallback(() => {
-    const targetUrl = isMockMode ? '/uag?mock=true' : '/uag';
-    navigate(targetUrl);
-  }, [isMockMode, navigate]);
+    navigate(uagRoute, { replace: mode === 'visitor' });
+  }, [mode, navigate, uagRoute]);
 
   const { profile, isLoading, error, updateProfile, isUpdating, uploadAvatar, isUploadingAvatar } =
     useAgentProfile();

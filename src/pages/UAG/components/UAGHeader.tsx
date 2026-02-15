@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
 // import { useNotifications } from '../../../hooks/useNotifications';
@@ -119,7 +119,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   const email = useMock ? null : (user?.email ?? null);
   const company = agentProfile?.company ?? null;
   const showSignOut = Boolean(user);
-  const profileHref = useMock ? `${ROUTES.UAG_PROFILE}?mock=true` : ROUTES.UAG_PROFILE;
+  const profileHref = ROUTES.UAG_PROFILE;
 
   const handleUserMenuKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -223,7 +223,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
                     role="menuitem"
                     onClick={() => {
                       setUserMenuOpen(false);
-                      // #6 Mock 模式：導向帶 mock 參數的 Profile 頁面
+                      // #5b：Profile 模式由 usePageMode 統一判定
                       window.location.href = profileHref;
                     }}
                   >

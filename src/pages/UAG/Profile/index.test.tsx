@@ -3,14 +3,13 @@ import UAGProfilePage from './index';
 
 const mockNavigate = vi.fn();
 const mockUseAgentProfile = vi.fn();
-const mockUseSearchParams = vi.fn();
+const mockUsePageMode = vi.fn();
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useSearchParams: () => mockUseSearchParams(),
   };
 });
 
@@ -30,6 +29,10 @@ vi.mock('./BasicInfoSection', () => ({
   BasicInfoSection: () => <div data-testid="basic-info-section" />,
 }));
 
+vi.mock('../../../hooks/usePageMode', () => ({
+  usePageMode: () => mockUsePageMode(),
+}));
+
 const makeHookResult = () => ({
   profile: {
     id: 'mock-agent-001',
@@ -47,41 +50,41 @@ const makeHookResult = () => ({
 describe('UAGProfilePage return navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseSearchParams.mockReturnValue([new URLSearchParams(), vi.fn()]);
+    mockUsePageMode.mockReturnValue('live');
   });
 
-  it('正常頁面（mock=true）點返回 UAG 應導向 /uag?mock=true', () => {
+  it('demo 模式正常頁面點返回 UAG 應導向 /uag', () => {
     mockUseAgentProfile.mockReturnValue(makeHookResult());
-    mockUseSearchParams.mockReturnValue([new URLSearchParams('mock=true'), vi.fn()]);
+    mockUsePageMode.mockReturnValue('demo');
 
     render(<UAGProfilePage />);
 
     fireEvent.click(screen.getByRole('button', { name: '返回 UAG' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/uag?mock=true');
+    expect(mockNavigate).toHaveBeenCalledWith('/uag', { replace: false });
   });
 
-  it('錯誤頁面（mock=true）點返回 UAG 應導向 /uag?mock=true', () => {
+  it('demo 模式錯誤頁面點返回 UAG 應導向 /uag', () => {
     const hookResult = makeHookResult();
     mockUseAgentProfile.mockReturnValue({
       ...hookResult,
       profile: null,
       error: new Error('load failed'),
     });
-    mockUseSearchParams.mockReturnValue([new URLSearchParams('mock=true'), vi.fn()]);
+    mockUsePageMode.mockReturnValue('demo');
 
     render(<UAGProfilePage />);
 
     fireEvent.click(screen.getByRole('button', { name: '返回 UAG' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/uag?mock=true');
+    expect(mockNavigate).toHaveBeenCalledWith('/uag', { replace: false });
   });
 
-  it('正常頁面（非 mock）點返回 UAG 應導向 /uag', () => {
+  it('visitor 模式點返回 UAG 應導向 /uag 且 replace=true', () => {
     mockUseAgentProfile.mockReturnValue(makeHookResult());
-    mockUseSearchParams.mockReturnValue([new URLSearchParams(), vi.fn()]);
+    mockUsePageMode.mockReturnValue('visitor');
 
     render(<UAGProfilePage />);
 
     fireEvent.click(screen.getByRole('button', { name: '返回 UAG' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/uag');
+    expect(mockNavigate).toHaveBeenCalledWith('/uag', { replace: true });
   });
 });

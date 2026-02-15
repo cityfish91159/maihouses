@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -96,8 +96,8 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
     mockUploadAgentAvatar.mockResolvedValue('https://example.com/avatar.png');
   });
 
-  it('mock=true 時應回傳 mock 資料且不呼叫 fetchAgentMe', async () => {
-    mockUsePageMode.mockReturnValue('visitor');
+  it('demo 模式時應回傳 mock 資料且不呼叫 fetchAgentMe', async () => {
+    mockUsePageMode.mockReturnValue('demo');
     mockUseAuth.mockReturnValue({
       user: null,
       session: null,
@@ -110,7 +110,7 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
 
     const queryClient = createQueryClient();
     const { result } = renderHook(() => useAgentProfile(), {
-      wrapper: createWrapper(queryClient, '/uag/profile?mock=true'),
+      wrapper: createWrapper(queryClient, '/uag/profile'),
     });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -118,8 +118,8 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
     expect(mockFetchAgentMe).not.toHaveBeenCalled();
   });
 
-  it('mock=true 時 updateProfile 應更新本地快取，不呼叫 update API', async () => {
-    mockUsePageMode.mockReturnValue('visitor');
+  it('demo 模式時 updateProfile 應更新本地快取，不呼叫 update API', async () => {
+    mockUsePageMode.mockReturnValue('demo');
     mockUseAuth.mockReturnValue({
       user: null,
       session: null,
@@ -132,7 +132,7 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
 
     const queryClient = createQueryClient();
     const { result } = renderHook(() => useAgentProfile(), {
-      wrapper: createWrapper(queryClient, '/uag/profile?mock=true'),
+      wrapper: createWrapper(queryClient, '/uag/profile'),
     });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -155,8 +155,8 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
     );
   });
 
-  it('mock=true 時 company=null 應保留為 null（不強制回填）', async () => {
-    mockUsePageMode.mockReturnValue('visitor');
+  it('demo 模式時 company=null 應保留為 null（不強制回填）', async () => {
+    mockUsePageMode.mockReturnValue('demo');
     mockUseAuth.mockReturnValue({
       user: null,
       session: null,
@@ -169,7 +169,7 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
 
     const queryClient = createQueryClient();
     const { result } = renderHook(() => useAgentProfile(), {
-      wrapper: createWrapper(queryClient, '/uag/profile?mock=true'),
+      wrapper: createWrapper(queryClient, '/uag/profile'),
     });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -184,10 +184,10 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
     expect(mockUpdateAgentProfile).not.toHaveBeenCalled();
   });
 
-  it('同一 QueryClient 由 mock 切到 live 時，不應復用 mock 快取', async () => {
+  it('同一 QueryClient 由 demo 切到 live 時，不應復用 mock 快取', async () => {
     const queryClient = createQueryClient();
 
-    mockUsePageMode.mockReturnValue('visitor');
+    mockUsePageMode.mockReturnValue('demo');
     mockUseAuth.mockReturnValue({
       user: null,
       session: null,
@@ -199,7 +199,7 @@ describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
     });
 
     const mockRender = renderHook(() => useAgentProfile(), {
-      wrapper: createWrapper(queryClient, '/uag/profile?mock=true'),
+      wrapper: createWrapper(queryClient, '/uag/profile'),
     });
     await waitFor(() => expect(mockRender.result.current.isLoading).toBe(false));
     expect(mockRender.result.current.profile?.id).toBe('mock-agent-001');

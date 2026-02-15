@@ -18,7 +18,7 @@
 - [ ] **#4a** 房產詳情頁：移除 `isDemoPropertyId` 改用 usePageMode（5 檔）
 - [x] **#4b** 房產詳情頁：社區牆 + 註冊查看連結修正（3 檔）✅ 2026-02-15
 - [x] **#5a** UAG：訪客 Landing Page + 角色守衛（6 新檔案 + 2 修改）✅ 2026-02-13
-- [ ] **#5b** UAG：移除 `uagModeStore`，改用 usePageMode（6 檔）
+- [x] **#5b** UAG：移除 `uagModeStore`，改用 usePageMode（6 檔）✅ 2026-02-15
 - [x] **#6a** Feed：Logo 導航修復 + 廢棄路由清理（4 檔）✅ 2026-02-15
 - [ ] **#6b** Feed：移除 `DEMO_IDS` + 新增 `/feed/demo` 路由（4 檔）
 - [ ] **#7** 登入後重定向 — agent→UAG、consumer→首頁（auth.html）
@@ -554,6 +554,53 @@ live + 其他角色                → notify.warning + navigate 回首頁
 | `Profile/hooks/useAgentProfile.ts` | mock 判斷 → mode |
 
 **驗收**：`grep -r "uagModeStore\|selectUseMock" src/` 回傳 0 筆
+
+#### 2026-02-15 #5b 收斂（usePageMode 單一模式來源）
+
+**摘要**
+
+- [x] 刪除 `src/stores/uagModeStore.ts`，移除手動 mock/live toggle store
+- [x] `useUAGData` 改為純 `usePageMode()` 模式來源，移除 store fallback/initialize
+- [x] `useAgentProfile`（UAG hooks）移除 store fallback，改為 `mode === 'demo'`
+- [x] `TrustFlow/index.tsx` 由 `usePageMode()` 判定 `useMock`
+- [x] `UAG/Profile/index.tsx` 移除 `?mock=true` 邏輯，返回路徑統一 `/uag`
+- [x] `Profile/hooks/useAgentProfile.ts` 移除 query fallback，改為純 mode 判斷
+- [x] `UAGHeader.tsx` 個人資料導向移除 `?mock=true`，避免舊雙來源殘留
+- [x] UAG 相關測試同步改為 mode 驗證，移除 query-param 假設
+- [x] 本次 `#5b` 修改檔案全數確認 UTF-8（無 BOM）
+
+**本次修改**
+
+1. `src/pages/UAG/hooks/useUAGData.ts`
+   - 移除 `useUAGModeStore` / `selectUseMock` 與 `initializeMode` 依賴。
+   - `mode` 直接取自 `usePageMode()`，`useMock = mode === 'demo'`。
+   - `toggleMode` 改為提示訊息（模式改由系統自動判定，不可手動切換）。
+2. `src/pages/UAG/hooks/useAgentProfile.ts`
+   - 移除 store fallback；查詢 key 與資料來源改為純 mode。
+3. `src/pages/UAG/components/TrustFlow/index.tsx`
+   - 移除 `selectUseMock`；改用 `usePageMode()` 判斷 demo/live。
+4. `src/pages/UAG/Profile/index.tsx`
+   - 移除 `useSearchParams` 與 `mock=true` 回跳分支。
+   - 返回 UAG 改用 `RouteUtils.toNavigatePath(ROUTES.UAG)`。
+5. `src/pages/UAG/Profile/hooks/useAgentProfile.ts`
+   - 移除 `useSearchParams` 與 `forceMockFromQuery`，改為 `mode === 'demo'`。
+6. `src/pages/UAG/components/UAGHeader.tsx`
+   - 個人資料連結統一 `ROUTES.UAG_PROFILE`（不附加 query）。
+7. 測試更新
+   - `src/pages/UAG/components/UAGHeader.test.tsx`
+   - `src/pages/UAG/Profile/index.test.tsx`
+   - `src/pages/UAG/Profile/basename-navigation.test.tsx`
+   - `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx`
+8. 移除檔案
+   - `src/stores/uagModeStore.ts`
+
+**收斂驗證**
+
+- [x] `rg -n "uagModeStore|selectUseMock|getUAGMode|setUAGMode" src` 無結果
+- [x] `rg -n "mock=true|\\?mock" src/pages/UAG` 無結果
+- [x] `cmd /c npm run test -- src/pages/UAG/components/UAGHeader.test.tsx src/pages/UAG/Profile/index.test.tsx src/pages/UAG/Profile/basename-navigation.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx src/pages/UAG/hooks/__tests__/useUAG.test.ts src/pages/UAG/index.test.tsx` 通過（6 files / 70 tests）
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
+- [x] `npm run gate` 通過
 
 ---
 
