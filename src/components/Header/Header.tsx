@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Search, LogIn, LogOut, UserPlus, List, Menu, X, ChevronDown, User } from 'lucide-react';
 import clsx from 'clsx';
 import { Logo } from '../Logo/Logo';
@@ -505,7 +505,7 @@ export default function Header() {
                 const getHref = (label: string) => {
                   if (label === '社區評價') return ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
                   if (label === '房仲專區') return ROUTES.UAG;
-                  return '#';
+                  return ROUTES.HOME_CONVERSATIONS;
                 };
                 const href = getHref(text);
                 const target = text === '房仲專區' ? '_blank' : undefined;

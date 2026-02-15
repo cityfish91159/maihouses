@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Community Wall Mock Data
  *
  * Mock 資料 - 開發與測試用
@@ -8,6 +8,17 @@ import type { MockData } from './types';
 import { mockTimestampMinutesAgo } from '../../lib/time';
 import { MOCK_AGENT_IDENTITIES, MOCK_PROPERTY_TITLES } from '../../constants/mockData';
 import { deepFreeze } from '../../lib/deepFreeze';
+
+let mockEntitySerial = 0;
+
+function createMockEntityId(prefix: 'post' | 'question'): string {
+  mockEntitySerial += 1;
+  const uuidPart =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID().slice(0, 8)
+      : `${Date.now()}-${mockEntitySerial}`;
+  return `${prefix}-${uuidPart}-${mockEntitySerial}`;
+}
 
 const publicPosts = deepFreeze([
   {
@@ -248,7 +259,7 @@ type QuestionAnswer = Question['answers'][number];
 
 export const createMockPost = (content: string, visibility: 'public' | 'private'): Post =>
   deepFreeze({
-    id: Date.now(),
+    id: createMockEntityId('post'),
     author: '測試用戶',
     type: 'resident',
     time: new Date().toISOString(),
@@ -262,7 +273,7 @@ export const createMockPost = (content: string, visibility: 'public' | 'private'
 
 export const createMockQuestion = (question: string): Question =>
   deepFreeze({
-    id: Date.now(),
+    id: createMockEntityId('question'),
     question,
     time: new Date().toISOString(),
     answersCount: 0,

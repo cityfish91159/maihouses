@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import * as ReactRouterDom from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getCurrentPath, navigateToAuth } from '../../lib/authUtils';
 import { ROUTES, RouteUtils } from '../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../constants/seed';
@@ -26,7 +26,7 @@ export function useCommunityReviewActions({
   onToggleLike,
   toggleLocalLike,
 }: UseCommunityReviewActionsOptions) {
-  const navigate = ReactRouterDom.useNavigate();
+  const navigate = useNavigate();
 
   const handleAuthRedirect = useCallback(() => navigateToAuth('login', getCurrentPath()), []);
   const handleSignupRedirect = useCallback(() => navigateToAuth('signup', getCurrentPath()), []);

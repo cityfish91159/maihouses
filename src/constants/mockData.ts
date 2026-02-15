@@ -1,6 +1,7 @@
-﻿import type { PerformanceStats, TodoItem, UagSummary } from '../types/agent';
+import type { PerformanceStats, TodoItem, UagSummary } from '../types/agent';
 import type { ActiveTransaction, ProfileStats, SaleItem } from '../types/feed';
 import type { AgentProfile } from '../pages/UAG/types/uag.types';
+import type { AgentProfileMe } from '../types/agent.types';
 import { deepFreeze } from '../lib/deepFreeze';
 
 /**
@@ -68,14 +69,45 @@ export const MOCK_UAG_SUMMARY: UagSummary = deepFreeze({
 
 export const MOCK_AGENT_PROFILE: AgentProfile = deepFreeze({
   id: 'mock-agent-001',
-  internalCode: 12345,
+  internalCode: 88001,
   name: MOCK_AGENT_IDENTITIES.primaryAgentName,
   avatarUrl: null,
-  company: MOCK_AGENT_IDENTITIES.defaultCompanyName,
-  trustScore: MOCK_SCORE,
-  encouragementCount: 18,
-  visitCount: 45,
-  dealCount: 8,
+  company: 'MaiHouses',
+  trustScore: 87,
+  encouragementCount: 23,
+  visitCount: 156,
+  dealCount: 45,
+});
+
+export const MOCK_AGENT_PROFILE_ME: AgentProfileMe = deepFreeze({
+  id: MOCK_AGENT_PROFILE.id,
+  internalCode: MOCK_AGENT_PROFILE.internalCode,
+  name: MOCK_AGENT_PROFILE.name,
+  avatarUrl: MOCK_AGENT_PROFILE.avatarUrl ?? null,
+  company: MOCK_AGENT_PROFILE.company ?? null,
+  trustScore: MOCK_AGENT_PROFILE.trustScore,
+  encouragementCount: MOCK_AGENT_PROFILE.encouragementCount,
+  visitCount: MOCK_AGENT_PROFILE.visitCount,
+  dealCount: MOCK_AGENT_PROFILE.dealCount,
+  bio: 'Focus on Taipei metro area housing with first-home buyer consulting.',
+  specialties: ['Transit-oriented housing', 'School district', 'First-home consulting'],
+  certifications: ['Real Estate Broker', 'Land Administration Agent'],
+  phone: '0912345678',
+  lineId: 'maihouses_demo',
+  licenseNumber: '(113) Taipei Broker No.004521',
+  isVerified: true,
+  verifiedAt: '2024-06-15T00:00:00Z',
+  serviceRating: 4.8,
+  reviewCount: 32,
+  completedCases: 45,
+  activeListings: 12,
+  serviceYears: 4,
+  joinedAt: '2021-02-01',
+  email: null,
+  points: 1200,
+  quotaS: 5,
+  quotaA: 10,
+  createdAt: '2021-02-01T00:00:00Z',
 });
 
 export const MOCK_PERFORMANCE_STATS: PerformanceStats = deepFreeze({

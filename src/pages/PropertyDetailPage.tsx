@@ -15,6 +15,7 @@ import { logger } from '../lib/logger';
 import { supabase } from '../lib/supabase';
 import { notify } from '../lib/notify';
 import { secureStorage } from '../lib/secureStorage';
+import { ROUTES, RouteUtils } from '../constants/routes';
 import { SkeletonBanner } from '../components/SkeletonScreen';
 import { useAuth } from '../hooks/useAuth';
 import { useTrustActions } from '../hooks/useTrustActions';
@@ -131,6 +132,7 @@ export const PropertyDetailPage: React.FC = () => {
     openLinePanel, openCallPanel, closeLinePanel, closeCallPanel,
     isActionLocked,
   } = useContactPanels(propertyTracker.trackLineClick, propertyTracker.trackCallClick);
+  const assurePath = RouteUtils.toNavigatePath(ROUTES.ASSURE);
 
   // 安心留痕服務操作
   const trustActions = useTrustActions(property.publicId);
@@ -141,7 +143,7 @@ export const PropertyDetailPage: React.FC = () => {
     setIsRequesting(true);
     try {
       if (isDemoMode) {
-        window.location.href = '/maihouses/assure';
+        navigate(assurePath);
         return;
       }
 
@@ -180,7 +182,7 @@ export const PropertyDetailPage: React.FC = () => {
         trackTrustServiceEnter(property.publicId);
       }
 
-      window.location.href = '/maihouses/assure';
+      navigate(assurePath);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorCode =
@@ -197,7 +199,7 @@ export const PropertyDetailPage: React.FC = () => {
     } finally {
       setIsRequesting(false);
     }
-  }, [property.publicId, isDemoMode, isRequesting]);
+  }, [assurePath, isDemoMode, isRequesting, navigate, property.publicId]);
 
   const handleRequestEnable = useCallback(async () => {
     if (isRequesting) return;

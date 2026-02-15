@@ -33,6 +33,22 @@ export default function ChatMessage({ sender, content, timestamp }: ChatMessageP
   const propertyCards = sender === 'assistant' ? parsePropertyTags(content) : [];
   const scenarios = sender === 'assistant' ? parseScenarioTags(content) : [];
   const text = sender === 'assistant' ? stripAllTags(content) : content;
+  const communityKeyCountMap = new Map<string, number>();
+  const propertyKeyCountMap = new Map<string, number>();
+
+  const communityCardsWithKey = communityCards.map((card) => {
+    const baseKey = `${card.communityId ?? 'seed'}-${card.name}-${card.topic}`;
+    const count = (communityKeyCountMap.get(baseKey) ?? 0) + 1;
+    communityKeyCountMap.set(baseKey, count);
+    return { ...card, key: `community-${baseKey}-${count}` };
+  });
+
+  const propertyCardsWithKey = propertyCards.map((property) => {
+    const baseKey = `${property.community}-${property.propertyId}`;
+    const count = (propertyKeyCountMap.get(baseKey) ?? 0) + 1;
+    propertyKeyCountMap.set(baseKey, count);
+    return { ...property, key: `property-${baseKey}-${count}` };
+  });
 
   return (
     <div className={`flex ${sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
@@ -55,29 +71,29 @@ export default function ChatMessage({ sender, content, timestamp }: ChatMessageP
         )}
 
         {/* 社區牆卡片 */}
-        {communityCards.length > 0 && (
+        {communityCardsWithKey.length > 0 && (
           <div className="mt-2 space-y-2">
-            {communityCards.map((card, i) =>
+            {communityCardsWithKey.map((card) =>
               card.communityId ? (
                 <CommunityWallCard
-                  key={`community-${i}`}
+                  key={card.key}
                   communityId={card.communityId}
                   name={card.name}
                   topic={card.topic}
                 />
               ) : (
-                <CommunityWallCard key={`community-${i}`} name={card.name} topic={card.topic} />
+                <CommunityWallCard key={card.key} name={card.name} topic={card.topic} />
               )
             )}
           </div>
         )}
 
         {/* 物件卡片 */}
-        {propertyCards.length > 0 && (
+        {propertyCardsWithKey.length > 0 && (
           <div className="mt-2 space-y-2">
-            {propertyCards.map((prop, i) => (
+            {propertyCardsWithKey.map((prop) => (
               <ChatPropertyCard
-                key={`property-${i}`}
+                key={prop.key}
                 community={prop.community}
                 propertyId={prop.propertyId}
               />

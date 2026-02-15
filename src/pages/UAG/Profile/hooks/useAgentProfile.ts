@@ -3,6 +3,7 @@ import { notify } from '../../../../lib/notify';
 import { useAuth } from '../../../../hooks/useAuth';
 import { usePageMode, type PageMode } from '../../../../hooks/usePageMode';
 import type { AgentProfileMe, UpdateAgentProfilePayload } from '../../../../types/agent.types';
+import { uagAgentProfileQueryKey } from '../../hooks/queryKeys';
 import {
   fetchAgentMe,
   updateAgentProfile,
@@ -10,19 +11,12 @@ import {
 } from '../../../../services/agentService';
 import { UAG_PROFILE_MOCK_DATA } from './mockProfile';
 
-type AgentProfileQueryKey = ['agent-profile-me', PageMode, string | undefined];
-const getAgentProfileQueryKey = (mode: PageMode, userId: string | undefined): AgentProfileQueryKey => [
-  'agent-profile-me',
-  mode,
-  userId,
-];
-
 export function useAgentProfile() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const mode: PageMode = usePageMode();
   const isMockMode = mode === 'demo';
-  const profileQueryKey = getAgentProfileQueryKey(mode, user?.id);
+  const profileQueryKey = uagAgentProfileQueryKey(mode, user?.id);
 
   const { data, isLoading, error } = useQuery({
     queryKey: profileQueryKey,
@@ -33,7 +27,7 @@ export function useAgentProfile() {
       }
       return fetchAgentMe();
     },
-    enabled: isMockMode || mode === 'live',
+    enabled: isMockMode || (mode === 'live' && Boolean(user?.id)),
     staleTime: 5 * 60 * 1000,
     retry: isMockMode ? 0 : 1, // Mock 模式不重試
   });

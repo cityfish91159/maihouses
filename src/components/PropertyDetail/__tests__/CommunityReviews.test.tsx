@@ -103,18 +103,8 @@ function renderWithRouter(ui: React.ReactElement) {
   return render(<MemoryRouter>{ui}</MemoryRouter>);
 }
 
-function isCommunityWallButton(candidate: HTMLElement): boolean {
-  return (
-    candidate.className.includes('bg-brand-50') &&
-    candidate.className.includes('px-4') &&
-    candidate.className.includes('py-2')
-  );
-}
-
 async function getCommunityWallButton(): Promise<HTMLElement> {
-  const button = await waitFor(() => screen.getAllByRole('button').find(isCommunityWallButton));
-  if (!button) throw new Error('community wall button not found');
-  return button;
+  return waitFor(() => screen.getByRole('button', { name: '前往社區牆' }));
 }
 
 describe('CommunityReviews', () => {
