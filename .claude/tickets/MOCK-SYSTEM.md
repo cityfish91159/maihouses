@@ -472,6 +472,8 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 - [x] `CommunityReviews` 社區牆導流統一使用 `RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(...))`
 - [x] `CommunityReviews` 註冊 / 登入跳轉統一使用 `navigateToAuth`（`return` 帶當前路徑）
 - [x] `CommunityReviews` 補路由行為測試：demo 無 `communityId` 走 seed，live 有 `communityId` 走對應社區
+- [x] `CommunityReviews` 補 auth 導流測試：訪客 CTA 觸發 `signup`、live 未登入按讚可觸發 `login`
+- [x] `CommunityWallCard` 支援可選 `communityId`，未提供時 fallback `SEED_COMMUNITY_ID`
 - [x] 房產詳情與社區牆相關檔案已無 `community-wall_mvp` / `auth.html` 靜態字串
 
 **本次修改**
@@ -482,13 +484,16 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 2. `src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx`
    - 新增 demo 模式無 `communityId` 時應導向 seed 社區牆測試。
    - 新增 live 模式有 `communityId` 時應導向該社區牆測試。
+   - 新增訪客鎖定 CTA 點擊後，應呼叫 `navigateToAuth('signup', getCurrentPath())`。
+   - 新增 live 模式未登入按讚後，toast action 應呼叫 `navigateToAuth('login', getCurrentPath())`。
 3. `src/features/home/components/CommunityWallCard.tsx`
-   - 持續沿用 React Router 路由導向 `ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)`（無需回退靜態頁）。
+   - 新增 `communityId?: string`，優先導向目標社區，缺值時 fallback `SEED_COMMUNITY_ID`。
 
 **驗證結果**
 
 - [x] `rg -n "community-wall_mvp|community-wall\\.html|auth\\.html" src/components/PropertyDetail src/features/home/components/CommunityWallCard.tsx src/pages/PropertyDetailPage.tsx` 無結果
-- [x] `npm run test -- src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx` 通過（15 tests）
+- [x] `npm run test -- src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx` 通過（16 tests）
+- [x] `npm run check:utf8` 通過（UTF-8 + Mojibake）
 
 ---
 

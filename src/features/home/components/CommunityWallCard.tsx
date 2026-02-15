@@ -33,6 +33,7 @@ import { getCommunityWallSummaryMock } from '../../../constants/mock';
  */
 
 type CommunityWallCardProps = {
+  communityId?: string;
   name: string;
   topic?: string;
   reviewCount?: number;
@@ -40,6 +41,7 @@ type CommunityWallCardProps = {
 };
 
 export default function CommunityWallCard({
+  communityId,
   name,
   topic = '住戶真實評價',
   reviewCount,
@@ -52,7 +54,8 @@ export default function CommunityWallCard({
   const finalReviewCount = reviewCount ?? mockData.reviewCount;
   const finalRating = rating ?? mockData.rating;
 
-  const communityWallPath = RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
+  const targetCommunityId = communityId?.trim() ? communityId : SEED_COMMUNITY_ID;
+  const communityWallPath = RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(targetCommunityId));
   const handleNavigate = () => navigate(communityWallPath);
 
   return (

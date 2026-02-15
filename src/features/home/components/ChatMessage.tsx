@@ -10,21 +10,59 @@ type ChatMessageProps = {
 
 /**
  * 解析訊息中的社區牆標記
- * 格式：[[社區牆:社區名稱:討論話題]]
+ * 格式：
+ * - 舊版：[[社區牆:社區名稱:討論話題]]
+ * - 新版：[[社區牆:communityId:社區名稱:討論話題]]
  */
-function parseCommunityWallTags(content: string): { name: string; topic: string }[] {
-  const regex = /\[\[社區牆:([^:]+):([^\]]+)\]\]/g;
-  const cards: { name: string; topic: string }[] = [];
+type CommunityWallTag = {
+  communityId?: string;
+  name: string;
+  topic: string;
+};
+
+function isLikelyCommunityId(value: string): boolean {
+  return /^(?=.*[-0-9])[a-z0-9-]{8,}$/i.test(value);
+}
+
+function parseCommunityWallTags(content: string): CommunityWallTag[] {
+  const regex = /\[\[社區牆:([^\]]+)\]\]/g;
+  const cards: CommunityWallTag[] = [];
   let match;
 
   while ((match = regex.exec(content)) !== null) {
-    const name = match[1];
-    const topic = match[2];
+    const rawPayload = match[1];
+    if (!rawPayload) {
+      continue;
+    }
+
+    const segments = rawPayload
+      .split(':')
+      .map((segment) => segment.trim())
+      .filter((segment) => segment.length > 0);
+
+    if (segments.length < 2) {
+      continue;
+    }
+
+    const first = segments[0];
+    const second = segments[1];
+    const rest = segments.slice(2);
+    if (!first || !second) {
+      continue;
+    }
+
+    const useNewFormat = rest.length > 0 && isLikelyCommunityId(first);
+
+    const communityId = useNewFormat ? first : undefined;
+    const name = useNewFormat ? second : first;
+    const topic = useNewFormat ? rest.join(':').trim() : [second, ...rest].join(':').trim();
+
     if (name && topic) {
-      cards.push({
-        name: name.trim(),
-        topic: topic.trim(),
-      });
+      if (communityId) {
+        cards.push({ communityId, name, topic });
+      } else {
+        cards.push({ name, topic });
+      }
     }
   }
 
@@ -77,7 +115,7 @@ function parseScenarioTags(content: string): string[] {
  */
 function stripAllTags(content: string): string {
   return content
-    .replace(/\[\[社區牆:[^:]+:[^\]]+\]\]/g, '')
+    .replace(/\[\[社區牆:[^\]]+\]\]/g, '')
     .replace(/\[\[物件:[^:]+:[^\]]+\]\]/g, '')
     .replace(/\[\[情境:[^\]]+\]\]/g, '')
     .trim();
@@ -125,9 +163,18 @@ export default function ChatMessage({ role, content, timestamp }: ChatMessagePro
         {/* 社區牆卡片 */}
         {communityCards.length > 0 && (
           <div className="mt-2 space-y-2">
-            {communityCards.map((card, i) => (
-              <CommunityWallCard key={`community-${i}`} name={card.name} topic={card.topic} />
-            ))}
+            {communityCards.map((card, i) =>
+              card.communityId ? (
+                <CommunityWallCard
+                  key={`community-${i}`}
+                  communityId={card.communityId}
+                  name={card.name}
+                  topic={card.topic}
+                />
+              ) : (
+                <CommunityWallCard key={`community-${i}`} name={card.name} topic={card.topic} />
+              )
+            )}
           </div>
         )}
 

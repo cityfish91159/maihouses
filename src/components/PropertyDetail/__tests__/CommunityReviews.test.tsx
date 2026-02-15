@@ -10,6 +10,8 @@ const mockUsePageMode = vi.fn<() => PageMode>();
 const mockNotifyInfo = vi.fn();
 const mockNotifyError = vi.fn();
 const mockNavigate = vi.fn();
+const mockNavigateToAuth = vi.fn();
+const mockGetCurrentPath = vi.fn(() => '/maihouses/property/mock');
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -29,6 +31,38 @@ vi.mock('../../../lib/notify', () => ({
     error: (...args: unknown[]) => mockNotifyError(...args),
   },
 }));
+
+vi.mock('../../../lib/authUtils', () => ({
+  getCurrentPath: () => mockGetCurrentPath(),
+  navigateToAuth: (mode: 'login' | 'signup', returnPath?: string) =>
+    mockNavigateToAuth(mode, returnPath),
+}));
+
+function isVoidCallback(value: unknown): value is () => void {
+  return typeof value === 'function';
+}
+
+function getNotifyActionOnClick(option: unknown): (() => void) | null {
+  if (typeof option !== 'object' || option === null) {
+    return null;
+  }
+
+  if (!('action' in option)) {
+    return null;
+  }
+
+  const actionValue = option.action;
+  if (typeof actionValue !== 'object' || actionValue === null) {
+    return null;
+  }
+
+  if (!('onClick' in actionValue)) {
+    return null;
+  }
+
+  const onClick = actionValue.onClick;
+  return isVoidCallback(onClick) ? onClick : null;
+}
 
 class MockIntersectionObserver implements IntersectionObserver {
   readonly root = null;
@@ -75,6 +109,9 @@ describe('CommunityReviews', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
+    mockNavigateToAuth.mockReset();
+    mockGetCurrentPath.mockReset();
+    mockGetCurrentPath.mockReturnValue('/maihouses/property/mock');
     mockUsePageMode.mockReturnValue('demo');
     vi.stubGlobal('fetch', vi.fn());
   });
@@ -283,6 +320,52 @@ describe('CommunityReviews', () => {
     expect(onToggleLike).toHaveBeenCalledWith('review-1');
   });
 
+  it('provides login redirect action for logged-out users in live mode', async () => {
+    mockUsePageMode.mockReturnValue('live');
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          data: [
+            {
+              id: 'review-live-login',
+              content: { pros: ['採光好'] },
+              agent: { name: '登入導流測試房仲' },
+            },
+          ],
+          total: 1,
+        },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderWithRouter(
+      <CommunityReviews
+        isLoggedIn={false}
+        communityId="community-live-login"
+        onToggleLike={onToggleLike}
+      />
+    );
+
+    const likeButton = await screen.findByLabelText('鼓勵這則評價');
+    await user.click(likeButton);
+
+    expect(onToggleLike).not.toHaveBeenCalled();
+
+    const loginNotifyCall = mockNotifyInfo.mock.calls.find((call) => call[0] === '請先登入');
+    expect(loginNotifyCall).toBeDefined();
+    if (!loginNotifyCall) throw new Error('login notify call not found');
+
+    const onClick = getNotifyActionOnClick(loginNotifyCall[2]);
+    expect(onClick).not.toBeNull();
+    if (!onClick) throw new Error('login action callback not found');
+    onClick();
+
+    expect(mockNavigateToAuth).toHaveBeenCalledWith('login', '/maihouses/property/mock');
+  });
+
   it('prioritizes mode guard before auth guard in visitor mode', async () => {
     mockUsePageMode.mockReturnValue('visitor');
     const user = userEvent.setup();
@@ -328,10 +411,14 @@ describe('CommunityReviews', () => {
 
   it('shows locked CTA for logged-out users', async () => {
     mockUsePageMode.mockReturnValue('visitor');
+    const user = userEvent.setup();
     renderWithRouter(<CommunityReviews isLoggedIn={false} onToggleLike={onToggleLike} />);
 
     const cta = await screen.findByRole('button', { name: /註冊查看全部|註冊查看更多評價/ });
     expect(within(cta).getByText(/註冊/)).toBeInTheDocument();
+    await user.click(cta);
+
+    expect(mockNavigateToAuth).toHaveBeenCalledWith('signup', '/maihouses/property/mock');
   });
 
   it('restores like count after two rapid demo toggles', async () => {
