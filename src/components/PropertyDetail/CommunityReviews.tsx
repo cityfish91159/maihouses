@@ -12,7 +12,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronRight, Lock, MessageSquare, Star, ThumbsUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentPath, getLoginUrl, getSignupUrl } from '../../lib/authUtils';
+import { getCurrentPath, navigateToAuth } from '../../lib/authUtils';
 import { ROUTES, RouteUtils } from '../../constants/routes';
 import { SEED_COMMUNITY_ID } from '../../constants/seed';
 import { notify } from '../../lib/notify';
@@ -239,17 +239,14 @@ function useCommunityReviewActions({
   toggleLocalLike,
 }: UseCommunityReviewActionsOptions) {
   const navigate = useNavigate();
-  const currentPath = getCurrentPath();
-  const loginUrl = getLoginUrl(currentPath);
-  const signupUrl = getSignupUrl(currentPath);
 
   const handleAuthRedirect = useCallback(() => {
-    window.location.href = loginUrl;
-  }, [loginUrl]);
+    navigateToAuth('login', getCurrentPath());
+  }, []);
 
   const handleSignupRedirect = useCallback(() => {
-    window.location.href = signupUrl;
-  }, [signupUrl]);
+    navigateToAuth('signup', getCurrentPath());
+  }, []);
 
   const handleCommunityWall = useCallback(() => {
     if (communityId) {

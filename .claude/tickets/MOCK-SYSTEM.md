@@ -16,7 +16,7 @@
 ### P1 — 逐頁接入
 
 - [ ] **#4a** 房產詳情頁：移除 `isDemoPropertyId` 改用 usePageMode（5 檔）
-- [ ] **#4b** 房產詳情頁：社區牆 + 註冊查看連結修正（2 檔）
+- [x] **#4b** 房產詳情頁：社區牆 + 註冊查看連結修正（3 檔）✅ 2026-02-15
 - [x] **#5a** UAG：訪客 Landing Page + 角色守衛（6 新檔案 + 2 修改）✅ 2026-02-13
 - [ ] **#5b** UAG：移除 `uagModeStore`，改用 usePageMode（6 檔）
 - [ ] **#6a** Feed：Logo 導航修復 + 廢棄路由清理（3 檔）
@@ -459,19 +459,36 @@ live    → likeMutation.mutate()  ← auth guard 只在這裡
 
 ---
 
-### #4b 房產詳情頁：連結修正
+### #4b ✅ 房產詳情頁：連結修正
 
-**目標**：詳情頁靜態 HTML 連結改 React 路由
+**已完成** 2026-02-15
+
+**目標**：房產詳情頁社區牆與註冊查看流程統一到 React 路由 / auth 工具，移除靜態 HTML 導流
 
 **依賴**：#15
 
-| 檔案 | 行號 | 現況 | 改為 |
-|------|------|------|------|
-| `CommunityReviews.tsx` | 247 | `community-wall_mvp.html` | `/community/{id}/wall` |
-| `CommunityReviews.tsx` | 243 | `auth.html?mode=login` | `showRegisterGuide()` 或 `getAuthUrl()` |
-| `CommunityWallCard.tsx` | 70 | `community-wall_mvp.html` | `/community/{id}/wall` |
+**摘要**
 
-**驗收**：詳情頁相關檔案搜尋 `community-wall_mvp` 和 `auth.html` 回傳 0 筆
+- [x] `CommunityReviews` 社區牆導流統一使用 `RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(...))`
+- [x] `CommunityReviews` 註冊 / 登入跳轉統一使用 `navigateToAuth`（`return` 帶當前路徑）
+- [x] `CommunityReviews` 補路由行為測試：demo 無 `communityId` 走 seed，live 有 `communityId` 走對應社區
+- [x] 房產詳情與社區牆相關檔案已無 `community-wall_mvp` / `auth.html` 靜態字串
+
+**本次修改**
+
+1. `src/components/PropertyDetail/CommunityReviews.tsx`
+   - `getLoginUrl/getSignupUrl + window.location.href` 改為 `navigateToAuth('login'|'signup', getCurrentPath())`。
+   - 保持社區牆導向規則：`communityId` 優先、demo fallback `SEED_COMMUNITY_ID`、live 缺 id 顯示 `notify.info`。
+2. `src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx`
+   - 新增 demo 模式無 `communityId` 時應導向 seed 社區牆測試。
+   - 新增 live 模式有 `communityId` 時應導向該社區牆測試。
+3. `src/features/home/components/CommunityWallCard.tsx`
+   - 持續沿用 React Router 路由導向 `ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)`（無需回退靜態頁）。
+
+**驗證結果**
+
+- [x] `rg -n "community-wall_mvp|community-wall\\.html|auth\\.html" src/components/PropertyDetail src/features/home/components/CommunityWallCard.tsx src/pages/PropertyDetailPage.tsx` 無結果
+- [x] `npm run test -- src/components/PropertyDetail/__tests__/CommunityReviews.test.tsx` 通過（15 tests）
 
 ---
 

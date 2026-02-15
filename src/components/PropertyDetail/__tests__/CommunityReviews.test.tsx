@@ -3,10 +3,21 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { CommunityReviews } from '../CommunityReviews';
 import type { PageMode } from '../../../hooks/usePageMode';
+import { ROUTES, RouteUtils } from '../../../constants/routes';
+import { SEED_COMMUNITY_ID } from '../../../constants/seed';
 
 const mockUsePageMode = vi.fn<() => PageMode>();
 const mockNotifyInfo = vi.fn();
 const mockNotifyError = vi.fn();
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 vi.mock('../../../hooks/usePageMode', () => ({
   usePageMode: () => mockUsePageMode(),
@@ -63,6 +74,7 @@ describe('CommunityReviews', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockReset();
     mockUsePageMode.mockReturnValue('demo');
     vi.stubGlobal('fetch', vi.fn());
   });
@@ -148,6 +160,62 @@ describe('CommunityReviews', () => {
 
     expect(mockNotifyInfo).toHaveBeenCalledTimes(1);
     expect(mockNotifyInfo).toHaveBeenCalledWith(expect.any(String), expect.any(String));
+  });
+
+  it('navigates to seed wall in demo mode when communityId is missing', async () => {
+    mockUsePageMode.mockReturnValue('demo');
+    const user = userEvent.setup();
+
+    renderWithRouter(<CommunityReviews isLoggedIn={true} onToggleLike={onToggleLike} />);
+
+    const wallButton = await waitFor(() =>
+      screen
+        .getAllByRole('button')
+        .find(
+          (candidate) =>
+            candidate.className.includes('bg-brand-50') &&
+            candidate.className.includes('px-4') &&
+            candidate.className.includes('py-2')
+        )
+    );
+    expect(wallButton).toBeDefined();
+    if (!wallButton) throw new Error('community wall button not found');
+    await user.click(wallButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID))
+    );
+  });
+
+  it('navigates to target community wall in live mode when communityId exists', async () => {
+    mockUsePageMode.mockReturnValue('live');
+    const user = userEvent.setup();
+
+    renderWithRouter(
+      <CommunityReviews
+        isLoggedIn={true}
+        communityId="community-live-1"
+        onToggleLike={onToggleLike}
+      />
+    );
+
+    const wallButton = await waitFor(() =>
+      screen
+        .getAllByRole('button')
+        .find(
+          (candidate) =>
+            candidate.className.includes('bg-brand-50') &&
+            candidate.className.includes('px-4') &&
+            candidate.className.includes('py-2')
+        )
+    );
+    expect(wallButton).toBeDefined();
+    if (!wallButton) throw new Error('community wall button not found');
+    await user.click(wallButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL('community-live-1'))
+    );
   });
 
   it('keeps like buttons enabled in demo mode for logged-out users', async () => {
