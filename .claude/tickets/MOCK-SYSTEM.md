@@ -1065,6 +1065,19 @@ grep -r "navigate.*auth\.html" src/            # 0 matches (only in authUtils.ts
 - [x] `npm run typecheck` 通過
 - [x] `npm run test -- src/components/__tests__/AgentReviewListModal.test.tsx src/features/home/sections/__tests__/CommunityTeaser.test.tsx src/pages/UAG/__tests__/ticket9d-regression.test.ts` 通過（20 tests）
 
+#### 2026-02-15 strict-audit phase1 收斂
+
+**摘要**
+
+- [x] `deepFreeze.ts` 移除 `as` 斷言，改用 type guard + `Reflect.ownKeys`
+- [x] `mock/community.ts` 移除 `.default!` 非空斷言
+- [x] `mock/chatProperty.ts` 移除 `.default!` 非空斷言
+- [x] `useCommunityReviews.ts` 移除多餘淺拷貝（`map + spread`）
+- [x] `strings.ts` 改用 `deepFreeze({...})`，符合 #20 不可變要求
+- [x] `Community/mockData.ts` 的 `createMockPost` 回傳改為 `deepFreeze`
+- [x] `Community/mockData.ts` 的 `createMockQuestion` 回傳改為 `deepFreeze`
+- [x] `Community/mockData.ts` 的 `createMockAnswer` 補型別 `Question['answers'][number]` 並改為 `deepFreeze`
+
 ---
 
 ### #21 全站 `console.log` → `logger`

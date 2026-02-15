@@ -1,6 +1,7 @@
 import { SEED_COMMUNITY_ID } from './seed';
+import { deepFreeze } from '../lib/deepFreeze';
 
-export const STRINGS = {
+export const STRINGS = deepFreeze({
   FEED: {
     TITLE: '我的社區',
     PAGE_TITLE: '邁房子｜我的社區',
@@ -228,4 +229,4 @@ export const STRINGS = {
       BTN_DETAIL: '➡️ 看詳情',
     },
   },
-};
+});

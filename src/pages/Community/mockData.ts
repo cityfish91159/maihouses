@@ -244,31 +244,35 @@ export const MOCK_DATA: MockData = deepFreeze({
 // ============ Mock Factories ============
 
 import type { Post, Question } from '../../types/community';
+type QuestionAnswer = Question['answers'][number];
 
-export const createMockPost = (content: string, visibility: 'public' | 'private'): Post => ({
-  id: Date.now(),
-  author: '測試用戶',
-  type: 'resident',
-  time: new Date().toISOString(),
-  title: content.substring(0, 20) + (content.length > 20 ? '...' : ''),
-  content,
-  likes: 0,
-  comments: 0,
-  pinned: false,
-  private: visibility === 'private',
-});
+export const createMockPost = (content: string, visibility: 'public' | 'private'): Post =>
+  deepFreeze({
+    id: Date.now(),
+    author: '測試用戶',
+    type: 'resident',
+    time: new Date().toISOString(),
+    title: content.substring(0, 20) + (content.length > 20 ? '...' : ''),
+    content,
+    likes: 0,
+    comments: 0,
+    pinned: false,
+    private: visibility === 'private',
+  });
 
-export const createMockQuestion = (question: string): Question => ({
-  id: Date.now(),
-  question,
-  time: new Date().toISOString(),
-  answersCount: 0,
-  answers: [],
-});
+export const createMockQuestion = (question: string): Question =>
+  deepFreeze({
+    id: Date.now(),
+    question,
+    time: new Date().toISOString(),
+    answersCount: 0,
+    answers: [],
+  });
 
-export const createMockAnswer = (content: string) => ({
-  author: '測試用戶',
-  type: 'resident' as const,
-  content,
-  expert: false,
-});
+export const createMockAnswer = (content: string): QuestionAnswer =>
+  deepFreeze({
+    author: '測試用戶',
+    type: 'resident',
+    content,
+    expert: false,
+  });

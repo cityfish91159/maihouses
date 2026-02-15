@@ -73,7 +73,7 @@ const LOCKED_PREVIEW_PLACEHOLDER: ReviewPreview = {
   totalLikes: 0,
 };
 
-const MOCK_REVIEWS: ReviewPreview[] = COMMUNITY_REVIEW_PREVIEWS.map((review) => ({ ...review }));
+const MOCK_REVIEWS: ReviewPreview[] = COMMUNITY_REVIEW_PREVIEWS;
 
 // ========== Helper Functions ==========
 
@@ -196,11 +196,12 @@ export function useCommunityReviews({
   }, [communityId, isDemo, isVisible]);
 
   // 基底資料：mock 用常數，無 communityId 回空，其餘用 fetch 結果
-  const baseReviews: ReviewPreview[] = isDemo ? [...MOCK_REVIEWS] : (!communityId ? [] : fetchedReviews);
   const totalReviews = isDemo ? MOCK_TOTAL_REVIEWS : (!communityId ? null : fetchedTotal);
 
   // 套用本地按讚覆蓋（demo 模式按讚不寫 DB）
   const reviewPreviews = useMemo(() => {
+    const baseReviews: ReviewPreview[] = isDemo ? MOCK_REVIEWS : (!communityId ? [] : fetchedReviews);
+
     if (Object.keys(localLikeOverrides).length === 0) return baseReviews;
     return baseReviews.map((review) => {
       const toggleCount = localLikeOverrides[review.propertyId];
@@ -216,7 +217,7 @@ export function useCommunityReviews({
           : Math.max(0, review.totalLikes - 1),
       };
     });
-  }, [baseReviews, localLikeOverrides]);
+  }, [isDemo, communityId, fetchedReviews, localLikeOverrides]);
 
   // Demo 模式按讚：僅做本地狀態切換，不寫入 API/DB
   const toggleLocalLike = useCallback((propertyId: string) => {

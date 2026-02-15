@@ -15,7 +15,10 @@ const COMMUNITY_WALL_SUMMARY_BY_NAME = deepFreeze<Record<string, CommunityWallSu
   default: { reviewCount: 12, rating: 4.2 },
 });
 
-const DEFAULT_COMMUNITY_WALL_SUMMARY: CommunityWallSummaryMock = COMMUNITY_WALL_SUMMARY_BY_NAME.default!;
+const DEFAULT_COMMUNITY_WALL_SUMMARY: CommunityWallSummaryMock = deepFreeze({
+  reviewCount: 12,
+  rating: 4.2,
+});
 
 export function getCommunityWallSummaryMock(name: string): CommunityWallSummaryMock {
   return COMMUNITY_WALL_SUMMARY_BY_NAME[name] ?? DEFAULT_COMMUNITY_WALL_SUMMARY;

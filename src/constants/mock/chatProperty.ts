@@ -52,7 +52,14 @@ const CHAT_PROPERTY_MOCK_BY_ID = deepFreeze<Record<string, ChatPropertyMock>>({
   },
 });
 
-const DEFAULT_CHAT_PROPERTY_MOCK: ChatPropertyMock = CHAT_PROPERTY_MOCK_BY_ID.default!;
+const DEFAULT_CHAT_PROPERTY_MOCK: ChatPropertyMock = deepFreeze({
+  title: '優質物件',
+  price: '洽詢',
+  size: '-',
+  rooms: '-',
+  address: '點擊查看詳情',
+  highlight: '新上架',
+});
 
 export function getChatPropertyMock(propertyId: string): ChatPropertyMock {
   return CHAT_PROPERTY_MOCK_BY_ID[propertyId] ?? DEFAULT_CHAT_PROPERTY_MOCK;
