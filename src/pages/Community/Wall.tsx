@@ -128,13 +128,13 @@ function WallInner() {
 
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
   const initialRole = useMemo<Role>(() => {
-    // Read initial value on mount only; later URL sync is handled by the effect below.
+    // Mount-only initialization; later sync is handled by URL/storage effects below.
     return resolveInitialWallRole({
       isDev: import.meta.env.DEV,
       urlRoleParam: searchParamsRef.current.get(COMMUNITY_WALL_ROLE_PARAM),
       storedRole: safeLocalStorage.getItem(COMMUNITY_WALL_ROLE_STORAGE_KEY),
     });
-  }, []); // Empty deps: mount-only initialization.
+  }, []);
 
   const [role, setRoleInternal] = useState<Role>(initialRole);
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
