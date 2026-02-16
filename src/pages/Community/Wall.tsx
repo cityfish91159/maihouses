@@ -58,8 +58,11 @@ function getMetadataString(metadata: unknown, key: 'name' | 'full_name'): string
     return null;
   }
 
-  const metadataRecord = metadata as { name?: unknown; full_name?: unknown };
-  const candidate = key === 'name' ? metadataRecord.name : metadataRecord.full_name;
+  if (!Object.prototype.hasOwnProperty.call(metadata, key)) {
+    return null;
+  }
+
+  const candidate = Reflect.get(metadata, key);
   if (typeof candidate !== 'string') {
     return null;
   }
@@ -138,7 +141,6 @@ function WallInner() {
     isAuthenticated,
     authRole,
     urlRole: role,
-    allowUrlRoleOverride: import.meta.env.DEV,
   });
 
   const perm = useMemo(() => getPermissions(effectiveRole), [effectiveRole]);
@@ -162,21 +164,19 @@ function WallInner() {
     includePrivate: canPerformAction(perm, 'view_private'),
   });
 
-  // #8a (MOCK-SYSTEM.md): demo 模式強制接入 mock，避免誤打 API
+  // #8a (.claude/tickets/MOCK-SYSTEM.md): demo 模式強制接入 mock，避免誤打 API
   useEffect(() => {
-    if (mode === 'demo') {
-      setUseMock(true);
+    const forcedUseMock = mode === 'demo' ? true : import.meta.env.DEV ? null : false;
+    if (forcedUseMock === null || forcedUseMock === useMock) {
       return;
     }
 
-    if (!import.meta.env.DEV) {
-      setUseMock(false);
-    }
-  }, [mode, setUseMock]);
+    setUseMock(forcedUseMock);
+  }, [mode, setUseMock, useMock]);
 
   const canToggleMock = allowManualMockToggle || useMock;
   const allowManualRoleSwitch = import.meta.env.DEV || useMock;
-  const mockToggleDisabled = mode === 'demo' || (!canToggleMock && !useMock);
+  const mockToggleDisabled = mode === 'demo' || !canToggleMock;
 
   // 提前處理 auth 錯誤 toast
   useEffect(() => {
@@ -263,38 +263,22 @@ function WallInner() {
     }
   }, [currentTab, perm]);
 
-  const showLikeRegisterGuide = useCallback(() => {
-    notify.info('註冊後即可鼓勵評價', '免費註冊即可鼓勵評價與參與討論', {
+  const showRegisterGuide = useCallback((title: string, description: string) => {
+    notify.info(title, description, {
       action: {
         label: '免費註冊',
         onClick: () => navigateToAuth('signup', getCurrentPath()),
       },
     });
   }, []);
-
-  const showUnlockGuide = useCallback(() => {
-    notify.info('註冊後即可解鎖完整社區牆', '免費註冊即可查看完整評價與互動', {
-      action: {
-        label: '免費註冊',
-        onClick: () => navigateToAuth('signup', getCurrentPath()),
-      },
-    });
-  }, []);
-
-  const runLikeAction = useCallback(
-    async (postId: number | string) => {
-      await toggleLike(postId);
-    },
-    [toggleLike]
-  );
 
   // #8a: 按讚改用 useModeAwareAction（visitor/demo/live 分流）
   const dispatchToggleLike = useModeAwareAction<number | string>({
     visitor: () => {
-      showLikeRegisterGuide();
+      showRegisterGuide('註冊後即可鼓勵評價', '免費註冊即可鼓勵評價與參與討論');
     },
-    demo: runLikeAction,
-    live: runLikeAction,
+    demo: toggleLike,
+    live: toggleLike,
   });
 
   const handleLike = useCallback(
@@ -315,9 +299,9 @@ function WallInner() {
   const handleUnlock = useCallback(
     (id?: string) => {
       logger.debug('[Wall] Unlock post', { id });
-      showUnlockGuide();
+      showRegisterGuide('註冊後即可解鎖完整社區牆', '免費註冊即可查看完整評價與互動');
     },
-    [showUnlockGuide]
+    [showRegisterGuide]
   );
 
   // 發文處理

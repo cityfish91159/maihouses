@@ -1,6 +1,10 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { useEffectiveRole, type UseEffectiveRoleOptions } from '../useEffectiveRole';
+import {
+  resolveEffectiveRole,
+  useEffectiveRole,
+  type UseEffectiveRoleOptions,
+} from '../useEffectiveRole';
 
 const baseOptions: UseEffectiveRoleOptions = {
   mode: 'visitor',
@@ -54,27 +58,23 @@ describe('useEffectiveRole', () => {
     expect(result.current).toBe('guest');
   });
 
-  it('允許覆蓋時使用 urlRole', () => {
-    const { result } = renderHook(() =>
-      useEffectiveRole({
-        ...baseOptions,
-        urlRole: 'member',
-        allowUrlRoleOverride: true,
-      })
-    );
+  it('開發模式可用 urlRole 覆蓋（供調試）', () => {
+    const result = resolveEffectiveRole({
+      ...baseOptions,
+      urlRole: 'member',
+      isDev: true,
+    });
 
-    expect(result.current).toBe('member');
+    expect(result).toBe('member');
   });
 
-  it('不允許覆蓋時忽略 urlRole', () => {
-    const { result } = renderHook(() =>
-      useEffectiveRole({
-        ...baseOptions,
-        urlRole: 'member',
-        allowUrlRoleOverride: false,
-      })
-    );
+  it('生產模式忽略 urlRole 覆蓋', () => {
+    const result = resolveEffectiveRole({
+      ...baseOptions,
+      urlRole: 'member',
+      isDev: false,
+    });
 
-    expect(result.current).toBe('guest');
+    expect(result).toBe('guest');
   });
 });
