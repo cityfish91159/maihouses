@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
@@ -41,24 +42,24 @@ import { useModeAwareAction } from '../../hooks/useModeAwareAction';
 import { usePageModeWithAuthState } from '../../hooks/usePageMode';
 import { useEffectiveRole } from '../../hooks/useEffectiveRole';
 import { ROUTES } from '../../constants/routes';
+import {
+  COMMUNITY_WALL_ROLE_PARAM,
+  COMMUNITY_WALL_ROLE_STORAGE_KEY,
+  parseWallRoleParam,
+  resolveInitialWallRole,
+} from './lib/roleState';
 
 // ============ URL / Storage Helpers ============
-const ROLE_PARAM = 'role';
-const ROLE_STORAGE_KEY = 'community-wall-dev-role';
-const VALID_ROLES: Role[] = ['guest', 'member', 'resident', 'agent'];
 const rawMockFlag = `${import.meta.env.VITE_COMMUNITY_WALL_ALLOW_MOCK ?? ''}`.trim().toLowerCase();
 const GLOBAL_MOCK_TOGGLE_ENABLED = rawMockFlag !== 'false';
-
-function isRole(value: unknown): value is Role {
-  return value === 'guest' || value === 'member' || value === 'resident' || value === 'agent';
-}
 
 function getMetadataString(metadata: unknown, key: 'name' | 'full_name'): string | null {
   if (typeof metadata !== 'object' || metadata === null) {
     return null;
   }
 
-  const candidate = Reflect.get(metadata, key);
+  const metadataRecord = metadata as { name?: unknown; full_name?: unknown };
+  const candidate = key === 'name' ? metadataRecord.name : metadataRecord.full_name;
   if (typeof candidate !== 'string') {
     return null;
   }
@@ -66,11 +67,6 @@ function getMetadataString(metadata: unknown, key: 'name' | 'full_name'): string
   const normalized = candidate.trim();
   return normalized.length > 0 ? normalized : null;
 }
-
-const parseRoleParam = (value: string | null): Role | null => {
-  if (!value) return null;
-  return isRole(value) ? value : null;
-};
 
 const updateURLParam = (params: URLSearchParams, key: string, value: string | null) => {
   const next = new URLSearchParams(params);
@@ -81,6 +77,19 @@ const updateURLParam = (params: URLSearchParams, key: string, value: string | nu
   }
   return next;
 };
+
+function getUserDisplayName(user: User | null): string | undefined {
+  if (!user) return undefined;
+
+  const metadata = user.user_metadata;
+  const name = getMetadataString(metadata, 'name');
+  if (name) return name;
+
+  const fullName = getMetadataString(metadata, 'full_name');
+  if (fullName) return fullName;
+
+  return user.email ?? undefined;
+}
 
 // ============ Inner Component (Wrapped by ErrorBoundary) ============
 function WallInner() {
@@ -95,16 +104,11 @@ function WallInner() {
 
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
   const initialRole = useMemo<Role>(() => {
-    if (!import.meta.env.DEV) return 'guest';
-    const urlRole = parseRoleParam(searchParamsRef.current.get(ROLE_PARAM));
-    if (urlRole) {
-      return urlRole;
-    }
-    const stored = safeLocalStorage.getItem(ROLE_STORAGE_KEY);
-    if (isRole(stored)) {
-      return stored;
-    }
-    return 'guest';
+    return resolveInitialWallRole({
+      isDev: import.meta.env.DEV,
+      urlRoleParam: searchParamsRef.current.get(COMMUNITY_WALL_ROLE_PARAM),
+      storedRole: safeLocalStorage.getItem(COMMUNITY_WALL_ROLE_STORAGE_KEY),
+    });
   }, []);
 
   const [role, setRoleInternal] = useState<Role>(initialRole);
@@ -123,16 +127,7 @@ function WallInner() {
 
   // 取得 currentUserId 和 userInitial 供留言系統使用
   const currentUserId = user?.id;
-  const userMetadata = user?.user_metadata;
-  const userName = (() => {
-    const name = getMetadataString(userMetadata, 'name');
-    if (name) return name;
-
-    const fullName = getMetadataString(userMetadata, 'full_name');
-    if (fullName) return fullName;
-
-    return user?.email;
-  })();
+  const userName = getUserDisplayName(user);
   const userInitial =
     typeof userName === 'string' && userName.length > 0 ? userName.charAt(0).toUpperCase() : 'U';
 
@@ -143,6 +138,7 @@ function WallInner() {
     isAuthenticated,
     authRole,
     urlRole: role,
+    allowUrlRoleOverride: import.meta.env.DEV,
   });
 
   const perm = useMemo(() => getPermissions(effectiveRole), [effectiveRole]);
@@ -166,23 +162,21 @@ function WallInner() {
     includePrivate: canPerformAction(perm, 'view_private'),
   });
 
-  // #8a: demo mode 強制接入 mock（離開 demo 時非 DEV 自動復原）
+  // #8a (MOCK-SYSTEM.md): demo 模式強制接入 mock，避免誤打 API
   useEffect(() => {
     if (mode === 'demo') {
-      if (!useMock) {
-        setUseMock(true);
-      }
+      setUseMock(true);
       return;
     }
 
-    if (!import.meta.env.DEV && useMock) {
+    if (!import.meta.env.DEV) {
       setUseMock(false);
     }
-  }, [mode, setUseMock, useMock]);
+  }, [mode, setUseMock]);
 
   const canToggleMock = allowManualMockToggle || useMock;
-  const allowManualRoleSwitch = (import.meta.env.DEV || useMock) && mode !== 'demo';
-  const mockToggleDisabled = !canToggleMock && !useMock;
+  const allowManualRoleSwitch = import.meta.env.DEV || useMock;
+  const mockToggleDisabled = mode === 'demo' || (!canToggleMock && !useMock);
 
   // 提前處理 auth 錯誤 toast
   useEffect(() => {
@@ -214,16 +208,16 @@ function WallInner() {
         return;
       }
 
-      const nextParams = updateURLParam(searchParamsRef.current, ROLE_PARAM, newRole);
+      const nextParams = updateURLParam(searchParamsRef.current, COMMUNITY_WALL_ROLE_PARAM, newRole);
       setSearchParams(nextParams, { replace: true });
-      safeLocalStorage.setItem(ROLE_STORAGE_KEY, newRole);
+      safeLocalStorage.setItem(COMMUNITY_WALL_ROLE_STORAGE_KEY, newRole);
     },
     [allowManualRoleSwitch, setSearchParams]
   );
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
-    const urlRole = parseRoleParam(searchParams.get(ROLE_PARAM));
+    const urlRole = parseWallRoleParam(searchParams.get(COMMUNITY_WALL_ROLE_PARAM));
     if (urlRole && urlRole !== role) {
       setRoleInternal(urlRole);
     }
@@ -236,8 +230,8 @@ function WallInner() {
       // However, reading from event.newValue is safe (it's a string or null).
       // We just need to check if we can trust it.
       // In private mode, this event might not fire or might be weird, but reading event properties is safe.
-      if (event.key === ROLE_STORAGE_KEY && import.meta.env.DEV) {
-        const parsedRole = parseRoleParam(event.newValue);
+      if (event.key === COMMUNITY_WALL_ROLE_STORAGE_KEY && import.meta.env.DEV) {
+        const parsedRole = parseWallRoleParam(event.newValue);
         if (parsedRole && parsedRole !== role) {
           setRoleInternal(parsedRole);
         }
@@ -269,7 +263,16 @@ function WallInner() {
     }
   }, [currentTab, perm]);
 
-  const showRegisterGuide = useCallback(() => {
+  const showLikeRegisterGuide = useCallback(() => {
+    notify.info('註冊後即可鼓勵評價', '免費註冊即可鼓勵評價與參與討論', {
+      action: {
+        label: '免費註冊',
+        onClick: () => navigateToAuth('signup', getCurrentPath()),
+      },
+    });
+  }, []);
+
+  const showUnlockGuide = useCallback(() => {
     notify.info('註冊後即可解鎖完整社區牆', '免費註冊即可查看完整評價與互動', {
       action: {
         label: '免費註冊',
@@ -278,30 +281,20 @@ function WallInner() {
     });
   }, []);
 
-  const showLoginGuide = useCallback(() => {
-    notify.info('請先登入', '登入後才能按讚', {
-      action: {
-        label: '前往登入',
-        onClick: () => navigateToAuth('login', getCurrentPath()),
-      },
-    });
-  }, []);
+  const runLikeAction = useCallback(
+    async (postId: number | string) => {
+      await toggleLike(postId);
+    },
+    [toggleLike]
+  );
 
   // #8a: 按讚改用 useModeAwareAction（visitor/demo/live 分流）
   const dispatchToggleLike = useModeAwareAction<number | string>({
     visitor: () => {
-      showRegisterGuide();
+      showLikeRegisterGuide();
     },
-    demo: async (postId) => {
-      await toggleLike(postId);
-    },
-    live: async (postId) => {
-      if (!isAuthenticated) {
-        showLoginGuide();
-        return;
-      }
-      await toggleLike(postId);
-    },
+    demo: runLikeAction,
+    live: runLikeAction,
   });
 
   const handleLike = useCallback(
@@ -322,9 +315,9 @@ function WallInner() {
   const handleUnlock = useCallback(
     (id?: string) => {
       logger.debug('[Wall] Unlock post', { id });
-      showRegisterGuide();
+      showUnlockGuide();
     },
-    [showRegisterGuide]
+    [showUnlockGuide]
   );
 
   // 發文處理
@@ -539,7 +532,7 @@ function WallInner() {
       )}
 
       {/* 開發專用角色切換器 */}
-      {(import.meta.env.DEV || useMock) && <RoleSwitcher role={role} onRoleChange={setRole} />}
+      {allowManualRoleSwitch && <RoleSwitcher role={role} onRoleChange={setRole} />}
 
       <VersionBadge />
 

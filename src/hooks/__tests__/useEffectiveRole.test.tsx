@@ -54,14 +54,27 @@ describe('useEffectiveRole', () => {
     expect(result.current).toBe('guest');
   });
 
-  it('開發模式支援 urlRole 覆蓋', () => {
+  it('允許覆蓋時使用 urlRole', () => {
     const { result } = renderHook(() =>
       useEffectiveRole({
         ...baseOptions,
         urlRole: 'member',
+        allowUrlRoleOverride: true,
       })
     );
 
-    expect(result.current).toBe(import.meta.env.DEV ? 'member' : 'guest');
+    expect(result.current).toBe('member');
+  });
+
+  it('不允許覆蓋時忽略 urlRole', () => {
+    const { result } = renderHook(() =>
+      useEffectiveRole({
+        ...baseOptions,
+        urlRole: 'member',
+        allowUrlRoleOverride: false,
+      })
+    );
+
+    expect(result.current).toBe('guest');
   });
 });
