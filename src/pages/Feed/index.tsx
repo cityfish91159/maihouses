@@ -19,7 +19,7 @@ import { safeSessionStorage } from '../../lib/safeStorage';
 import { ROUTES, RouteUtils } from '../../constants/routes';
 
 type Role = 'agent' | 'member' | 'guest';
-/** Demo 模式只支援 agent/member 兩種切換角色。 */
+/** Demo 模式只支援 agent/member 兩種切換角色（使用 Extract 確保型別來源一致）。 */
 type DemoRole = Extract<Role, 'agent' | 'member'>;
 
 const FEED_DEMO_ROLE_KEY = 'feed-demo-role';

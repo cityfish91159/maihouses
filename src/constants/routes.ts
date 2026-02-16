@@ -14,7 +14,7 @@ export const ROUTES = {
   /** 個人信息流 (React) - 需要 userId 參數 */
   FEED: (userId: string): string => `/maihouses/feed/${userId}`,
 
-  /** 演示模式 Feed 入口（已登入導向真實 feed；demo 到期或非 demo 的未登入使用者導向首頁） */
+  /** 演示模式 Feed 入口（已登入導向真實 feed；非 demo 模式下未登入導向首頁） */
   FEED_DEMO: '/maihouses/feed/demo',
 
   /** ASSURE 交易戰情室 */
