@@ -54,8 +54,11 @@ function getStorage(type: 'localStorage' | 'sessionStorage'): SafeStorage {
       return noopStorage;
     }
     return storage;
-  } catch {
-    // 靜默失敗，直接返回 noopStorage
+  } catch (error) {
+    logger.warn('[safeStorage] Storage unavailable', {
+      type,
+      error: getErrorMessage(error),
+    });
     return noopStorage;
   }
 }

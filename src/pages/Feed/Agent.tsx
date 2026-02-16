@@ -11,9 +11,11 @@ import { useAgentConversations } from '../../hooks/useAgentConversations';
 import { STRINGS } from '../../constants/strings';
 import { MockToggle } from '../../components/common/MockToggle';
 import type { PageMode } from '../../hooks/usePageMode';
+import type { UserProfile } from '../../types/feed';
 
 interface AgentPageProps {
   userId?: string;
+  /** 指定頁面模式時，會以 mode 同步 useMock 初始值與切換 */
   mode?: PageMode;
 }
 
@@ -23,7 +25,6 @@ export default function AgentPage({ userId, mode }: AgentPageProps) {
     uagSummary,
     performanceStats,
     todoList,
-    viewerRole, // Kept for consistency if logic expands
     createPost,
     toggleLike,
     isLiked,
@@ -37,21 +38,20 @@ export default function AgentPage({ userId, mode }: AgentPageProps) {
   const { user } = useAuth();
   const { conversations } = useAgentConversations();
 
-  const userProfile = useMemo(
+  const userProfile = useMemo<UserProfile>(
     () => ({
       id: user?.id || 'demo-agent',
-      name: user?.user_metadata?.name || '游杰倫', // Fallback name
-      role: (viewerRole || 'agent') as 'agent', // Explicit cast for now as this is Agent view
+      name: user?.user_metadata?.name || '游杰倫',
+      role: 'agent',
       communityId: STRINGS.FEED.DEFAULT_COMMUNITY_ID,
-      communityName: STRINGS.FEED.DEFAULT_COMMUNITY_NAME, // Fallback community
-      email: user?.email || 'agent@maihouses.com',
+      communityName: STRINGS.FEED.DEFAULT_COMMUNITY_NAME,
       stats: {
         days: performanceStats.days,
         liked: performanceStats.liked,
-        contributions: performanceStats.replies, // mapping replies to contributions
+        contributions: performanceStats.replies,
       },
     }),
-    [user, viewerRole, performanceStats]
+    [user, performanceStats]
   );
 
   const handleCreatePost = async (content: string, images?: File[]) => {

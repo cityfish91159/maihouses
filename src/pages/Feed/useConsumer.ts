@@ -7,7 +7,7 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useFeedData } from '../../hooks/useFeedData';
+import { useFeedData, type UseFeedDataOptions } from '../../hooks/useFeedData';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { notify } from '../../lib/notify';
@@ -59,6 +59,14 @@ export function useConsumer(userId?: string, mode?: PageMode) {
     return notifications[0] ?? null;
   }, [realAuth, user, notifications]);
 
+  const feedOptions: UseFeedDataOptions = {
+    // P6-REFACTOR: Use shared mock data instance to prevent duplication (C6)
+    initialMockData: DEFAULT_MOCK_DATA,
+  };
+  if (mode !== undefined) {
+    feedOptions.mode = mode;
+  }
+
   const {
     data,
     useMock,
@@ -70,11 +78,7 @@ export function useConsumer(userId?: string, mode?: PageMode) {
     createPost,
     addComment,
     isLiked,
-  } = useFeedData({
-    // P6-REFACTOR: Use shared mock data instance to prevent duplication (C6)
-    initialMockData: DEFAULT_MOCK_DATA,
-    ...(mode !== undefined ? { mode } : {}),
-  });
+  } = useFeedData(feedOptions);
 
   const isDemo = mode === 'demo';
   // 在 Demo 模式下，如果沒有真實登入，則視為「模擬登入」
@@ -114,7 +118,7 @@ export function useConsumer(userId?: string, mode?: PageMode) {
     }
 
     return null;
-  }, [realAuth, user, role, isDemo, userId, isAuthenticated]);
+  }, [realAuth, user, role, isDemo, isAuthenticated]);
 
   // Mock 交易狀態
   const [activeTransaction] = useState<ActiveTransaction>(() => {

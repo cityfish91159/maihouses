@@ -27,7 +27,7 @@ import { ROUTES } from '../../constants/routes';
 import { RequirePermission } from '../../components/auth/Guard';
 import { PERMISSIONS } from '../../types/permissions';
 import PrivateWallLocked from '../../components/Feed/PrivateWallLocked';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { PageMode } from '../../hooks/usePageMode';
 
 const S = STRINGS.FEED;
@@ -145,6 +145,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 /** Props */
 interface ConsumerProps {
   userId?: string;
+  /** 指定頁面模式時，會以 mode 同步 useMock 初始值與切換 */
   mode?: PageMode;
 }
 
@@ -174,6 +175,17 @@ function ConsumerContent({ userId, mode }: ConsumerProps) {
     // Phase 7: 留言系統需要的 currentUserId
     currentUserId,
   } = useConsumer(userId, mode);
+
+  const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
+
+  const filteredPosts = useMemo(
+    () =>
+      data.posts.filter((post) => {
+        if (activeTab === 'private') return post.private;
+        return !post.private;
+      }),
+    [data.posts, activeTab]
+  );
 
   // F6/E5 Fix: Deep Linking and Profile Navigation
   useEffect(() => {
@@ -210,14 +222,7 @@ function ConsumerContent({ userId, mode }: ConsumerProps) {
     }
 
     return () => window.removeEventListener('hashchange', handleNavigation);
-  }, [data.posts]); // Re-run when posts load
-
-  const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
-
-  const filteredPosts = data.posts.filter((post) => {
-    if (activeTab === 'private') return post.private;
-    return !post.private;
-  });
+  }, [filteredPosts]); // Re-run when filtered posts load
 
   // Auth 載入中
   if (authLoading) {
@@ -254,11 +259,7 @@ function ConsumerContent({ userId, mode }: ConsumerProps) {
           {/* 發文框 */}
           {isAuthenticated && (
             <InlineComposer
-              onSubmit={(content, images) =>
-                images && images.length > 0
-                  ? handleCreatePost(content, images)
-                  : handleCreatePost(content)
-              }
+              onSubmit={(content, images) => handleCreatePost(content, images)}
               disabled={isLoading}
               userInitial={userInitial}
             />

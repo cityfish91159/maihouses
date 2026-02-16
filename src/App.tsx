@@ -39,6 +39,7 @@ import MusePage from './pages/Muse/MusePage';
 import GodView from './pages/Admin/GodView';
 import SharedReportPreviewPage from './pages/UAG/SharedReportPreviewPage';
 import { useDemoTimer } from './hooks/useDemoTimer';
+import { ROUTES, RouteUtils } from './constants/routes';
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -113,13 +114,9 @@ export default function App() {
                       </ErrorBoundary>
                 }
               />
-              {/* 
-            由於 basename 已統一設定為 /maihouses/，
-            此處不需要額外的 /maihouses 路由，
-            否則會變成匹配 /maihouses/maihouses 
-          */}
+              {/* 路由常數含 /maihouses 前綴，需經 RouteUtils.toNavigatePath 避免 basename 重複 */}
               <Route
-                path="/feed/demo"
+                path={RouteUtils.toNavigatePath(ROUTES.FEED_DEMO)}
                 element={
                   <ErrorBoundary>
                     <Feed />

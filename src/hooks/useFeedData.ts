@@ -1,14 +1,14 @@
-﻿/**
+/**
  * useFeedData
  *
- * 信息流統一資料來源 Hook（不綁定特定社區）
+ * 資訊流統一資料來源 Hook（不綁定特定社區）
  * - Mock 模式：使用本地假資料
  * - API 模式：使用真實 API 資料（含樂觀更新）
  * - 統一資料格式：不管來源是 Mock 還是 API，輸出格式一致
  *
  * 與 useCommunityWallData 差異：
- * - 移除 reviews / questions 邏輯（信息流不需要）
- * - communityId 為 optional（信息流可能跨社區）
+ * - 移除 reviews / questions 邏輯（資訊流不需要）
+ * - communityId 為 optional（資訊流可能跨社區）
  * - 資料結構簡化為 posts only
  *
  * P2-AUDIT-3 修復紀錄（2025-12-07）：
@@ -125,13 +125,17 @@ export const createFeedMockPost = (
 
 // ============ Hook 選項 ============
 export interface UseFeedDataOptions {
-  /** 篩選特定社區（不填則載入所有） */
+  /** 篩選特定社區（不填則載入全部社區資料） */
   communityId?: string;
-  /** 測試或客製化可覆寫初始 Mock 資料 */
+  /** 覆寫預設 Mock 資料（主要供測試與局部頁面客製） */
   initialMockData?: UnifiedFeedData;
-  /** 是否持久化 Mock 狀態 */
+  /** 是否將 Mock 資料持久化到 localStorage（預設 true） */
   persistMockState?: boolean;
-  /** 指定頁面模式時，會以 mode 同步 useMock 初始值與切換 */
+  /**
+   * 指定頁面模式。
+   * 提供 mode 時以 mode 為唯一來源（demo -> mock；非 demo -> API）；
+   * 未提供時回退 mhEnv 全域設定。
+   */
   mode?: PageMode;
 }
 
@@ -164,7 +168,7 @@ export interface UseFeedDataReturn {
 
 // ============ Main Hook ============
 /**
- * 信息流統一資料來源 Hook。根據 useMock 旗標自動切換 Mock 與 API 模式，
+ * 資訊流統一資料來源 Hook。根據 useMock 旗標自動切換 Mock 與 API 模式，
  * 並提供發文、按讚等操作的單一出入口。
  *
  * @param options.communityId - 篩選特定社區（不填則載入所有）
@@ -183,19 +187,22 @@ export function useFeedData(options: UseFeedDataOptions = {}): UseFeedDataReturn
   const resolvedInitialMockData = initialMockData ?? getDefaultMockData();
 
   // ============ Mock 控制 ============
+  const hasModeOverride = mode !== undefined;
+  const modeUseMock = mode === 'demo';
   const [useMock, setUseMockState] = useState<boolean>(() =>
-    mode !== undefined ? mode === 'demo' : mhEnv.isMockEnabled()
+    hasModeOverride ? modeUseMock : mhEnv.isMockEnabled()
   );
 
   useEffect(() => {
-    if (mode !== undefined) {
-      setUseMockState(mode === 'demo');
+    if (hasModeOverride) {
+      setUseMockState(modeUseMock);
       return;
     }
 
+    setUseMockState(mhEnv.isMockEnabled());
     const unsubscribe = mhEnv.subscribe(setUseMockState);
     return unsubscribe;
-  }, [mode]);
+  }, [hasModeOverride, modeUseMock]);
 
   const currentUserId = authUser?.id;
 
@@ -338,7 +345,7 @@ export function useFeedData(options: UseFeedDataOptions = {}): UseFeedDataReturn
         setApiLikedPosts(initialLiked);
       }
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('載入信息流失敗');
+      const error = err instanceof Error ? err : new Error('載入資訊流失敗');
       setApiError(error);
       if (import.meta.env.DEV) {
         logger.error('[useFeedData] API error', { error: err });
@@ -692,7 +699,7 @@ export function useFeedData(options: UseFeedDataOptions = {}): UseFeedDataReturn
       }
     },
     [useMock, isAuthenticated, options.communityId, authUser, authRole, currentUserId, fetchApiData]
-  ); // E2: Added fetchApiData dependency
+  );
 
   const addComment = useCallback(
     async (postId: string | number, content: string) => {

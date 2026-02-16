@@ -19,10 +19,12 @@ import { safeSessionStorage } from '../../lib/safeStorage';
 import { ROUTES, RouteUtils } from '../../constants/routes';
 
 type Role = 'agent' | 'member' | 'guest';
-type DemoRole = 'agent' | 'member';
+/** Demo 模式只支援 agent/member 兩種切換角色。 */
+type DemoRole = Extract<Role, 'agent' | 'member'>;
 
 const FEED_DEMO_ROLE_KEY = 'feed-demo-role';
 
+/** 讀取 demo 角色；若無資料或值異常，一律回退 member。 */
 function readDemoRole(): DemoRole {
   const persistedRole = safeSessionStorage.getItem(FEED_DEMO_ROLE_KEY);
   return persistedRole === 'agent' ? 'agent' : 'member';
@@ -31,6 +33,7 @@ function readDemoRole(): DemoRole {
 export default function Feed() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  // mode 來自 usePageMode()：支援 demo 到期響應式退出（不可在路由層覆蓋）
   const mode = usePageMode();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const isDemoMode = mode === 'demo';
@@ -51,81 +54,61 @@ export default function Feed() {
 
     if (isDemoRoute) {
       if (authLoading) {
-        return () => {
-          mounted = false;
-        };
-      }
-
-      if (isAuthenticated && user?.id) {
+        // wait auth state settle
+      } else if (isAuthenticated && user?.id) {
         navigate(RouteUtils.toNavigatePath(ROUTES.FEED(user.id)), { replace: true });
-        return () => {
-          mounted = false;
-        };
+      } else if (!isDemoMode) {
+        navigate(RouteUtils.toNavigatePath(ROUTES.HOME), { replace: true });
+      } else {
+        finish(readDemoRole());
       }
-
-      if (!isDemoMode) {
-        window.location.replace('/');
-        return () => {
-          mounted = false;
-        };
-      }
-
+    } else if (isDemoMode) {
       finish(readDemoRole());
-      return () => {
-        mounted = false;
-      };
-    }
-
-    if (isDemoMode) {
-      finish(readDemoRole());
-      return () => {
-        mounted = false;
-      };
-    }
-
-    if (!userId) {
+    } else if (!userId) {
       setLoading(false);
-      return () => {
-        mounted = false;
+    } else {
+      const fetchRole = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', userId)
+            .single();
+
+          if (error) throw error;
+          const dbRole = data?.role;
+          if (dbRole === 'agent' || dbRole === 'member' || dbRole === 'guest') {
+            finish(dbRole);
+          } else {
+            finish('member');
+          }
+        } catch (err) {
+          logger.error('[Feed] Failed to fetch role', { error: err });
+          finish('member');
+        } finally {
+          if (mounted) {
+            setLoading(false);
+          }
+        }
       };
+
+      void fetchRole();
     }
 
-    const fetchRole = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
-          .single();
-
-        if (error) throw error;
-        const dbRole = data?.role;
-        if (dbRole === 'agent' || dbRole === 'member' || dbRole === 'guest') {
-          finish(dbRole);
-        } else {
-          finish('member');
-        }
-      } catch (err) {
-        logger.error('[Feed] Failed to fetch role', { error: err });
-        finish('member');
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchRole();
     return () => {
       mounted = false;
     };
   }, [authLoading, isAuthenticated, isDemoMode, isDemoRoute, navigate, user?.id, userId]);
 
   const handleRoleToggle = () => {
-    const nextRole: DemoRole = role === 'agent' ? 'member' : 'agent';
-    setRole(nextRole);
-    safeSessionStorage.setItem(FEED_DEMO_ROLE_KEY, nextRole);
+    setRole((prevRole) => (prevRole === 'agent' ? 'member' : 'agent'));
   };
+
+  useEffect(() => {
+    if (!isDemoMode) return;
+    if (role !== 'agent' && role !== 'member') return;
+    safeSessionStorage.setItem(FEED_DEMO_ROLE_KEY, role);
+  }, [isDemoMode, role]);
 
   if (loading || (isDemoRoute && authLoading)) {
     return (

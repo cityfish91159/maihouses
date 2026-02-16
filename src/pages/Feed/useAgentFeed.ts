@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useFeedData } from '../../hooks/useFeedData';
+import { useFeedData, type UseFeedDataOptions } from '../../hooks/useFeedData';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
 import type { PageMode } from '../../hooks/usePageMode';
@@ -23,11 +23,14 @@ export function useAgentFeed(userId?: string, mode?: PageMode) {
   // P6-REFACTOR: Use Agent-specific mock data with deep copy
   const agentMockData = useMemo(() => getAgentFeedData(), []);
 
-  const feed = useFeedData({
+  const feedOptions: UseFeedDataOptions = {
     persistMockState: true,
     initialMockData: agentMockData,
-    ...(mode !== undefined ? { mode } : {}),
-  });
+  };
+  if (mode !== undefined) {
+    feedOptions.mode = mode;
+  }
+  const feed = useFeedData(feedOptions);
 
   // P6-REFACTOR: UAG Data from external mockData (deep copy)
   const uagSummary = useMemo(() => getAgentUagSummary(), []);
