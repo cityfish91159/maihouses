@@ -100,6 +100,10 @@ interface UseDemoModeMockSyncOptions {
   setUseMock: (value: boolean) => void;
 }
 
+/**
+ * #8a (.claude/tickets/MOCK-SYSTEM.md):
+ * demo mode forces mock data to avoid accidental API calls.
+ */
 function useDemoModeMockSync({ mode, useMock, setUseMock }: UseDemoModeMockSyncOptions): void {
   useEffect(() => {
     const forcedUseMock = mode === 'demo' ? true : import.meta.env.DEV ? null : false;
@@ -124,13 +128,13 @@ function WallInner() {
 
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
   const initialRole = useMemo<Role>(() => {
-    // 僅讀取首次載入時的 URL/localStorage；後續由下方 useEffect 負責同步。
+    // Read initial value on mount only; later URL sync is handled by the effect below.
     return resolveInitialWallRole({
       isDev: import.meta.env.DEV,
       urlRoleParam: searchParamsRef.current.get(COMMUNITY_WALL_ROLE_PARAM),
       storedRole: safeLocalStorage.getItem(COMMUNITY_WALL_ROLE_STORAGE_KEY),
     });
-  }, []);
+  }, []); // Empty deps: mount-only initialization.
 
   const [role, setRoleInternal] = useState<Role>(initialRole);
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
@@ -182,8 +186,7 @@ function WallInner() {
     includePrivate: canPerformAction(perm, 'view_private'),
   });
 
-  // #8a (.claude/tickets/MOCK-SYSTEM.md): demo 模式強制接入 mock，避免誤打 API
-  useDemoModeMockSync({ mode, useMock, setUseMock });
+  useDemoModeMockSync({ mode, useMock, setUseMock }); // demo mode enforces mock
 
   const canToggleMock = allowManualMockToggle || useMock;
   const allowManualRoleSwitch = import.meta.env.DEV || useMock;
@@ -283,11 +286,16 @@ function WallInner() {
     });
   }, []);
 
-  // #8a: 按讚改用 useModeAwareAction（visitor/demo/live 分流）
-  const dispatchToggleLike = useModeAwareAction<number | string>({
-    visitor: () => {
+  const showLikeRegisterGuide = useCallback(
+    (_postId: number | string) => {
       showRegisterGuide('註冊後即可鼓勵評價', '免費註冊即可鼓勵評價與參與討論');
     },
+    [showRegisterGuide]
+  );
+
+  // #8a: 按讚改用 useModeAwareAction（visitor/demo/live 分流）
+  const dispatchToggleLike = useModeAwareAction<number | string>({
+    visitor: showLikeRegisterGuide,
     demo: toggleLike,
     live: toggleLike,
   });

@@ -53,15 +53,21 @@ export function useEffectiveRole({
   devRole,
 }: UseEffectiveRoleOptions): Role {
   return useMemo(
-    () =>
-      resolveEffectiveRole({
+    () => {
+      const options: _ResolveEffectiveRoleOptions = {
         mode,
         authLoading,
         isAuthenticated,
         authRole,
         isDev: import.meta.env.DEV,
-        ...(devRole !== undefined ? { devRole } : {}),
-      }),
+      };
+
+      if (devRole !== undefined) {
+        options.devRole = devRole;
+      }
+
+      return resolveEffectiveRole(options);
+    },
     [authLoading, authRole, isAuthenticated, mode, devRole]
   );
 }

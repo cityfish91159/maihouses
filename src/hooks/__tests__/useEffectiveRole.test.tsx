@@ -57,12 +57,13 @@ describe('useEffectiveRole', () => {
     expect(result.current).toBe('guest');
   });
 
-  it('開發模式下可用 devRole 覆蓋（供調試）', () => {
+  it('DEV mode: devRole overrides guest when unauthenticated', () => {
     vi.stubEnv('DEV', true);
 
     const { result } = renderHook(() =>
       useEffectiveRole({
         ...baseOptions,
+        isAuthenticated: false,
         devRole: 'member',
       })
     );
@@ -70,12 +71,13 @@ describe('useEffectiveRole', () => {
     expect(result.current).toBe('member');
   });
 
-  it('生產模式下忽略 devRole 覆蓋', () => {
+  it('PROD mode: devRole is ignored and guest remains when unauthenticated', () => {
     vi.stubEnv('DEV', false);
 
     const { result } = renderHook(() =>
       useEffectiveRole({
         ...baseOptions,
+        isAuthenticated: false,
         devRole: 'member',
       })
     );

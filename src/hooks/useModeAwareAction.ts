@@ -12,6 +12,12 @@ export interface ModeAwareHandlers<TData> {
   live: ModeAwareHandler<TData>;
 }
 
+/**
+ * Dispatches action handlers by current page mode (visitor/demo/live).
+ *
+ * @param handlers - mode-specific handlers; memoize at call-site when possible
+ * to avoid unnecessary ref updates in the internal effect.
+ */
 export function useModeAwareAction<TData>(handlers: ModeAwareHandlers<TData>) {
   const mode = usePageMode();
   const handlersRef = useRef(handlers);
