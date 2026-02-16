@@ -28,6 +28,7 @@ import { RequirePermission } from '../../components/auth/Guard';
 import { PERMISSIONS } from '../../types/permissions';
 import PrivateWallLocked from '../../components/Feed/PrivateWallLocked';
 import { useState, useEffect } from 'react';
+import type { PageMode } from '../../hooks/usePageMode';
 
 const S = STRINGS.FEED;
 
@@ -144,11 +145,11 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 /** Props */
 interface ConsumerProps {
   userId?: string;
-  forceMock?: boolean;
+  mode?: PageMode;
 }
 
 /** Main Consumer Page Content */
-function ConsumerContent({ userId, forceMock }: ConsumerProps) {
+function ConsumerContent({ userId, mode }: ConsumerProps) {
   const {
     authLoading,
     activeTransaction,
@@ -172,7 +173,7 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
     latestNotification,
     // Phase 7: 留言系統需要的 currentUserId
     currentUserId,
-  } = useConsumer(userId, forceMock);
+  } = useConsumer(userId, mode);
 
   // F6/E5 Fix: Deep Linking and Profile Navigation
   useEffect(() => {

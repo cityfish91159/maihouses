@@ -44,6 +44,7 @@ import { usePermission } from './usePermission';
 import { PERMISSIONS } from '../types/permissions';
 import { uploadService } from '../services/uploadService';
 import type { FeedPost, UnifiedFeedData, SidebarData } from '../types/feed';
+import type { PageMode } from './usePageMode';
 
 // [NASA TypeScript Safety] 定義有效的 FeedPost type 值
 const VALID_POST_TYPES = ['agent', 'resident', 'official', 'member'] as const;
@@ -130,6 +131,8 @@ export interface UseFeedDataOptions {
   initialMockData?: UnifiedFeedData;
   /** 是否持久化 Mock 狀態 */
   persistMockState?: boolean;
+  /** 指定頁面模式時，會以 mode 同步 useMock 初始值與切換 */
+  mode?: PageMode;
 }
 
 export interface UseFeedDataReturn {
@@ -171,7 +174,7 @@ export interface UseFeedDataReturn {
  */
 export function useFeedData(options: UseFeedDataOptions = {}): UseFeedDataReturn {
   const { user: authUser, role: authRole, isAuthenticated, loading: authLoading } = useAuth();
-  const { communityId, initialMockData, persistMockState = true } = options;
+  const { communityId, initialMockData, persistMockState = true, mode } = options;
 
   const { hasPermission } = usePermission();
   const canViewPrivate = hasPermission(PERMISSIONS.VIEW_PRIVATE_WALL);
@@ -180,12 +183,19 @@ export function useFeedData(options: UseFeedDataOptions = {}): UseFeedDataReturn
   const resolvedInitialMockData = initialMockData ?? getDefaultMockData();
 
   // ============ Mock 控制 ============
-  const [useMock, setUseMockState] = useState<boolean>(() => mhEnv.isMockEnabled());
+  const [useMock, setUseMockState] = useState<boolean>(() =>
+    mode !== undefined ? mode === 'demo' : mhEnv.isMockEnabled()
+  );
 
   useEffect(() => {
+    if (mode !== undefined) {
+      setUseMockState(mode === 'demo');
+      return;
+    }
+
     const unsubscribe = mhEnv.subscribe(setUseMockState);
     return unsubscribe;
-  }, []);
+  }, [mode]);
 
   const currentUserId = authUser?.id;
 

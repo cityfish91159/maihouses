@@ -1,10 +1,10 @@
-﻿import { renderHook, act } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useAgentFeed } from '../useAgentFeed';
 import { notify } from '../../../lib/notify';
+import { useFeedData } from '../../../hooks/useFeedData';
 
 const mockSetUseMock = vi.fn();
 
-// Mock useFeedData
 vi.mock('../../../hooks/useFeedData', () => ({
   useFeedData: vi.fn(() => ({
     data: { posts: [], hasMore: false },
@@ -19,7 +19,6 @@ vi.mock('../../../hooks/useFeedData', () => ({
   })),
 }));
 
-// Mock notify
 vi.mock('../../../lib/notify', () => ({
   notify: {
     success: vi.fn(),
@@ -27,19 +26,21 @@ vi.mock('../../../lib/notify', () => ({
   },
 }));
 
+const mockUseFeedData = useFeedData as unknown as ReturnType<typeof vi.fn>;
+
 describe('useAgentFeed Hook', () => {
   beforeEach(() => {
     mockSetUseMock.mockClear();
+    mockUseFeedData.mockClear();
   });
+
   it('should return combined feed data and agent stats', () => {
     const { result } = renderHook(() => useAgentFeed('agent-123'));
 
-    // Verify inherited feed data
     expect(result.current.data.posts).toEqual([]);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.viewerRole).toBe('agent');
 
-    // Verify Agent specific data
     expect(result.current.uagSummary).toBeDefined();
     expect(result.current.uagSummary.grade).toBe('S');
 
@@ -59,8 +60,8 @@ describe('useAgentFeed Hook', () => {
     expect(notify.success).toHaveBeenCalledWith('留言成功', '您的留言已發佈');
   });
 
-  it('should apply forceMock to feed state', () => {
-    renderHook(() => useAgentFeed('agent-123', true));
-    expect(mockSetUseMock).toHaveBeenCalledWith(true);
+  it('should pass mode to useFeedData options', () => {
+    renderHook(() => useAgentFeed('agent-123', 'demo'));
+    expect(mockUseFeedData).toHaveBeenCalledWith(expect.objectContaining({ mode: 'demo' }));
   });
 });

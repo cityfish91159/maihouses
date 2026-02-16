@@ -75,7 +75,7 @@ describe('useConsumer', () => {
     });
 
     // Simulate demo mode
-    const { result } = renderHook(() => useConsumer('demo-001'));
+    const { result } = renderHook(() => useConsumer(undefined, 'demo'));
 
     expect(result.current.isAuthenticated).toBe(true); // Should be true due to demo mode
     expect(result.current.userProfile?.id).toBe('demo-user');

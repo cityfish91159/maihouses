@@ -10,13 +10,14 @@ import { useAuth } from '../../hooks/useAuth';
 import { useAgentConversations } from '../../hooks/useAgentConversations';
 import { STRINGS } from '../../constants/strings';
 import { MockToggle } from '../../components/common/MockToggle';
+import type { PageMode } from '../../hooks/usePageMode';
 
 interface AgentPageProps {
   userId?: string;
-  forceMock?: boolean;
+  mode?: PageMode;
 }
 
-export default function AgentPage({ userId, forceMock }: AgentPageProps) {
+export default function AgentPage({ userId, mode }: AgentPageProps) {
   const {
     data,
     uagSummary,
@@ -31,7 +32,7 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
     handleShare,
     useMock,
     setUseMock,
-  } = useAgentFeed(userId, forceMock);
+  } = useAgentFeed(userId, mode);
 
   const { user } = useAuth();
   const { conversations } = useAgentConversations();

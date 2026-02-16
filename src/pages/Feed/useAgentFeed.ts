@@ -5,10 +5,11 @@
  * P6-REFACTOR: Mock 資料已抽離至 mockData/posts/agent.ts
  */
 
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useFeedData } from '../../hooks/useFeedData';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
+import type { PageMode } from '../../hooks/usePageMode';
 import {
   getAgentFeedData,
   getAgentUagSummary,
@@ -18,13 +19,14 @@ import {
 
 const S = STRINGS.FEED;
 
-export function useAgentFeed(userId?: string, forceMock?: boolean) {
+export function useAgentFeed(userId?: string, mode?: PageMode) {
   // P6-REFACTOR: Use Agent-specific mock data with deep copy
   const agentMockData = useMemo(() => getAgentFeedData(), []);
 
   const feed = useFeedData({
     persistMockState: true,
     initialMockData: agentMockData,
+    ...(mode !== undefined ? { mode } : {}),
   });
 
   // P6-REFACTOR: UAG Data from external mockData (deep copy)
@@ -38,12 +40,6 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
 
   const { createPost, toggleLike, isLiked, addComment, useMock, setUseMock, isAuthenticated } =
     feed;
-
-  useEffect(() => {
-    if (forceMock !== undefined) {
-      setUseMock(forceMock);
-    }
-  }, [forceMock, setUseMock]);
 
   const handleComment = useCallback(
     async (postId: string | number, content: string) => {

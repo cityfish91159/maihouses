@@ -20,7 +20,7 @@
 - [x] **#5a** UAG：訪客 Landing Page + 角色守衛（6 新檔案 + 2 修改）✅ 2026-02-13
 - [x] **#5b** UAG：移除 `uagModeStore`，改用 usePageMode（6 檔）✅ 2026-02-15
 - [x] **#6a** Feed：Logo 導航修復 + 廢棄路由清理（4 檔）✅ 2026-02-15
-- [ ] **#6b** Feed：移除 `DEMO_IDS` + 新增 `/feed/demo` 路由（4 檔）
+- [x] **#6b** Feed：移除 `DEMO_IDS` + 新增 `/feed/demo` 路由（7 檔 + 4 測試）✅ 2026-02-16
 - [ ] **#7** 登入後重定向 — agent→UAG、consumer→首頁（auth.html）
 
 ### P1 — 跨頁面
@@ -341,29 +341,19 @@ function useModeAwareAction<T>(handlers: {
 
 ---
 
-### #6b Feed：移除 `DEMO_IDS` + usePageMode
+### #6b ✅ Feed：移除 `DEMO_IDS` + usePageMode
 
-**目標**：消除 `DEMO_IDS` 白名單，統一用 `usePageMode()`
+**已完成** 2026-02-16
 
-**依賴**：#1a、#1b
+新增：`App.tsx` `/feed/demo` 靜態路由、`ROUTES.FEED_DEMO`
+修改：`Feed/index.tsx`、`useFeedData.ts`、`useConsumer.ts`、`useAgentFeed.ts`、`Agent.tsx`、`Consumer.tsx` + 測試同步
+核心：
+- 移除 `DEMO_IDS` 與 feed 頁面的 `?mock=true` 入口依賴，統一由 `usePageMode()` 驅動
+- `/feed/demo`：已登入直接導回 `/feed/{realUserId}`；非 demo（含演示到期）執行 `location.replace('/')`
+- feed demo 角色切換持久化到 `feed-demo-role`（sessionStorage）
+- `useFeedData` 新增 `mode` 選項，`useMock` 依 mode 同步（demo=true / 其他=false）
 
-**修改**：
-| 檔案 | 改動 |
-|------|------|
-| `Feed/index.tsx` | 移除 `DEMO_IDS` 定義、`isDemo`/`forceMock` → `usePageMode()` |
-| `FeedPostCard.tsx` | 移除 `disabled={!isLoggedIn}` |
-| `useFeedData.ts` | `useMock` → mode |
-
-**新增**：路由 `/feed/demo`（演示入口）
-
-**行為規則**：
-- 已登入進 `/feed/demo` → 重定向 `/feed/{realUserId}`
-- 演示到期 → `location.replace('/')` 帶回首頁
-- 舊 URL `/feed/demo-:id` 301 → `/feed/demo`（歸 #9 vercel.json）
-
-**驗收**：
-- `rg "DEMO_IDS" src/` → 0 筆
-- `npm run gate` 通過
+**驗證**：`rg "DEMO_IDS" src/` → 0 筆 ✅ · `npm run check:utf8` ✅ · `npm run gate` ✅
 
 ---
 

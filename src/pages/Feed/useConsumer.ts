@@ -20,12 +20,13 @@ import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../constants/mockDa
 // P7-Audit-C6: Use shared mock data
 import { getConsumerFeedData } from './mockData';
 import { safeLocalStorage } from '../../lib/safeStorage';
+import type { PageMode } from '../../hooks/usePageMode';
 
 const DEFAULT_MOCK_DATA = getConsumerFeedData();
 
 const S = STRINGS.FEED;
 
-export function useConsumer(userId?: string, forceMock?: boolean) {
+export function useConsumer(userId?: string, mode?: PageMode) {
   const { user, isAuthenticated: realAuth, role, loading: authLoading } = useAuth();
 
   // MSG-3: 取得未讀私訊通知（只在真正登入時查詢）
@@ -72,19 +73,12 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
   } = useFeedData({
     // P6-REFACTOR: Use shared mock data instance to prevent duplication (C6)
     initialMockData: DEFAULT_MOCK_DATA,
+    ...(mode !== undefined ? { mode } : {}),
   });
 
-  // 判定是否為 Demo 模式 (forceMock or userId starts with demo-)
-  const isDemo = forceMock || userId?.startsWith('demo-');
+  const isDemo = mode === 'demo';
   // 在 Demo 模式下，如果沒有真實登入，則視為「模擬登入」
   const isAuthenticated = realAuth || isDemo;
-
-  // 根據 forceMock 設置初始 mock 狀態
-  useEffect(() => {
-    if (forceMock !== undefined) {
-      setUseMock(forceMock);
-    }
-  }, [forceMock, setUseMock]);
 
   // 設置頁面標題
   useEffect(() => {
@@ -112,8 +106,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
       return {
         id: 'demo-user',
         name: S.DEFAULT_USER, // '用戶'
-        // [NASA TypeScript Safety] 使用條件表達式取代 as Role
-        role: userId === 'demo-agent' ? ('agent' as const) : ('member' as const),
+        role: 'member',
         stats: MOCK_FEED_STATS,
         communityId: S.DEFAULT_COMMUNITY_ID,
         communityName: S.DEFAULT_COMMUNITY_NAME,

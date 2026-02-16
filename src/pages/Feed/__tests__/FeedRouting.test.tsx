@@ -1,28 +1,9 @@
-﻿/**
- * FEED-2: Mock/API 切換驗證測試
- *
- * 測試場景：
- * 1. Demo Mock - 使用 demo ID (demo-001, demo-consumer, demo-agent)
- * 2. Real Mock - URL 參數 ?mock=true
- * 3. Real API - 預設行為
- * 4. Toggle - MockToggle 組件切換
- * 5. Error Handling - 錯誤狀態處理
- */
-
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Consumer from '../Consumer';
 import AgentPage from '../Agent';
-import { mhEnv } from '../../../lib/mhEnv';
-
-// Mock Dependencies
-vi.mock('../../../lib/mhEnv', () => ({
-  mhEnv: {
-    isMockEnabled: vi.fn(),
-    subscribe: vi.fn(() => () => {}),
-  },
-}));
+import type { PageMode } from '../../../hooks/usePageMode';
 
 vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => ({
@@ -34,7 +15,7 @@ vi.mock('../../../hooks/useAuth', () => ({
 }));
 
 vi.mock('../../../hooks/useFeedData', () => ({
-  useFeedData: (options: { communityId?: string; forceMock?: boolean }) => ({
+  useFeedData: (options: { communityId?: string; mode?: PageMode }) => ({
     data: {
       posts: [
         {
@@ -53,7 +34,7 @@ vi.mock('../../../hooks/useFeedData', () => ({
       totalPosts: 1,
       sidebarData: { hotPosts: [], saleItems: [] },
     },
-    useMock: options?.forceMock ?? false,
+    useMock: options?.mode === 'demo',
     setUseMock: vi.fn(),
     isLoading: false,
     error: null,
@@ -84,7 +65,6 @@ vi.mock('../../../hooks/useAgentConversations', () => ({
   }),
 }));
 
-// Mock Supabase
 vi.mock('../../../lib/supabase', () => ({
   supabase: {
     from: () => ({
@@ -97,7 +77,7 @@ vi.mock('../../../lib/supabase', () => ({
   },
 }));
 
-describe('FEED-2: Mock/API Routing Verification', () => {
+describe('FEED Routing Mode Verification', () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -116,123 +96,18 @@ describe('FEED-2: Mock/API Routing Verification', () => {
     vi.clearAllMocks();
   });
 
-  describe('Scenario 1: Demo Mock (Demo IDs)', () => {
-    it('使用 demo-001 ID 應該啟用 Mock 模式', () => {
-      (mhEnv.isMockEnabled as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-      renderWithProviders(<Consumer userId="demo-001" forceMock={true} />);
-
-      // 驗證頁面渲染成功
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
-
-    it('使用 demo-consumer ID 應該啟用 Mock 模式', () => {
-      (mhEnv.isMockEnabled as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-      renderWithProviders(<Consumer userId="demo-consumer" forceMock={true} />);
-
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
-
-    it('使用 demo-agent ID 應該啟用 Mock 模式', () => {
-      (mhEnv.isMockEnabled as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-      renderWithProviders(<AgentPage userId="demo-agent" forceMock={true} />);
-
-      // Agent 頁面應該正常渲染
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
+  it('demo mode consumer should render mock content', () => {
+    renderWithProviders(<Consumer mode="demo" />);
+    expect(screen.getByText('Test Post')).toBeInTheDocument();
   });
 
-  describe('Scenario 2: Real Mock (?mock=true)', () => {
-    it('URL 參數 ?mock=true 應該啟用 Mock 模式', () => {
-      // 模擬 URL 參數
-      Object.defineProperty(window, 'location', {
-        value: {
-          search: '?mock=true',
-        },
-        writable: true,
-      });
-
-      (mhEnv.isMockEnabled as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-      renderWithProviders(<Consumer forceMock={true} />);
-
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
+  it('demo mode agent should render mock content', () => {
+    renderWithProviders(<AgentPage mode="demo" />);
+    expect(screen.getByText('Test Post')).toBeInTheDocument();
   });
 
-  describe('Scenario 3: Real API (Default)', () => {
-    it('無參數時應該使用 Real API 模式', () => {
-      (mhEnv.isMockEnabled as ReturnType<typeof vi.fn>).mockReturnValue(false);
-
-      renderWithProviders(<Consumer />);
-
-      // 驗證頁面渲染（使用 Real API）
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
-
-    it('非 demo ID 應該使用 Real API 模式', () => {
-      (mhEnv.isMockEnabled as ReturnType<typeof vi.fn>).mockReturnValue(false);
-
-      renderWithProviders(<Consumer userId="real-user-123" />);
-
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
-  });
-
-  describe('Scenario 4: Toggle Switching', () => {
-    it('MockToggle 組件應該存在於頁面', () => {
-      renderWithProviders(<Consumer />);
-
-      // MockToggle 在 sidebar 中，手機版隱藏
-      const mockToggle = document.querySelector('[class*="MockToggle"]');
-      // MockToggle 可能被 mock，所以我們只驗證組件能正常渲染
-      expect(mockToggle || screen.queryByTestId('mock-toggle')).toBeDefined();
-    });
-  });
-
-  describe('Scenario 5: Error Handling', () => {
-    it('無效的 userId 不應該導致崩潰', () => {
-      renderWithProviders(<Consumer />);
-
-      // 應該顯示預設內容而不是崩潰
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
-
-    it('forceMock=false 時應該使用 API 模式', () => {
-      (mhEnv.isMockEnabled as ReturnType<typeof vi.fn>).mockReturnValue(false);
-
-      renderWithProviders(<Consumer forceMock={false} />);
-
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
-  });
-
-  describe('Integration: Mode Detection Logic', () => {
-    it('Demo ID 優先級高於 URL 參數', () => {
-      Object.defineProperty(window, 'location', {
-        value: {
-          search: '?mock=false',
-        },
-        writable: true,
-      });
-
-      // Demo ID 強制 Mock
-      (mhEnv.isMockEnabled as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-      renderWithProviders(<Consumer userId="demo-001" forceMock={true} />);
-
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
-
-    it('forceMock prop 優先級最高', () => {
-      (mhEnv.isMockEnabled as ReturnType<typeof vi.fn>).mockReturnValue(false);
-
-      renderWithProviders(<Consumer userId="real-user" forceMock={true} />);
-
-      // 即使是 real user，forceMock=true 仍然啟用 Mock
-      expect(screen.getByText('Test Post')).toBeInTheDocument();
-    });
+  it('live mode consumer should render content without crashing', () => {
+    renderWithProviders(<Consumer mode="live" />);
+    expect(screen.getByText('Test Post')).toBeInTheDocument();
   });
 });

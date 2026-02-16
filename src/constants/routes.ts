@@ -14,6 +14,9 @@ export const ROUTES = {
   /** 個人信息流 (React) - 需要 userId 參數 */
   FEED: (userId: string): string => `/maihouses/feed/${userId}`,
 
+  /** 演示模式 Feed 入口 */
+  FEED_DEMO: '/maihouses/feed/demo',
+
   /** ASSURE 交易戰情室 */
   ASSURE: '/maihouses/assure',
 

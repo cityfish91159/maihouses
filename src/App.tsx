@@ -119,6 +119,14 @@ export default function App() {
             否則會變成匹配 /maihouses/maihouses 
           */}
               <Route
+                path="/feed/demo"
+                element={
+                  <ErrorBoundary>
+                    <Feed />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
                 path="/feed/:userId"
                 element={
                   <ErrorBoundary>
