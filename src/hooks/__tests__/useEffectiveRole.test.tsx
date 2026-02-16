@@ -1,10 +1,6 @@
 import { renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
-import {
-  resolveEffectiveRole,
-  useEffectiveRole,
-  type UseEffectiveRoleOptions,
-} from '../useEffectiveRole';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { useEffectiveRole, type UseEffectiveRoleOptions } from '../useEffectiveRole';
 
 const baseOptions: UseEffectiveRoleOptions = {
   mode: 'visitor',
@@ -14,6 +10,10 @@ const baseOptions: UseEffectiveRoleOptions = {
 };
 
 describe('useEffectiveRole', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('auth loading 時回傳 guest', () => {
     const { result } = renderHook(() =>
       useEffectiveRole({
@@ -32,7 +32,7 @@ describe('useEffectiveRole', () => {
       useEffectiveRole({
         ...baseOptions,
         mode: 'demo',
-        urlRole: 'agent',
+        devRole: 'agent',
       })
     );
 
@@ -54,27 +54,32 @@ describe('useEffectiveRole', () => {
 
   it('未登入且非 demo 時回傳 guest', () => {
     const { result } = renderHook(() => useEffectiveRole(baseOptions));
-
     expect(result.current).toBe('guest');
   });
 
-  it('開發模式可用 urlRole 覆蓋（供調試）', () => {
-    const result = resolveEffectiveRole({
-      ...baseOptions,
-      urlRole: 'member',
-      isDev: true,
-    });
+  it('開發模式下可用 devRole 覆蓋（供調試）', () => {
+    vi.stubEnv('DEV', true);
 
-    expect(result).toBe('member');
+    const { result } = renderHook(() =>
+      useEffectiveRole({
+        ...baseOptions,
+        devRole: 'member',
+      })
+    );
+
+    expect(result.current).toBe('member');
   });
 
-  it('生產模式忽略 urlRole 覆蓋', () => {
-    const result = resolveEffectiveRole({
-      ...baseOptions,
-      urlRole: 'member',
-      isDev: false,
-    });
+  it('生產模式下忽略 devRole 覆蓋', () => {
+    vi.stubEnv('DEV', false);
 
-    expect(result).toBe('guest');
+    const { result } = renderHook(() =>
+      useEffectiveRole({
+        ...baseOptions,
+        devRole: 'member',
+      })
+    );
+
+    expect(result.current).toBe('guest');
   });
 });

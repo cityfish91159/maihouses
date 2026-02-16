@@ -7,38 +7,42 @@ export interface UseEffectiveRoleOptions {
   authLoading: boolean;
   isAuthenticated: boolean;
   authRole: Role;
-  urlRole?: Role;
+  devRole?: Role;
 }
 
-interface ResolveEffectiveRoleOptions extends UseEffectiveRoleOptions {
+/** @internal */
+interface _ResolveEffectiveRoleOptions extends UseEffectiveRoleOptions {
   isDev: boolean;
 }
 
 /**
- * 依規格推導社區牆有效角色。
+ * 計算社區牆最終角色。
  *
  * 規則優先序：
- * 1. auth loading 時固定 guest
- * 2. demo mode 時固定 resident
- * 3. 僅 DEV 環境可用 urlRole 覆蓋
- * 4. 其餘情況走 isAuthenticated ? authRole : guest
+ * 1. authLoading 時固定 `guest`
+ * 2. demo mode 固定 `resident`
+ * 3. 開發環境（`isDev === true`）可用 `devRole` 覆蓋
+ * 4. 其餘依登入狀態回傳 `authRole` 或 `guest`
+ *
+ * @param options - 角色判斷所需輸入
+ * @returns 最終生效角色
  */
 export function resolveEffectiveRole({
   mode,
   authLoading,
   isAuthenticated,
   authRole,
-  urlRole,
+  devRole,
   isDev,
-}: ResolveEffectiveRoleOptions): Role {
+}: _ResolveEffectiveRoleOptions): Role {
   if (authLoading) return 'guest';
   if (mode === 'demo') return 'resident';
-  if (isDev && urlRole) return urlRole;
+  if (isDev && devRole) return devRole;
   return isAuthenticated ? authRole : 'guest';
 }
 
 /**
- * @param options - 角色推導所需的輸入條件
+ * @param options - 角色判斷所需輸入
  * @returns 最終生效角色（依 `resolveEffectiveRole` 規則）
  */
 export function useEffectiveRole({
@@ -46,24 +50,18 @@ export function useEffectiveRole({
   authLoading,
   isAuthenticated,
   authRole,
-  urlRole,
+  devRole,
 }: UseEffectiveRoleOptions): Role {
-  return useMemo(() => {
-    const baseOptions = {
-      mode,
-      authLoading,
-      isAuthenticated,
-      authRole,
-      isDev: import.meta.env.DEV,
-    };
-
-    if (urlRole !== undefined) {
-      return resolveEffectiveRole({
-        ...baseOptions,
-        urlRole,
-      });
-    }
-
-    return resolveEffectiveRole(baseOptions);
-  }, [authLoading, authRole, isAuthenticated, mode, urlRole]);
+  return useMemo(
+    () =>
+      resolveEffectiveRole({
+        mode,
+        authLoading,
+        isAuthenticated,
+        authRole,
+        isDev: import.meta.env.DEV,
+        ...(devRole !== undefined ? { devRole } : {}),
+      }),
+    [authLoading, authRole, isAuthenticated, mode, devRole]
+  );
 }

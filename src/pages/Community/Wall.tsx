@@ -39,7 +39,7 @@ import { canPerformAction } from './lib';
 import { useCommunityWallData } from '../../hooks/useCommunityWallData';
 import { useAuth } from '../../hooks/useAuth';
 import { useModeAwareAction } from '../../hooks/useModeAwareAction';
-import { usePageModeWithAuthState } from '../../hooks/usePageMode';
+import { usePageModeWithAuthState, type PageMode } from '../../hooks/usePageMode';
 import { useEffectiveRole } from '../../hooks/useEffectiveRole';
 import { ROUTES } from '../../constants/routes';
 import {
@@ -94,6 +94,23 @@ function getUserDisplayName(user: User | null): string | undefined {
   return user.email ?? undefined;
 }
 
+interface UseDemoModeMockSyncOptions {
+  mode: PageMode;
+  useMock: boolean;
+  setUseMock: (value: boolean) => void;
+}
+
+function useDemoModeMockSync({ mode, useMock, setUseMock }: UseDemoModeMockSyncOptions): void {
+  useEffect(() => {
+    const forcedUseMock = mode === 'demo' ? true : import.meta.env.DEV ? null : false;
+    if (forcedUseMock === null || forcedUseMock === useMock) {
+      return;
+    }
+
+    setUseMock(forcedUseMock);
+  }, [mode, setUseMock, useMock]);
+}
+
 // ============ Inner Component (Wrapped by ErrorBoundary) ============
 function WallInner() {
   const params = useParams<{ id: string }>();
@@ -107,6 +124,7 @@ function WallInner() {
 
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
   const initialRole = useMemo<Role>(() => {
+    // 僅讀取首次載入時的 URL/localStorage；後續由下方 useEffect 負責同步。
     return resolveInitialWallRole({
       isDev: import.meta.env.DEV,
       urlRoleParam: searchParamsRef.current.get(COMMUNITY_WALL_ROLE_PARAM),
@@ -140,7 +158,7 @@ function WallInner() {
     authLoading,
     isAuthenticated,
     authRole,
-    urlRole: role,
+    devRole: role,
   });
 
   const perm = useMemo(() => getPermissions(effectiveRole), [effectiveRole]);
@@ -165,14 +183,7 @@ function WallInner() {
   });
 
   // #8a (.claude/tickets/MOCK-SYSTEM.md): demo 模式強制接入 mock，避免誤打 API
-  useEffect(() => {
-    const forcedUseMock = mode === 'demo' ? true : import.meta.env.DEV ? null : false;
-    if (forcedUseMock === null || forcedUseMock === useMock) {
-      return;
-    }
-
-    setUseMock(forcedUseMock);
-  }, [mode, setUseMock, useMock]);
+  useDemoModeMockSync({ mode, useMock, setUseMock });
 
   const canToggleMock = allowManualMockToggle || useMock;
   const allowManualRoleSwitch = import.meta.env.DEV || useMock;
