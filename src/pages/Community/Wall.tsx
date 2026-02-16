@@ -27,7 +27,7 @@ import { MockToggle } from '../../components/common/MockToggle';
 import { mhEnv } from '../../lib/mhEnv';
 import { safeLocalStorage } from '../../lib/safeStorage';
 import { logger } from '../../lib/logger';
-import { navigateToAuth } from '../../lib/authUtils';
+import { getCurrentPath, navigateToAuth } from '../../lib/authUtils';
 
 // Types
 import type { Role, WallTab } from './types';
@@ -37,6 +37,9 @@ import { canPerformAction } from './lib';
 // Hooks - 統一資料來源
 import { useCommunityWallData } from '../../hooks/useCommunityWallData';
 import { useAuth } from '../../hooks/useAuth';
+import { useModeAwareAction } from '../../hooks/useModeAwareAction';
+import { usePageModeWithAuthState } from '../../hooks/usePageMode';
+import { useEffectiveRole } from '../../hooks/useEffectiveRole';
 import { ROUTES } from '../../constants/routes';
 
 // ============ URL / Storage Helpers ============
@@ -116,6 +119,7 @@ function WallInner() {
     error: authError,
     user,
   } = useAuth();
+  const mode = usePageModeWithAuthState(isAuthenticated);
 
   // 取得 currentUserId 和 userInitial 供留言系統使用
   const currentUserId = user?.id;
@@ -133,12 +137,13 @@ function WallInner() {
     typeof userName === 'string' && userName.length > 0 ? userName.charAt(0).toUpperCase() : 'U';
 
   // B4: 統一計算 effectiveRole，子組件不再自行計算
-  const effectiveRole = useMemo<Role>(() => {
-    if (authLoading) return 'guest'; // loading 時預設 guest
-    const allowMockRole = import.meta.env.DEV && GLOBAL_MOCK_TOGGLE_ENABLED && role !== 'guest';
-    if (allowMockRole) return role;
-    return isAuthenticated ? authRole : 'guest';
-  }, [authRole, isAuthenticated, role, authLoading]);
+  const effectiveRole = useEffectiveRole({
+    mode,
+    authLoading,
+    isAuthenticated,
+    authRole,
+    urlRole: role,
+  });
 
   const perm = useMemo(() => getPermissions(effectiveRole), [effectiveRole]);
   const allowManualMockToggle = GLOBAL_MOCK_TOGGLE_ENABLED;
@@ -161,8 +166,22 @@ function WallInner() {
     includePrivate: canPerformAction(perm, 'view_private'),
   });
 
+  // #8a: demo mode 強制接入 mock（離開 demo 時非 DEV 自動復原）
+  useEffect(() => {
+    if (mode === 'demo') {
+      if (!useMock) {
+        setUseMock(true);
+      }
+      return;
+    }
+
+    if (!import.meta.env.DEV && useMock) {
+      setUseMock(false);
+    }
+  }, [mode, setUseMock, useMock]);
+
   const canToggleMock = allowManualMockToggle || useMock;
-  const allowManualRoleSwitch = import.meta.env.DEV || useMock;
+  const allowManualRoleSwitch = (import.meta.env.DEV || useMock) && mode !== 'demo';
   const mockToggleDisabled = !canToggleMock && !useMock;
 
   // 提前處理 auth 錯誤 toast
@@ -250,27 +269,63 @@ function WallInner() {
     }
   }, [currentTab, perm]);
 
-  // 按讚處理 - B6: 加入 auth guard
-  const handleLike = useCallback(
-    async (postId: number | string) => {
+  const showRegisterGuide = useCallback(() => {
+    notify.info('註冊後即可解鎖完整社區牆', '免費註冊即可查看完整評價與互動', {
+      action: {
+        label: '免費註冊',
+        onClick: () => navigateToAuth('signup', getCurrentPath()),
+      },
+    });
+  }, []);
+
+  const showLoginGuide = useCallback(() => {
+    notify.info('請先登入', '登入後才能按讚', {
+      action: {
+        label: '前往登入',
+        onClick: () => navigateToAuth('login', getCurrentPath()),
+      },
+    });
+  }, []);
+
+  // #8a: 按讚改用 useModeAwareAction（visitor/demo/live 分流）
+  const dispatchToggleLike = useModeAwareAction<number | string>({
+    visitor: () => {
+      showRegisterGuide();
+    },
+    demo: async (postId) => {
+      await toggleLike(postId);
+    },
+    live: async (postId) => {
       if (!isAuthenticated) {
-        notify.error('請先登入', '登入後才能按讚');
+        showLoginGuide();
         return;
       }
-      try {
-        await toggleLike(postId);
-      } catch (err) {
-        logger.error('[Wall] Failed to toggle like', { error: err });
-        notify.error('按讚失敗', '請稍後再試');
-      }
+      await toggleLike(postId);
     },
-    [toggleLike, isAuthenticated]
+  });
+
+  const handleLike = useCallback(
+    (postId: number | string) => {
+      void dispatchToggleLike(postId).then((result) => {
+        if (!result.ok) {
+          logger.error('[Wall] Failed to toggle like', {
+            postId,
+            error: result.error,
+          });
+          notify.error('按讚失敗', result.error);
+        }
+      });
+    },
+    [dispatchToggleLike]
   );
 
-  const handleUnlock = useCallback((id?: string) => {
-    logger.debug('[Wall] Unlock post', { id });
-    notify.info('功能開發中', '解鎖功能即將上線');
-  }, []);
+  const handleUnlock = useCallback(
+    (id?: string) => {
+      logger.debug('[Wall] Unlock post', { id });
+      showRegisterGuide();
+    },
+    [showRegisterGuide]
+  );
 
   // 發文處理
   const handleCreatePost = useCallback(

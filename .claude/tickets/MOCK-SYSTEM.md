@@ -39,7 +39,7 @@
 
 ### P1 — 社區牆三模式（極限測試升級）
 
-- [ ] **#8a** 社區牆：`useEffectiveRole` hook + 按讚改用 useModeAwareAction + **demo mode 完全未接入**（2 檔）⚠️ P2→P1 升級
+- [x] **#8a** 社區牆：`useEffectiveRole` hook + 按讚改用 useModeAwareAction + **demo mode 完全未接入**（3 檔）✅ 2026-02-16
 - [ ] **#8b** 社區牆：發文/留言本地化 + LockedOverlay/BottomCTA 引導修正（3 檔）
 
 ### P2 — 社區牆導航修正
@@ -405,32 +405,27 @@ function successRedirect(user) {
 
 ---
 
-### #8a [P1] 社區牆權限重構（P2→P1 升級）
+### #8a ✅ [P1] 社區牆權限重構（P2→P1 升級）
 
-**目標**：抽 `useEffectiveRole` hook + 按讚改 `useModeAwareAction`
+**已完成** 2026-02-16
 
 **依賴**：#1a、#1b
 
-**升級原因**：`Wall.tsx:241` `handleLike` 的 `if (!isAuthenticated)` 完全阻斷 demo 互動
+**新增**：`src/hooks/useEffectiveRole.ts`、`src/hooks/__tests__/useEffectiveRole.test.tsx`
 
-**新增**：`src/hooks/useEffectiveRole.ts`
-```typescript
-function useEffectiveRole(urlRole?: Role): Role {
-  if (loading) return 'guest'
-  if (mode === 'demo') return 'resident'
-  if (import.meta.env.DEV && urlRole) return urlRole
-  return isAuthenticated ? authRole : 'guest'
-}
-```
+**修改**：`src/pages/Community/Wall.tsx`
 
-**修改**：
-| 檔案 | 改動 |
-|------|------|
-| `Wall.tsx` | 角色判斷改 `useEffectiveRole()`、`handleLike` 改 `useModeAwareAction`、`handleUnlock` 改 `showRegisterGuide()` |
+**核心變更**：
+- `useEffectiveRole` 統一角色推導：`loading -> guest`、`demo -> resident`、`DEV + urlRole -> override`、其餘走 auth role
+- `Wall.tsx` 改用 `useEffectiveRole()` + `usePageModeWithAuthState()` 計算 `effectiveRole`
+- demo mode 進頁時強制 `setUseMock(true)`，離開 demo（非 DEV）自動還原 `setUseMock(false)`
+- `handleLike` 改為 `useModeAwareAction`：`visitor -> 註冊引導`、`demo -> 本地 toggle`、`live -> API toggle`
+- `handleUnlock` 改為註冊引導（含 action button）
 
-**驗收**：
-- 演示模式下社區牆全部可見、按讚可本地 toggle
-- `npm run gate` 通過
+**驗證**：
+- [x] `npm run check:utf8`
+- [x] `npm run test -- src/hooks/__tests__/useEffectiveRole.test.tsx`（5 passed）
+- [ ] `npm run gate`（受既有型別錯誤阻擋：`src/pages/Feed/index.tsx` 傳入 `mode` prop 與 `AgentPageProps` / `ConsumerProps` 不相容）
 
 ---
 
