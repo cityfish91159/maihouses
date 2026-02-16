@@ -48,7 +48,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@line/bot-sdk": "^10.5.0",
+    "@line/bot-sdk": "^10.6.0",
     "@sentry/node": "^8.0.0",
     "@sentry/react": "^10.36.0",
     "@supabase/supabase-js": "^2.83.0",
