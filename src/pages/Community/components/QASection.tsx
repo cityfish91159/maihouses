@@ -10,9 +10,11 @@ import type { Role, Question, Permissions } from '../types';
 import { getPermissions } from '../types';
 import { canPerformAction, getPermissionDeniedMessage } from '../lib';
 import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
+import { useModeAwareAction } from '../../../hooks/useModeAwareAction';
 import { LockedOverlay } from './LockedOverlay';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 import { logger } from '../../../lib/logger';
+import { useQAModalState } from '../hooks/useQAModalState';
 
 /** 虛擬化啟用門檻：超過此數量才啟用虛擬化 */
 const VIRTUALIZATION_THRESHOLD = 10;
@@ -64,27 +66,30 @@ function QACard({
         </div>
       ) : (
         <div className="flex flex-col gap-1.5 border-l-[3px] border-border-light pl-3">
-          {q.answers.map((a, idx) => (
-            <div key={idx} className="py-1.5 text-[12px] leading-relaxed">
-              <div className="mb-1 flex flex-wrap items-center gap-1">
-                <span
-                  className={`rounded px-2 py-0.5 text-[10px] font-bold ${a.type === 'agent' ? 'bg-brand-100 text-brand-600' : a.type === 'official' ? 'bg-brand-50 text-brand' : 'bg-brand-100 text-brand'}`}
-                >
-                  {a.type === 'agent'
-                    ? '🏢 認證房仲'
-                    : a.type === 'official'
-                      ? `📋 ${a.author}`
-                      : `🏠 ${a.author}`}
-                </span>
-                {a.expert && (
-                  <span className="rounded bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-600">
-                    ⭐ 專家回答
+          {q.answers.map((a) => {
+            const answerKey = `${String(q.id)}-${a.type}-${a.author}-${a.content}`;
+            return (
+              <div key={answerKey} className="py-1.5 text-[12px] leading-relaxed">
+                <div className="mb-1 flex flex-wrap items-center gap-1">
+                  <span
+                    className={`rounded px-2 py-0.5 text-[10px] font-bold ${a.type === 'agent' ? 'bg-brand-100 text-brand-600' : a.type === 'official' ? 'bg-brand-50 text-brand' : 'bg-brand-100 text-brand'}`}
+                  >
+                    {a.type === 'agent'
+                      ? '🏢 認證房仲'
+                      : a.type === 'official'
+                        ? `📋 ${a.author}`
+                        : `🏠 ${a.author}`}
                   </span>
-                )}
+                  {a.expert && (
+                    <span className="rounded bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-600">
+                      ⭐ 專家回答
+                    </span>
+                  )}
+                </div>
+                {a.content}
               </div>
-              {a.content}
-            </div>
-          ))}
+            );
+          })}
 
           {/* 非會員：顯示「還有 X 則回答」+ 註冊按鈕（但在 LockedOverlay 內不顯示） */}
           {!hideUnlockButton && q.hasMoreAnswers && q.totalAnswers && (
@@ -203,6 +208,7 @@ function VirtualizedQAListInner({
   maxHeight = DEFAULT_VIRTUAL_MAX_HEIGHT,
 }: VirtualizedQAListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const spacerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -210,7 +216,7 @@ function VirtualizedQAListInner({
   }, []);
 
   const { visibleItems, totalHeight } = useMemo(() => {
-    const containerHeight = typeof maxHeight === 'string' ? parseInt(maxHeight) : maxHeight;
+    const containerHeight = maxHeight;
     const overscan = 2;
 
     const startIndex = Math.max(0, Math.floor(scrollTop / ESTIMATED_CARD_HEIGHT) - overscan);
@@ -239,21 +245,25 @@ function VirtualizedQAListInner({
     totalHeight - (lastVisibleOffset + (visibleItems.length > 0 ? ESTIMATED_CARD_HEIGHT : 0))
   );
 
+  useEffect(() => {
+    if (!parentRef.current) return;
+    parentRef.current.style.maxHeight = `${maxHeight}px`;
+  }, [maxHeight]);
+
+  useEffect(() => {
+    if (!spacerRef.current) return;
+    spacerRef.current.style.paddingTop = `${firstVisibleOffset}px`;
+    spacerRef.current.style.paddingBottom = `${bottomPadding}px`;
+  }, [firstVisibleOffset, bottomPadding]);
+
   return (
     <div
       ref={parentRef}
       className="overflow-auto"
-      style={{ maxHeight }}
       onScroll={handleScroll}
       data-testid="virtualized-container"
     >
-      <div
-        style={{
-          paddingTop: `${firstVisibleOffset}px`,
-          paddingBottom: `${bottomPadding}px`,
-        }}
-        className="w-full"
-      >
+      <div ref={spacerRef} className="w-full">
         {visibleItems.map((item) => {
           const q = questions[item.index];
           if (!q) return null;
@@ -316,21 +326,34 @@ export function QASection({
 }: QASectionProps) {
   const questions = Array.isArray(questionsProp) ? questionsProp : questionsProp?.items || [];
   const perm = getPermissions(viewerRole);
-  const [askModalOpen, setAskModalOpen] = useState(false);
-  const [askInput, setAskInput] = useState('');
-  const [answerModalOpen, setAnswerModalOpen] = useState(false);
-  const [answerInput, setAnswerInput] = useState('');
-  const [activeQuestion, setActiveQuestion] = useState<Question | null>(null);
-  const [submitting, setSubmitting] = useState<'ask' | 'answer' | null>(null);
-  const [askError, setAskError] = useState('');
-  const [answerError, setAnswerError] = useState('');
   const [feedback, setFeedback] = useState('');
-  const askDialogRef = useRef<HTMLDivElement | null>(null);
-  const answerDialogRef = useRef<HTMLDivElement | null>(null);
-  const askTextareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const answerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const feedbackTimeoutRef = useRef<number | null>(null);
-  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const focusRestoreTimerRef = useRef<number | null>(null);
+  const {
+    askModalOpen,
+    setAskModalOpen,
+    askInput,
+    setAskInput,
+    answerModalOpen,
+    setAnswerModalOpen,
+    answerInput,
+    setAnswerInput,
+    activeQuestion,
+    setActiveQuestion,
+    submitting,
+    setSubmitting,
+    askError,
+    setAskError,
+    answerError,
+    setAnswerError,
+    askDialogRef,
+    answerDialogRef,
+    askTextareaRef,
+    answerTextareaRef,
+    feedbackTimeoutRef,
+    restoreFocusRef,
+    resetAskModal,
+    resetAnswerModal,
+  } = useQAModalState();
 
   // 使用 totalAnswers（API 回傳總數）或 answersCount 判斷是否有回答
   // 這樣即使 API 對非會員限流，也能正確分類
@@ -356,25 +379,13 @@ export function QASection({
   const MIN_QUESTION_LENGTH = 10;
   const MIN_ANSWER_LENGTH = 5;
 
-  const resetAskModal = () => {
-    setAskInput('');
-    setAskError('');
-  };
-
-  const resetAnswerModal = () => {
-    setAnswerInput('');
-    setAnswerError('');
-    setActiveQuestion(null);
-  };
-
-  const rememberTriggerFocus = () => {
+  const rememberTriggerFocus = useCallback(() => {
     // [NASA TypeScript Safety] 使用 instanceof 檢查取代 as HTMLElement
     const active = document.activeElement;
     restoreFocusRef.current = active instanceof HTMLElement ? active : null;
-  };
+  }, [restoreFocusRef]);
 
-  // AUDIT-01 Phase 7: 使用統一權限檢查函數
-  const openAskModal = () => {
+  const openAskModalForPermittedUser = useCallback(() => {
     if (!canPerformAction(perm, 'ask_question')) {
       if (onUnlock) {
         onUnlock();
@@ -387,27 +398,72 @@ export function QASection({
     rememberTriggerFocus();
     resetAskModal();
     setAskModalOpen(true);
-  };
+  }, [onUnlock, perm, resetAskModal, setAskModalOpen]);
 
-  const openAnswerModal = (question: Question) => {
-    if (!canPerformAction(perm, 'answer_question')) {
+  const openAnswerModalForPermittedUser = useCallback(
+    (question: Question) => {
+      if (!canPerformAction(perm, 'answer_question')) {
+        if (onUnlock) {
+          onUnlock();
+          return;
+        }
+        const msg = getPermissionDeniedMessage('answer_question');
+        setFeedback(`⚠️ ${msg.title}`);
+        return;
+      }
+      rememberTriggerFocus();
+      resetAnswerModal();
+      setActiveQuestion(question);
+      setAnswerModalOpen(true);
+    },
+    [onUnlock, perm, resetAnswerModal, setActiveQuestion, setAnswerModalOpen]
+  );
+
+  const showDiscussionRegisterGuide = useCallback(
+    (_question?: Question) => {
       if (onUnlock) {
         onUnlock();
         return;
       }
-      const msg = getPermissionDeniedMessage('answer_question');
-      setFeedback(`⚠️ ${msg.title}`);
-      return;
-    }
-    rememberTriggerFocus();
-    resetAnswerModal();
-    setActiveQuestion(question);
-    setAnswerModalOpen(true);
-  };
+      setFeedback('⚠️ 請先登入或註冊');
+    },
+    [onUnlock]
+  );
+
+  const dispatchOpenAskModal = useModeAwareAction<undefined>({
+    visitor: showDiscussionRegisterGuide,
+    demo: () => openAskModalForPermittedUser(),
+    live: () => openAskModalForPermittedUser(),
+  });
+
+  const dispatchOpenAnswerModal = useModeAwareAction<Question>({
+    visitor: showDiscussionRegisterGuide,
+    demo: (question) => openAnswerModalForPermittedUser(question),
+    live: (question) => openAnswerModalForPermittedUser(question),
+  });
+
+  // AUDIT-01 Phase 7: 使用統一權限檢查函數
+  const openAskModal = useCallback(() => {
+    void dispatchOpenAskModal(undefined).then((result) => {
+      if (!result.ok) {
+        logger.error('[QASection] Failed to open ask modal', { error: result.error });
+        setFeedback('⚠️ 目前無法開啟發問視窗，請稍後再試。');
+      }
+    });
+  }, [dispatchOpenAskModal]);
+
+  const openAnswerModal = useCallback((question: Question) => {
+    void dispatchOpenAnswerModal(question).then((result) => {
+      if (!result.ok) {
+        logger.error('[QASection] Failed to open answer modal', { error: result.error });
+        setFeedback('⚠️ 目前無法開啟回答視窗，請稍後再試。');
+      }
+    });
+  }, [dispatchOpenAnswerModal]);
 
   const getActiveDialog = useCallback((): HTMLDivElement | null => {
     return askModalOpen ? askDialogRef.current : answerModalOpen ? answerDialogRef.current : null;
-  }, [askModalOpen, answerModalOpen]);
+  }, [askModalOpen, askDialogRef, answerModalOpen, answerDialogRef]);
 
   const getFocusableElements = useCallback((container: HTMLElement | null): HTMLElement[] => {
     if (!container) return [];
@@ -440,7 +496,10 @@ export function QASection({
         el.tabIndex = -1;
         el.focus();
         // 還原 tabIndex（使用 setTimeout 確保 focus 完成）
-        setTimeout(() => {
+        if (focusRestoreTimerRef.current !== null) {
+          window.clearTimeout(focusRestoreTimerRef.current);
+        }
+        focusRestoreTimerRef.current = window.setTimeout(() => {
           const stored = el.dataset.prevTabindex;
           if (stored === '') {
             el.removeAttribute('tabindex');
@@ -448,6 +507,7 @@ export function QASection({
             el.tabIndex = Number(stored);
           }
           delete el.dataset.prevTabindex;
+          focusRestoreTimerRef.current = null;
         }, 0);
         return;
       }
@@ -456,6 +516,15 @@ export function QASection({
       logger.warn('[QASection] focusSafeElement: 找不到可聚焦的 fallback 元素');
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (focusRestoreTimerRef.current !== null) {
+        window.clearTimeout(focusRestoreTimerRef.current);
+        focusRestoreTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const trapFocusWithinModal = useCallback(
     (event: KeyboardEvent) => {
@@ -566,6 +635,11 @@ export function QASection({
     getActiveDialog,
     trapFocusWithinModal,
     getFocusableElements,
+    resetAnswerModal,
+    resetAskModal,
+    restoreFocusRef,
+    setAnswerModalOpen,
+    setAskModalOpen,
   ]);
 
   useEffect(() => {
@@ -582,7 +656,7 @@ export function QASection({
         feedbackTimeoutRef.current = null;
       }
     };
-  }, [feedback, feedbackDurationMs]);
+  }, [feedback, feedbackDurationMs, feedbackTimeoutRef]);
 
   useEffect(() => {
     if (askModalOpen) {
@@ -590,7 +664,7 @@ export function QASection({
         askTextareaRef.current?.focus();
       });
     }
-  }, [askModalOpen]);
+  }, [askModalOpen, askTextareaRef]);
 
   useEffect(() => {
     if (answerModalOpen) {
@@ -598,7 +672,7 @@ export function QASection({
         answerTextareaRef.current?.focus();
       });
     }
-  }, [answerModalOpen]);
+  }, [answerModalOpen, answerTextareaRef]);
 
   const handleAskSubmit = async () => {
     const trimmed = askInput.trim();

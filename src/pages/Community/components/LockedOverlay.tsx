@@ -63,15 +63,17 @@ export function LockedOverlay({
         </h4>
         <p className="mb-2.5 text-xs text-ink-600">
           {benefits.map((b, i) => (
-            <span key={i}>
+            <span key={b}>
               {i > 0 && '　'}✓ {b}
             </span>
           ))}
         </p>
         {showCta && (
           <button
+            type="button"
             onClick={onCtaClick}
-            className="rounded-full bg-gradient-to-br from-brand to-brand-600 px-6 py-2.5 text-[13px] font-bold text-white transition-transform hover:scale-[1.02]"
+            aria-label={ctaText}
+            className="rounded-full bg-gradient-to-br from-brand to-brand-600 px-6 py-2.5 text-[13px] font-bold text-white transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
           >
             {ctaText}
           </button>

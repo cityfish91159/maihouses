@@ -11,6 +11,7 @@ const DEMO_COMMENT_AUTHOR_NAME = '示範住戶';
 const VISITOR_COMMENT_PROXY_ID = 'visitor-comment-proxy';
 
 type RegisterGuideHandler = (title: string, description: string) => void;
+type AddCommentPayload = { content: string; parentId?: string };
 
 interface UsePostCommentModeStateOptions {
   postId: string;
@@ -191,8 +192,6 @@ export function usePostCommentModeState({
       notify.success('留言已刪除');
     }
   }, []);
-
-  type AddCommentPayload = { content: string; parentId?: string };
 
   const dispatchAddComment = useModeAwareAction<AddCommentPayload>({
     visitor: () => showDiscussionRegisterGuide(),

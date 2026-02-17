@@ -120,6 +120,15 @@ type CreatePostPayload = {
   visibility: 'public' | 'private';
 };
 
+type AskQuestionPayload = {
+  question: string;
+};
+
+type AnswerQuestionPayload = {
+  questionId: string;
+  content: string;
+};
+
 // ============ Inner Component (Wrapped by ErrorBoundary) ============
 function WallInner() {
   const params = useParams<{ id: string }>();
@@ -240,7 +249,7 @@ function WallInner() {
     if (urlRole && urlRole !== role) {
       setRoleInternal(urlRole);
     }
-  }, [role, searchParams, setRoleInternal]);
+  }, [role, searchParams]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -335,6 +344,13 @@ function WallInner() {
     [showRegisterGuide]
   );
 
+  const showDiscussionRegisterGuide = useCallback(
+    (_payload: AskQuestionPayload | AnswerQuestionPayload) => {
+      showRegisterGuide('註冊後即可參與討論', '免費註冊即可提出問題、回答與追蹤最新回覆');
+    },
+    [showRegisterGuide]
+  );
+
   const runCreatePost = useCallback(
     async ({ content, visibility }: CreatePostPayload) => {
       await createPost(content, visibility);
@@ -360,30 +376,54 @@ function WallInner() {
     [dispatchCreatePost]
   );
 
-  const handleAskQuestion = useCallback(
-    async (question: string) => {
-      try {
-        await askQuestion(question);
-      } catch (err) {
-        logger.error('[Wall] Failed to submit question', { error: err });
-        notify.error('提問失敗', '請稍後再試');
-        throw err;
-      }
+  const runAskQuestion = useCallback(
+    async ({ question }: AskQuestionPayload) => {
+      await askQuestion(question);
     },
     [askQuestion]
   );
 
-  const handleAnswerQuestion = useCallback(
-    async (questionId: string, content: string) => {
-      try {
-        await answerQuestion(questionId, content);
-      } catch (err) {
-        logger.error('[Wall] Failed to submit answer', { error: err });
-        notify.error('回答失敗', '請稍後再試');
-        throw err;
-      }
+  const runAnswerQuestion = useCallback(
+    async ({ questionId, content }: AnswerQuestionPayload) => {
+      await answerQuestion(questionId, content);
     },
     [answerQuestion]
+  );
+
+  const dispatchAskQuestion = useModeAwareAction<AskQuestionPayload>({
+    visitor: showDiscussionRegisterGuide,
+    demo: runAskQuestion,
+    live: runAskQuestion,
+  });
+
+  const dispatchAnswerQuestion = useModeAwareAction<AnswerQuestionPayload>({
+    visitor: showDiscussionRegisterGuide,
+    demo: runAnswerQuestion,
+    live: runAnswerQuestion,
+  });
+
+  const handleAskQuestion = useCallback(
+    async (question: string) => {
+      const result = await dispatchAskQuestion({ question });
+      if (!result.ok) {
+        logger.error('[Wall] Failed to submit question', { error: result.error });
+        notify.error('提問失敗', result.error);
+        throw new Error(result.error);
+      }
+    },
+    [dispatchAskQuestion]
+  );
+
+  const handleAnswerQuestion = useCallback(
+    async (questionId: string, content: string) => {
+      const result = await dispatchAnswerQuestion({ questionId, content });
+      if (!result.ok) {
+        logger.error('[Wall] Failed to submit answer', { error: result.error });
+        notify.error('回答失敗', result.error);
+        throw new Error(result.error);
+      }
+    },
+    [dispatchAnswerQuestion]
   );
 
   const handleReload = useCallback(async () => {
@@ -442,10 +482,12 @@ function WallInner() {
             <p className="mt-2 text-sm text-red-600">{authError.message}</p>
             <button
               type="button"
-              onClick={() => window.location.reload()}
+              onClick={handleReload}
+              disabled={isReloading}
+              aria-busy={isReloading}
               className="mt-4 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-700"
             >
-              重新載入
+              {isReloading ? '⏳ 重新整理中…' : '重新載入'}
             </button>
           </div>
         </div>
@@ -480,6 +522,7 @@ function WallInner() {
           </div>
           {isAuthError ? (
             <button
+              type="button"
               onClick={handleLogin}
               className="rounded-lg bg-brand px-4 py-2 text-sm text-white"
             >
@@ -488,6 +531,7 @@ function WallInner() {
           ) : (
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               <button
+                type="button"
                 onClick={handleReload}
                 disabled={isReloading}
                 aria-busy={isReloading}
@@ -496,6 +540,7 @@ function WallInner() {
                 {isReloading ? '⏳ 重新整理中…' : '🔄 重新整理'}
               </button>
               <button
+                type="button"
                 onClick={forceEnableMock}
                 className="rounded-lg bg-[#1a1a2e] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
               >
@@ -518,7 +563,7 @@ function WallInner() {
 
       <div className="mx-auto flex max-w-[960px] gap-5 p-2.5 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:p-2.5">
         {/* 主內容區 */}
-        <main className="flex max-w-[600px] flex-1 animate-[fadeInUp_0.5s_ease-out] flex-col gap-3">
+        <main className="flex max-w-[600px] flex-1 animate-fadeIn flex-col gap-3">
           <ReviewsSection viewerRole={effectiveRole} reviews={reviews} onUnlock={handleUnlock} />
           <PostsSection
             viewerRole={effectiveRole}
@@ -549,7 +594,7 @@ function WallInner() {
       </div>
 
       {/* 底部 CTA */}
-      <BottomCTA viewerRole={effectiveRole} />
+      <BottomCTA viewerRole={effectiveRole} mode={mode} />
 
       {/* Mock 切換僅於開發或白名單環境顯示 */}
       {(allowManualMockToggle || useMock) && (
@@ -564,21 +609,6 @@ function WallInner() {
       {allowManualRoleSwitch && <RoleSwitcher role={role} onRoleChange={setRole} />}
 
       <VersionBadge />
-
-      {/* 動畫 keyframes */}
-      <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes wave {
-          0%, 100% { transform: rotate(0deg); }
-          20% { transform: rotate(-25deg); }
-          40% { transform: rotate(10deg); }
-          60% { transform: rotate(-20deg); }
-          80% { transform: rotate(5deg); }
-        }
-      `}</style>
     </div>
   );
 }
