@@ -1,311 +1,22 @@
-﻿/**
+/**
  * QASection Component
  *
  * 準住戶問答區塊
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { Role, Question, Permissions } from '../types';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import type { Role, Question } from '../types';
 import { getPermissions } from '../types';
 import { canPerformAction, getPermissionDeniedMessage } from '../lib';
 import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
 import { useModeAwareAction } from '../../../hooks/useModeAwareAction';
 import { LockedOverlay } from './LockedOverlay';
-import { formatRelativeTimeLabel } from '../../../lib/time';
 import { logger } from '../../../lib/logger';
 import { useQAModalState } from '../hooks/useQAModalState';
-
-/** 虛擬化啟用門檻：超過此數量才啟用虛擬化 */
-const VIRTUALIZATION_THRESHOLD = 10;
-
-/** QACard 預估高度（px），用於虛擬化計算 */
-const ESTIMATED_CARD_HEIGHT = 180;
-
-interface QACardProps {
-  q: Question & { hasMoreAnswers?: boolean; totalAnswers?: number };
-  perm: Permissions;
-  isUnanswered?: boolean;
-  onAnswer?: (question: Question) => void;
-  isAnswering?: boolean;
-  onUnlock?: () => void;
-  /** 當卡片在 LockedOverlay 內時，不顯示內部的解鎖按鈕 */
-  hideUnlockButton?: boolean;
-}
-
-function QACard({
-  q,
-  perm,
-  isUnanswered = false,
-  onAnswer,
-  isAnswering,
-  onUnlock,
-  hideUnlockButton = false,
-}: QACardProps) {
-  const displayTime = formatRelativeTimeLabel(q.time);
-  return (
-    <article
-      className={`hover:border-brand/15 rounded-[12px] border p-3 transition-all ${isUnanswered ? 'border-brand-light/30 to-brand-100/30 bg-gradient-to-br from-brand-50' : 'border-border-light bg-white'}`}
-    >
-      <div className="mb-1.5 text-[13px] font-bold leading-snug text-brand-700">
-        Q: {q.question}
-      </div>
-      <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-ink-600">
-        <span>👤 準住戶</span>
-        <span>· {displayTime}</span>
-        {isUnanswered ? (
-          <span className="font-bold text-brand-light">· 等待回答中</span>
-        ) : (
-          <span>· {q.answersCount} 則回覆</span>
-        )}
-      </div>
-
-      {isUnanswered ? (
-        <div className="bg-brand/2 mt-2 rounded-[10px] p-4 text-center text-[13px] text-ink-600">
-          🙋 還沒有人回答，成為第一個回答的人！
-        </div>
-      ) : (
-        <div className="flex flex-col gap-1.5 border-l-[3px] border-border-light pl-3">
-          {q.answers.map((a) => {
-            const answerKey = `${String(q.id)}-${a.type}-${a.author}-${a.content}`;
-            return (
-              <div key={answerKey} className="py-1.5 text-[12px] leading-relaxed">
-                <div className="mb-1 flex flex-wrap items-center gap-1">
-                  <span
-                    className={`rounded px-2 py-0.5 text-[10px] font-bold ${a.type === 'agent' ? 'bg-brand-100 text-brand-600' : a.type === 'official' ? 'bg-brand-50 text-brand' : 'bg-brand-100 text-brand'}`}
-                  >
-                    {a.type === 'agent'
-                      ? '🏢 認證房仲'
-                      : a.type === 'official'
-                        ? `📋 ${a.author}`
-                        : `🏠 ${a.author}`}
-                  </span>
-                  {a.expert && (
-                    <span className="rounded bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-600">
-                      ⭐ 專家回答
-                    </span>
-                  )}
-                </div>
-                {a.content}
-              </div>
-            );
-          })}
-
-          {/* 非會員：顯示「還有 X 則回答」+ 註冊按鈕（但在 LockedOverlay 內不顯示） */}
-          {!hideUnlockButton && q.hasMoreAnswers && q.totalAnswers && (
-            <div className="border-brand/10 to-brand-100/50 mt-2 rounded-lg border bg-gradient-to-r from-brand-50 p-3 text-center">
-              <p className="mb-2 text-[13px] text-ink-700">
-                🔒 還有{' '}
-                <span className="font-bold text-brand">{q.totalAnswers - q.answers.length}</span>{' '}
-                則回答
-              </p>
-              <button
-                type="button"
-                onClick={onUnlock}
-                className="rounded-lg bg-brand px-4 py-2 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-brand-dark hover:shadow-md"
-              >
-                免費註冊 / 登入 解鎖全部
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {canPerformAction(perm, 'answer_question') && (
-        <div className="mt-2">
-          <button
-            type="button"
-            className={`flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${isUnanswered ? 'border-brand-light/30 bg-brand-light/10 text-brand-600' : 'bg-brand/6 border-brand/10 text-brand'} hover:bg-brand/12`}
-            onClick={() => onAnswer?.(q)}
-            disabled={isAnswering}
-            aria-busy={isAnswering}
-            aria-label={isUnanswered ? '搶先回答這個問題' : '回答這個問題'}
-          >
-            {isAnswering
-              ? '⏳ 傳送中…'
-              : `💬 ${isUnanswered ? '搶先回答' : '我來回答'}${perm.isAgent ? '（專家）' : ''}`}
-          </button>
-        </div>
-      )}
-    </article>
-  );
-}
-
-/**
- * AUDIT-01 Phase 8: 虛擬化 QA 列表
- *
- * 當問題數量超過門檻時，使用虛擬化渲染提升效能
- * - 減少 DOM 節點數量
- * - 降低記憶體占用
- * - 提升滾動流暢度
- */
-interface VirtualizedQAListProps {
-  questions: (Question & { hasMoreAnswers?: boolean; totalAnswers?: number })[];
-  perm: Permissions;
-  isUnanswered?: boolean | undefined;
-  onAnswer?: ((question: Question) => void) | undefined;
-  activeQuestionId?: string | number | null | undefined;
-  isAnswering?: boolean | undefined;
-  onUnlock?: (() => void) | undefined;
-  /** 容器最大高度（px），超過此高度會出現滾動條 */
-  maxHeight?: number | undefined;
-}
-
-/**
- * 非虛擬化渲染：當問題數量 <= 門檻時使用
- * 獨立組件避免 useVirtualizer hook 被調用
- */
-function SimpleQAList({
-  questions,
-  perm,
-  isUnanswered = false,
-  onAnswer,
-  activeQuestionId,
-  isAnswering,
-  onUnlock,
-}: Omit<VirtualizedQAListProps, 'maxHeight'>) {
-  return (
-    <div className="flex flex-col gap-2.5">
-      {questions.map((q) => {
-        const cardIsAnswering = isAnswering === true && activeQuestionId === q.id;
-        return (
-          <QACard
-            key={q.id}
-            q={q}
-            perm={perm}
-            isUnanswered={isUnanswered}
-            isAnswering={cardIsAnswering}
-            {...(onAnswer ? { onAnswer } : {})}
-            {...(onUnlock ? { onUnlock } : {})}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-/** 虛擬化容器預設最大高度（px） */
-const DEFAULT_VIRTUAL_MAX_HEIGHT = 600;
-
-/** 已回答問題區塊最大高度（px） */
-const ANSWERED_SECTION_MAX_HEIGHT = 500;
-
-/** 未回答問題區塊最大高度（px） */
-const UNANSWERED_SECTION_MAX_HEIGHT = 400;
-
-/**
- * 虛擬化渲染：當問題數量 > 門檻時使用
- * 獨立組件確保 useVirtualizer hook 只在需要時調用
- */
-function VirtualizedQAListInner({
-  questions,
-  perm,
-  isUnanswered = false,
-  onAnswer,
-  activeQuestionId,
-  isAnswering,
-  onUnlock,
-  maxHeight = DEFAULT_VIRTUAL_MAX_HEIGHT,
-}: VirtualizedQAListProps) {
-  const parentRef = useRef<HTMLDivElement>(null);
-  const spacerRef = useRef<HTMLDivElement>(null);
-  const [scrollTop, setScrollTop] = useState(0);
-
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    setScrollTop(e.currentTarget.scrollTop);
-  }, []);
-
-  const { visibleItems, totalHeight } = useMemo(() => {
-    const containerHeight = maxHeight;
-    const overscan = 2;
-
-    const startIndex = Math.max(0, Math.floor(scrollTop / ESTIMATED_CARD_HEIGHT) - overscan);
-    const endIndex = Math.min(
-      questions.length - 1,
-      Math.ceil((scrollTop + containerHeight) / ESTIMATED_CARD_HEIGHT) + overscan
-    );
-
-    const items = [];
-    for (let i = startIndex; i <= endIndex; i++) {
-      items.push({
-        index: i,
-        offsetTop: i * ESTIMATED_CARD_HEIGHT,
-      });
-    }
-
-    return {
-      visibleItems: items,
-      totalHeight: questions.length * ESTIMATED_CARD_HEIGHT,
-    };
-  }, [scrollTop, questions.length, maxHeight]);
-  const firstVisibleOffset = visibleItems.length > 0 ? visibleItems[0]?.offsetTop ?? 0 : 0;
-  const lastVisibleOffset = visibleItems.length > 0 ? visibleItems[visibleItems.length - 1]?.offsetTop ?? 0 : 0;
-  const bottomPadding = Math.max(
-    0,
-    totalHeight - (lastVisibleOffset + (visibleItems.length > 0 ? ESTIMATED_CARD_HEIGHT : 0))
-  );
-
-  useEffect(() => {
-    if (!parentRef.current) return;
-    parentRef.current.style.maxHeight = `${maxHeight}px`;
-  }, [maxHeight]);
-
-  useEffect(() => {
-    if (!spacerRef.current) return;
-    spacerRef.current.style.paddingTop = `${firstVisibleOffset}px`;
-    spacerRef.current.style.paddingBottom = `${bottomPadding}px`;
-  }, [firstVisibleOffset, bottomPadding]);
-
-  return (
-    <div
-      ref={parentRef}
-      className="overflow-auto"
-      onScroll={handleScroll}
-      data-testid="virtualized-container"
-    >
-      <div ref={spacerRef} className="w-full">
-        {visibleItems.map((item) => {
-          const q = questions[item.index];
-          if (!q) return null;
-          const cardIsAnswering = isAnswering === true && activeQuestionId === q.id;
-          const isLastItem = item.index === questions.length - 1;
-          return (
-            <div
-              key={q.id}
-              data-index={item.index}
-              // P3 修復：最後一項不加底部間距，避免多餘空白
-              className={isLastItem ? '' : 'pb-2.5'}
-            >
-              <QACard
-                q={q}
-                perm={perm}
-                isUnanswered={isUnanswered}
-                isAnswering={cardIsAnswering}
-                {...(onAnswer ? { onAnswer } : {})}
-                {...(onUnlock ? { onUnlock } : {})}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/**
- * 智慧選擇列表組件
- * - 數量 <= 門檻：使用 SimpleQAList（不調用 useVirtualizer）
- * - 數量 > 門檻：使用 VirtualizedQAListInner（啟用虛擬化）
- */
-function VirtualizedQAList(props: VirtualizedQAListProps) {
-  const shouldVirtualize = props.questions.length > VIRTUALIZATION_THRESHOLD;
-
-  if (!shouldVirtualize) {
-    return <SimpleQAList {...props} />;
-  }
-
-  return <VirtualizedQAListInner {...props} />;
-}
+import { QACard } from './QACard';
+import { VirtualizedQAList, ANSWERED_SECTION_MAX_HEIGHT, UNANSWERED_SECTION_MAX_HEIGHT } from './QAVirtualizedList';
+import { AskModal, AnswerModal } from './QAModals';
 
 interface QASectionProps {
   viewerRole: Role;
@@ -315,6 +26,9 @@ interface QASectionProps {
   feedbackDurationMs?: number;
   onUnlock?: () => void;
 }
+
+const MIN_QUESTION_LENGTH = 10;
+const MIN_ANSWER_LENGTH = 5;
 
 export function QASection({
   viewerRole,
@@ -356,7 +70,6 @@ export function QASection({
   } = useQAModalState();
 
   // 使用 totalAnswers（API 回傳總數）或 answersCount 判斷是否有回答
-  // 這樣即使 API 對非會員限流，也能正確分類
   const answeredQuestions = questions.filter(
     (q) => (q.totalAnswers ?? q.answersCount ?? q.answers.length) > 0
   );
@@ -364,7 +77,6 @@ export function QASection({
     (q) => (q.totalAnswers ?? q.answersCount ?? q.answers.length) === 0
   );
 
-  // 使用統一的 hook 處理訪客可見項目
   const {
     visible: visibleAnswered,
     hiddenCount,
@@ -376,11 +88,9 @@ export function QASection({
   const shouldShowUnlockCta =
     !!onUnlock && (showGuestUnlockCta || hiddenCount > 0 || remainingAnsweredCount > 0);
 
-  const MIN_QUESTION_LENGTH = 10;
-  const MIN_ANSWER_LENGTH = 5;
+  // --- Modal open handlers ---
 
   const rememberTriggerFocus = useCallback(() => {
-    // [NASA TypeScript Safety] 使用 instanceof 檢查取代 as HTMLElement
     const active = document.activeElement;
     restoreFocusRef.current = active instanceof HTMLElement ? active : null;
   }, [restoreFocusRef]);
@@ -398,7 +108,7 @@ export function QASection({
     rememberTriggerFocus();
     resetAskModal();
     setAskModalOpen(true);
-  }, [onUnlock, perm, resetAskModal, setAskModalOpen]);
+  }, [onUnlock, perm, rememberTriggerFocus, resetAskModal, setAskModalOpen]);
 
   const openAnswerModalForPermittedUser = useCallback(
     (question: Question) => {
@@ -416,7 +126,7 @@ export function QASection({
       setActiveQuestion(question);
       setAnswerModalOpen(true);
     },
-    [onUnlock, perm, resetAnswerModal, setActiveQuestion, setAnswerModalOpen]
+    [onUnlock, perm, rememberTriggerFocus, resetAnswerModal, setActiveQuestion, setAnswerModalOpen]
   );
 
   const showDiscussionRegisterGuide = useCallback(
@@ -442,7 +152,6 @@ export function QASection({
     live: (question) => openAnswerModalForPermittedUser(question),
   });
 
-  // AUDIT-01 Phase 7: 使用統一權限檢查函數
   const openAskModal = useCallback(() => {
     void dispatchOpenAskModal(undefined).then((result) => {
       if (!result.ok) {
@@ -460,6 +169,8 @@ export function QASection({
       }
     });
   }, [dispatchOpenAnswerModal]);
+
+  // --- Focus trap ---
 
   const getActiveDialog = useCallback((): HTMLDivElement | null => {
     return askModalOpen ? askDialogRef.current : answerModalOpen ? answerDialogRef.current : null;
@@ -480,7 +191,6 @@ export function QASection({
 
   /**
    * 安全聚焦 helper：依序嘗試 main、[data-app-root]、#root、body
-   * 會暫存原本的 tabIndex 並在聚焦後還原，避免永久污染 DOM
    */
   const focusSafeElement = (): void => {
     const candidates = [
@@ -495,7 +205,6 @@ export function QASection({
         el.dataset.prevTabindex = prevTabIndex ?? '';
         el.tabIndex = -1;
         el.focus();
-        // 還原 tabIndex（使用 setTimeout 確保 focus 完成）
         if (focusRestoreTimerRef.current !== null) {
           window.clearTimeout(focusRestoreTimerRef.current);
         }
@@ -533,7 +242,6 @@ export function QASection({
       if (!container) return;
       const focusable = getFocusableElements(container);
 
-      // 若無可聚焦元素，將焦點設到對話框本身
       if (!focusable.length) {
         const prevTabIndex = container.getAttribute('tabindex');
         container.dataset.prevTabindex = prevTabIndex ?? '';
@@ -545,7 +253,6 @@ export function QASection({
 
       const [first] = focusable;
       const last = focusable.at(-1);
-      // [NASA TypeScript Safety] 使用 instanceof 檢查取代 as HTMLElement
       const activeEl = document.activeElement;
       const active = activeEl instanceof HTMLElement ? activeEl : null;
       if (!active || !container.contains(active)) {
@@ -589,7 +296,6 @@ export function QASection({
     };
 
     const ensureFocusStaysInside = (event: FocusEvent) => {
-      // [NASA TypeScript Safety] 使用 instanceof 檢查取代 as Node
       const targetNode = event.target instanceof Node ? event.target : null;
       if (!targetNode || !activeDialog.contains(targetNode)) {
         const focusable = getFocusableElements(activeDialog);
@@ -607,7 +313,6 @@ export function QASection({
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('focusin', ensureFocusStaysInside);
 
-      // 還原對話框的 tabIndex（若之前被設為 -1）
       if (activeDialog && activeDialog.dataset.prevTabindex !== undefined) {
         const stored = activeDialog.dataset.prevTabindex;
         if (stored === '') {
@@ -618,12 +323,10 @@ export function QASection({
         delete activeDialog.dataset.prevTabindex;
       }
 
-      // 確保還原焦點到仍存在於 DOM 的元素
       const target = restoreFocusRef.current;
       if (target && document.body.contains(target)) {
         target.focus();
       } else {
-        // Fallback: 使用安全聚焦 helper
         focusSafeElement();
       }
       restoreFocusRef.current = null;
@@ -642,6 +345,8 @@ export function QASection({
     setAskModalOpen,
   ]);
 
+  // --- Feedback timer ---
+
   useEffect(() => {
     if (!feedback) return () => undefined;
     if (feedbackTimeoutRef.current) {
@@ -658,6 +363,8 @@ export function QASection({
     };
   }, [feedback, feedbackDurationMs, feedbackTimeoutRef]);
 
+  // --- Auto-focus textarea ---
+
   useEffect(() => {
     if (askModalOpen) {
       requestAnimationFrame(() => {
@@ -673,6 +380,8 @@ export function QASection({
       });
     }
   }, [answerModalOpen, answerTextareaRef]);
+
+  // --- Submit handlers ---
 
   const handleAskSubmit = async () => {
     const trimmed = askInput.trim();
@@ -728,6 +437,18 @@ export function QASection({
     }
   };
 
+  // --- Modal close handlers ---
+
+  const handleCloseAskModal = useCallback(() => {
+    setAskModalOpen(false);
+    resetAskModal();
+  }, [setAskModalOpen, resetAskModal]);
+
+  const handleCloseAnswerModal = useCallback(() => {
+    setAnswerModalOpen(false);
+    resetAnswerModal();
+  }, [setAnswerModalOpen, resetAnswerModal]);
+
   return (
     <section
       className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]"
@@ -751,7 +472,6 @@ export function QASection({
         </div>
       </div>
       <div className="flex flex-col gap-2.5 p-3.5 pb-12">
-        {/* AUDIT-01 Phase 8: 使用虛擬化列表渲染已回答問題 */}
         <VirtualizedQAList
           questions={visibleAnswered}
           perm={perm}
@@ -762,7 +482,6 @@ export function QASection({
           maxHeight={ANSWERED_SECTION_MAX_HEIGHT}
         />
 
-        {/* 使用 LockedOverlay 組件 */}
         <LockedOverlay
           visible={hiddenCount > 0 && !!nextHiddenQuestion}
           hiddenCount={hiddenCount}
@@ -781,11 +500,10 @@ export function QASection({
           )}
         </LockedOverlay>
 
-        {/* 還沒人回答區塊 - 移至註冊 CTA 上方 */}
+        {/* 還沒人回答區塊 */}
         <div className="bg-brand/3 rounded-[14px] border border-dashed border-border-light p-3.5">
           <div className="space-y-2">
             <div className="text-[12px] font-semibold text-brand-700">還沒人回答的問題</div>
-            {/* AUDIT-01 Phase 8: 使用虛擬化列表渲染未回答問題 */}
             {unansweredQuestions.length > 0 ? (
               <VirtualizedQAList
                 questions={unansweredQuestions}
@@ -817,7 +535,7 @@ export function QASection({
           </div>
         </div>
 
-        {/* 訪客固定顯示註冊 CTA，放在還沒人回答區塊下方 */}
+        {/* 訪客註冊 CTA */}
         {shouldShowUnlockCta && (
           <div className="bg-brand/4 border-brand/10 rounded-[12px] border p-3 text-center">
             <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
@@ -843,140 +561,32 @@ export function QASection({
         )}
       </div>
 
-      {/* 發問 Modal */}
-      {askModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
-          <div
-            ref={askDialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="ask-modal-title"
-            className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <h3 id="ask-modal-title" className="text-base font-bold text-ink-700">
-                  提出你的問題
-                </h3>
-                <p className="text-ink-500 text-xs">請描述情境，方便住戶提供建議</p>
-              </div>
-              <button
-                type="button"
-                className="text-sm text-ink-400 transition hover:text-ink-700"
-                onClick={() => {
-                  if (submitting === 'ask') return;
-                  setAskModalOpen(false);
-                  resetAskModal();
-                }}
-                aria-label="關閉發問視窗"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-3">
-              <label className="block text-xs font-semibold text-ink-600" htmlFor="qa-ask-textarea">
-                問題內容
-              </label>
-              <textarea
-                ref={askTextareaRef}
-                id="qa-ask-textarea"
-                className="bg-ink-50/40 h-28 w-full rounded-xl border border-border-light p-3 text-sm outline-none focus:border-brand"
-                placeholder="例：晚上車流聲音大嗎？管理費包含哪些服務？"
-                value={askInput}
-                onChange={(e) => setAskInput(e.target.value)}
-                maxLength={500}
-                disabled={submitting === 'ask'}
-              />
-              {askError && (
-                <p className="text-error-500 text-xs" role="alert">
-                  {askError}
-                </p>
-              )}
-              <div className="flex items-center justify-between text-[11px] text-ink-400">
-                <span>至少 {MIN_QUESTION_LENGTH} 個字</span>
-                <span>{askInput.length}/500</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleAskSubmit}
-                disabled={submitting === 'ask'}
-                className={`w-full rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition ${submitting === 'ask' ? 'opacity-70' : 'hover:bg-brand-600'}`}
-              >
-                {submitting === 'ask' ? '送出中…' : '送出問題'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AskModal
+        open={askModalOpen}
+        dialogRef={askDialogRef}
+        textareaRef={askTextareaRef}
+        input={askInput}
+        onInputChange={setAskInput}
+        error={askError}
+        onClose={handleCloseAskModal}
+        onSubmit={handleAskSubmit}
+        submitting={submitting}
+        minLength={MIN_QUESTION_LENGTH}
+      />
 
-      {/* 回答 Modal */}
-      {answerModalOpen && activeQuestion && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
-          <div
-            ref={answerDialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="answer-modal-title"
-            className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <div>
-                <h3 id="answer-modal-title" className="text-base font-bold text-ink-700">
-                  回答問題
-                </h3>
-                <p className="text-ink-500 text-xs">{activeQuestion.question}</p>
-              </div>
-              <button
-                type="button"
-                className="text-sm text-ink-400 transition hover:text-ink-700"
-                onClick={() => {
-                  if (submitting === 'answer') return;
-                  setAnswerModalOpen(false);
-                  resetAnswerModal();
-                }}
-                aria-label="關閉回答視窗"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-3">
-              <label
-                className="block text-xs font-semibold text-ink-600"
-                htmlFor="qa-answer-textarea"
-              >
-                回答內容
-              </label>
-              <textarea
-                ref={answerTextareaRef}
-                id="qa-answer-textarea"
-                className="bg-ink-50/40 h-32 w-full rounded-xl border border-border-light p-3 text-sm outline-none focus:border-brand"
-                placeholder="提供實際經驗、噪音狀況、交通建議等"
-                value={answerInput}
-                onChange={(e) => setAnswerInput(e.target.value)}
-                maxLength={800}
-                disabled={submitting === 'answer'}
-              />
-              {answerError && (
-                <p className="text-error-500 text-xs" role="alert">
-                  {answerError}
-                </p>
-              )}
-              <div className="flex items-center justify-between text-[11px] text-ink-400">
-                <span>至少 {MIN_ANSWER_LENGTH} 個字</span>
-                <span>{answerInput.length}/800</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleAnswerSubmit}
-                disabled={submitting === 'answer'}
-                className={`w-full rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition ${submitting === 'answer' ? 'opacity-70' : 'hover:bg-brand-600'}`}
-              >
-                {submitting === 'answer' ? '送出中…' : '送出回答'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AnswerModal
+        open={answerModalOpen}
+        question={activeQuestion}
+        dialogRef={answerDialogRef}
+        textareaRef={answerTextareaRef}
+        input={answerInput}
+        onInputChange={setAnswerInput}
+        error={answerError}
+        onClose={handleCloseAnswerModal}
+        onSubmit={handleAnswerSubmit}
+        submitting={submitting}
+        minLength={MIN_ANSWER_LENGTH}
+      />
     </section>
   );
 }

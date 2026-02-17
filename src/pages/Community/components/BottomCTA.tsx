@@ -41,7 +41,7 @@ export function BottomCTA({ viewerRole, mode }: BottomCTAProps) {
       <button
         type="button"
         onClick={handleSignupClick}
-        className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[#005282] px-5 py-2.5 text-[13px] font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+        className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] px-5 py-2.5 text-[13px] font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
       >
         {isMember ? '驗證住戶' : '免費註冊'}
       </button>
