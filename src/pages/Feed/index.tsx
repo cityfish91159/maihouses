@@ -64,8 +64,6 @@ export default function Feed() {
       }
     } else if (isDemoMode) {
       finish(readDemoRole());
-    } else if (!userId) {
-      setLoading(false);
     } else {
       const fetchRole = async () => {
         try {
@@ -114,14 +112,6 @@ export default function Feed() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-brand-50">
         <div className="text-sm text-gray-500">載入中...</div>
-      </div>
-    );
-  }
-
-  if (!userId && !isDemoRoute) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-brand-50">
-        <div className="text-sm text-red-500">缺少用戶 ID</div>
       </div>
     );
   }

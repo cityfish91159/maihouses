@@ -79,20 +79,13 @@ function toCommentAuthorRole(role: string | undefined | null): FeedCommentAuthor
 
 // Phase 4: 從 feedUtils 導入純函數
 import {
-  FEED_MOCK_STORAGE_KEY,
   EMPTY_FEED_DATA,
-  type SupabasePostRow,
-  type ProfileRow,
   SupabasePostRowSchema,
   deriveSidebarData,
-  deriveTitleFromContent,
   loadPersistedFeedMockState,
   saveFeedMockState,
-  buildProfileMap,
   mapSupabasePostsToFeed,
   filterMockData,
-  filterSecurePosts,
-  createSecureFeedData,
 } from './feed';
 
 // Re-export types for backward compatibility
@@ -177,7 +170,7 @@ export interface UseFeedDataReturn {
  * @returns 統一資料、操作方法與錯誤/載入狀態
  */
 export function useFeedData(options: UseFeedDataOptions = {}): UseFeedDataReturn {
-  const { user: authUser, role: authRole, isAuthenticated, loading: authLoading } = useAuth();
+  const { user: authUser, role: authRole, isAuthenticated } = useAuth();
   const { communityId, initialMockData, persistMockState = true, mode } = options;
 
   const { hasPermission } = usePermission();
@@ -316,7 +309,8 @@ export function useFeedData(options: UseFeedDataOptions = {}): UseFeedDataReturn
         return;
       }
 
-      const mapped = await mapSupabasePostsToFeed(parseResult.data);
+      const parsedRows = parseResult.data;
+      const mapped = await mapSupabasePostsToFeed(parsedRows);
 
       // Security Filter
       const securePosts = mapped.posts.filter((p) => {
@@ -336,10 +330,10 @@ export function useFeedData(options: UseFeedDataOptions = {}): UseFeedDataReturn
 
       if (currentUserId) {
         const initialLiked = new Set<string | number>();
-        (data ?? []).forEach((row) => {
-          const likedBy = (row as SupabasePostRow).liked_by ?? [];
+        parsedRows.forEach((row) => {
+          const likedBy = row.liked_by ?? [];
           if (likedBy.includes(currentUserId)) {
-            initialLiked.add((row as SupabasePostRow).id);
+            initialLiked.add(row.id);
           }
         });
         setApiLikedPosts(initialLiked);

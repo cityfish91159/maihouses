@@ -156,16 +156,11 @@ export function useConsumer(userId?: string, mode?: PageMode) {
         return;
       }
       const communityId = userProfile?.communityId || 'mock-community';
-      try {
-        if (images && images.length > 0) {
-          await createPost(content, communityId, images);
-        } else {
-          await createPost(content, communityId);
-        }
-      } catch (err) {
-        // console.error('Failed to create post', err); // B2: Removed console.error
-        throw err;
+      if (!images || images.length === 0) {
+        await createPost(content, communityId);
+        return;
       }
+      await createPost(content, communityId, images);
     },
     [createPost, isAuthenticated, userProfile]
   );

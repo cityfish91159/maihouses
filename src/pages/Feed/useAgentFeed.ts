@@ -41,8 +41,7 @@ export function useAgentFeed(userId?: string, mode?: PageMode) {
   // P6-REFACTOR: Todo List from external mockData (deep copy)
   const todoList = useMemo(() => getAgentTodoList(), []);
 
-  const { createPost, toggleLike, isLiked, addComment, useMock, setUseMock, isAuthenticated } =
-    feed;
+  const { addComment } = feed;
 
   const handleComment = useCallback(
     async (postId: string | number, content: string) => {

@@ -11,7 +11,7 @@ export const ROUTES = {
   /** 房地產列表 */
   PROPERTY_LIST: '/maihouses/property.html',
 
-  /** 個人信息流 (React) - 需要 userId 參數 */
+  /** 個人資訊流 (React) - 需要 userId 參數 */
   FEED: (userId: string): string => `/maihouses/feed/${userId}`,
 
   /** 演示模式 Feed 入口（已登入導向真實 feed；非 demo 模式下未登入導向首頁） */

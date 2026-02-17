@@ -65,11 +65,12 @@
 - [ ] **#26** 登出清理 — `cleanupAuthState()` 統一函數 + onAuthStateChange（2 檔）
 - [ ] **#27** UAG 新房仲空狀態 + MaiMai 引導（1 新組件）
 
-### P2 — 靜態頁重構（`docs/property.html`）
+### P2 — 房源列表頁三模式重構（`PropertyListPage`）
 
-- [ ] **#30a** HTML 結構 + CSS Design System — 6 區塊骨架 + 三層卡片(L/M/S) + 房仲頭像 + 品牌色 + 響應式（需 `/ui-ux-pro-max`）
-- [ ] **#30b** MaiMai SVG + 動畫 + 互動 — wave/celebrate 精確座標 + scroll-triggered 入場 + 點擊氣泡切換 + confetti
-- [ ] **#30c** JS 資料驅動 + 卡片渲染 — 11 筆 Mock 資料 + L/M/S 三層 JS 渲染 + 愛心收藏 + 分頁
+- [ ] **#30a** PropertyListPage 頁面骨架 + 6 區塊 Section 組件 + 三模式接入（需 `/ui-ux-pro-max`）
+- [ ] **#30a2** L/M/S 三層卡片 React 組件 + Schema 擴充 + seed 擴充
+- [ ] **#30b** PropertyListPage MaiMai React 組件 + 動畫
+- [ ] **#30c** PropertyListPage 三模式互動（愛心收藏 + 評價鎖定 + ModeBreakBlock）
 
 ---
 
@@ -107,9 +108,14 @@
 #8d 社區探索頁 ─┬──────→ #12b Header 社區導航分層（探索頁須先存在）
 #12 Header UI ──┘
 
-#30a HTML+CSS 骨架 ────── 無依賴（獨立靜態 HTML，可隨時施工）
-#30a ─────────────────┬→ #30b MaiMai SVG + 動畫
-                       └→ #30c JS 資料驅動 + 卡片渲染
+#12 Header 三模式 UI ──→ #13 PropertyListPage Header 統一
+#13 ──────────────────→ #30a PropertyListPage 頁面骨架 + 6 區塊
+#1a usePageMode ───────→ #30a（三模式驅動）
+#30a ─────────────────┬→ #30a2 L/M/S 三層卡片組件（可部分平行）
+                       ├→ #30b MaiMai React 組件 + 動畫
+                       └→ #9 移除 docs/property.html（新增依賴）
+#30a2 ────────────────→ #30c 三模式互動（愛心收藏 + 評價鎖定）
+#1b useModeAwareAction → #30c（愛心收藏三模式派發）
 ```
 
 ## 施工順序
@@ -126,8 +132,9 @@
 | Wave 4B | #8d、#10b、#24、#25、#29 | 社區探索頁 + 退出清理 + Chat/Assure + 跨裝置修復 |
 | Wave 4C | #12b、#26 | Header 社區導航分層（依賴 #8d + #12）+ 登出清理 |
 | Wave 5 | #7、#11 | 登入重定向 + 註冊加社區選擇（依賴 #8c）+ 產品方向確認 |
-| Wave Any-1 | #30a | HTML+CSS 骨架（無依賴，可隨時插入）|
-| Wave Any-2 | #30b、#30c | MaiMai 動畫 + JS 渲染（依賴 #30a）|
+| Wave 4-PL | #30a | 頁面骨架 + 6 區塊 Section（依賴 #13）|
+| Wave 4-PL | #30a2 | L/M/S 卡片組件 + Schema + seed（可與 #30a 部分平行）|
+| Wave 4-PL+1 | #30b、#30c | MaiMai + 三模式互動（依賴 #30a/#30a2）|
 
 ---
 
@@ -355,7 +362,7 @@ function useModeAwareAction<T>(handlers: {
 
 ### #6b ✅ Feed：移除 `DEMO_IDS` + usePageMode
 
-**已完成** 2026-02-16（第二輪修正：2026-02-16；strict-audit Phase 4：2026-02-16）
+**已完成** 2026-02-16（第二輪修正：2026-02-16；strict-audit Phase 4：2026-02-16；第三輪修正：2026-02-17）
 
 新增：`App.tsx` `/feed/demo` 靜態路由、`ROUTES.FEED_DEMO`
 修改：`Feed/index.tsx`、`useFeedData.ts`、`useConsumer.ts`、`useAgentFeed.ts`、`Agent.tsx`、`Consumer.tsx` + 測試同步
@@ -369,6 +376,11 @@ function useModeAwareAction<T>(handlers: {
 - `Agent` 移除無效 `viewerRole` fallback；`Consumer` 的 deep-link 依賴改為 `filteredPosts`
 - `Consumer` 發文 `onSubmit` 改為直接傳遞可選 `images`
 - `safeStorage` 補 `logger.warn`，避免 storage 不可用時靜默失敗
+- `useFeedData` 移除 `as SupabasePostRow` 斷言，改為使用 `parsedRows` 直接推導 liked 狀態
+- `Feed/index.tsx` 刪除不可達的 `!userId && !isDemoRoute` 防禦分支與重複分支
+- `Consumer` 手機版補掛 `BottomNav`，避免既有底部導航元件閒置
+- `useConsumer.handleCreatePost` 改為 early-return 呼叫契約（無圖片時維持兩參數呼叫）
+- Feed 相關註解用語統一為「資訊流」
 
 **驗證**：
 - [x] `rg "DEMO_IDS" src/` → 0 筆
@@ -376,6 +388,7 @@ function useModeAwareAction<T>(handlers: {
 - [x] `npm run typecheck`
 - [x] `npm run gate`
 - [x] `cmd /c npm run test -- src/pages/Feed/__tests__/FeedIntegration.test.tsx src/pages/Feed/__tests__/FeedRouting.test.tsx src/pages/Feed/__tests__/useAgentFeed.test.ts src/pages/Feed/__tests__/useConsumer.test.ts`（16 passed）
+- [x] `cmd /c npm run test -- src/pages/Feed/__tests__/FeedRouting.test.tsx src/pages/Feed/__tests__/useAgentFeed.test.ts src/pages/Feed/__tests__/useConsumer.test.ts`（12 passed）
 
 ---
 
@@ -474,13 +487,14 @@ function successRedirect(user) {
 
 **目標**：清理靜態 HTML 殘留
 
-**依賴**：#2、#6b
+**依賴**：#2、#6b、#30a
 
 **移除**：
 - `public/community-wall_mvp.html`
 - `public/maihouses/community-wall_mvp.html`
 - `public/feed-agent.html`
 - `public/feed-consumer.html`
+- `docs/property.html`（1223 行靜態 HTML，#30a React 版完成後移除）
 
 **修改**：`vercel.json`（同步 rewrite + 新增 301 `/feed/demo-:id` → `/feed/demo`）
 
@@ -867,15 +881,331 @@ App.tsx 加 `onAuthStateChange('SIGNED_IN')` → `queryClient.clear()`。
 
 ---
 
-### #27 UAG 新房仲空狀態
+### #27 UAG 新房仲空狀態 MaiMai 歡迎引導卡片
 
 **目標**：新 agent 進 UAG 看到 MaiMai 引導而非空白頁
 
 **依賴**：#5a
 
-**新增**：`src/pages/UAG/components/UAGEmptyState.tsx`
+**Context**：新房仲註冊後第一次進入 UAG 頁面（`/maihouses/uag`），因為還沒上架任何物件，leads 和 listings 都是空的，整頁除了空區塊什麼都沒有。需要一個 MaiMai 歡迎卡片引導新房仲去上架第一筆物件。
 
-UI 設計需 `/ui-ux-pro-max`。
+上架物件後系統才能追蹤消費者瀏覽行為，雷達才會有泡泡。所以引導方向是「去上架物件」。
+
+**修改檔案清單**：
+
+| 操作 | 檔案 | 用途 |
+|------|------|------|
+| 新增 | `src/pages/UAG/components/UAGEmptyState.tsx` | 歡迎卡片組件 |
+| 修改 | `src/pages/UAG/index.tsx` (L268) | 在 uag-grid 最上方條件渲染卡片 |
+| 修改 | `src/pages/UAG/UAG.module.css` | 新增歡迎卡片樣式 |
+
+**不動的東西**：`routes.ts`（不新增常數，CTA 用 `<Link to="/property/upload">`，照 `ListingFeed.tsx:186` 既有 pattern）
+
+---
+
+#### 步驟 1：新增 UAGEmptyState.tsx
+
+**Props**：
+```typescript
+interface UAGEmptyStateProps {
+  onDismiss: () => void;
+}
+```
+
+**顯示邏輯（由父組件 index.tsx 控制）**：
+- `appData.leads.length === 0 && appData.listings.length === 0 && !dismissed`
+- dismissed 狀態用 `useState(false)`，關閉時寫 `sessionStorage.setItem('uag-welcome-dismissed', '1')`
+- 初始化時讀 sessionStorage 判斷是否已關閉
+
+**使用的分子素材**：
+- `MaiMaiBase` from `src/components/MaiMai`（mood="wave", size="md", showEffects={true}）
+- `usePrefersReducedMotion` from `src/hooks/usePrefersReducedMotion`（控制 animated prop）
+- `X` from `lucide-react`（關閉按鈕）
+- `Link` from `react-router-dom`（CTA 導航）
+
+**佈局**：
+- 桌面：水平左右（左 MaiMai、右文案）
+- 平板（<1024px）：垂直排列（上 MaiMai、下文案）
+- 手機（<768px）：MaiMai 改用 `size="sm"`（80px），減少垂直佔用
+- Grid 定位：CSS class `k-span-6`（全寬），在 RadarCluster 之前
+
+**配色（首頁主色系 —— `src/index.css` :root 變數，全部用 CSS Module 實作，UAG 頁面零 Tailwind）**：
+
+| 元素 | CSS 變數 | 色碼 |
+|------|---------|------|
+| 卡片背景 | `#fff` | #ffffff |
+| 卡片邊框 | `var(--border)` | #e6edf7 |
+| 標題文字 | `var(--text-primary)` | #0a2246 |
+| 說明文字 | `var(--text-secondary)` | #526070 |
+| CTA 按鈕背景 | `var(--brand)` | #00385a |
+| CTA 按鈕文字 | `#fff` | #fff |
+| CTA hover 背景 | `var(--primary-dark)` | #002a44 |
+| CTA hover 陰影 | `0 4px 12px rgba(0,56,90,0.2)` | — |
+| 「知道了」文字 | `var(--text-secondary)` | #526070 |
+| 關閉按鈕 | `var(--text-muted)` | #6c7b91 |
+
+**文案**：
+- 標題：嗨！歡迎加入 MaiHouses！
+- 內文：你的買家雷達已經就緒。當有消費者在看你負責的物件，我會馬上通知你。
+- 引導：現在先去上架你的第一筆物件吧！
+- CTA：上架物件
+- 次要：知道了（語意誠實，dismiss 後不會自動再顯示）
+
+**動畫**：
+- 卡片進場：CSS Module `animation: fadeIn 0.3s cubic-bezier(0.4,0,0.2,1) forwards`（`@keyframes fadeIn` 需在 UAG.module.css 中新增，UAG.module.css 目前無此 keyframe）
+- MaiMai：`animated={!prefersReducedMotion}` 浮動動畫
+- prefers-reduced-motion 處理：
+  - 用 `usePrefersReducedMotion()` hook 取得偏好
+  - MaiMai `animated` prop 綁定 `!prefersReducedMotion`
+  - 卡片 fadeIn 在 CSS Module 中加 `@media (prefers-reduced-motion: reduce)` 停用
+
+**互動 transition**：
+- CTA hover / 關閉按鈕 hover：`transition: all 0.2s ease`（與既有 `.uag-btn` 一致）
+- 所有可點擊元素：`cursor: pointer`
+
+**無障礙**：
+- 關閉按鈕觸控區 min 44×44px
+- 關閉按鈕 `aria-label="關閉歡迎引導"`
+- 關閉按鈕 `focus-visible` 樣式：`outline: 2px solid var(--brand); outline-offset: 2px`
+- CTA 按鈕 min-height 44px
+- 「知道了」按鈕 min-height 44px
+- 卡片 `role="region"` `aria-label="新手引導"`
+- 文字對比度：說明文字用 `--text-secondary`(#526070) 對白底 = 5.2:1 ≥ WCAG AA 4.5:1
+
+---
+
+#### 步驟 2：修改 index.tsx
+
+**新增 import**（放在 L29 `import ListingFeed` 之後）：
+```typescript
+import { UAGEmptyState } from './components/UAGEmptyState';
+```
+
+在 `UAGPageContent` 中：
+
+1. 新增 state（放在 L59 `assetMessageLead` state 之後，與其他 state 同區）：
+```typescript
+const [welcomeDismissed, setWelcomeDismissed] = useState(
+  () => sessionStorage.getItem('uag-welcome-dismissed') === '1'
+);
+```
+
+2. 計算是否顯示（放在 L231 `if (!appData) return null` 之後、`const agentId` 之前）：
+```typescript
+const showWelcome = appData.leads.length === 0
+  && appData.listings.length === 0
+  && !welcomeDismissed;
+```
+
+> 注意：`showWelcome` 不是 hook，依賴 `appData`，所以放在 early return 之後是正確的。
+
+3. dismiss handler（放在 `handleCreatePost` 之前）：
+```typescript
+const handleDismissWelcome = useCallback(() => {
+  setWelcomeDismissed(true);
+  try {
+    sessionStorage.setItem('uag-welcome-dismissed', '1');
+  } catch {
+    // iOS Safari 私隱模式 sessionStorage 可能滿額（參考 #29）
+  }
+}, []);
+```
+
+4. 在 `<div className={styles['uag-grid']}>` 內、RadarCluster 之前插入：
+```tsx
+{showWelcome && <UAGEmptyState onDismiss={handleDismissWelcome} />}
+```
+
+---
+
+#### 步驟 3：修改 UAG.module.css
+
+新增歡迎卡片樣式 class（純 CSS Module，不用 Tailwind — 與 UAG 全頁面一致）：
+
+```css
+/* ====== #27: 歡迎引導卡片 ====== */
+.welcome-card {
+  background: #fff;
+  border: 1px solid var(--border);         /* #e6edf7 */
+  border-radius: 16px;                     /* 與 .uag-card 一致 */
+  padding: 24px;                           /* 桌機 */
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  position: relative;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.welcome-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.welcome-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.welcome-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);              /* #0a2246 */
+  margin: 0 0 8px;
+}
+
+.welcome-desc {
+  font-size: 14px;
+  color: var(--text-secondary);            /* #526070, WCAG AA 5.2:1 */
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.welcome-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 12px;
+  background: var(--brand);                /* #00385a */
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.welcome-cta:hover {
+  background: var(--primary-dark);         /* #002a44 */
+  box-shadow: 0 4px 12px rgba(0, 56, 90, 0.2);
+}
+
+.welcome-dismiss {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);            /* #526070 */
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 16px;
+  min-height: 44px;
+  transition: color 0.2s ease;
+}
+
+.welcome-dismiss:hover {
+  color: var(--text-primary);
+}
+
+.welcome-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);                /* #6c7b91 */
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.welcome-close:hover {
+  background: var(--bg-alt);
+}
+
+.welcome-close:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.welcome-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* 平板/手機 */
+@media (max-width: 1024px) {
+  .welcome-card {
+    padding: 16px;
+  }
+  .welcome-card-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  .welcome-actions {
+    justify-content: center;
+  }
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .welcome-card {
+    animation: none;
+  }
+}
+
+/* fadeIn keyframe — UAG.module.css 目前無此定義，需新增 */
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+```
+
+---
+
+#### UAGEmptyState.tsx import 順序
+
+```typescript
+import { Link } from 'react-router-dom';                   // 1. 路由
+import { X } from 'lucide-react';                          // 2. 第三方 UI
+import { MaiMaiBase } from '../../../components/MaiMai';   // 3. 內部元件
+import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion'; // 4. 內部 hook
+import styles from '../UAG.module.css';                    // 5. 樣式
+```
+
+> 不需 `import React` — 專案用 Vite + React 18 JSX transform，無需顯式 import。
+> 不需 `useMemo` — 此組件是純展示組件，接收 `onDismiss` prop，無計算邏輯。
+
+---
+
+#### 驗證方式
+
+1. `npm run gate` 通過（typecheck + lint）
+2. 用 live 模式新帳號（或 mock 模式清空 leads/listings）訪問 `/maihouses/uag`
+3. 確認卡片出現在 RadarCluster 上方、全寬
+4. 確認 MaiMai wave 動畫正常
+5. 點「上架物件」→ 導航到 `/property/upload`
+6. 點「知道了」或 ✕ → 卡片消失
+7. 重整頁面 → 卡片不再出現（sessionStorage）
+8. 關閉瀏覽器重開 → 卡片重新出現（sessionStorage 清除）
+9. 上架物件後回到 UAG → 卡片自動不顯示（listings > 0）
+10. 手機 viewport（<768px）→ 確認垂直排列 + MaiMai 縮為 80px
+11. prefers-reduced-motion → 確認 fadeIn 停用 + MaiMai 浮動停用
+12. 關閉按鈕 Tab focus → 確認 focus-visible outline 可見
+13. 「知道了」/ CTA 觸控區 ≥ 44px
+
+---
+
+#### #27 可優化補充（規劃建議，未實作）
+
+> 以下為 #27 可再提升的項目，先記錄在工單供規劃與排程，不直接改碼。
+
+| 優化項目 | 建議 | 目的 | 建議落點 |
+|---|---|---|---|
+| 顯示條件更精準 | `showWelcome` 增加 `mode === 'live'` 與房仲角色判斷（agent/admin/official） | 避免 visitor/demo 或非房仲身份誤顯示 | `src/pages/UAG/index.tsx` |
+| 儲存防禦一致化 | `sessionStorage` 改用 `safeSessionStorage` 封裝（或至少保留 `try/catch`） | 對齊 iOS 私隱模式防護，避免儲存例外影響流程 | `src/lib/safeStorage.ts`, `src/pages/UAG/index.tsx` |
+| 動畫無障礙統一 | 改用 `useMaiMaiA11yProps()` 一次輸出 `animated/showEffects` | 與全站 MaiMai a11y 模式一致，減少重複判斷 | `src/hooks/useMaiMaiA11yProps.ts`, `src/pages/UAG/components/UAGEmptyState.tsx` |
+| 素材一致性約束 | 明確規範卡片僅可用 `MaiMaiBase`（禁止手刻 SVG）且維持 Header `Logo` 現有分子元件 | 確保 Logo / MaiMai 使用完整正規分子素材，避免素材漂移 | `src/components/MaiMai`, `src/components/Logo/Logo.tsx` |
+| 行為可觀測性 | 新增曝光/關閉/CTA 點擊事件（例：`uag_welcome_impression`、`uag_welcome_dismiss`、`uag_welcome_upload_click`） | 量化引導卡轉換成效，支援後續文案與版位優化 | `api/uag/track.ts`, `src/pages/UAG/index.tsx` |
+| 測試覆蓋補強 | 增加 `UAGEmptyState` 與 `showWelcome` 條件測試（含 dismiss 持久化） | 降低回歸風險，確保 #27 長期可維護 | `src/pages/UAG/components/__tests__/*`, `src/pages/UAG/__tests__/*` |
 
 ### #28 已完成工單防禦強化
 
@@ -1001,7 +1331,7 @@ UI 設計需 `/ui-ux-pro-max`。
 
 ---
 
-### #30 房產聚合頁重構（共用上下文）
+### #30 React 房源列表頁三模式設計規格（共用上下文）
 
 **參考截圖**：
 - `C:\Users\陳世瑜\Downloads\www.realestate.com.au_buy_in-nsw_list-1.png`（Premier 大卡 + 標準卡片混排）
@@ -1011,9 +1341,14 @@ UI 設計需 `/ui-ux-pro-max`。
 
 **修改**：
 
-| 檔案 | 動作 |
-|------|------|
-| `docs/property.html` | 完整重寫（唯一目標）|
+| 檔案 | 動作 | 工單 |
+|------|------|------|
+| `src/pages/PropertyListPage.tsx` | 主頁面重構（接入 usePageMode） | #30a |
+| `src/pages/Property/components/` | 6 區塊 Section 子組件重構/新增 | #30a |
+| `src/styles/LegacyPropertyPage.css` | 遷移至 Tailwind 後移除 | #30a |
+| `src/features/property/components/` | L/M/S 三層卡片組件重構 | #30a2 |
+| `src/types/property-page.ts` | Schema 擴充（agent/scarcityTag/tier） | #30a2 |
+| `src/features/property/data/seed.ts` | 擴充：房仲資料、11 筆完整卡片 | #30a2 |
 
 **realestate.com.au 特色 → MaiHouses 改造對照**：
 
@@ -1060,46 +1395,79 @@ UI 設計需 `/ui-ux-pro-max`。
 | Ghost | `bg: transparent; color: #00385a; hover: underline` |
 | Pill/Tag | `border: 1px solid #E6EDF7; border-radius: 999px; hover: border-color #00385a` |
 
+### PropertyListPage 三模式視覺差異表
+
+| 互動元素 | visitor | demo | live |
+|----------|---------|------|------|
+| **Header** | 登入/註冊按鈕（首頁 Header） | 退出演示按鈕 | 使用者頭像 + 下拉選單 |
+| **搜尋框 + pills** | 正常使用 | 正常使用 | 正常使用 |
+| **L/M 卡評價** | 2 則 + LockedOverlay blur 鎖定 | 全部解鎖（seed 完整顯示） | API 數據，全部解鎖 |
+| **L/M 卡愛心收藏** | 點擊 → toast 引導註冊 | 本地 toggle（React state） | API 收藏（暫 = 本地 toggle） |
+| **「查看詳情」導航** | → PropertyDetailPage（visitor） | → PropertyDetailPage（demo） | → PropertyDetailPage（live） |
+| **模式中斷區塊** | 顯示：CTA 引導註冊（M 卡 #4~#5 間） | 不渲染 | 不渲染 |
+| **CTA 區（§5）** | 「免費註冊」→ getAuthUrl | 「開始探索」→ 滾動回搜尋區 | 「聯繫我們」或隱藏（待定） |
+| **Hero 副標數字** | seed 靜態數字 | seed + count-up 動畫 | API 真實數字 + count-up |
+| **資料來源** | seed + API 背景更新 | seed（禁 API） | API 數據 |
+| **DemoBadge** | 不顯示 | 右下角浮動標籤（#10a） | 不顯示 |
+| **S 卡** | 正常顯示（無評價、無愛心） | 正常顯示 | 正常顯示 |
+
 ---
 
-### #30a HTML 結構 + CSS Design System
+### #30a PropertyListPage 頁面骨架 + 6 區塊 Section 組件
 
-**目標**：建立 6 區塊 HTML 骨架 + 三層卡片 CSS + 品牌色 + 響應式，不含 MaiMai SVG 和 JS 渲染
+**目標**：PropertyListPage 主頁面接入 usePageMode() + 6 區塊 Section 容器組件 + Tailwind 遷移。
+Section 內部使用 #30a2 的卡片組件（施工期可先用 placeholder）。
 
-**依賴**：無（獨立靜態 HTML）
+**依賴**：#12（Header 三模式 UI）、#13（LegacyHeader → Header 替換）、#1a（usePageMode）
 
-**三層卡片規格**：
+**修改**：
 
-| 層級 | 名稱 | 商業 | 視覺規格 |
-|------|------|------|---------|
-| **L** | Premier 推廣 | 付費最高曝光 | 全寬大圖(16:10) + `Premier` badge 左上 + 愛心收藏右上 + 房仲圓形頭像右上角(56px白邊框+陰影) + 房仲姓名/公司名/頭銜 + 2 則評價 + 註冊看更多 + 品牌色左邊框 4px |
-| **M** | 標準展示 | 標準刊登 | 桌面水平(圖左文右)、手機圖上文下 + 愛心收藏 + 房仲圓形頭像(40px) + 房仲姓名/公司名 + 2 則評價 + 註冊看更多 + 評分星星（`--star-color: #FBB424`） |
-| **S** | 精簡列表 | 免費/基本 | 單行：60px 縮圖 + 標題 + 價格 + specs icon。無評價無房仲頭像 |
+| 檔案 | 動作 |
+|------|------|
+| `src/pages/PropertyListPage.tsx` | 主頁面重構：接入 usePageMode，三模式資料來源，組合 6 區塊 |
+| `src/pages/Property/components/HeroSection.tsx` | 新增：Hero 搜尋區 |
+| `src/pages/Property/components/SearchBox.tsx` | 升級：Glassmorphism + 快捷 pills |
+| `src/pages/Property/components/FeaturedSection.tsx` | 升級：2 欄容器（消費 PremierCard） |
+| `src/pages/Property/components/ListingSection.tsx` | 升級：M+S 混合容器 + ModeBreakBlock 插入邏輯 |
+| `src/pages/Property/components/ModeBreakBlock.tsx` | 新增：visitor CTA 區塊 |
+| `src/pages/Property/components/CtaSection.tsx` | 新增：品牌色 CTA 區（三模式文案切換） |
+| `src/pages/Property/components/FooterSection.tsx` | 新增：Footer |
+| `src/styles/LegacyPropertyPage.css` | 遷移至 Tailwind 後移除 |
 
-**頁面結構（6 區塊）**：
+**ErrorBoundary**：頂層 `<ErrorBoundary>` 包裹 6 區塊（ref: react.csv #39），fallback 顯示品牌色錯誤卡片：「頁面載入異常，請重新整理」+ 重新整理按鈕（Primary 樣式）。
+
+**三態處理**（ref: CONVENTIONS §5.3）：
+- **Loading**：首次載入顯示 skeleton（Hero 區 pulse 背景 + 卡片區 3 個 skeleton 卡片 `animate-pulse`），不顯示空白頁面
+- **Error**：API 失敗時顯示 inline 錯誤訊息 + 「重試」按鈕，不阻擋已載入的 seed 資料渲染
+- **Empty**：搜尋/篩選結果為空時顯示空狀態插圖 + 「清除篩選條件」按鈕 + 文案「找不到符合條件的房源，試試其他關鍵字」
+
+**6 區塊結構**：
+
+1. **Sticky Header** → 使用首頁 `<Header />`（64px，#13 替換後自動繼承三模式）
+2. **Hero 搜尋區** → `<HeroSection />`（大標 + 副標 + Glassmorphism 搜尋 + pills + MaiMai placeholder）
+3. **精選推薦區** → `<FeaturedSection />`（2 欄 `PremierCard` 並排）
+4. **房源列表區** → `<ListingSection />`（M `StandardCard` × 6 + `ModeBreakBlock` + S `CompactCard` × 3）
+5. **CTA 區** → `<CtaSection />`（品牌色背景 + MaiMai celebrate + 文案依模式切換）
+6. **Footer** → `<FooterSection />`
+
+**Header 方案**：使用首頁 `Header.tsx`（`src/components/Header/Header.tsx`），高度統一 64px（`h-16`）。
+
+**三模式資料來源**：
+- visitor：SEED_DATA + API 背景更新（同現有邏輯）
+- demo：SEED_DATA only（`mode !== 'live'` 時 skip fetch）
+- live：API 數據（`GET /api/property/page-data`）
+
+**CTA 區三模式**（保持顯示，文案切換）：
+- visitor：「加入邁房子，解鎖所有評價」+「免費註冊」→ `getAuthUrl('signup')`
+- demo：「喜歡這個體驗嗎？」+「開始探索」→ 滾動回搜尋區
+- live：「找到心儀的房源了嗎？」+「聯繫房仲」→ 導向聯繫頁面（或隱藏，視需求）
+
+**頁面結構（6 區塊精確規格）**：
 
 #### 1. Sticky Header
 
-```
-高度: 56px (手機 48px)
-背景: white + border-bottom: 1px solid #E6EDF7
-z-index: 100
-body padding-top: 56px (手機 48px)，防內容被 header 遮蔽（ux-guidelines #2 Sticky Navigation）
-```
-
-- Skip link: `<a class="skip-link" href="#main">跳至主要內容</a>`（視覺隱藏，`:focus` 時顯示）
-- Logo: 42x42px 深藍漸層方形 + 白色房子 SVG +「邁房子」+ slogan（桌面顯示）
-- 導航:「精選社區」「房源列表」（桌面）
-- 右側: 搜尋 icon +「登入」ghost +「免費註冊」primary 按鈕
-
-Logo 精確規格（對齊 `src/components/Logo/Logo.tsx`）:
-- 圖標: `border-radius: 12px`, `background: linear-gradient(to bottom right, #00385a, #004E7C)`
-- SVG: `viewBox="0 0 24 24"` stroke="white" strokeWidth="2.5"
-  - 房子: `M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z`
-  - 門: `M9 21.5V13H15V21.5`
-- 紅點: 6x6px `#f87171`（對齊 Logo.tsx `bg-red-400`）右上角，`box-shadow: 0 0 0 1.5px #004E7C`
-- 文字: `font-family: 'Noto Serif TC', Georgia, serif; font-size: 24px; font-weight: bold; color: #00385a`
-- Slogan: `15px; font-weight: 700; letter-spacing: 0.15em; color: #005282`
+高度: 64px（`h-16`，與首頁 Header 統一）。使用首頁 `<Header />`，三模式行為自動繼承。
+`body padding-top: 64px`，防內容被 header 遮蔽。
 
 #### 2. Hero 搜尋區
 
@@ -1116,123 +1484,25 @@ padding: 64px 0 48px (手機 40px 0 24px)
 
 搜尋框:
 - 容器: `bg: rgba(255,255,255,0.85); backdrop-filter: blur(24px); border-radius: 16px; border: 1px solid #E6EDF7`
-- 輸入: 56px 高，focus `border-color: #00385a`，`font-size: 16px`（防 iOS 自動縮放），`aria-label="搜尋社區或地址"`
-- 搜尋按鈕: 44x44px 圓形 `#00385a`，白色搜尋 SVG
+- 輸入: 56px 高，focus `border-color: #00385a; ring-2 ring-[#00385a]/30`，`font-size: 16px`（防 iOS 自動縮放），`aria-label="搜尋社區或地址"`
+- 搜尋按鈕: 44x44px 圓形 `#00385a`，白色搜尋 SVG，`aria-label="搜尋"`
 - 快捷 pills:「3房以內」「30坪以下」「近捷運」「新成屋」水平可捲動，`gap: 8px`
 
-MaiMai placeholder: 預留 `<div class="hero-maimai">` 容器，SVG 由 #30b 填入。
+MaiMai placeholder: 預留容器，由 #30b `<PropertyHeroMaiMai />` 填入。
 
-#### 3. 精選推薦區（2 張 L 大卡）
+#### 3. 精選推薦區
 
 標題:「口碑精選」20px bold + 副標「住戶評價最高的房源」14px
-
-L 大卡結構:
-```
-┌────────────────────────────────────────┐
-│ [圖片 16:10 全寬]                         │
-│ badge: "Premier"左上      ♡ 愛心右上     │
-│                               ┌────────┐ │
-│ 左下: 圖片數量 "1/8"          │ ○ 房仲  │ │  ← 56px, 白邊框3px + 陰影
-│                               │ 照片   │ │
-│                               │ 王大明  │ │  ← 姓名 12px bold
-│                               │信義房屋 │ │  ← 公司 12px #526070
-│                               │ 經紀人  │ │  ← 頭銜 12px #526070
-│                               └────────┘ │
-├────────────────────────────────────────┤
-│ 1,288 萬                    ★ 4.8 (15則) │  ← 價格左 + 評分右（星 #FBB424）
-│ 新板特區｜三房雙衛，捷運步行3分鐘          │
-│ 新北市板橋區 · 中山路一段                  │
-│ 🛏3  🛁2  📐34.2坪  🏢高樓層              │  ← SVG icon 化
-│ ─────────────────────────────────────── │
-│ 「管委反應快，公設打理乾淨。」             │  ← 評價 1 blockquote, line-height: 1.6（ux-guidelines #72）
-│  — 王小姐, 3年住戶                        │
-│ 「坡道寬、指示清楚，不太需要繞圈找位。」   │  ← 評價 2 blockquote
-│  — 林先生, 屋主                           │
-│ 🔒 註冊看更多評價                         │  ← 統一鎖定提示 + 登入解鎖
-│ 左邊框 4px solid #00385a                  │  ← 品牌色識別為 Premier
-└────────────────────────────────────────┘
-```
-
-房仲圓形頭像規格（L 大卡）:
-- 尺寸: 56px 圓形（手機 48px）
-- 邊框: `border: 3px solid white; box-shadow: 0 2px 8px rgba(0,56,90,0.15)`
-- 位置: 圖片區域右上角，`position: absolute; top: 12px; right: 12px`
-- 下方文字: 姓名 12px bold `#0A2246` + 公司名 12px `#526070` + 頭銜 12px `#526070`，居中對齊
-- Mock 照片: `https://i.pravatar.cc/112?img=N`
-
-L/M 卡圖片底部 scrim: `linear-gradient(transparent 60%, rgba(0,0,0,0.3))`，確保 `1/8` 數量文字在淺色照片上可讀（ux-guidelines #36 Color Contrast）
-
-L/M 卡稀缺性標籤: 圖片左下角 `position: absolute; bottom: 8px; left: 8px`，`padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; color: white`。底色依類型：`剛上架` `#16A34A`（綠）、`熱門關注` `#EA580C`（橘）、`本週新增` `#2563EB`（藍）、`多人收藏` `#9333EA`（紫）。對比均 ≥ 4.5:1（styles #21 urgency + ux-guidelines #36 contrast）
-
-愛心收藏按鈕:
-- 位置: 圖片右上角 `top: 12px; right: 80px`（L 卡避開房仲頭像），M 卡 `top: 8px; right: 8px`
-- 尺寸: 36x36px 圓形白色半透明背景 `rgba(255,255,255,0.9)`
-- Icon: 空心愛心 SVG 20x20，hover 填充 `#E63946`
-- 觸控: min 44px hit area
-
 桌面: 2 欄並排，gap 24px。手機: 單欄堆疊。
+內容: 渲染 2 個 `<PremierCard />`（#30a2 提供）。
 
-L/M 卡 hover: `box-shadow: 0 4px 16px rgba(0,56,90,0.12); transition: box-shadow 200ms ease`（html-tailwind #38 Card hover states）
-
-L/M 卡防禦性截斷: 標題 `-webkit-line-clamp: 2`、地址 `text-overflow: ellipsis` 單行、缺圖 fallback `background: #E6EDF7` + 房子 SVG 佔位（html-tailwind #19 Text truncation）
-
-#### 4. 房源列表區（M 小卡 × 6 + S 表列 × 3）
+#### 4. 房源列表區
 
 標題:「更多房源」20px bold +「共 248 筆」14px `#526070`
 切換: 右側小 icon 切換卡片/表列模式（grid icon + list icon）
-
-M 小卡結構（桌面水平排列）:
-```
-┌──────────┬──────────────────────────────┐
-│ [圖片]    │ 1,052 萬    ★ 4.6    ○ 房仲 │  ← 40px 圓形房仲頭像
-│ 180x130  │ 民生社區｜邊間大兩房    陳經紀  │
-│ 16:10    │ 永慶房屋 · 經紀人             │  ← 公司名 + 頭銜
-│  ♡ 愛心  │ 台北市松山區                  │
-│          │ 🛏2  🛁2  📐28.6坪            │
-│          │ ──────────────────────────── │
-│          │ 「鄰里友善，社區群組活躍」     │  ← 評價 1
-│          │  — 陳太太, 5年住戶             │
-│          │ 「走路3分鐘有超市，買菜方便」   │  ← 評價 2
-│          │  — 賴先生, 上班族              │
-│          │ 🔒 註冊看更多評價              │  ← 統一鎖定提示
-└──────────┴──────────────────────────────┘
-  border-bottom: 1px solid #E6EDF7（分隔線代替陰影）
-```
-
-M 卡房仲頭像規格:
-- 尺寸: 40px 圓形（手機 36px）
-- 邊框: `border: 2px solid white; box-shadow: 0 1px 4px rgba(0,56,90,0.12)`
-- 位置: 文字區右上角
-
-桌面: 單欄列表（像 realestate.com.au 一樣）。手機: 圖上文下堆疊。
-
-#### 4.5 模式中斷區塊（M 卡第 3~4 張之間插入）
-
-插入位置: M 卡 #5（東湖站旁）與 #6（橋和站旁）之間，打斷 6 張 M 卡的視覺疲勞（Von Restorff 效應）
-
-```
-┌─────────────────┬─────────────────┬─────────────────┐
-│ 📖 買房前必看    │ ⭐ 如何讀懂      │ 🏠 房仲選擇      │
-│  3 件事         │  社區評價        │  指南            │
-│ 1行描述文字      │ 1行描述文字      │ 1行描述文字      │
-│ 了解更多 →      │ 了解更多 →      │ 了解更多 →      │
-└─────────────────┴─────────────────┴─────────────────┘
-```
-
-- 布局: 桌面 3 欄 `grid-template-columns: repeat(3, 1fr); gap: 16px`，手機單欄堆疊
-- 背景: `#F6F9FF`（與 Hero 同色系），`border-radius: 16px; padding: 24px`
-- 圖示: SVG icon 24x24 `#00385a`，標題 16px bold，描述 14px `#526070`
-- 連結: `了解更多 →` 14px `#00385a` bold，hover `#004E7C`（`#` placeholder）
-- 觸控: 每欄可點擊，min 44px 高（html-tailwind #34）
-
-S 表列結構:
-```
-┌───┬─────────────────────────────────────┐
-│ □ │ 七張站旁｜電梯兩房  22.1坪 2房  838萬 │  ← 60px 縮圖 + 單行
-└───┴─────────────────────────────────────┘
-```
-
-列表底部:「查看更多房源」Secondary 按鈕，居中
+桌面: 單欄列表。手機: 圖上文下堆疊。
+內容: 渲染 6 個 `<StandardCard />`（M 卡 #4~#5 間插入 `<ModeBreakBlock />`）+ 3 個 `<CompactCard />`（#30a2 提供）。
+列表底部:「查看更多房源」Secondary 按鈕，居中。
 
 #### 5. CTA 區（MaiMai celebrate）
 
@@ -1242,9 +1512,8 @@ border-radius: 24px; padding: 48px 32px; margin: 0 16px
 ```
 
 - 布局: 左 MaiMai celebrate + 右文案（手機上下排列居中）
-- MaiMai placeholder: `<div class="cta-maimai">`，SVG 由 #30b 填入
-- 標題:「加入邁房子，解鎖所有評價」28px bold 白色
-- CTA:「免費註冊」白色背景 + brand 文字，48px 高圓角
+- MaiMai: `<PropertyCtaMaiMai />`（#30b 實作）
+- 標題/CTA 依三模式切換（見上方 CTA 區三模式）
 
 #### 6. Footer
 
@@ -1268,39 +1537,194 @@ padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px))
 
 | 斷點 | 布局重點 |
 |------|---------|
-| < 768px (iOS) | 單欄。搜尋全寬。卡片圖上文下。MaiMai 80px 不隱藏。觸控 ≥ 44px。`env(safe-area-inset-bottom)` 處理 Home Indicator。`-webkit-overflow-scrolling: touch` |
+| < 768px (iOS) | 單欄。搜尋全寬。卡片圖上文下。MaiMai 80px 不隱藏。觸控 ≥ 44px。`env(safe-area-inset-bottom)` 處理 Home Indicator |
 | 768-1024px | 精選 2 欄，列表單欄 |
 | ≥ 1024px | 完整設計。精選 2 欄。列表水平卡片 |
 
 **iOS 特別處理**：
-- `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`
 - `-webkit-tap-highlight-color: transparent`
 - `padding-bottom: env(safe-area-inset-bottom)`（footer）
-- scroll pills: `-webkit-overflow-scrolling: touch`
 - 搜尋框: `font-size: 16px`（防止 iOS 自動縮放）
-- 圖片: `srcset` + `sizes` 響應式（html-tailwind #15）
+- 圖片: 響應式 `srcset` + `sizes`
 
 **驗收**：
-- [ ] 6 區塊 HTML 結構完整，語意標籤 header/nav/main/section/article/footer
-- [ ] 品牌色 CSS 變數與 `src/index.css` 一致（含 `--star-color: #FBB424`）
-- [ ] Logo: 42x42 深藍漸層 + `'Noto Serif TC'` serif + 紅點 `#f87171`
-- [ ] 三層卡片 CSS 差異明確（L 左邊框 + Premier badge / M 水平 / S 單行）
-- [ ] L/M 卡房仲圓形頭像 + 姓名/公司名/頭銜
-- [ ] L/M 卡愛心收藏按鈕
-- [ ] 列表標題顯示結果數量
-- [ ] 列表底部「查看更多房源」按鈕
-- [ ] DevTools 測 375(iPhone) / 768 / 1024 / 1440
-- [ ] `:focus-visible` outline ring + `prefers-reduced-motion`
-- [ ] 觸控目標 ≥ 44px
-- [ ] 圖片 `loading="lazy"` + `alt` + `srcset`
+- [ ] usePageMode() 正確驅動三模式
+- [ ] 6 區塊 Section 組件結構完整
+- [ ] Header 顯示三模式 UI（首頁 Header，64px）
+- [ ] CTA 區文案依三模式正確切換
+- [ ] ModeBreakBlock 在 visitor 顯示、demo/live 隱藏
+- [ ] LegacyPropertyPage.css 遷移至 Tailwind 完成
+- [ ] ErrorBoundary 包裹 6 區塊，fallback UI 正確顯示
+- [ ] Loading skeleton / Error 回退 / Empty 空狀態三態完整
+- [ ] 搜尋框 focus ring 可見（`ring-2 ring-[#00385a]/30`）
+- [ ] 搜尋按鈕 `aria-label="搜尋"` 存在
+- [ ] 響應式：375(iPhone) / 768 / 1024 / 1440
+- [ ] 品牌色 CSS 變數與 src/index.css 一致
+- [ ] npm run gate 通過
 
 ---
 
-### #30b MaiMai SVG + 動畫 + 互動
+### #30a2 L/M/S 三層卡片 React 組件 + Schema + seed 擴充
 
-**目標**：填入 Hero wave 和 CTA celebrate 的 MaiMai SVG，加入 scroll-triggered 入場動畫和點擊互動
+**目標**：實作 PremierCard（L）/ StandardCard（M）/ CompactCard（S）三種卡片 React 組件，
+擴充 Schema 和 seed 資料。卡片本身為純展示組件，三模式互動邏輯由 #30c 接入。
 
-**依賴**：#30a（HTML 骨架中的 MaiMai placeholder 容器）
+**依賴**：#30a（Section 容器須先存在，但可部分平行開發）
+
+**修改**：
+
+| 檔案 | 動作 |
+|------|------|
+| `src/features/property/components/PremierCard.tsx` | 重構自 LegacyFeaturedCard：L 大卡 |
+| `src/features/property/components/StandardCard.tsx` | 重構自 LegacyHorizontalCard：M 小卡 |
+| `src/features/property/components/CompactCard.tsx` | 新增：S 表列卡片 |
+| `src/types/property-page.ts` | 擴充：agent 物件、scarcityTag、tier |
+| `src/features/property/data/seed.ts` | 擴充：房仲資料、11 筆完整卡片 |
+
+**三層卡片規格**：
+
+| 層級 | 名稱 | 商業 | 視覺規格 |
+|------|------|------|---------|
+| **L** | Premier 推廣 | 付費最高曝光 | 全寬大圖(16:10) + `Premier` badge 左上 + 愛心收藏右上 + 房仲圓形頭像右上角(56px白邊框+陰影) + 房仲姓名/公司名/頭銜 + 2 則評價 + 註冊看更多 + 品牌色左邊框 4px |
+| **M** | 標準展示 | 標準刊登 | 桌面水平(圖左文右)、手機圖上文下 + 愛心收藏 + 房仲圓形頭像(40px) + 房仲姓名/公司名 + 2 則評價 + 註冊看更多 + 評分星星（`--star-color: #FBB424`） |
+| **S** | 精簡列表 | 免費/基本 | 單行：60px 縮圖 + 標題 + 價格 + specs icon。無評價無房仲頭像 |
+
+**L 大卡結構**（PremierCard）:
+```
+┌────────────────────────────────────────┐
+│ [圖片 16:10 全寬]                         │
+│ badge: "Premier"左上      ♡ 愛心右上     │
+│                               ┌────────┐ │
+│ 左下: 圖片數量 "1/8"          │ ○ 房仲  │ │  ← 56px, 白邊框3px + 陰影
+│                               │ 照片   │ │
+│                               │ 王大明  │ │  ← 姓名 12px bold
+│                               │信義房屋 │ │  ← 公司 12px #526070
+│                               │ 經紀人  │ │  ← 頭銜 12px #526070
+│                               └────────┘ │
+├────────────────────────────────────────┤
+│ 1,288 萬                    ★ 4.8 (15則) │  ← 價格左 + 評分右（星 #FBB424）
+│ 新板特區｜三房雙衛，捷運步行3分鐘          │
+│ 新北市板橋區 · 中山路一段                  │
+│ 🛏3  🛁2  📐34.2坪  🏢高樓層              │  ← SVG icon 化
+│ ─────────────────────────────────────── │
+│ 「管委反應快，公設打理乾淨。」             │  ← 評價 1 blockquote, line-height: 1.6
+│  — 王小姐, 3年住戶                        │
+│ 「坡道寬、指示清楚，不太需要繞圈找位。」   │  ← 評價 2 blockquote
+│  — 林先生, 屋主                           │
+│ 🔒 註冊看更多評價                         │  ← 統一鎖定提示 + 登入解鎖
+│ 左邊框 4px solid #00385a                  │  ← 品牌色識別為 Premier
+└────────────────────────────────────────┘
+```
+
+房仲圓形頭像規格（L 大卡）:
+- 尺寸: 56px 圓形（手機 48px）
+- 邊框: `border: 3px solid white; box-shadow: 0 2px 8px rgba(0,56,90,0.15)`
+- 位置: 圖片區域右上角，`position: absolute; top: 12px; right: 12px`
+- 下方文字: 姓名 12px bold `#0A2246` + 公司名 12px `#526070` + 頭銜 12px `#526070`，居中對齊
+- Mock 照片: `https://i.pravatar.cc/112?img=N`
+
+**M 小卡結構**（StandardCard，桌面水平排列）:
+```
+┌──────────┬──────────────────────────────┐
+│ [圖片]    │ 1,052 萬    ★ 4.6    ○ 房仲 │  ← 40px 圓形房仲頭像
+│ 180x130  │ 民生社區｜邊間大兩房    陳經紀  │
+│ 16:10    │ 永慶房屋 · 經紀人             │  ← 公司名 + 頭銜
+│  ♡ 愛心  │ 台北市松山區                  │
+│          │ 🛏2  🛁2  📐28.6坪            │
+│          │ ──────────────────────────── │
+│          │ 「鄰里友善，社區群組活躍」     │  ← 評價 1
+│          │  — 陳太太, 5年住戶             │
+│          │ 「走路3分鐘有超市，買菜方便」   │  ← 評價 2
+│          │  — 賴先生, 上班族              │
+│          │ 🔒 註冊看更多評價              │  ← 統一鎖定提示
+└──────────┴──────────────────────────────┘
+  border-bottom: 1px solid #E6EDF7（分隔線代替陰影）
+```
+
+M 卡房仲頭像規格:
+- 尺寸: 40px 圓形（手機 36px）
+- 邊框: `border: 2px solid white; box-shadow: 0 1px 4px rgba(0,56,90,0.12)`
+- 位置: 文字區右上角
+
+**S 表列結構**（CompactCard）:
+```
+┌───┬─────────────────────────────────────┐
+│ □ │ 七張站旁｜電梯兩房  22.1坪 2房  838萬 │  ← 60px 縮圖 + 單行
+└───┴─────────────────────────────────────┘
+```
+
+**共用卡片規格**：
+
+L/M 卡圖片底部 scrim: `linear-gradient(transparent 60%, rgba(0,0,0,0.3))`
+
+L/M 卡稀缺性標籤: 圖片左下角 `absolute; bottom: 8px; left: 8px`，`padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; color: white`。底色：`剛上架` `#16A34A`（綠）、`熱門關注` `#EA580C`（橘）、`本週新增` `#2563EB`（藍）、`多人收藏` `#9333EA`（紫）。對比均 ≥ 4.5:1
+
+愛心收藏按鈕（純 UI，點擊 handler 由 #30c 注入）:
+- L 卡位置: `top: 12px; right: 80px`（避開房仲頭像），M 卡: `top: 8px; right: 8px`
+- 尺寸: 36x36px 圓形白色半透明背景 `rgba(255,255,255,0.9)`
+- Icon: 空心愛心 SVG 20x20，hover 填充 `#E63946`
+- 觸控: min 44px hit area
+- `aria-label="收藏{社區名}"`（動態帶入社區名稱，ref: ux-guidelines #40）
+
+L/M 卡 focus-visible: `outline: 2px solid #00385a; outline-offset: 2px`（鍵盤焦點環，ref: ux-guidelines #28）。愛心按鈕/搜尋按鈕同規格。快捷 pills: `focus-visible:ring-2 focus-visible:ring-[#00385a]/50`
+
+L/M 卡 hover: `box-shadow: 0 4px 16px rgba(0,56,90,0.12); transition: box-shadow 200ms ease`
+
+L/M 卡圖片 alt: `alt="{社區名}—{標題}"`（動態帶入，ref: ux-guidelines #38）。S 卡縮圖: `alt="{社區名}"`
+
+L/M 卡圖片 lazy loading: `loading="lazy"`（ref: ux-guidelines #47）。例外：精選推薦區前 2 張 L 大卡為 above-fold，使用 `loading="eager"`
+
+L/M 卡防禦性截斷: 標題 `-webkit-line-clamp: 2`、地址 `text-overflow: ellipsis` 單行、缺圖 fallback `background: #E6EDF7` + 房子 SVG 佔位
+
+**Schema 擴充**（`src/types/property-page.ts`）：
+- `agent: { name: string; company: string; title: string; avatarUrl: string }`
+- `scarcityTag: '剛上架' | '熱門關注' | '本週新增' | '多人收藏' | null`
+- `tier: 'L' | 'M' | 'S'`
+
+**seed 擴充**（`src/features/property/data/seed.ts`）：
+- 現有 6 筆 PROPERTIES 補充 agent 物件
+- 新增 5 筆（竹北高鐵/台中七期/林口三井/桃園藝文/新莊副都心）
+- 共 11 筆，每筆含 tier/agent/scarcityTag/badge
+
+**Props 設計原則**：
+- 愛心收藏：`onFavoriteClick?: (id: string) => void`、`isFavorited?: boolean`（handler 由父組件或 #30c 注入）
+- 評價鎖定：`reviews: Review[]`、`maxVisibleReviews?: number`、`onLockedClick?: () => void`（鎖定邏輯由 #30c 控制）
+- 卡片本身為**純展示組件**，不直接 import usePageMode / useModeAwareAction
+
+**驗收**：
+- [ ] PremierCard 渲染正確（Premier badge、房仲頭像 56px、左邊框 4px）
+- [ ] StandardCard 渲染正確（水平布局、房仲頭像 40px、分隔線）
+- [ ] CompactCard 渲染正確（60px 縮圖、單行）
+- [ ] Schema property-page.ts 型別完整（agent/scarcityTag/tier）
+- [ ] seed.ts 11 筆資料完整且 deepFreeze
+- [ ] 星級顏色 `#FBB424`
+- [ ] L/M 卡圖片 `alt="{社區名}—{標題}"` 動態帶入
+- [ ] S 卡縮圖 `alt="{社區名}"` 動態帶入
+- [ ] 愛心按鈕 `aria-label="收藏{社區名}"` 動態帶入
+- [ ] L/M 卡 `focus-visible: outline 2px solid #00385a`
+- [ ] 列表區卡片圖片 `loading="lazy"`，精選區 L 卡 `loading="eager"`
+- [ ] 響應式卡片：375 / 768 / 1024
+- [ ] npm run gate 通過
+
+---
+
+### #30b PropertyListPage MaiMai React 組件 + 動畫
+
+**目標**：Hero wave + CTA celebrate 的 MaiMai 以 React 組件實作，
+使用現有 `MaiMaiBase` + IntersectionObserver
+
+**依賴**：#30a（Hero/CTA 區塊容器須先存在）
+
+**新增**：
+
+| 檔案 | 說明 |
+|------|------|
+| `src/pages/Property/components/PropertyHeroMaiMai.tsx` | Hero 區 MaiMai wave（復用 MaiMaiBase） |
+| `src/pages/Property/components/PropertyCtaMaiMai.tsx` | CTA 區 MaiMai celebrate（復用 MaiMaiBase） |
+| `src/pages/Property/hooks/useScrollTriggered.ts` | IntersectionObserver 封裝（scroll 觸發動畫） |
+
+**實作方式**：復用 `src/components/MaiMai/MaiMaiBase.tsx`，
+通過 `mood` prop 控制 wave/celebrate。不需要手動畫 SVG path。
 
 **MaiMai 角色分配（2 處，符合 ux-guidelines #7 每視圖 max 1-2 動畫）**：
 
@@ -1310,6 +1734,14 @@ padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px))
 | CTA 區 | celebrate | 120x144px（白色） | 慶祝角色：鼓勵註冊解鎖評價 |
 
 > ~~卡片 hover MaiMai 彩蛋~~ 已移除：違反 ux-guidelines #7（每視圖 max 1-2 動畫）和 #11（hover 在觸控裝置無效）
+
+**MaiMai 三模式差異**：
+
+| 元素 | visitor | demo | live |
+|------|---------|------|------|
+| Hero MaiMai wave | 氣泡 3 句（含「免費註冊解鎖」） | 氣泡 3 句（第 3 句改「正在體驗演示模式」） | 氣泡 2 句（移除註冊引導） |
+| CTA MaiMai celebrate | 顯示 + confetti | 顯示（文案不同） | 顯示（文案不同） |
+| count-up 數字 | seed 固定 | seed + count-up | API + count-up |
 
 **MaiMai SVG 精確規格**（對齊 `src/components/MaiMai/constants.ts` + `configs.ts`）：
 
@@ -1347,30 +1779,30 @@ viewBox="0 0 200 240", stroke="currentColor", color="white"
 
 | 動畫 | CSS | 說明 |
 |------|-----|------|
-| wave 手臂揮動 | `@keyframes wave-arm { 0%,100% { rotate(0) } 25% { rotate(-20deg) } 75% { rotate(20deg) } }` | 右手臂循環揮動，transform-origin 在肩膀 |
+| wave 手臂揮動 | `@keyframes wave-arm { 0%,100% { rotate(0) } 25% { rotate(-20deg) } 75% { rotate(20deg) } }` | 右手臂循環揮動，transform-origin 在肩膀。**限制**：僅 viewport 內播放，離開視窗後 `animation-play-state: paused`（ref: ux-guidelines #12 連續動畫限 loading，此為裝飾性例外，以 viewport 限制降低干擾）|
 | wave 揮手圈 | `@keyframes wave-circle { 0%,100% { opacity:0.2 } 50% { opacity:0.6 } }` | 揮手時的波紋效果 |
 | celebrate jump | `@keyframes jump { 0%,100% { translateY(0) } 30% { translateY(-20px) } 50% { translateY(-25px) } }` | 跳躍，**一次性播放**非循環 |
 | confetti | `@keyframes confetti-fall` | 紙花下落，**一次性播放** |
 | antenna wiggle | `@keyframes wiggle` | 天線搖擺 |
-| count-up | JS `IntersectionObserver` | Hero 副標「2,847」數字從 0 滾動到目標值 |
+| count-up | React `useScrollTriggered` | Hero 副標「2,847」數字從 0 滾動到目標值 |
 | reduced-motion | `@media (prefers-reduced-motion: reduce) { * { animation: none !important } }` | 停止所有動畫（`!important` 為無障礙業界慣例，屬 CONVENTIONS §十一.5 例外）|
 
 **MaiMai 互動規格**：
 
 1. **Hero MaiMai scroll-triggered 入場**：
-   - `IntersectionObserver` 偵測 `.hero-maimai` 進入視窗
+   - `useScrollTriggered` 偵測 Hero MaiMai 容器進入視窗
    - 入場動畫：`scale(0) → scale(1)` 0.4s ease-out + 對話氣泡 `opacity(0) → opacity(1)` 0.3s delay 0.3s
    - 入場完成後才啟動手臂 wave 循環
    - 只觸發一次（`{ once: true }`）
 
 2. **Hero MaiMai 點擊氣泡切換**：
    - 點擊 MaiMai → 氣泡文字循環切換（觸控友好，44px+ hit area）
-   - 3 句循環：「找房子？讓鄰居告訴你真相 👋」→「已有 2,847 位鄰居分享心得」→「免費註冊解鎖所有評價」
+   - 3 句循環（visitor）：「找房子？讓鄰居告訴你真相」→「已有 2,847 位鄰居分享心得」→「免費註冊解鎖所有評價」
    - 切換動畫：fade-out 0.15s → 換文字 → fade-in 0.15s
    - 切換時觸發天線 wiggle 一次（0.6s）
 
 3. **CTA MaiMai scroll-triggered 入場**：
-   - `IntersectionObserver` 偵測 `.cta-maimai` 進入視窗
+   - `useScrollTriggered` 偵測 CTA MaiMai 容器進入視窗
    - 入場觸發 **一次性** `animate-jump` + confetti 爆發
    - 結束後靜止在 celebrate 姿勢，不循環
    - 只觸發一次
@@ -1380,25 +1812,33 @@ viewBox="0 0 200 240", stroke="currentColor", color="white"
    - 節流 2 秒（防連點）
 
 **驗收**：
-- [ ] Hero MaiMai wave SVG 座標對齊 constants.ts（揮手圈 cx=26/180 cy=90）
-- [ ] CTA MaiMai celebrate SVG 座標對齊 configs.ts（含 jump 動畫）
-- [ ] Hero 入場：scroll 到位 → scale-in + 氣泡 fade-in → 手臂 wave 啟動
-- [ ] Hero 點擊：氣泡文字循環 3 句 + 天線 wiggle
-- [ ] CTA 入場：scroll 到位 → jump + confetti 一次性
-- [ ] CTA 點擊：re-celebrate（節流 2s）
-- [ ] Hero 副標「2,847」count-up 動畫（IntersectionObserver）
-- [ ] `prefers-reduced-motion: reduce` 停止所有動畫
-- [ ] 手機版 MaiMai 可見（80px 不隱藏）、觸控目標 44px+
+- [ ] 使用現有 MaiMaiBase 組件（非手動 SVG）
+- [ ] IntersectionObserver 正確觸發入場動畫
+- [ ] prefers-reduced-motion 停止所有動畫
+- [ ] wave 循環動畫離開 viewport 後 paused
+- [ ] 三模式 MaiMai 氣泡文案正確切換
+- [ ] npm run gate 通過
 
 ---
 
-### #30c JS 資料驅動 + 卡片渲染
+### #30c PropertyListPage 三模式互動（愛心收藏 + 評價鎖定 + ModeBreakBlock）
 
-**目標**：11 筆 Mock 資料 JS 渲染三層卡片（L×2 + M×6 + S×3）+ 愛心收藏互動 + 分頁
+**目標**：為 #30a2 的卡片組件接入三模式互動邏輯（愛心收藏/評價鎖定/模式中斷區塊），
+全部使用 useModeAwareAction + usePageMode
 
-**依賴**：#30a（HTML 骨架 + CSS class）
+**依賴**：#30a2（卡片組件須先存在）、#1b（useModeAwareAction）
 
-**Mock 資料來源**：
+**修改**：
+
+| 檔案 | 動作 |
+|------|------|
+| `src/features/property/components/PremierCard.tsx` | 接入三模式：愛心收藏 + 評價鎖定 |
+| `src/features/property/components/StandardCard.tsx` | 接入三模式：愛心收藏 + 評價鎖定 |
+| `src/features/property/components/CompactCard.tsx` | 基本渲染（無評價、無愛心） |
+| `src/pages/Property/components/ModeBreakBlock.tsx` | visitor CTA（usePageMode 驅動） |
+| `src/pages/Property/components/ListingSection.tsx` | M 卡 #4~#5 間插入 ModeBreakBlock |
+
+**Seed 資料來源**：
 - #1~#6：來自 `src/constants/data.ts` PROPERTIES 陣列（6 筆 seed）
 - #7~#11：手動補充 5 筆（對齊 SeedProperty 介面）
 - 評價：來自 seed 資料的 reviews + BACKUP_REVIEWS
@@ -1420,50 +1860,48 @@ viewBox="0 0 200 240", stroke="currentColor", color="white"
 | #10 | S | 手動補充 桃園藝文 | — | — |
 | #11 | S | 手動補充 新莊副都心 | — | — |
 
-**評價規則（嚴守）**：
+**愛心收藏三模式**（`useModeAwareAction`）：
 
-| 卡片 | 層級 | 可見評價 | 鎖定提示 |
-|------|------|---------|---------|
-| #1~#2 | L | 2 則 | 🔒 註冊看更多評價 |
-| #3~#8 | M | 2 則 | 🔒 註冊看更多評價 |
-| #9~#11 | S | 無 | — |
+| mode | 行為 |
+|------|------|
+| visitor | toast 引導註冊（「登入後即可收藏房源」） |
+| demo | 本地 toggle（`useState<Set<string>>`，重新整理消失） |
+| live | API 收藏（暫與 demo 相同，待收藏 API 工單） |
 
-**愛心收藏互動**：
-- L/M 卡圖片區域有愛心 icon button
-- 點擊 toggle 填充/空心狀態（純前端 state）
-- 填充色: `#E63946`，空心: white stroke
-- 靜態 HTML 無登入系統，toggle 僅視覺效果
+**評價鎖定三模式**：
+
+| mode | 可見評價數 | 鎖定 UI |
+|------|-----------|---------|
+| visitor | 2 則 | 第 3 則起 blur + LockedOverlay |
+| demo | 全部（seed） | 無鎖定 |
+| live | 全部（API） | 無鎖定 |
+
+**模式中斷區塊**（`ModeBreakBlock`）：
+- visitor：M 卡 #4 與 #5 之間顯示 CTA（「免費註冊解鎖全部評價」+ MaiMai thinking）
+- demo/live：不渲染（`return null`）
+- 只插入一次
 
 **分頁**：
 - 列表底部「查看更多房源」按鈕
-- 靜態 HTML 點擊無動作（placeholder，未來接 API）
-
-**JS 渲染邏輯**：
-- L 大卡：硬編碼 HTML（精選推薦區，2 張）
-- M 小卡：JS `LISTINGS` 陣列 loop 渲染到 `#listings-grid`，第 3~4 張之間插入模式中斷區塊（硬編碼 HTML）
-- M 小卡稀缺性標籤：`LISTINGS` 每筆含 `tag` 欄位（`string | null`），非 null 時渲染圖片左下角標籤
-- S 表列：JS `COMPACT_LISTINGS` 陣列 loop 渲染到 `#compact-grid`
-- Header scroll shadow：`requestAnimationFrame` + `scrollY > 10` toggle `.scrolled`
-- **禁止 `console.log`**：debug 用 `// DEBUG:` 註解標記，正式碼不得殘留
+- 點擊觸發 React 分頁邏輯（載入更多 seed/API 數據）
 
 **驗收**：
 - [ ] L×2 + M×6 + S×3 = 11 張卡片全部渲染
-- [ ] 每張卡片評價內容不同（來自不同 seed reviews）
-- [ ] 每張卡片 badge 不同
-- [ ] 每張卡片房仲頭像不同（pravatar img 參數不同）
-- [ ] L/M 卡嚴守 2 則評價 + 🔒 註冊看更多
-- [ ] S 卡無評價
-- [ ] 愛心收藏 toggle 正常
+- [ ] visitor：愛心點擊觸發註冊引導 toast
+- [ ] visitor：評價只顯示 2 則 + LockedOverlay
+- [ ] visitor：ModeBreakBlock 在 M 卡 #4~#5 間顯示
+- [ ] demo：愛心本地 toggle、評價全解鎖、無 ModeBreakBlock
+- [ ] live：愛心本地 toggle（暫）、評價全解鎖、無 ModeBreakBlock
+- [ ] 稀缺性標籤顯示正確
 - [ ] 星級顏色 `#FBB424`
-- [ ] 「查看更多房源」按鈕存在
-- [ ] L/M 卡稀缺性標籤顯示正確（有 tag 的卡片顯示、無 tag 的不顯示）
-- [ ] 模式中斷區塊在 M 卡 #5 與 #6 之間，3 欄桌面 / 單欄手機
+- [ ] npm run gate 通過
 
 **`/ui-ux-pro-max` 規範合規摘要（#30a/#30b/#30c 共用）**：
 
 已逐條檢查以下 CSV：
-- **ux-guidelines.csv**: #7 動畫 max 1-2（Hero+CTA 合規）、#9 reduced-motion、#11 hover→onClick、#22 touch 44px、#28 focus ring
-- **html-tailwind.csv**: #2 bounce 限單一 CTA、#14 lazy loading、#15 srcset、#34 touch 44px
+- **ux-guidelines.csv**: #7 動畫 max 1-2（Hero+CTA 合規）、#9 reduced-motion、#11 hover→onClick、#12 連續動畫（wave viewport 限制）、#22 touch 44px、#28 focus ring（全互動元素 focus-visible）、#38 alt text（L/M/S 卡動態 alt）、#40 aria-label（搜尋按鈕+愛心按鈕）、#47 lazy loading（列表卡片 lazy / 精選 eager）
+- **react.csv**: React 組件拆分、Tailwind class 統一、usePageMode 三模式驅動、#39 ErrorBoundary（頂層包裹 6 區塊）
+- **CONVENTIONS §5.3**: Loading skeleton / Error 回退 / Empty 空狀態三態完整
 - **landing.csv**: #2 Hero+Testimonials、#22 Marketplace 搜尋為核心、#19 Reviews 星級金色、#24 Social Proof count-up
 - **colors.csv**: #38 Real Estate（Trust Blue `#00385a` + Gold `#FBB424` + White）
 - **styles.csv**: #3 Glassmorphism（搜尋框）、#8 Accessible（WCAG AA + 44px + focus）、#24 Social Proof（評價 + 星級 + count-up）
@@ -1479,7 +1917,7 @@ viewBox="0 0 200 240", stroke="currentColor", color="white"
 8. MaiMai celebrate 補 `animate-jump` 跳躍動畫
 9. MaiMai 互動優化：scroll-triggered 入場 + 點擊氣泡切換 + CTA 一次性 confetti
 10. 補 `--star-color: #FBB424` 星級金色
-11. 補圖片 `srcset`（html-tailwind #15）
+11. 補圖片 `srcset`（React `<img>` 響應式）
 12. 補愛心收藏按鈕（截圖特色）
 13. 補 `Premier` 文字 badge（截圖特色）
 14. 補搜尋結果數量 + 分頁按鈕（截圖特色）
@@ -1491,7 +1929,7 @@ viewBox="0 0 200 240", stroke="currentColor", color="white"
 - [ ] 所有 icon button 有 `aria-label`
 - [ ] `:focus-visible` outline ring
 - [ ] `prefers-reduced-motion: reduce` 停止所有動畫
-- [ ] 語意 HTML: header/nav/main/section/article/footer
+- [ ] 語意 React 組件: header/nav/main/section/article/footer
 - [ ] 圖片 `loading="lazy"` + `alt` + `srcset`
 - [ ] SVG 有 width/height 防 layout shift
 - [ ] 觸控目標 ≥ 44px

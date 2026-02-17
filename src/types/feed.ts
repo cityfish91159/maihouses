@@ -1,7 +1,7 @@
 ﻿/**
  * Feed Domain Types
  *
- * 信息流領域模型定義
+ * 資訊流領域模型定義
  * 擴展 community.ts 的基礎型別，增加 Feed 專用屬性
  */
 
@@ -124,7 +124,7 @@ import type { FeedComment } from './comment';
 
 /** Feed 貼文（useFeedData 使用） */
 export interface FeedPost extends Post {
-  /** 貼文所屬社區（信息流可能跨社區） */
+  /** 貼文所屬社區（資訊流可能跨社區） */
   communityId?: string | undefined;
   communityName?: string | undefined;
   /** 貼文留言列表 */
@@ -135,7 +135,7 @@ export interface FeedPost extends Post {
   private?: boolean;
 }
 
-/** 統一信息流資料 */
+/** 統一資訊流資料 */
 export interface UnifiedFeedData {
   posts: FeedPost[];
   totalPosts: number;

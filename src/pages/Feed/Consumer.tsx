@@ -1,7 +1,7 @@
 ﻿/**
  * Feed Consumer Page
  *
- * 消費者信息流主頁面
+ * 消費者資訊流主頁面
  * 顯示用戶的社區動態、跨社區貼文、交易狀態等
  */
 
@@ -18,8 +18,6 @@ import {
 // FeedSkeleton is defined locally in this file
 import { FeedErrorBoundary } from '../../components/Feed/FeedErrorBoundary';
 import { MockToggle } from '../../components/common/MockToggle';
-
-import { DEFAULTS } from '../../constants/defaults';
 
 import { useConsumer } from './useConsumer';
 import { STRINGS } from '../../constants/strings';
@@ -256,7 +254,6 @@ function ConsumerContent({ userId, mode }: ConsumerProps) {
           {userProfile && <ProfileCard profile={userProfile} />}
 
           {/* 發文框 */}
-          {/* 發文框 */}
           {isAuthenticated && (
             <InlineComposer
               onSubmit={(content, images) => handleCreatePost(content, images)}
@@ -357,6 +354,7 @@ function ConsumerContent({ userId, mode }: ConsumerProps) {
           </div>
         </aside>
       </div>
+      <BottomNav activeId="community" />
     </div>
   );
 }
