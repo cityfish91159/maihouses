@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { MaiMaiBase } from '../../../components/MaiMai';
 import { useMaiMaiA11yProps } from '../../../hooks/useMaiMaiA11yProps';
+import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import styles from '../UAG.module.css';
 
 interface UAGEmptyStateProps {
@@ -10,6 +11,7 @@ interface UAGEmptyStateProps {
 
 export function UAGEmptyState({ onDismiss }: UAGEmptyStateProps) {
   const maimaiA11yProps = useMaiMaiA11yProps();
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   return (
     <section className={`${styles['k-span-6']} ${styles['welcome-card']}`} aria-label="新手引導">
@@ -24,7 +26,7 @@ export function UAGEmptyState({ onDismiss }: UAGEmptyStateProps) {
 
       <div className={styles['welcome-card-inner']}>
         <div className={styles['welcome-maimai-wrap']}>
-          <MaiMaiBase mood="wave" size="md" {...maimaiA11yProps} />
+          <MaiMaiBase mood="wave" size={isMobile ? 'sm' : 'md'} {...maimaiA11yProps} />
         </div>
 
         <div className={styles['welcome-text']}>

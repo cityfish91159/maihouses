@@ -453,7 +453,7 @@
 /* ====== #27: 歡迎引導卡片 ====== */
 .welcome-card {
   background: #fff;
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
@@ -483,15 +483,19 @@
 .welcome-title {
   font-size: 18px;
   font-weight: 800;
-  color: #0a2246;
+  color: var(--text-primary);
   margin: 0 0 8px;
 }
 
 .welcome-desc {
   font-size: 14px;
-  color: #526070;
+  color: var(--text-secondary);
   line-height: 1.6;
-  margin: 0 0 12px;
+  margin: 0 0 16px;
+}
+
+.welcome-desc:last-of-type {
+  margin-bottom: 0;
 }
 
 .welcome-actions {
@@ -509,7 +513,7 @@
   padding: 10px 24px;
   border: none;
   border-radius: 12px;
-  background: #00385a;
+  background: var(--brand);
   color: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -519,14 +523,14 @@
 }
 
 .welcome-cta:hover {
-  background: #002a44;
+  background: var(--primary-dark);
   box-shadow: 0 4px 12px rgba(0, 56, 90, 0.2);
 }
 
 .welcome-dismiss {
   border: none;
   background: transparent;
-  color: #526070;
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -536,7 +540,7 @@
 }
 
 .welcome-dismiss:hover {
-  color: #0a2246;
+  color: var(--text-primary);
 }
 
 .welcome-close {
@@ -550,7 +554,7 @@
   height: 44px;
   border: none;
   background: transparent;
-  color: #6c7b91;
+  color: var(--text-muted);
   cursor: pointer;
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -561,7 +565,7 @@
 }
 
 .welcome-close:focus-visible {
-  outline: 2px solid #00385a;
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
 
@@ -584,6 +588,10 @@
 }
 
 @media (max-width: 767px) {
+  .welcome-maimai-wrap {
+    width: 80px;
+    min-width: 80px;
+  }
   .welcome-title {
     font-size: 17px;
   }
