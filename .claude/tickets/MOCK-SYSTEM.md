@@ -44,7 +44,7 @@
 
 ### P2 — 社區牆導航修正
 
-- [ ] **#8c** 社區列表 API — `GET /api/community/list`（1 新檔案）
+- [x] **#8c** 社區列表 API — `GET /api/community/list`（1 新檔案）✅ 2026-02-17
 - [ ] **#8d** 社區探索頁 — visitor/無歸屬會員的著陸頁（1 新頁面 + 路由，需 `/ui-ux-pro-max`）
 - [ ] **#12b** Header 社區導航分層 — `useUserCommunity` + `api/community/my` + 導航規則（依賴 #8d + #12）
 
@@ -1357,7 +1357,9 @@ import styles from '../UAG.module.css';                    // 5. 樣式
 
 ---
 
-### #8c 社區列表 API
+### #8c ✅ 社區列表 API
+
+**已完成** 2026-02-17
 
 **目標**：提供公開社區清單，作為社區探索頁的資料來源
 
@@ -1365,18 +1367,17 @@ import styles from '../UAG.module.css';                    // 5. 樣式
 
 **新增**：`api/community/list.ts`
 
-**規格**：
-- `GET /api/community/list`
-- 查詢參數：`offset`（預設 0）、`limit`（預設 20）
-- 查詢 `communities` 表，回傳有公開內容的社區
-- 回傳欄位：`id`, `name`, `address`, `image`, `post_count`, `review_count`
-- Zod schema 驗證回傳格式
-- 無內容時回傳空陣列（非 404）
+**核心變更**：
+- 新增 `GET /api/community/list`，支援 `offset`（預設 0）與 `limit`（預設 20，最大 100）查詢參數
+- 查詢 `communities` 表（`id/name/address/cover_image/review_count`）並整合 `community_posts` 公開貼文數
+- 僅回傳有公開內容的社區（`post_count > 0` 或 `review_count > 0`）
+- 回傳欄位固定為：`id`, `name`, `address`, `image`, `post_count`, `review_count`
+- 以 Zod 驗證查詢參數、資料庫回傳資料、最終 response payload
+- 無內容時回傳空陣列（`200`，非 `404`）
 
-**驗收**：
-- API 回傳正確 JSON，Zod 驗證通過
-- `npm run gate` 通過
-- 新增 API 測試
+**驗證**：
+- [x] `npm run check:utf8`
+- [x] `npm run gate`
 
 ---
 
