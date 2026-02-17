@@ -5,7 +5,7 @@
  * P6-REFACTOR: Mock 資料已抽離至 mockData/posts/agent.ts
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useState } from 'react';
 import { useFeedData, type UseFeedDataOptions } from '../../hooks/useFeedData';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
@@ -20,8 +20,8 @@ import {
 const S = STRINGS.FEED;
 
 export function useAgentFeed(userId?: string, mode?: PageMode) {
-  // P6-REFACTOR: Use Agent-specific mock data with deep copy
-  const agentMockData = useMemo(() => getAgentFeedData(), []);
+  // P6-REFACTOR: Use Agent-specific mock data with lazy initialization
+  const [agentMockData] = useState(getAgentFeedData);
 
   const feedOptions: UseFeedDataOptions = {
     persistMockState: true,
@@ -32,14 +32,14 @@ export function useAgentFeed(userId?: string, mode?: PageMode) {
   }
   const feed = useFeedData(feedOptions);
 
-  // P6-REFACTOR: UAG Data from external mockData (deep copy)
-  const uagSummary = useMemo(() => getAgentUagSummary(), []);
+  // P6-REFACTOR: UAG Data from external mockData (lazy initialization)
+  const [uagSummary] = useState(getAgentUagSummary);
 
-  // P6-REFACTOR: Performance Stats from external mockData (deep copy)
-  const performanceStats = useMemo(() => getAgentPerformanceStats(), []);
+  // P6-REFACTOR: Performance Stats from external mockData (lazy initialization)
+  const [performanceStats] = useState(getAgentPerformanceStats);
 
-  // P6-REFACTOR: Todo List from external mockData (deep copy)
-  const todoList = useMemo(() => getAgentTodoList(), []);
+  // P6-REFACTOR: Todo List from external mockData (lazy initialization)
+  const [todoList] = useState(getAgentTodoList);
 
   const { addComment } = feed;
 

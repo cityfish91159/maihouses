@@ -256,7 +256,7 @@ function ConsumerContent({ userId, mode }: ConsumerProps) {
           {/* 發文框 */}
           {isAuthenticated && (
             <InlineComposer
-              onSubmit={(content, images) => handleCreatePost(content, images)}
+              onSubmit={handleCreatePost}
               disabled={isLoading}
               userInitial={userInitial}
             />

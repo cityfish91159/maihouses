@@ -362,7 +362,7 @@ function useModeAwareAction<T>(handlers: {
 
 ### #6b ✅ Feed：移除 `DEMO_IDS` + usePageMode
 
-**已完成** 2026-02-16（第二輪修正：2026-02-16；strict-audit Phase 4：2026-02-16；第三輪修正：2026-02-17）
+**已完成** 2026-02-16（第二輪修正：2026-02-16；strict-audit Phase 4：2026-02-16；第三輪修正：2026-02-17；第四輪 /superpowers 再審核：2026-02-17）
 
 新增：`App.tsx` `/feed/demo` 靜態路由、`ROUTES.FEED_DEMO`
 修改：`Feed/index.tsx`、`useFeedData.ts`、`useConsumer.ts`、`useAgentFeed.ts`、`Agent.tsx`、`Consumer.tsx` + 測試同步
@@ -379,8 +379,9 @@ function useModeAwareAction<T>(handlers: {
 - `useFeedData` 移除 `as SupabasePostRow` 斷言，改為使用 `parsedRows` 直接推導 liked 狀態
 - `Feed/index.tsx` 刪除不可達的 `!userId && !isDemoRoute` 防禦分支與重複分支
 - `Consumer` 手機版補掛 `BottomNav`，避免既有底部導航元件閒置
-- `useConsumer.handleCreatePost` 改為 early-return 呼叫契約（無圖片時維持兩參數呼叫）
+- `useConsumer.handleCreatePost` 改為單一路徑呼叫（`createPost(content, communityId, images)`），由 `createPost` 內部處理可選圖片
 - Feed 相關註解用語統一為「資訊流」
+- `useAgentFeed` 移除 `useMemo(() => getAgentFeedData(), [])`，改 lazy `useState` 初始化，避免 Hook 過度優化寫法不一致
 
 **驗證**：
 - [x] `rg "DEMO_IDS" src/` → 0 筆
@@ -389,6 +390,8 @@ function useModeAwareAction<T>(handlers: {
 - [x] `npm run gate`
 - [x] `cmd /c npm run test -- src/pages/Feed/__tests__/FeedIntegration.test.tsx src/pages/Feed/__tests__/FeedRouting.test.tsx src/pages/Feed/__tests__/useAgentFeed.test.ts src/pages/Feed/__tests__/useConsumer.test.ts`（16 passed）
 - [x] `cmd /c npm run test -- src/pages/Feed/__tests__/FeedRouting.test.tsx src/pages/Feed/__tests__/useAgentFeed.test.ts src/pages/Feed/__tests__/useConsumer.test.ts`（12 passed）
+- [x] `rg "useMemo\\(\\(\\) => getAgentFeedData\\(\\), \\[\\]\\)" src/pages/Feed/useAgentFeed.ts` → 0 筆
+- [x] `npm run check:utf8`
 
 ---
 
@@ -1225,6 +1228,26 @@ import styles from '../UAG.module.css';                    // 5. 樣式
 - [x] `cmd /c npm run test -- src/pages/UAG/components/__tests__/UAGEmptyState.test.tsx`
 - [x] `npm run gate`
 
+#### 2026-02-17 strict-audit 修正（第二輪）
+
+**修改**：
+- `src/pages/UAG/components/UAGEmptyState.tsx`
+- `src/pages/UAG/UAG.module.css`
+
+**修正項目**：
+- `UAGEmptyState.tsx:42` 次要按鈕文案改回「知道了」（對齊規格 L963），修復 2 個測試失敗
+- `UAGEmptyState.tsx` 新增 `useMediaQuery('(max-width: 767px)')` 驅動手機版 MaiMai `size="sm"` (80px)（對齊規格 L940）
+- `UAG.module.css:456` `.welcome-card` border 改 `var(--border)`（對齊規格 `#e6edf7`，原用 `var(--line-soft)` `#e2e8f0`）
+- `UAG.module.css` 8 處 hardcode 色碼改 CSS 變數：`.welcome-title` → `var(--text-primary)`、`.welcome-desc` → `var(--text-secondary)`、`.welcome-cta` → `var(--brand)` / `var(--primary-dark)`、`.welcome-dismiss` → `var(--text-secondary)` / `var(--text-primary)`、`.welcome-close` → `var(--text-muted)`、`:focus-visible` → `var(--brand)`
+- `UAG.module.css:494` `.welcome-desc` margin 改 `0 0 16px`（對齊規格，原為 `0 0 12px`）
+- `UAG.module.css` 767px breakpoint 新增 `.welcome-maimai-wrap` 80px 容器限制
+
+**驗證摘要**：
+- [x] `npm run check:utf8`
+- [x] `npx vitest run src/pages/UAG/components/__tests__/UAGEmptyState.test.tsx`（5 passed）
+- [x] `npx tsc --noEmit`
+- [x] `npm run gate`
+
 ---
 
 #### #27 可優化補充（規劃建議，未實作）
@@ -1233,9 +1256,6 @@ import styles from '../UAG.module.css';                    // 5. 樣式
 
 | 優化項目 | 建議 | 目的 | 建議落點 |
 |---|---|---|---|
-| 顯示條件更精準 | `showWelcome` 增加 `mode === 'live'` 與房仲角色判斷（agent/admin/official） | 避免 visitor/demo 或非房仲身份誤顯示 | `src/pages/UAG/index.tsx` |
-| 儲存防禦一致化 | `sessionStorage` 改用 `safeSessionStorage` 封裝（或至少保留 `try/catch`） | 對齊 iOS 私隱模式防護，避免儲存例外影響流程 | `src/lib/safeStorage.ts`, `src/pages/UAG/index.tsx` |
-| 動畫無障礙統一 | 改用 `useMaiMaiA11yProps()` 一次輸出 `animated/showEffects` | 與全站 MaiMai a11y 模式一致，減少重複判斷 | `src/hooks/useMaiMaiA11yProps.ts`, `src/pages/UAG/components/UAGEmptyState.tsx` |
 | 素材一致性約束 | 明確規範卡片僅可用 `MaiMaiBase`（禁止手刻 SVG）且維持 Header `Logo` 現有分子元件 | 確保 Logo / MaiMai 使用完整正規分子素材，避免素材漂移 | `src/components/MaiMai`, `src/components/Logo/Logo.tsx` |
 | 行為可觀測性 | 新增曝光/關閉/CTA 點擊事件（例：`uag_welcome_impression`、`uag_welcome_dismiss`、`uag_welcome_upload_click`） | 量化引導卡轉換成效，支援後續文案與版位優化 | `api/uag/track.ts`, `src/pages/UAG/index.tsx` |
 | 測試覆蓋補強 | 增加 `UAGEmptyState` 與 `showWelcome` 條件測試（含 dismiss 持久化） | 降低回歸風險，確保 #27 長期可維護 | `src/pages/UAG/components/__tests__/*`, `src/pages/UAG/__tests__/*` |
