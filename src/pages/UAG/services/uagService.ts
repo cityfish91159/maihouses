@@ -392,7 +392,7 @@ export class UAGService {
 
     // 1. 並行查詢：用戶資料、sessions、已購買記錄、listings（含 community_id）
     const [userRes, sessionsRes, purchasedRes, listingsRes] = await Promise.all([
-      supabase.from('users').select('points, quota_s, quota_a').eq('id', validatedUserId).single(),
+      supabase.from('agents').select('points, quota_s, quota_a').eq('id', validatedUserId).single(),
       // 正確數據源：uag_sessions（匿名瀏覽行為），不是 leads（真實個資）
       supabase
         .from('uag_sessions')
@@ -406,7 +406,7 @@ export class UAGService {
       supabase
         .from('uag_lead_purchases')
         // 修6: 關聯 conversation_id
-        .select('session_id, id, created_at, notification_status, conversations(id)')
+        .select('session_id, id, created_at, notification_status')
         .eq('agent_id', validatedUserId),
       // UAG-20: 改查 properties 表（listings 表不存在）
       // FEED-01 Phase 8 Bug 1: 加入 community_id 用於過濾 feed
@@ -498,8 +498,7 @@ export class UAGService {
         id: p.id,
         created_at: p.created_at,
         notification_status: p.notification_status ?? undefined,
-        // 修6: 取第一個關聯的 conversation_id
-        conversation_id: p.conversations?.[0]?.id,
+        conversation_id: undefined,
       });
     }
 

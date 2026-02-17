@@ -1,11 +1,13 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- 驗證腳本: audit_logs RLS 政策與欄位檢查
 -- File: 20260129_verify_audit_logs_rls.sql
 --
 -- 使用方式:
---   psql -h <supabase-host> -U postgres -d postgres -f 20260129_verify_audit_logs_rls.sql
+--   1) 先執行 20260129_fix_audit_logs_rls.sql
+--   2) 在 Supabase SQL Editor 執行本檔查詢並核對結果
 --
--- 或在 Supabase SQL Editor 中直接執行
+-- 可選（psql）:
+--   psql -h <supabase-host> -U postgres -d postgres -f 20260129_verify_audit_logs_rls.sql
 -- =============================================================================
 
 -- ============================================================================
@@ -93,13 +95,13 @@ WHERE schemaname = 'public'
 ORDER BY indexname;
 
 -- 預期結果（4 條索引 + 1 條主鍵）:
--- indexname                   | indexdef
--- ----------------------------|----------
--- audit_logs_pkey             | CREATE UNIQUE INDEX ... (id)
--- idx_audit_logs_action       | CREATE INDEX ... (action)
--- idx_audit_logs_created_at   | CREATE INDEX ... (created_at DESC)
+-- indexname                     | indexdef
+-- ------------------------------|---------
+-- audit_logs_pkey               | CREATE UNIQUE INDEX ... (id)
+-- idx_audit_logs_action         | CREATE INDEX ... (action)
+-- idx_audit_logs_created_at     | CREATE INDEX ... (created_at DESC)
 -- idx_audit_logs_transaction_id | CREATE INDEX ... (transaction_id)
--- idx_audit_logs_user_id      | CREATE INDEX ... (user_id)
+-- idx_audit_logs_user_id        | CREATE INDEX ... (user_id)
 
 -- ============================================================================
 -- 6. 驗證註解
@@ -126,7 +128,23 @@ ORDER BY col.column_name;
 -- status      | 稽核日誌狀態：success=成功, failed=失敗, pending=等待中
 
 -- ============================================================================
--- 7. 安全測試（需要在應用層測試）
+-- 7. 驗證表級權限（Defense in Depth）
+-- ============================================================================
+SELECT
+  grantee,
+  privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = 'public'
+  AND table_name = 'audit_logs'
+  AND grantee IN ('anon', 'authenticated', 'service_role')
+ORDER BY grantee, privilege_type;
+
+-- 預期結果:
+-- - anon / authenticated 不應有任何資料列
+-- - service_role 至少具備 SELECT / INSERT / UPDATE / DELETE
+
+-- ============================================================================
+-- 8. 安全測試（可選，建議在隔離環境執行）
 -- ============================================================================
 
 -- 測試案例 1: anon 用戶嘗試查詢（應該失敗）

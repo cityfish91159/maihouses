@@ -6,6 +6,7 @@ import { ROUTES, RouteUtils } from '../../constants/routes';
 import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
 import { getErrorMessage } from '../../lib/error';
+import { safeSessionStorage } from '../../lib/safeStorage';
 import { createPost } from '../../services/communityService';
 import type { AppData } from './types/uag.types';
 
@@ -27,12 +28,15 @@ import RadarCluster from './components/RadarCluster';
 import ActionPanel from './components/ActionPanel';
 import AssetMonitor from './components/AssetMonitor';
 import ListingFeed from './components/ListingFeed';
+import { UAGEmptyState } from './components/UAGEmptyState';
 import ReportGenerator from './components/ReportGenerator';
 import TrustFlow from './components/TrustFlow';
 
 // MSG-5: 購買成功後發送訊息 Modal
 import { SendMessageModal } from '../../components/UAG/SendMessageModal';
 import type { Lead } from './types/uag.types';
+
+const UAG_WELCOME_DISMISSED_KEY = 'uag-welcome-dismissed';
 
 function UAGPageContent() {
   const navigate = useNavigate();
@@ -43,6 +47,9 @@ function UAGPageContent() {
   const { profile: agentProfile } = useAgentProfile(user?.id);
   const actionPanelRef = useRef<HTMLDivElement>(null);
   const uagCacheKey = useMemo(() => uagDataQueryKey(mode, user?.id), [mode, user?.id]);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(
+    () => safeSessionStorage.getItem(UAG_WELCOME_DISMISSED_KEY) === '1'
+  );
 
   // MSG-5: Modal 狀態
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -79,6 +86,11 @@ function UAGPageContent() {
   const handleCloseAssetModal = useCallback(() => {
     setShowAssetMessageModal(false);
     setAssetMessageLead(null);
+  }, []);
+
+  const handleDismissWelcome = useCallback(() => {
+    setWelcomeDismissed(true);
+    safeSessionStorage.setItem(UAG_WELCOME_DISMISSED_KEY, '1');
   }, []);
 
   // 修9: AssetMonitor 發送訊息成功回調
@@ -230,6 +242,12 @@ function UAGPageContent() {
   if (isLoading) return <UAGLoadingSkeleton />;
   if (!appData) return null;
 
+  const showWelcome =
+    mode === 'live' &&
+    appData.leads.length === 0 &&
+    appData.listings.length === 0 &&
+    !welcomeDismissed;
+
   /**
    * 問題 #10-11 修復：不使用假數據 fallback
    * 如果沒有真實的 user.id 或 session_id，不應該嘗試建立對話
@@ -266,6 +284,8 @@ function UAGPageContent() {
 
       <main className={styles['uag-container']}>
         <div className={styles['uag-grid']}>
+          {showWelcome && <UAGEmptyState onDismiss={handleDismissWelcome} />}
+
           {/* [1] UAG Radar */}
           <RadarCluster leads={appData.leads} onSelectLead={selectLead} />
 

@@ -1,4 +1,4 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- Migration: 修復 audit_logs RLS 政策 + 新增欄位
 -- File: 20260129_fix_audit_logs_rls.sql
 --
@@ -11,6 +11,7 @@
 -- 2. 新增 status 欄位追蹤日誌狀態
 -- 3. 新增 error 欄位記錄失敗原因
 -- 4. 新增 action 欄位 CHECK constraint 強化資料完整性
+-- 5. 明確 REVOKE/GRANT 強化表級權限
 -- =============================================================================
 
 -- ============================================================================
@@ -49,10 +50,13 @@ ALTER TABLE public.audit_logs
   ));
 
 -- ============================================================================
--- 3. 刪除舊政策
+-- 3. 清理舊政策（確保可重跑）
 -- ============================================================================
 
 DROP POLICY IF EXISTS "audit_logs_service_role_only" ON public.audit_logs;
+DROP POLICY IF EXISTS "audit_logs_deny_anon" ON public.audit_logs;
+DROP POLICY IF EXISTS "audit_logs_deny_authenticated" ON public.audit_logs;
+DROP POLICY IF EXISTS "audit_logs_service_role_full_access" ON public.audit_logs;
 
 -- ============================================================================
 -- 4. 建立明確 DENY 政策（Default-Deny 原則）
@@ -88,7 +92,17 @@ USING (true)
 WITH CHECK (true);
 
 -- ============================================================================
--- 6. 更新註解
+-- 6. 權限防護（Defense in Depth）
+-- ============================================================================
+
+-- 明確回收前台角色權限，避免誤授權
+REVOKE ALL ON TABLE public.audit_logs FROM anon, authenticated;
+
+-- 僅允許 service_role 讀寫
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.audit_logs TO service_role;
+
+-- ============================================================================
+-- 7. 更新註解
 -- ============================================================================
 
 COMMENT ON COLUMN public.audit_logs.status
@@ -101,25 +115,81 @@ COMMENT ON CONSTRAINT audit_logs_action_check ON public.audit_logs
 IS '限制 action 欄位僅能插入預定義的操作類型（安心留痕流程相關動作）';
 
 -- ============================================================================
--- 7. 驗證 RLS 政策
+-- 8. 驗證結構與政策
 -- ============================================================================
 
 DO $$
 DECLARE
   policy_count INTEGER;
+  extra_policy_count INTEGER;
+  has_status_column BOOLEAN;
+  has_error_column BOOLEAN;
+  has_action_constraint BOOLEAN;
 BEGIN
-  -- 檢查政策數量（應該有 3 個）
+  -- 檢查必要欄位是否存在
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'audit_logs'
+      AND column_name = 'status'
+  ) INTO has_status_column;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'audit_logs'
+      AND column_name = 'error'
+  ) INTO has_error_column;
+
+  IF NOT has_status_column OR NOT has_error_column THEN
+    RAISE EXCEPTION 'Required columns missing: status=% error=%', has_status_column, has_error_column;
+  END IF;
+
+  -- 檢查 action constraint 是否存在
+  SELECT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.audit_logs'::regclass
+      AND conname = 'audit_logs_action_check'
+  ) INTO has_action_constraint;
+
+  IF NOT has_action_constraint THEN
+    RAISE EXCEPTION 'Missing constraint: audit_logs_action_check';
+  END IF;
+
+  -- 檢查必要政策數量（必須是 3 個）
   SELECT COUNT(*) INTO policy_count
   FROM pg_policies
   WHERE schemaname = 'public'
     AND tablename = 'audit_logs'
-    AND policyname LIKE 'audit_logs_%';
+    AND policyname IN (
+      'audit_logs_deny_anon',
+      'audit_logs_deny_authenticated',
+      'audit_logs_service_role_full_access'
+    );
 
-  IF policy_count < 3 THEN
+  IF policy_count <> 3 THEN
     RAISE EXCEPTION 'RLS policies incomplete: expected 3, got %', policy_count;
   END IF;
 
-  RAISE NOTICE 'RLS policies verified: % policies active', policy_count;
+  -- 檢查是否存在非預期政策
+  SELECT COUNT(*) INTO extra_policy_count
+  FROM pg_policies
+  WHERE schemaname = 'public'
+    AND tablename = 'audit_logs'
+    AND policyname NOT IN (
+      'audit_logs_deny_anon',
+      'audit_logs_deny_authenticated',
+      'audit_logs_service_role_full_access'
+    );
+
+  IF extra_policy_count > 0 THEN
+    RAISE EXCEPTION 'Unexpected audit_logs policies found: %', extra_policy_count;
+  END IF;
+
+  RAISE NOTICE 'audit_logs hardening verified: columns, constraint, and 3 policies are valid';
 END $$;
 
 -- ============================================================================
@@ -132,8 +202,8 @@ END $$;
 --
 -- SELECT policyname, roles, cmd FROM pg_policies WHERE tablename = 'audit_logs';
 -- 預期結果:
---   audit_logs_deny_anon             | {anon}          | ALL
---   audit_logs_deny_authenticated    | {authenticated} | ALL
---   audit_logs_service_role_full_access | {service_role} | ALL
+--   audit_logs_deny_anon                | {anon}          | ALL
+--   audit_logs_deny_authenticated       | {authenticated} | ALL
+--   audit_logs_service_role_full_access | {service_role}  | ALL
 --
 -- =============================================================================

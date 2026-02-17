@@ -63,7 +63,7 @@
 - [ ] **#24** Chat 三模式支持（`Chat/index.tsx`）
 - [ ] **#25** Assure 三模式支持 — `isMock` → usePageMode（`Assure/Detail.tsx`）
 - [ ] **#26** 登出清理 — `cleanupAuthState()` 統一函數 + onAuthStateChange（2 檔）
-- [ ] **#27** UAG 新房仲空狀態 + MaiMai 引導（1 新組件）
+- [x] **#27** UAG 新房仲空狀態 + MaiMai 引導（1 新組件）✅ 2026-02-17
 
 ### P2 — 房源列表頁三模式重構（`PropertyListPage`）
 
@@ -881,11 +881,13 @@ App.tsx 加 `onAuthStateChange('SIGNED_IN')` → `queryClient.clear()`。
 
 ---
 
-### #27 UAG 新房仲空狀態 MaiMai 歡迎引導卡片
+### #27 ✅ UAG 新房仲空狀態 MaiMai 歡迎引導卡片
 
 **目標**：新 agent 進 UAG 看到 MaiMai 引導而非空白頁
 
 **依賴**：#5a
+
+**已完成** 2026-02-17
 
 **Context**：新房仲註冊後第一次進入 UAG 頁面（`/maihouses/uag`），因為還沒上架任何物件，leads 和 listings 都是空的，整頁除了空區塊什麼都沒有。需要一個 MaiMai 歡迎卡片引導新房仲去上架第一筆物件。
 
@@ -1191,6 +1193,28 @@ import styles from '../UAG.module.css';                    // 5. 樣式
 11. prefers-reduced-motion → 確認 fadeIn 停用 + MaiMai 浮動停用
 12. 關閉按鈕 Tab focus → 確認 focus-visible outline 可見
 13. 「知道了」/ CTA 觸控區 ≥ 44px
+
+#### 2026-02-17 施作紀錄（本輪）
+
+**新增**：
+- `src/pages/UAG/components/UAGEmptyState.tsx`
+- `src/pages/UAG/components/__tests__/UAGEmptyState.test.tsx`
+
+**修改**：
+- `src/pages/UAG/index.tsx`
+- `src/pages/UAG/UAG.module.css`
+
+**本輪調整重點**：
+- `UAGPageContent` 新增 `showWelcome` 條件渲染：`mode === 'live' && leads/listings 皆空 && !welcomeDismissed`。
+- dismiss 持久化採用 `safeSessionStorage`（key: `uag-welcome-dismissed`），避免直接存取 `sessionStorage` 的環境風險。
+- `UAGEmptyState` 使用既有分子素材 `MaiMaiBase`，動畫參數改用 `useMaiMaiA11yProps()` 統一接入 reduced-motion。
+- 歡迎卡樣式完全使用 `UAG.module.css`（零 Tailwind），補齊 44px 觸控區、focus-visible、`prefers-reduced-motion`。
+- CTA 維持既有 pattern：`<Link to="/property/upload">`（不新增 `routes.ts` 常數）。
+
+**驗證摘要**：
+- [x] `npm run check:utf8`
+- [x] `cmd /c npm run test -- src/pages/UAG/components/__tests__/UAGEmptyState.test.tsx`
+- [x] `npm run gate`
 
 ---
 
