@@ -14,7 +14,10 @@ export function UAGEmptyState({ onDismiss }: UAGEmptyStateProps) {
   const isMobile = useMediaQuery('(max-width: 767px)');
 
   return (
-    <section className={`${styles['k-span-6']} ${styles['welcome-card']}`} aria-label="新手引導">
+    <section
+      className={`${styles['k-span-6']} ${styles['welcome-card']}`}
+      aria-label="新手引導"
+    >
       <button
         type="button"
         className={styles['welcome-close']}
