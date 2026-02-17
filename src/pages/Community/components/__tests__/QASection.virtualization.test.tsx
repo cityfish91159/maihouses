@@ -14,6 +14,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { QASection } from '../QASection';
 import type { Question } from '../../types';
 
+vi.mock('../../../../hooks/usePageMode', () => ({
+  usePageMode: () => 'live',
+}));
+
 // Mock useGuestVisibleItems hook
 vi.mock('../../../../hooks/useGuestVisibleItems', () => ({
   useGuestVisibleItems: <T,>(items: T[], isLoggedIn: boolean) => ({

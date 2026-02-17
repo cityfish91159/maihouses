@@ -3,6 +3,10 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { QASection } from '../QASection';
 import type { Question } from '../../types';
 
+vi.mock('../../../../hooks/usePageMode', () => ({
+  usePageMode: () => 'live',
+}));
+
 const questions: Question[] = [
   {
     id: 'q1',
