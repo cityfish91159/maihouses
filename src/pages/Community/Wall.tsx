@@ -115,6 +115,11 @@ function useDemoModeMockSync({ mode, useMock, setUseMock }: UseDemoModeMockSyncO
   }, [mode, setUseMock, useMock]);
 }
 
+type CreatePostPayload = {
+  content: string;
+  visibility: 'public' | 'private';
+};
+
 // ============ Inner Component (Wrapped by ErrorBoundary) ============
 function WallInner() {
   const params = useParams<{ id: string }>();
@@ -323,17 +328,36 @@ function WallInner() {
     [showRegisterGuide]
   );
 
+  const showPostRegisterGuide = useCallback(
+    (_payload: CreatePostPayload) => {
+      showRegisterGuide('註冊後即可發表貼文', '免費註冊即可分享社區生活與參與討論');
+    },
+    [showRegisterGuide]
+  );
+
+  const runCreatePost = useCallback(
+    async ({ content, visibility }: CreatePostPayload) => {
+      await createPost(content, visibility);
+    },
+    [createPost]
+  );
+
+  const dispatchCreatePost = useModeAwareAction<CreatePostPayload>({
+    visitor: showPostRegisterGuide,
+    demo: runCreatePost,
+    live: runCreatePost,
+  });
+
   // 發文處理
   const handleCreatePost = useCallback(
     async (content: string, visibility: 'public' | 'private' = 'public') => {
-      try {
-        await createPost(content, visibility);
-      } catch (err) {
-        logger.error('[Wall] Failed to create post', { error: err });
-        notify.error('發文失敗', '請稍後再試');
+      const result = await dispatchCreatePost({ content, visibility });
+      if (!result.ok) {
+        logger.error('[Wall] Failed to create post', { error: result.error });
+        notify.error('發文失敗', result.error);
       }
     },
-    [createPost]
+    [dispatchCreatePost]
   );
 
   const handleAskQuestion = useCallback(
@@ -505,6 +529,8 @@ function WallInner() {
             communityId={communityId}
             currentUserId={currentUserId}
             userInitial={userInitial}
+            mode={mode}
+            onRegisterGuide={showRegisterGuide}
             onLike={handleLike}
             onCreatePost={handleCreatePost}
             onUnlock={handleUnlock}

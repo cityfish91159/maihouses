@@ -40,7 +40,7 @@
 ### P1 — 社區牆三模式（極限測試升級）
 
 - [x] **#8a** 社區牆：`useEffectiveRole` hook + 按讚改用 useModeAwareAction + **demo mode 完全未接入**（3 檔）✅ 2026-02-16
-- [ ] **#8b** 社區牆：發文/留言本地化 + LockedOverlay/BottomCTA 引導修正（3 檔）
+- [x] **#8b** 社區牆：發文/留言本地化 + LockedOverlay/BottomCTA 引導修正（3 檔）✅ 2026-02-17
 
 ### P2 — 社區牆導航修正
 
@@ -464,22 +464,31 @@ function successRedirect(user) {
 
 ---
 
-### #8b 社區牆互動本地化
+### #8b ✅ 社區牆互動本地化
+
+**已完成** 2026-02-17
 
 **目標**：發文/留言本地化 + LockedOverlay/BottomCTA 引導
 
 **依賴**：#8a、#14b、#15
 
-**修改**：
-| 檔案 | 改動 |
-|------|------|
-| `PostsSection.tsx` | 移除 `disabled={!isLoggedIn}` → `useModeAwareAction` |
-| `BottomCTA.tsx` | `auth.html` → `getAuthUrl()` |
-| LockedOverlay | CTA 改 `onCtaClick` 由父組件注入 |
+**新增/修改**：
+- `src/pages/Community/components/PostsSection.tsx`
+- `src/pages/Community/components/BottomCTA.tsx`
+- `src/pages/Community/Wall.tsx`
 
-**驗收**：
-- `rg "auth\\.html" src/pages/Community/` → 0 筆
-- `npm run gate` 通過
+**核心變更**：
+- `PostsSection` 發文入口改用 `useModeAwareAction` 分流：`visitor -> 註冊引導`、`demo/live -> 開啟發文流程`
+- `PostCommentSection` 留言操作改用 `useModeAwareAction` 分流：`visitor -> 註冊引導`、`demo -> 本地留言 state`、`live -> API`
+- `PostCommentSection` demo 模式支援本地 `add / like / delete`（不打 API）
+- `BottomCTA` 註冊導向統一改 `getAuthUrl('signup', getCurrentPath())`，移除社區頁面內硬編碼 `auth.html` 依賴
+- `PostsSection` 補接 `onRegisterGuide`，留言引導文案對齊「註冊後即可參與討論」
+
+**驗證**：
+- [x] `npm run check:utf8`
+- [x] `npm run typecheck`
+- [x] `rg "auth\\.html" src/pages/Community/`（0 筆）
+- [x] `npm run gate`
 
 ---
 

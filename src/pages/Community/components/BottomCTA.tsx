@@ -7,7 +7,7 @@
 import type { Role } from '../types';
 import { getPermissions } from '../types';
 import { canPerformAction } from '../lib';
-import { getSignupUrl, getCurrentPath } from '../../../lib/authUtils';
+import { getAuthUrl, getCurrentPath } from '../../../lib/authUtils';
 
 interface BottomCTAProps {
   viewerRole: Role;
@@ -24,12 +24,12 @@ export function BottomCTA({ viewerRole }: BottomCTAProps) {
   const isMember = perm.isMember;
 
   // 產生當前頁面的註冊 URL（含 return 參數）
-  const signupUrl = getSignupUrl(getCurrentPath());
+  const signupUrl = getAuthUrl('signup', getCurrentPath());
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-overlay flex items-center justify-center gap-3 border-t border-[var(--border)] bg-[rgba(255,255,255,0.95)] px-4 py-3 backdrop-blur-md">
       <p className="text-xs text-[var(--text-secondary)]">
-        {isMember ? '驗證住戶身份，解鎖私密牆' : '登入解鎖完整評價 + 更多功能'}
+        {isMember ? '驗證住戶身份，解鎖私密牆' : '免費註冊查看完整社區'}
       </p>
       <button
         onClick={() => (window.location.href = signupUrl)}
