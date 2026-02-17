@@ -45,7 +45,7 @@ export default function AssureDetail() {
   const [pendingAction, setPendingAction] = useState<null | 'pay' | 'reset'>(null);
   const [hasDismissedDataModal, setHasDismissedDataModal] = useState(false);
 
-  // #13b: 評價提示 Modal
+  // var(--mh-color-1133bb): 評價提示 Modal
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
 
   // Note: Token handling and initialization is now managed by useTrustRoom hook
@@ -65,7 +65,7 @@ export default function AssureDetail() {
     handleAction('submit', { step, data: { note: inputBuffer } });
   const confirmStep = async (step: string) => {
     const success = await handleAction('confirm', { step, note: inputBuffer });
-    // #13b: Step 2 確認成功後 500ms 彈出評價提示
+    // var(--mh-color-1133bb): Step 2 確認成功後 500ms 彈出評價提示
     if (success && step === '2' && role === 'buyer') {
       setTimeout(() => {
         setShowReviewPrompt(true);
@@ -376,7 +376,7 @@ export default function AssureDetail() {
         />
       )}
 
-      {/* #13b: 評價提示 Modal */}
+      {/* var(--mh-color-1133bb): 評價提示 Modal */}
       {showReviewPrompt && tx && caseId && lastAgentId && (
         <ReviewPromptModal
           open={showReviewPrompt}

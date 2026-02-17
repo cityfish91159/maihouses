@@ -10,6 +10,9 @@ import type { Role, Review } from '../types';
 import { getPermissions } from '../types';
 import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
 import { LockedOverlay } from './LockedOverlay';
+import { STRINGS } from '../../../constants/strings';
+
+const { COMMUNITY: S } = STRINGS;
 
 interface ReviewEntry {
   id: string;
@@ -153,8 +156,8 @@ export function ReviewsSection({
         <LockedOverlay
           visible={hiddenReviewCount > 0 && !!nextHiddenEntry}
           hiddenCount={hiddenReviewCount}
-          countLabel="則評價"
-          benefits={['查看全部評價', '新回答通知']}
+          countLabel={S.LOCKED_OVERLAY_REVIEW_COUNT_LABEL}
+          benefits={[S.LOCKED_OVERLAY_REVIEW_BENEFIT_1, S.LOCKED_OVERLAY_REVIEW_BENEFIT_2]}
           {...(onUnlock ? { onCtaClick: onUnlock } : {})}
         >
           {nextHiddenEntry && <ReviewCard entry={nextHiddenEntry} />}

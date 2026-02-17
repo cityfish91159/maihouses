@@ -103,15 +103,15 @@ export const PropertyEditPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
-        <Loader2 className="animate-spin text-[#003366]" size={40} />
+      <div className="flex min-h-screen items-center justify-center bg-[var(--mh-color-f8fafc)]">
+        <Loader2 className="animate-spin text-[var(--mh-color-003366)]" size={40} />
       </div>
     );
   }
 
   if (error || !property) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--mh-color-f8fafc)]">
         <div className="text-center">
           <AlertTriangle size={48} className="mx-auto mb-4 text-red-500" />
           <p className="text-red-600">{error || '找不到物件'}</p>
@@ -124,7 +124,7 @@ export const PropertyEditPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
+    <div className="min-h-screen bg-[var(--mh-color-f8fafc)] font-sans text-slate-800">
       {/* Header */}
       <nav className="sticky top-0 z-overlay flex h-16 items-center border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
         <button
@@ -133,8 +133,8 @@ export const PropertyEditPage: React.FC = () => {
         >
           <ArrowLeft size={20} className="text-slate-600" />
         </button>
-        <div className="flex items-center gap-2 text-xl font-extrabold text-[#003366]">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white">
+        <div className="flex items-center gap-2 text-xl font-extrabold text-[var(--mh-color-003366)]">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--mh-color-003366)] to-[var(--mh-color-00a8e8)] text-white">
             <Home size={18} />
           </div>
           {isFixCommunityMode ? '修正社區歸屬' : '編輯物件'}
@@ -196,7 +196,7 @@ export const PropertyEditPage: React.FC = () => {
           disabled={!hasChanges || saving}
           className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-lg font-bold transition-all ${
             hasChanges && !saving
-              ? 'bg-gradient-to-r from-[#003366] to-[#00A8E8] text-white shadow-lg hover:scale-[1.01]'
+              ? 'bg-gradient-to-r from-[var(--mh-color-003366)] to-[var(--mh-color-00a8e8)] text-white shadow-lg hover:scale-[1.01]'
               : 'cursor-not-allowed bg-slate-200 text-slate-400'
           } `}
         >

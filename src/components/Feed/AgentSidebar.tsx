@@ -49,11 +49,11 @@ const HotPostItem = memo(function HotPostItem({ post }: HotPostItemProps) {
     <li className="text-[13px] leading-tight">
       <Link
         to={`/post/${post.id}`}
-        className="mb-0.5 line-clamp-2 block font-medium text-[#0b214a] no-underline hover:text-[#005282]"
+        className="mb-0.5 line-clamp-2 block font-medium text-[var(--mh-color-0b214a)] no-underline hover:text-[var(--mh-color-005282)]"
       >
         {post.title}
       </Link>
-      <span className="flex items-center gap-1 text-[11px] text-[#94a3b8]">
+      <span className="flex items-center gap-1 text-[11px] text-[var(--mh-color-94a3b8)]">
         {post.communityName} · 👍 {post.likes}
       </span>
     </li>
@@ -100,19 +100,19 @@ export const AgentSidebar: React.FC<AgentSidebarProps> = memo(function AgentSide
           </Link>
           <Link
             to={`${ROUTES.UAG}#stats`}
-            className="flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[#0b214a] no-underline transition-colors hover:bg-[#f0f7ff]"
+            className="flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[var(--mh-color-0b214a)] no-underline transition-colors hover:bg-[var(--mh-color-f0f7ff)]"
           >
             {STRINGS.AGENT.SIDEBAR.LINK_STATS}
           </Link>
           <Link
             to={ROUTES.ASSURE}
-            className="flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[#0b214a] no-underline transition-colors hover:bg-[#f0f7ff]"
+            className="flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[var(--mh-color-0b214a)] no-underline transition-colors hover:bg-[var(--mh-color-f0f7ff)]"
           >
             {STRINGS.AGENT.SIDEBAR.LINK_TRUST}
           </Link>
           <Link
             to={`/community/${DEFAULT_COMMUNITY_ID}/wall`}
-            className="relative flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[#0b214a] no-underline transition-colors hover:bg-[#f0f7ff]"
+            className="relative flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[var(--mh-color-0b214a)] no-underline transition-colors hover:bg-[var(--mh-color-f0f7ff)]"
           >
             {STRINGS.AGENT.SIDEBAR.LINK_WALL}
             {/* Notification Badge Example */}

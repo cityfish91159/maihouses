@@ -6,7 +6,7 @@
  * 【風格】Flat Design + Minimalism & Swiss Style
  * 【產品】Real Estate/Property - Trust Blue + Gold + White
  * 【字體】Corporate Trust - Lexend + Source Sans 3
- * 【顏色】Financial Dashboard - #3B82F6, #F97316, #F8FAFC
+ * 【顏色】Financial Dashboard - var(--mh-color-3b82f6), var(--mh-color-f97316), var(--mh-color-f8fafc)
  * 【動畫】Micro-interactions - Small hover (50-100ms)
  *        Sales Intelligence Dashboard - status change highlights
  * 【Stack】html-tailwind - rounded-2xl shadow-lg p-6
@@ -225,7 +225,7 @@ const mockListings = [
   {
     id: '1',
     title: '惠宇上晴 12F',
-    thumbColor: '#3B82F6',
+    thumbColor: 'var(--mh-color-3b82f6)',
     tags: ['高樓層', '景觀戶'],
     view: 1280,
     click: 245,
@@ -234,7 +234,7 @@ const mockListings = [
   {
     id: '2',
     title: '捷運共構 3 房',
-    thumbColor: '#10B981',
+    thumbColor: 'var(--mh-color-10b981)',
     tags: ['捷運宅', '首購推薦'],
     view: 890,
     click: 156,
@@ -243,7 +243,7 @@ const mockListings = [
   {
     id: '3',
     title: '南屯學區宅',
-    thumbColor: '#F59E0B',
+    thumbColor: 'var(--mh-color-f59e0b)',
     tags: ['學區', '家庭'],
     view: 650,
     click: 98,
@@ -331,9 +331,9 @@ export default function UAGDeAIDemoV2() {
   const liveLeads = mockLeads.filter((l) => l.status === 'new');
   const purchasedLeads = mockLeads.filter((l) => l.status === 'purchased');
   const thumbToneClassByColor: Record<string, string | undefined> = {
-    '#3B82F6': styles['deai-v2-thumb-tone-blue'],
-    '#10B981': styles['deai-v2-thumb-tone-green'],
-    '#F59E0B': styles['deai-v2-thumb-tone-amber'],
+    'var(--mh-color-3b82f6)': styles['deai-v2-thumb-tone-blue'],
+    'var(--mh-color-10b981)': styles['deai-v2-thumb-tone-green'],
+    'var(--mh-color-f59e0b)': styles['deai-v2-thumb-tone-amber'],
   };
 
   // 產生「等級-序號」標籤

@@ -67,19 +67,19 @@ export const WarmWelcomeBar = () => {
 
   return (
     <div
-      className="flex h-[34px] w-full items-center justify-center gap-3 border-b border-[#E6ECFF] bg-[#F5F8FF] text-center text-sm leading-[34px] tracking-wide text-[#0a2246]"
+      className="flex h-[34px] w-full items-center justify-center gap-3 border-b border-[var(--mh-color-e6ecff)] bg-[var(--mh-color-f5f8ff)] text-center text-sm leading-[34px] tracking-wide text-[var(--mh-color-0a2246)]"
       role="status"
       aria-live="polite"
     >
       <span>{leftText}</span>
       <button
-        className="h-[26px] cursor-pointer rounded-full border border-[#1749D7] bg-[#1749D7] px-2.5 py-0.5 leading-6 text-white transition-colors hover:bg-[#123cb3]"
+        className="h-[26px] cursor-pointer rounded-full border border-[var(--mh-color-1749d7)] bg-[var(--mh-color-1749d7)] px-2.5 py-0.5 leading-6 text-white transition-colors hover:bg-[var(--mh-color-123cb3)]"
         onClick={onContinue}
       >
         接著聊
       </button>
       <button
-        className="h-[26px] cursor-pointer rounded-full border border-[#C9D5FF] bg-white px-2.5 py-0.5 leading-6 text-[#1749D7] transition-colors hover:bg-gray-50"
+        className="h-[26px] cursor-pointer rounded-full border border-[var(--mh-color-c9d5ff)] bg-white px-2.5 py-0.5 leading-6 text-[var(--mh-color-1749d7)] transition-colors hover:bg-gray-50"
         onClick={onDismissToday}
       >
         今天不再顯示

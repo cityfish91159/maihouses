@@ -457,7 +457,7 @@ export function Blush({ show }: { show: boolean }) {
         cx={EYE_L_X - BLUSH_OFFSET_X}
         cy={BLUSH_Y}
         r={BLUSH_RADIUS}
-        fill="#FFB6C1"
+        fill="var(--mh-color-ffb6c1)"
         opacity="0.6"
         className={T_OPACITY}
       />
@@ -465,7 +465,7 @@ export function Blush({ show }: { show: boolean }) {
         cx={EYE_R_X + BLUSH_OFFSET_X}
         cy={BLUSH_Y}
         r={BLUSH_RADIUS}
-        fill="#FFB6C1"
+        fill="var(--mh-color-ffb6c1)"
         opacity="0.6"
         className={T_OPACITY}
       />

@@ -95,7 +95,7 @@ describe('AgentProfileCard Performance', () => {
     );
 
     // 檢查 badge 樣式類名（共用的部分）
-    const badges = container.querySelectorAll('.border-\\[\\#fde047\\]');
+    const badges = container.querySelectorAll('.border-\\[\\var(--mh-color-fde047)\\]');
     expect(badges.length).toBeGreaterThanOrEqual(2);
   });
 

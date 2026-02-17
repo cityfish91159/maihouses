@@ -69,7 +69,7 @@ describe('UAGHeader responsive behavior (U3)', () => {
 
     const stats = screen.getByText('信任分').closest('div');
     expect(stats?.className).toContain('agent-bar-stats');
-    expect(screen.getByText('#6600').className).toContain('agent-bar-code');
+    expect(screen.getByText('var(--mh-color-66660000)').className).toContain('agent-bar-code');
   });
 
   it('defines mobile hide rules and 44px user touch target in CSS', () => {

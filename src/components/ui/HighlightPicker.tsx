@@ -139,10 +139,10 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
                     disabled={isDisabled}
                     className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       isSelected
-                        ? 'bg-[#003366] text-white shadow-sm'
+                        ? 'bg-[var(--mh-color-003366)] text-white shadow-sm'
                         : isDisabled
                           ? 'cursor-not-allowed bg-slate-200 text-slate-400'
-                          : 'bg-white text-slate-600 shadow-sm hover:bg-blue-50 hover:text-[#003366]'
+                          : 'bg-white text-slate-600 shadow-sm hover:bg-blue-50 hover:text-[var(--mh-color-003366)]'
                     }`}
                   >
                     {isSelected && <Check size={14} />}
@@ -177,13 +177,13 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
                   placeholder="自訂..."
                   maxLength={MAX_TAG_LENGTH}
                   disabled={isFull}
-                  className="w-28 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 placeholder:text-slate-300 focus:border-[#003366] focus:outline-none focus:ring-1 focus:ring-[#003366] disabled:cursor-not-allowed disabled:bg-slate-100"
+                  className="w-28 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 placeholder:text-slate-300 focus:border-[var(--mh-color-003366)] focus:outline-none focus:ring-1 focus:ring-[var(--mh-color-003366)] disabled:cursor-not-allowed disabled:bg-slate-100"
                 />
                 {input.trim() && !isFull && (
                   <button
                     type="button"
                     onClick={() => addCustomTag(index)}
-                    className="rounded-full bg-[#003366] p-1 text-white transition hover:bg-[#004488]"
+                    className="rounded-full bg-[var(--mh-color-003366)] p-1 text-white transition hover:bg-[var(--mh-color-004488)]"
                   >
                     <Plus size={14} />
                   </button>
@@ -201,7 +201,7 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
           {value.map((tag) => (
             <span
               key={tag}
-              className="flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-sm font-medium text-[#003366]"
+              className="flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-sm font-medium text-[var(--mh-color-003366)]"
             >
               {tag}
               <button

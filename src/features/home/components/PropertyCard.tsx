@@ -14,7 +14,7 @@ export default function PropertyCard({ property }: { property: FeaturedProperty 
       {/* Cover Image */}
       <a
         href={`/property/${property.id}`}
-        className="relative block aspect-[4/3] overflow-hidden bg-[#e9ecf5]"
+        className="relative block aspect-[4/3] overflow-hidden bg-[var(--mh-color-e9ecf5)]"
       >
         <img
           src={property.image}
@@ -47,7 +47,7 @@ export default function PropertyCard({ property }: { property: FeaturedProperty 
             ))}
         </div>
 
-        <div className="my-2 mb-1 text-[19px] font-black tracking-[0.2px] text-[#111]">
+        <div className="my-2 mb-1 text-[19px] font-black tracking-[0.2px] text-[var(--mh-color-111111)]">
           NT$ {property.price} 萬
         </div>
         <div className="text-[13px] text-ink-600">{property.location}</div>

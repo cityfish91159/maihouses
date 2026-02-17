@@ -33,10 +33,10 @@ import css from './UIUXDemo.module.css';
  * 【來源 3】colors.csv - SaaS 配色
  * 搜尋指令：python search.py "saas" --domain color
  * 結果：
- *   - Primary: #2563EB (藍)
- *   - CTA: #F97316 (橘)
- *   - Text: #1E293B
- *   - Border: #E2E8F0
+ *   - Primary: var(--mh-color-2563eb) (藍)
+ *   - CTA: var(--mh-color-f97316) (橘)
+ *   - Text: var(--mh-color-1e293b)
+ *   - Border: var(--mh-color-e2e8f0)
  *
  * 【來源 4】ux-guidelines.csv - Forms/Submit Feedback
  * 搜尋指令：python search.py "confirm danger" --domain ux

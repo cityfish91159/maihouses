@@ -32,10 +32,10 @@ export function ListingSection({ listings, urlQuery, totalCount }: ListingSectio
           ))
         ) : (
           <div className="empty-state col-[1/-1] p-12 text-center">
-            <p className="mb-2 text-lg font-semibold text-[#5b6b7b]">
+            <p className="mb-2 text-lg font-semibold text-[var(--mh-color-5b6b7b)]">
               找不到符合「{urlQuery}」的房源
             </p>
-            <p className="text-sm text-[#8b9cad]">
+            <p className="text-sm text-[var(--mh-color-8b9cad)]">
               試試其他關鍵字，例如：林口、捷運、學區
             </p>
           </div>

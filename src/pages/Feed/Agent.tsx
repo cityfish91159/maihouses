@@ -60,7 +60,7 @@ export default function AgentPage({ userId, mode }: AgentPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f9ff]">
+    <div className="min-h-screen bg-[var(--mh-color-f6f9ff)]">
       <GlobalHeader mode="agent" title={STRINGS.FEED.PAGE_TITLE} />
 
       <div className="mx-auto flex max-w-[960px] gap-5 p-2.5 pb-24 md:pb-5">

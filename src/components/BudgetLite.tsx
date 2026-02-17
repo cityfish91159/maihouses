@@ -106,7 +106,7 @@ export const BudgetLite: React.FC = () => {
       <div className="mt-2 text-gray-500">{warmTip}</div>
       <button
         onClick={onCopy}
-        className="mt-2 rounded-lg border border-[#1749D7] bg-white px-2.5 py-1.5 text-[#1749D7]"
+        className="mt-2 rounded-lg border border-[var(--mh-color-1749d7)] bg-white px-2.5 py-1.5 text-[var(--mh-color-1749d7)]"
       >
         複製概算模板
       </button>

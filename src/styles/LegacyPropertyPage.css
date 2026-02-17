@@ -2,27 +2,27 @@
 
 .legacy-property-page {
   /* 主色：邁房子深藍 (Deep Blue) */
-  --primary: #00385a;
-  --primary-light: #e0f4ff;
+  --primary: var(--mh-color-00385a);
+  --primary-light: var(--mh-color-e0f4ff);
   /* 淺藍背景 */
-  --primary-dark: #002a44;
-  --primary-cyan: #009fe8;
+  --primary-dark: var(--mh-color-002a44);
+  --primary-cyan: var(--mh-color-009fe8);
   /* 亮藍/青色 (保留部分淺藍) */
 
   /* 背景色系 */
-  --bg-base: #f6f9ff;
-  --bg-card: #ffffff;
+  --bg-base: var(--mh-color-f6f9ff);
+  --bg-card: var(--mh-color-ffffff);
 
   /* 文字色 */
-  --text-primary: #1f2933;
-  --text-secondary: #5b6b7b;
-  --text-tertiary: #9aa5b1;
+  --text-primary: var(--mh-color-1f2933);
+  --text-secondary: var(--mh-color-5b6b7b);
+  --text-tertiary: var(--mh-color-9aa5b1);
 
   /* 邊框 */
-  --border-light: #dde5f0;
+  --border-light: var(--mh-color-dde5f0);
 
   /* 評價綠 */
-  --review-green: #28a38a;
+  --review-green: var(--mh-color-28a38a);
   --review-green-bg: rgba(40, 163, 138, 0.07);
   --review-green-border: rgba(40, 163, 138, 0.3);
 
@@ -88,7 +88,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #ffffff;
+  background: var(--mh-color-ffffff);
   box-shadow: var(--shadow-sm);
   padding: 0 2.5rem;
   /* 40px */
@@ -115,7 +115,7 @@
   /* 42px */
   height: 2.625rem;
   /* 42px */
-  background: linear-gradient(135deg, #00385a, #005282);
+  background: linear-gradient(135deg, var(--mh-color-00385a), var(--mh-color-005282));
   border-radius: 0.75rem;
   /* 12px */
   display: flex;
@@ -139,9 +139,9 @@
   right: 0.5rem;
   width: 0.375rem;
   height: 0.375rem;
-  background-color: #ff6b6b;
+  background-color: var(--mh-color-ff6b6b);
   border-radius: 50%;
-  box-shadow: 0 0 0 1.5px #004e7c;
+  box-shadow: 0 0 0 1.5px var(--mh-color-004e7c);
 }
 
 .legacy-property-page .logo-text-group {
@@ -154,7 +154,7 @@
   /* 24px */
   font-weight: 700;
   font-family: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-  color: #00385a;
+  color: var(--mh-color-00385a);
   letter-spacing: 0.025em;
   line-height: 1;
 }
@@ -174,7 +174,7 @@
   font-size: 0.9375rem;
   /* 15px */
   font-weight: 700;
-  color: #00629b;
+  color: var(--mh-color-00629b);
   /* brand-500 */
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -195,7 +195,7 @@
   padding: 0.375rem 0.875rem;
   border-radius: 1.25rem;
   border: 1px solid var(--border-light);
-  background: #ffffff;
+  background: var(--mh-color-ffffff);
   cursor: pointer;
   transition:
     opacity 0.2s ease,
@@ -255,7 +255,7 @@
 .legacy-property-page .search-box {
   display: flex;
   align-items: center;
-  background: #ffffff;
+  background: var(--mh-color-ffffff);
   border-radius: 999px;
   border: 1px solid var(--border-light);
   padding: 0.5rem 0.875rem;
@@ -285,7 +285,7 @@
   /* 13px */
   font-weight: 600;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--mh-color-ffffff);
   cursor: pointer;
   white-space: nowrap;
   touch-action: manipulation;
@@ -415,7 +415,7 @@
   /* 12px */
   font-weight: 600;
   background: rgba(0, 56, 90, 0.92);
-  color: #ffffff;
+  color: var(--mh-color-ffffff);
   border-radius: 1rem;
   z-index: 2;
 }
@@ -492,7 +492,7 @@
 
 .legacy-property-page .tiny-text-highlight {
   font-size: 0.75rem;
-  color: #e63946;
+  color: var(--mh-color-e63946);
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
@@ -505,7 +505,7 @@
 }
 
 .legacy-property-page .property-rating .star {
-  color: #fbbf24;
+  color: var(--mh-color-fbbf24);
   font-size: 0.9375rem;
   /* 15px */
   margin-right: 0.125rem;
@@ -546,7 +546,7 @@
 }
 
 .legacy-property-page .review-stars {
-  color: #fbbf24;
+  color: var(--mh-color-fbbf24);
   font-size: 0.8125rem;
   /* 13px */
 }
@@ -611,7 +611,7 @@
   /* 12px */
   font-weight: 600;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--mh-color-ffffff);
   border: none;
   border-radius: 1rem;
   cursor: pointer;
@@ -653,7 +653,7 @@
   /* 14px */
   font-weight: 600;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--mh-color-ffffff);
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -695,8 +695,8 @@
 }
 
 .legacy-property-page .heart-btn:hover {
-  color: #ef4444;
-  border-color: #ef4444;
+  color: var(--mh-color-ef4444);
+  border-color: var(--mh-color-ef4444);
   background: rgba(239, 68, 68, 0.05);
 }
 
@@ -825,7 +825,7 @@
 }
 
 .legacy-property-page .horizontal-rating .star {
-  color: #fbbf24;
+  color: var(--mh-color-fbbf24);
   margin-right: 0.125rem;
 }
 

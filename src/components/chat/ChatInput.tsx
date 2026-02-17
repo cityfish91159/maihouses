@@ -50,7 +50,7 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={isActive() ? '安靜模式：只聊天,不推內容' : '輸入訊息…'}
-        className="flex-1 rounded-[10px] border border-[#ddd] px-3 py-2.5"
+        className="flex-1 rounded-[10px] border border-[var(--mh-color-dddddd)] px-3 py-2.5"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -60,7 +60,7 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
       />
       <button
         onClick={handleSend}
-        className="rounded-[10px] border border-[#1749D7] bg-[#1749D7] px-3 py-2 text-white"
+        className="rounded-[10px] border border-[var(--mh-color-1749d7)] bg-[var(--mh-color-1749d7)] px-3 py-2 text-white"
       >
         發送
       </button>

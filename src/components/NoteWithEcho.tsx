@@ -26,7 +26,7 @@ export const NoteWithEcho: React.FC = () => {
   };
 
   return (
-    <div className="rounded-xl border border-[#eee] bg-white p-3">
+    <div className="rounded-xl border border-[var(--mh-color-eeeeee)] bg-white p-3">
       <div className="mb-1.5 font-semibold">收藏備註（感受）</div>
       <textarea
         rows={3}
@@ -35,18 +35,18 @@ export const NoteWithEcho: React.FC = () => {
         onChange={(e) => setText(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className="w-full rounded-lg border border-[#ddd] p-2"
+        className="w-full rounded-lg border border-[var(--mh-color-dddddd)] p-2"
       />
-      {focused && <div className="mt-1 text-xs text-[#6b7280]">慢慢寫，我在。</div>}
+      {focused && <div className="mt-1 text-xs text-[var(--mh-color-6b7280)]">慢慢寫，我在。</div>}
       <div className="mt-2 flex gap-2">
         <button
           onClick={handleSave}
           disabled={loading}
-          className="rounded-lg border border-[#1749D7] bg-[#1749D7] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg border border-[var(--mh-color-1749d7)] bg-[var(--mh-color-1749d7)] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? '生成中…' : '存入便條（含回聲）'}
         </button>
-        {echo && <span className="text-[#6b7280]">AI 回聲：{echo}</span>}
+        {echo && <span className="text-[var(--mh-color-6b7280)]">AI 回聲：{echo}</span>}
       </div>
     </div>
   );

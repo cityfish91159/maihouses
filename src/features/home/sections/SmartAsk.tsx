@@ -189,7 +189,7 @@ export default function SmartAsk() {
   }, [status]);
 
   return (
-    <section className="to-brand-700/[0.03] group relative isolate overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-[#F8FAFC] shadow-brand-lg transition-all duration-300 hover:shadow-brand-xl">
+    <section className="to-brand-700/[0.03] group relative isolate overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-[var(--mh-color-f8fafc)] shadow-brand-lg transition-all duration-300 hover:shadow-brand-xl">
       {/* --- Background Elements --- */}
       <div className="bg-brand-100/30 pointer-events-none absolute -right-24 -top-24 size-80 rounded-full mix-blend-multiply blur-3xl"></div>
       <div className="bg-brand-700/5 pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full mix-blend-multiply blur-3xl"></div>

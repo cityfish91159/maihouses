@@ -246,7 +246,7 @@ describe('工具函數', () => {
     it('應該返回正確的狀態格式', () => {
       const active = formatCaseStatus('active');
       expect(active.text).toBe('進行中');
-      expect(active.color).toBe('#16a34a');
+      expect(active.color).toBe('var(--mh-color-16a34a)');
 
       const completed = formatCaseStatus('completed');
       expect(completed.text).toBe('已成交');
@@ -579,8 +579,8 @@ describe('DB-2 案件生命週期狀態', () => {
     it('應該正確格式化 dormant 狀態', () => {
       const dormant = formatCaseStatus('dormant');
       expect(dormant.text).toBe('休眠中');
-      expect(dormant.bg).toBe('#fef3c7');
-      expect(dormant.color).toBe('#d97706');
+      expect(dormant.bg).toBe('var(--mh-color-fef3c7)');
+      expect(dormant.color).toBe('var(--mh-color-d97706)');
     });
 
     it('應該正確格式化 closed_* 系列狀態', () => {

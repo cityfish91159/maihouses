@@ -100,4 +100,17 @@ describe('UAGEmptyState', () => {
     const maimai = screen.getByTestId('maimai-base');
     expect(maimai).toHaveAttribute('data-size', 'sm');
   });
+
+  it('resolves upload link with basename prefix in production routing', () => {
+    render(
+      <MemoryRouter basename="/maihouses" initialEntries={['/maihouses/uag']}>
+        <UAGEmptyState onDismiss={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: '上架物件' })).toHaveAttribute(
+      'href',
+      '/maihouses/property/upload'
+    );
+  });
 });

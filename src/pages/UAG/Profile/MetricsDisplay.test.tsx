@@ -36,7 +36,7 @@ function createProfile(overrides: Partial<AgentProfileMe> = {}): AgentProfileMe 
   };
 }
 
-describe('MetricsDisplay (#21b-P9)', () => {
+describe('MetricsDisplay (var(--mh-color-2211bb)-P9)', () => {
   it('default variant should highlight trust score card with brand token classes', () => {
     render(<MetricsDisplay profile={createProfile()} />);
 

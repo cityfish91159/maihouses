@@ -20,7 +20,7 @@ interface MobileActionBarProps {
 }
 
 /**
- * 行動端底部操作欄組件（#2 雙按鈕重構 + #20b-D4 毛玻璃+滾動隱藏）
+ * 行動端底部操作欄組件（#2 雙按鈕重構 + var(--mh-color-2200bb)-D4 毛玻璃+滾動隱藏）
  *
  * 功能:
  * - 加 LINE 聊聊按鈕（主 CTA）
@@ -56,7 +56,7 @@ export const MobileActionBar = memo(function MobileActionBar({
         !isVisible && 'translate-y-full motion-reduce:translate-y-0'
       )}
     >
-      {/* 社會證明資訊（#8 真實數據 + #20b-D4 icon 升級至 14px） */}
+      {/* 社會證明資訊（#8 真實數據 + var(--mh-color-2200bb)-D4 icon 升級至 14px） */}
       <div className="mb-2 flex items-center justify-center gap-4 text-xs text-slate-500">
         {isVerified && (
           <span className="flex items-center gap-1">

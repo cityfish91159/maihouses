@@ -63,16 +63,16 @@ export function calculateProtectionInfo(lead: Lead): ProtectionInfo {
 export function getGradeColor(grade: Grade): string {
   switch (grade) {
     case 'S':
-      return 'var(--grade-s, #dc2626)'; // 紅色
+      return 'var(--grade-s, var(--mh-color-dc2626))'; // 紅色
     case 'A':
-      return 'var(--grade-a, #f59e0b)'; // 橙色
+      return 'var(--grade-a, var(--mh-color-f59e0b))'; // 橙色
     case 'B':
-      return 'var(--grade-b, #3b82f6)'; // 藍色
+      return 'var(--grade-b, var(--mh-color-3b82f6))'; // 藍色
     case 'C':
-      return 'var(--grade-c, #6b7280)'; // 灰色
+      return 'var(--grade-c, var(--mh-color-6b7280))'; // 灰色
     case 'F':
     default:
-      return 'var(--grade-f, #9ca3af)'; // 淺灰
+      return 'var(--grade-f, var(--mh-color-9ca3af))'; // 淺灰
   }
 }
 

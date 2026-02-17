@@ -61,14 +61,14 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
       {/* 開心時的愛心裝飾 */}
       {phase === 4 && (
         <>
-          <text x="25" y="70" className="animate-ping text-xl" fill="#FF6B9D">
+          <text x="25" y="70" className="animate-ping text-xl" fill="var(--mh-color-ff6b9d)">
             ♥
           </text>
           <text
             x="165"
             y="75"
             className="animate-ping text-xl [animation-delay:300ms]"
-            fill="#FF6B9D"
+            fill="var(--mh-color-ff6b9d)"
           >
             ♥
           </text>
@@ -134,10 +134,10 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
       {/* 交屋時的鑰匙 */}
       {phase === 5 && (
         <g className="animate-pulse">
-          <circle cx="175" cy="100" r="8" stroke="#FFB800" strokeWidth="3" fill="none" />
+          <circle cx="175" cy="100" r="8" stroke="var(--mh-color-ffb800)" strokeWidth="3" fill="none" />
           <path
             d="M 175 108 L 175 130 M 172 120 L 178 120 M 172 125 L 178 125"
-            stroke="#FFB800"
+            stroke="var(--mh-color-ffb800)"
             strokeWidth="3"
             fill="none"
             strokeLinecap="round"

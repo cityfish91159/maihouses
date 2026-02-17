@@ -25,7 +25,7 @@ export const MODE_CONFIGS = {
       box_threshold: 0.12,
       iou_threshold: 0.5,
     },
-    color: '#9370db', // 紫
+    color: 'var(--mh-color-9370db)', // 紫
     tag: '🪟',
     name: 'FABRIC DETAIL',
   },
@@ -37,7 +37,7 @@ export const MODE_CONFIGS = {
       box_threshold: 0.15,
       iou_threshold: 0.45,
     },
-    color: '#4ade80', // 綠
+    color: 'var(--mh-color-4ade80)', // 綠
     tag: '📦',
     name: 'OBJECT',
   },

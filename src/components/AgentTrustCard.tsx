@@ -274,7 +274,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
           onClick={onLineClick}
           aria-label="加 LINE 聊聊"
           data-testid="agent-card-line-button"
-          className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-2.5 text-sm font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[#05B04A] focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--mh-color-06c755)] py-2.5 text-sm font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[var(--mh-color-05b04a)] focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           <MessageCircle size={18} />加 LINE 聊聊
         </button>

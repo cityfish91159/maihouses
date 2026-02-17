@@ -6,7 +6,7 @@
  * 基於 ui-ux-pro-max 資料庫：
  * 1. Style: Minimalism & Swiss Style
  * 2. Typography: Corporate Trust (Lexend + Source Sans 3)
- * 3. Color: Brand #00385a + Swiss monochromatic
+ * 3. Color: Brand var(--mh-color-00385a) + Swiss monochromatic
  * 4. UX: hover:bg-gray-100 cursor-pointer, 200-250ms transitions
  */
 
@@ -347,7 +347,7 @@ export default function UAGDeAIDemo() {
                   height="48"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#CBD5E1"
+                  stroke="var(--mh-color-cbd5e1)"
                   strokeWidth="1.5"
                   className={styles['deai-empty-icon']}
                 >

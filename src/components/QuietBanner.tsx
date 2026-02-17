@@ -20,7 +20,7 @@ export const QuietBanner: React.FC = () => {
 
   return (
     <div
-      className="h-9 w-full bg-[#0a2246] text-center text-sm leading-9 tracking-[0.5px] text-white"
+      className="h-9 w-full bg-[var(--mh-color-0a2246)] text-center text-sm leading-9 tracking-[0.5px] text-white"
       role="status"
       aria-live="polite"
     >

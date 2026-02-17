@@ -88,7 +88,7 @@ const showFriendlyErrorPage = (title: string, message: string): void => {
           justify-content: center;
           height: 100vh;
           font-family: system-ui, -apple-system, sans-serif;
-          background: #f8fafc;
+          background: var(--mh-color-f8fafc);
         }
         .env-error-card {
           text-align: center;
@@ -102,18 +102,18 @@ const showFriendlyErrorPage = (title: string, message: string): void => {
         .env-error-title {
           font-size: 1.25rem;
           font-weight: 600;
-          color: #1e293b;
+          color: var(--mh-color-1e293b);
           margin-bottom: 0.5rem;
         }
         .env-error-message {
-          color: #475569;
+          color: var(--mh-color-475569);
           margin-bottom: 1.5rem;
         }
         .env-error-link {
           display: inline-block;
           padding: 0.75rem 1.5rem;
-          background: #3b82f6;
-          color: #fff;
+          background: var(--mh-color-3b82f6);
+          color: var(--mh-color-ffffff);
           border-radius: 0.5rem;
           text-decoration: none;
           font-weight: 500;

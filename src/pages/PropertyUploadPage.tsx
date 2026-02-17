@@ -456,7 +456,7 @@ const PropertyUploadContent: React.FC = () => {
             <div className="grid grid-cols-1 gap-3">
               <Link
                 to={`/p/${uploadResult.public_id}`}
-                className="flex items-center justify-center gap-2 rounded-xl bg-maihouses-dark py-4 font-bold text-white transition-all hover:bg-[#002244] active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl bg-maihouses-dark py-4 font-bold text-white transition-all hover:bg-[var(--mh-color-002244)] active:scale-[0.98]"
               >
                 查看物件詳情
               </Link>
@@ -513,7 +513,7 @@ const PropertyUploadContent: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleRestoreDraft}
-                  className="flex items-center gap-2 rounded-full bg-[#003366] px-4 py-2 text-sm font-bold text-white shadow-md shadow-blue-900/10 transition-all hover:bg-[#002244] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 active:scale-95"
+                  className="flex items-center gap-2 rounded-full bg-[var(--mh-color-003366)] px-4 py-2 text-sm font-bold text-white shadow-md shadow-blue-900/10 transition-all hover:bg-[var(--mh-color-002244)] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 active:scale-95"
                 >
                   <RotateCcw size={16} aria-hidden="true" /> 還原草稿
                   {draftPreview && (
@@ -534,13 +534,13 @@ const PropertyUploadContent: React.FC = () => {
             <button
               type="button"
               onClick={handleImport591}
-              className="hidden items-center gap-2 rounded-full border-2 border-[#003366] bg-white px-4 py-1.5 text-sm font-bold text-[#003366] transition-all hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 sm:flex"
+              className="hidden items-center gap-2 rounded-full border-2 border-[var(--mh-color-003366)] bg-white px-4 py-1.5 text-sm font-bold text-[var(--mh-color-003366)] transition-all hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 sm:flex"
             >
               <Download size={16} aria-hidden="true" /> 591 搬家
             </button>
 
             {!userId && (
-              <a href={loginUrl} className="ml-2 text-sm font-bold text-[#003366] hover:underline">
+              <a href={loginUrl} className="ml-2 text-sm font-bold text-[var(--mh-color-003366)] hover:underline">
                 登入同步
               </a>
             )}

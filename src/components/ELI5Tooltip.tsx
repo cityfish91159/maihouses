@@ -49,13 +49,13 @@ export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
       <button
         aria-label="白話解釋"
         onClick={toggle}
-        className="ml-1.5 size-[18px] cursor-pointer rounded-full border border-[#C9D5FF] bg-[#F5F8FF] text-xs text-[#1749D7]"
+        className="ml-1.5 size-[18px] cursor-pointer rounded-full border border-[var(--mh-color-c9d5ff)] bg-[var(--mh-color-f5f8ff)] text-xs text-[var(--mh-color-1749d7)]"
       >
         ?
       </button>
       {open && (
-        <div className="absolute left-0 top-[120%] z-50 w-[280px] rounded-lg border border-[#E6ECFF] bg-white p-2.5 shadow-[0_10px_24px_rgba(0,0,0,0.08)]">
-          <div className="mb-1.5 text-xs text-[#6b7280]">
+        <div className="absolute left-0 top-[120%] z-50 w-[280px] rounded-lg border border-[var(--mh-color-e6ecff)] bg-white p-2.5 shadow-[0_10px_24px_rgba(0,0,0,0.08)]">
+          <div className="mb-1.5 text-xs text-[var(--mh-color-6b7280)]">
             白話解釋（僅供參考，非法律意見）
           </div>
           <div className="whitespace-pre-wrap">{loading ? '生成中…' : ans}</div>

@@ -36,18 +36,18 @@ export function formatRelativeTime(ts: number): string {
 export function getStatusBadge(status: TrustCase['status']): StatusBadge {
   switch (status) {
     case 'active':
-      return { text: '進行中', bg: '#dcfce7', color: '#16a34a' };
+      return { text: '進行中', bg: 'var(--mh-color-dcfce7)', color: 'var(--mh-color-16a34a)' };
     case 'dormant':
-      return { text: '休眠中', bg: '#fef3c7', color: '#d97706' };
+      return { text: '休眠中', bg: 'var(--mh-color-fef3c7)', color: 'var(--mh-color-d97706)' };
     case 'completed':
-      return { text: '已成交', bg: '#dbeafe', color: '#2563eb' };
+      return { text: '已成交', bg: 'var(--mh-color-dbeafe)', color: 'var(--mh-color-2563eb)' };
     case 'closed':
-      return { text: '已關閉', bg: '#f3f4f6', color: '#6b7280' };
+      return { text: '已關閉', bg: 'var(--mh-color-f3f4f6)', color: 'var(--mh-color-6b7280)' };
     case 'pending':
-      return { text: '待處理', bg: '#fef3c7', color: '#d97706' };
+      return { text: '待處理', bg: 'var(--mh-color-fef3c7)', color: 'var(--mh-color-d97706)' };
     case 'expired':
-      return { text: '已過期', bg: '#fee2e2', color: '#dc2626' };
+      return { text: '已過期', bg: 'var(--mh-color-fee2e2)', color: 'var(--mh-color-dc2626)' };
     default:
-      return { text: '未知', bg: '#f3f4f6', color: '#6b7280' };
+      return { text: '未知', bg: 'var(--mh-color-f3f4f6)', color: 'var(--mh-color-6b7280)' };
   }
 }

@@ -118,7 +118,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
     {
       value: 'line',
       label: 'LINE',
-      icon: <MessageCircle size={18} className="text-[#00c300]" />,
+      icon: <MessageCircle size={18} className="text-[var(--mh-color-00c300)]" />,
     },
     {
       value: 'phone',
@@ -194,7 +194,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
           ) : step === 'submitting' ? (
             /* 送出中 */
             <div className="py-12 text-center">
-              <Loader2 className="mx-auto mb-4 animate-spin text-[#003366]" size={40} />
+              <Loader2 className="mx-auto mb-4 animate-spin text-[var(--mh-color-003366)]" size={40} />
               <p className="text-slate-600">建立諮詢紀錄中...</p>
             </div>
           ) : (

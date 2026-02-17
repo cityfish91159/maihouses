@@ -15,7 +15,7 @@
  *    - Heading: Lexend (corporate, trustworthy, accessible)
  *    - Body: Source Sans 3 (readable, professional)
  *
- * 3. Color Palette: Real Estate/Property (adapted to brand #00385a)
+ * 3. Color Palette: Real Estate/Property (adapted to brand var(--mh-color-00385a))
  *    - Trust Blue as primary
  *    - High contrast for accessibility
  *
@@ -26,50 +26,50 @@
  *    - Minimum 4.5:1 contrast ratio
  */
 
-/* ====== Brand Color System (Based on #00385a) ====== */
+/* ====== Brand Color System (Based on var(--mh-color-00385a)) ====== */
 :root {
   /* Primary Brand - Deep Trust Blue */
-  --brand-primary: #00385a;
+  --brand-primary: var(--mh-color-00385a);
   --brand-primary-rgb: 0, 56, 90;
-  --brand-secondary: #004e7c;
-  --brand-light: #005282;
-  --brand-hover: #002a44;
+  --brand-secondary: var(--mh-color-004e7c);
+  --brand-light: var(--mh-color-005282);
+  --brand-hover: var(--mh-color-002a44);
 
   /* Swiss Minimalism: Monochromatic base */
-  --swiss-black: #0a2246;
-  --swiss-white: #ffffff;
-  --swiss-gray-50: #f8fafc;
-  --swiss-gray-100: #f1f5f9;
-  --swiss-gray-200: #e2e8f0;
-  --swiss-gray-300: #cbd5e1;
-  --swiss-gray-400: #94a3b8;
-  --swiss-gray-500: #64748b;
-  --swiss-gray-600: #475569;
-  --swiss-gray-700: #334155;
-  --swiss-gray-800: #1e293b;
-  --swiss-gray-900: #0f172a;
+  --swiss-black: var(--mh-color-0a2246);
+  --swiss-white: var(--mh-color-ffffff);
+  --swiss-gray-50: var(--mh-color-f8fafc);
+  --swiss-gray-100: var(--mh-color-f1f5f9);
+  --swiss-gray-200: var(--mh-color-e2e8f0);
+  --swiss-gray-300: var(--mh-color-cbd5e1);
+  --swiss-gray-400: var(--mh-color-94a3b8);
+  --swiss-gray-500: var(--mh-color-64748b);
+  --swiss-gray-600: var(--mh-color-475569);
+  --swiss-gray-700: var(--mh-color-334155);
+  --swiss-gray-800: var(--mh-color-1e293b);
+  --swiss-gray-900: var(--mh-color-0f172a);
 
   /* Grade Colors - Higher contrast, less gradient */
   /* Based on ui-ux-pro-max: single vibrant accent only */
-  --grade-s: #b45309; /* Amber-700: deeper, less AI */
-  --grade-s-bg: #fffbeb;
-  --grade-s-border: #fcd34d;
+  --grade-s: var(--mh-color-b45309); /* Amber-700: deeper, less AI */
+  --grade-s-bg: var(--mh-color-fffbeb);
+  --grade-s-border: var(--mh-color-fcd34d);
 
-  --grade-a: #047857; /* Emerald-700: deeper green */
-  --grade-a-bg: #ecfdf5;
-  --grade-a-border: #6ee7b7;
+  --grade-a: var(--mh-color-047857); /* Emerald-700: deeper green */
+  --grade-a-bg: var(--mh-color-ecfdf5);
+  --grade-a-border: var(--mh-color-6ee7b7);
 
-  --grade-b: #1d4ed8; /* Blue-700: deeper blue */
-  --grade-b-bg: #eff6ff;
-  --grade-b-border: #93c5fd;
+  --grade-b: var(--mh-color-1d4ed8); /* Blue-700: deeper blue */
+  --grade-b-bg: var(--mh-color-eff6ff);
+  --grade-b-border: var(--mh-color-93c5fd);
 
-  --grade-c: #374151; /* Gray-700 */
-  --grade-c-bg: #f9fafb;
-  --grade-c-border: #d1d5db;
+  --grade-c: var(--mh-color-374151); /* Gray-700 */
+  --grade-c-bg: var(--mh-color-f9fafb);
+  --grade-c-border: var(--mh-color-d1d5db);
 
-  --grade-f: #6b7280; /* Gray-500 */
-  --grade-f-bg: #f9fafb;
-  --grade-f-border: #e5e7eb;
+  --grade-f: var(--mh-color-6b7280); /* Gray-500 */
+  --grade-f-bg: var(--mh-color-f9fafb);
+  --grade-f-border: var(--mh-color-e5e7eb);
 
   /* Swiss Style: Sharp shadows */
   --shadow-sharp-sm: 0 1px 2px rgba(0, 56, 90, 0.08);
@@ -264,7 +264,7 @@
 }
 
 .deai-agent-metric-trust {
-  color: #059669;
+  color: var(--mh-color-059669);
 }
 
 .deai-agent-metric-value {
@@ -423,7 +423,7 @@
 .deai-live-dot {
   width: 6px;
   height: 6px;
-  background: #059669; /* Emerald-600 */
+  background: var(--mh-color-059669); /* Emerald-600 */
   border-radius: 50%;
   /* Subtle pulse, not distracting */
   animation: deai-pulse 2s ease-in-out infinite;

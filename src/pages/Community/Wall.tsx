@@ -542,7 +542,7 @@ function WallInner() {
               <button
                 type="button"
                 onClick={forceEnableMock}
-                className="rounded-lg bg-[#1a1a2e] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
+                className="rounded-lg bg-[var(--mh-color-1a1a2e)] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
               >
                 🧪 改用示範資料
               </button>

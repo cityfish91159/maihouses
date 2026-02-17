@@ -42,7 +42,7 @@ export const ReviewCard = React.memo(({ id, name, rating, tags, content }: Revie
           ))}
         </div>
 
-        <p className="text-justify text-[13px] font-medium leading-relaxed text-[#4B5563]">
+        <p className="text-justify text-[13px] font-medium leading-relaxed text-[var(--mh-color-4b5563)]">
           {content}
         </p>
       </div>

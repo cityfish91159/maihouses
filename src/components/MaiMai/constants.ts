@@ -125,11 +125,11 @@ export const ARM_THINK_R_HAND_OFFSET = 8;
 
 // ============ 特效顏色 ============
 
-export const EFFECT_COLOR_GOLD = '#FFD700';
-export const EFFECT_COLOR_CONFETTI_RED = '#FF6B6B';
-export const EFFECT_COLOR_CONFETTI_TEAL = '#4ECDC4';
-export const EFFECT_COLOR_CONFETTI_YELLOW = '#FFE66D';
-export const EFFECT_COLOR_SHY_BLUE = '#87CEEB';
+export const EFFECT_COLOR_GOLD = 'var(--mh-color-ffd700)';
+export const EFFECT_COLOR_CONFETTI_RED = 'var(--mh-color-ff6b6b)';
+export const EFFECT_COLOR_CONFETTI_TEAL = 'var(--mh-color-4ecdc4)';
+export const EFFECT_COLOR_CONFETTI_YELLOW = 'var(--mh-color-ffe66d)';
+export const EFFECT_COLOR_SHY_BLUE = 'var(--mh-color-87ceeb)';
 export const STAR_INNER_RATIO = 0.4;
 export const SPARKLE_DIAGONAL_RATIO = 0.6;
 

@@ -6,25 +6,25 @@
 @layer base {
   :root {
     /* === 統一色票系統 (以 Tailwind Config 為準) === */
-    --brand: #00385a; /* 深藍 */
+    --brand: var(--mh-color-00385a); /* 深藍 */
     --brand-primary-rgb: 0, 56, 90; /* 用於 rgba() shadows */
-    --brand-light: #009fe8; /* 亮藍 */
-    --brand-600: #004e7c;
-    --primary: #00385a;
-    --primary-dark: #002a44;
-    --primary-light: #005282;
-    --text-primary: #0a2246;
-    --text-secondary: #526070;
-    --text-tertiary: #8a95a5;
-    --text-muted: #6c7b91;
-    --bg-page: #eef2f7;
-    --bg-base: #f6f9ff;
-    --bg-alt: #eef3ff;
-    --bg-elevated: #ffffff;
-    --success: #0f6a23;
-    --border: #e6edf7;
-    --border-light: #e8f0f8;
-    --line: #e6edf7;
+    --brand-light: var(--mh-color-009fe8); /* 亮藍 */
+    --brand-600: var(--mh-color-004e7c);
+    --primary: var(--mh-color-00385a);
+    --primary-dark: var(--mh-color-002a44);
+    --primary-light: var(--mh-color-005282);
+    --text-primary: var(--mh-color-0a2246);
+    --text-secondary: var(--mh-color-526070);
+    --text-tertiary: var(--mh-color-8a95a5);
+    --text-muted: var(--mh-color-6c7b91);
+    --bg-page: var(--mh-color-eef2f7);
+    --bg-base: var(--mh-color-f6f9ff);
+    --bg-alt: var(--mh-color-eef3ff);
+    --bg-elevated: var(--mh-color-ffffff);
+    --success: var(--mh-color-0f6a23);
+    --border: var(--mh-color-e6edf7);
+    --border-light: var(--mh-color-e8f0f8);
+    --line: var(--mh-color-e6edf7);
 
     /* === 常用參數 === */
     --r-sm: 12px;
@@ -34,14 +34,172 @@
     --r-pill: 999px;
 
     /* === 缺失的 CSS 變數補充（防止手機白屏） === */
-    --danger: #dc2626;
+    --danger: var(--mh-color-dc2626);
     --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.08);
     --z-overlay: 40;
-    --neutral-100: #f5f5f5;
-    --neutral-150: #e5e5e5;
-    --neutral-300: #d4d4d4;
-    --brand-fg: #ffffff;
-  }
+    --neutral-100: var(--mh-color-f5f5f5);
+    --neutral-150: var(--mh-color-e5e5e5);
+    --neutral-300: var(--mh-color-d4d4d4);
+    --brand-fg: var(--mh-color-ffffff);
+  
+/* === Auto Generated Color Tokens (hardcoded hex replacement) === */
+    --mh-color-000000: #000000;
+    --mh-color-002244: #002244;
+    --mh-color-002a44: #002a44;
+    --mh-color-003366: #003366;
+    --mh-color-00385a: #00385a;
+    --mh-color-004488: #004488;
+    --mh-color-004e7c: #004e7c;
+    --mh-color-005282: #005282;
+    --mh-color-00629b: #00629b;
+    --mh-color-0077b6: #0077b6;
+    --mh-color-009fe8: #009fe8;
+    --mh-color-00a8e8: #00a8e8;
+    --mh-color-00b900: #00b900;
+    --mh-color-00c300: #00c300;
+    --mh-color-047857: #047857;
+    --mh-color-050505: #050505;
+    --mh-color-059669: #059669;
+    --mh-color-05b04a: #05b04a;
+    --mh-color-06c755: #06c755;
+    --mh-color-0a0a0a: #0a0a0a;
+    --mh-color-0a0a12: #0a0a12;
+    --mh-color-0a2246: #0a2246;
+    --mh-color-0b214a: #0b214a;
+    --mh-color-0d0c0b: #0d0c0b;
+    --mh-color-0e8d52: #0e8d52;
+    --mh-color-0f172a: #0f172a;
+    --mh-color-0f3399: #0f3399;
+    --mh-color-0f36a6: #0f36a6;
+    --mh-color-0f6a23: #0f6a23;
+    --mh-color-10b981: #10b981;
+    --mh-color-111111: #111111;
+    --mh-color-1133bb: #1133bb;
+    --mh-color-123cb3: #123cb3;
+    --mh-color-15803d: #15803d;
+    --mh-color-16213e: #16213e;
+    --mh-color-16a34a: #16a34a;
+    --mh-color-1749d7: #1749d7;
+    --mh-color-1a1a1a: #1a1a1a;
+    --mh-color-1a1a2e: #1a1a2e;
+    --mh-color-1d4ed8: #1d4ed8;
+    --mh-color-1e293b: #1e293b;
+    --mh-color-1f2933: #1f2933;
+    --mh-color-2200bb: #2200bb;
+    --mh-color-2211bb: #2211bb;
+    --mh-color-22c55e: #22c55e;
+    --mh-color-2563eb: #2563eb;
+    --mh-color-28a38a: #28a38a;
+    --mh-color-334155: #334155;
+    --mh-color-34d399: #34d399;
+    --mh-color-374151: #374151;
+    --mh-color-38bdf8: #38bdf8;
+    --mh-color-3b6bf0: #3b6bf0;
+    --mh-color-3b82f6: #3b82f6;
+    --mh-color-3ed0e6: #3ed0e6;
+    --mh-color-475569: #475569;
+    --mh-color-4ade80: #4ade80;
+    --mh-color-4b5563: #4b5563;
+    --mh-color-4ecdc4: #4ecdc4;
+    --mh-color-526070: #526070;
+    --mh-color-5b6b7b: #5b6b7b;
+    --mh-color-60a5fa: #60a5fa;
+    --mh-color-64748b: #64748b;
+    --mh-color-66660000: #66660000;
+    --mh-color-6b7280: #6b7280;
+    --mh-color-6c7b91: #6c7b91;
+    --mh-color-6ee7b7: #6ee7b7;
+    --mh-color-854d0e: #854d0e;
+    --mh-color-87ceeb: #87ceeb;
+    --mh-color-8a95a5: #8a95a5;
+    --mh-color-8b9cad: #8b9cad;
+    --mh-color-9370db: #9370db;
+    --mh-color-93c5fd: #93c5fd;
+    --mh-color-94a3b8: #94a3b8;
+    --mh-color-9aa5b1: #9aa5b1;
+    --mh-color-9ca3af: #9ca3af;
+    --mh-color-a78bfa: #a78bfa;
+    --mh-color-a855f7: #a855f7;
+    --mh-color-b45309: #b45309;
+    --mh-color-b91c1c: #b91c1c;
+    --mh-color-bbf7d0: #bbf7d0;
+    --mh-color-bfdbfe: #bfdbfe;
+    --mh-color-c2410c: #c2410c;
+    --mh-color-c9d5ff: #c9d5ff;
+    --mh-color-ca8a04: #ca8a04;
+    --mh-color-cbd5e1: #cbd5e1;
+    --mh-color-d1d5db: #d1d5db;
+    --mh-color-d4d4d4: #d4d4d4;
+    --mh-color-d97706: #d97706;
+    --mh-color-dbeafe: #dbeafe;
+    --mh-color-dc2626: #dc2626;
+    --mh-color-dcfce7: #dcfce7;
+    --mh-color-dddddd: #dddddd;
+    --mh-color-dde5f0: #dde5f0;
+    --mh-color-e0f4ff: #e0f4ff;
+    --mh-color-e2e8f0: #e2e8f0;
+    --mh-color-e5e5e5: #e5e5e5;
+    --mh-color-e5e7eb: #e5e7eb;
+    --mh-color-e5edff: #e5edff;
+    --mh-color-e63946: #e63946;
+    --mh-color-e6ecff: #e6ecff;
+    --mh-color-e6edf7: #e6edf7;
+    --mh-color-e8f0f8: #e8f0f8;
+    --mh-color-e8f4ff: #e8f4ff;
+    --mh-color-e9ecf5: #e9ecf5;
+    --mh-color-ea580c: #ea580c;
+    --mh-color-eaf1ff: #eaf1ff;
+    --mh-color-ec4899: #ec4899;
+    --mh-color-ecfdf5: #ecfdf5;
+    --mh-color-eeeeee: #eeeeee;
+    --mh-color-eef2f7: #eef2f7;
+    --mh-color-eef2ff: #eef2ff;
+    --mh-color-eef3ff: #eef3ff;
+    --mh-color-eef4ff: #eef4ff;
+    --mh-color-ef4444: #ef4444;
+    --mh-color-eff6ff: #eff6ff;
+    --mh-color-f0f4ff: #f0f4ff;
+    --mh-color-f0f5ff: #f0f5ff;
+    --mh-color-f0f7ff: #f0f7ff;
+    --mh-color-f0f9ff: #f0f9ff;
+    --mh-color-f0fdf4: #f0fdf4;
+    --mh-color-f1f5f9: #f1f5f9;
+    --mh-color-f3f4f6: #f3f4f6;
+    --mh-color-f3fff8: #f3fff8;
+    --mh-color-f472b6: #f472b6;
+    --mh-color-f59e0b: #f59e0b;
+    --mh-color-f5f5f5: #f5f5f5;
+    --mh-color-f5f8ff: #f5f8ff;
+    --mh-color-f6f9ff: #f6f9ff;
+    --mh-color-f87171: #f87171;
+    --mh-color-f8fafc: #f8fafc;
+    --mh-color-f8faff: #f8faff;
+    --mh-color-f8fbff: #f8fbff;
+    --mh-color-f97316: #f97316;
+    --mh-color-f9fafb: #f9fafb;
+    --mh-color-f9fbff: #f9fbff;
+    --mh-color-fb7185: #fb7185;
+    --mh-color-fbbf24: #fbbf24;
+    --mh-color-fcd34d: #fcd34d;
+    --mh-color-fde047: #fde047;
+    --mh-color-fecaca: #fecaca;
+    --mh-color-fee2e2: #fee2e2;
+    --mh-color-fef2f2: #fef2f2;
+    --mh-color-fef3c7: #fef3c7;
+    --mh-color-fef9c3: #fef9c3;
+    --mh-color-fefce8: #fefce8;
+    --mh-color-ff6b6b: #ff6b6b;
+    --mh-color-ff6b9d: #ff6b9d;
+    --mh-color-ffb6c1: #ffb6c1;
+    --mh-color-ffb800: #ffb800;
+    --mh-color-ffd700: #ffd700;
+    --mh-color-ffe66d: #ffe66d;
+    --mh-color-ffedd5: #ffedd5;
+    --mh-color-fff7ed: #fff7ed;
+    --mh-color-fffbeb: #fffbeb;
+    --mh-color-ffffff: #ffffff;
+    /* === End Auto Generated Color Tokens === */
+}
 
   body {
     @apply bg-[var(--bg-page)] font-sans text-[var(--text-primary)] antialiased;
@@ -80,7 +238,7 @@
   /* === AI 專用樣式 (配合 SmartAsk) === */
   .mh-ai-card {
     @apply mh-card space-y-6 p-6 md:p-8;
-    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+    background: linear-gradient(135deg, var(--mh-color-dbeafe) 0%, var(--mh-color-eff6ff) 100%);
   }
 
   .mh-ai-input {

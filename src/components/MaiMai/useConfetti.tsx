@@ -44,7 +44,7 @@ export function useConfetti(options: UseConfettiOptions = {}) {
     particleCount = 100,
     spread = 70,
     origin = { x: 0.5, y: 0.6 },
-    colors = ['#FBBF24', '#F472B6', '#38BDF8', '#A78BFA', '#22C55E'],
+    colors = ['var(--mh-color-fbbf24)', 'var(--mh-color-f472b6)', 'var(--mh-color-38bdf8)', 'var(--mh-color-a78bfa)', 'var(--mh-color-22c55e)'],
   } = options;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

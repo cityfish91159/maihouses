@@ -161,6 +161,9 @@ export const STRINGS = deepFreeze({
     LOCKED_OVERLAY_COUNT_LABEL: '則貼文',
     LOCKED_OVERLAY_BENEFIT_1: '查看完整動態',
     LOCKED_OVERLAY_BENEFIT_2: '新回應通知',
+    LOCKED_OVERLAY_REVIEW_COUNT_LABEL: '則評價',
+    LOCKED_OVERLAY_REVIEW_BENEFIT_1: '查看全部評價',
+    LOCKED_OVERLAY_REVIEW_BENEFIT_2: '新回答通知',
   },
   VALIDATION: {
     MIN_LENGTH: (min: number) => `內容至少需要 ${min} 個字`,

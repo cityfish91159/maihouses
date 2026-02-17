@@ -39,7 +39,7 @@ export const PoliteRewrite: React.FC<{ onAdopt?: (text: string) => void }> = ({ 
   };
 
   return (
-    <div className="rounded-xl border border-[#eee] bg-white p-3">
+    <div className="rounded-xl border border-[var(--mh-color-eeeeee)] bg-white p-3">
       <div className="mb-1.5 font-semibold">禮貌改寫小幫手</div>
       <div className="mb-2 flex flex-wrap gap-2">
         <label className="inline-flex items-center">
@@ -47,7 +47,7 @@ export const PoliteRewrite: React.FC<{ onAdopt?: (text: string) => void }> = ({ 
           <select
             value={audience}
             onChange={(e) => setAudience(e.target.value as 'owner' | 'agent')}
-            className="ml-1.5 rounded-lg border border-[#ddd] p-1.5"
+            className="ml-1.5 rounded-lg border border-[var(--mh-color-dddddd)] p-1.5"
           >
             <option value="agent">仲介</option>
             <option value="owner">屋主</option>
@@ -58,7 +58,7 @@ export const PoliteRewrite: React.FC<{ onAdopt?: (text: string) => void }> = ({ 
           <select
             value={intent}
             onChange={(e) => setIntent(e.target.value as 'view' | 'detail' | 'pet' | 'price')}
-            className="ml-1.5 rounded-lg border border-[#ddd] p-1.5"
+            className="ml-1.5 rounded-lg border border-[var(--mh-color-dddddd)] p-1.5"
           >
             <option value="detail">詢問細節</option>
             <option value="view">預約看房</option>
@@ -72,13 +72,13 @@ export const PoliteRewrite: React.FC<{ onAdopt?: (text: string) => void }> = ({ 
         placeholder="貼上你想發的訊息（我會根據對象/目的幫你潤飾）"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        className="w-full rounded-lg border border-[#ddd] p-2"
+        className="w-full rounded-lg border border-[var(--mh-color-dddddd)] p-2"
       />
       <div className="mt-2 flex gap-2">
         <button
           onClick={handleRewrite}
           disabled={loading}
-          className="rounded-lg border border-[#1749D7] bg-[#1749D7] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg border border-[var(--mh-color-1749d7)] bg-[var(--mh-color-1749d7)] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? '生成中…' : '禮貌改寫'}
         </button>
@@ -86,30 +86,30 @@ export const PoliteRewrite: React.FC<{ onAdopt?: (text: string) => void }> = ({ 
       {(v1 || v2) && (
         <div className="mt-2.5 grid gap-2">
           {v1 && (
-            <div className="rounded-lg border border-[#E6ECFF] p-2">
-              <div className="mb-1 text-xs text-[#6b7280]">版本一</div>
+            <div className="rounded-lg border border-[var(--mh-color-e6ecff)] p-2">
+              <div className="mb-1 text-xs text-[var(--mh-color-6b7280)]">版本一</div>
               <div className="mb-1.5">{v1}</div>
               <button
                 onClick={() => adopt(v1)}
-                className="rounded-lg border border-[#1749D7] bg-white px-2.5 py-1.5 text-[#1749D7]"
+                className="rounded-lg border border-[var(--mh-color-1749d7)] bg-white px-2.5 py-1.5 text-[var(--mh-color-1749d7)]"
               >
                 採用（複製/送出）
               </button>
             </div>
           )}
           {v2 && (
-            <div className="rounded-lg border border-[#E6ECFF] p-2">
-              <div className="mb-1 text-xs text-[#6b7280]">版本二</div>
+            <div className="rounded-lg border border-[var(--mh-color-e6ecff)] p-2">
+              <div className="mb-1 text-xs text-[var(--mh-color-6b7280)]">版本二</div>
               <div className="mb-1.5">{v2}</div>
               <button
                 onClick={() => adopt(v2)}
-                className="rounded-lg border border-[#1749D7] bg-white px-2.5 py-1.5 text-[#1749D7]"
+                className="rounded-lg border border-[var(--mh-color-1749d7)] bg-white px-2.5 py-1.5 text-[var(--mh-color-1749d7)]"
               >
                 採用（複製/送出）
               </button>
             </div>
           )}
-          {sent && <div className="text-[#16a34a]">已準備好訊息，祝溝通順利 🤞</div>}
+          {sent && <div className="text-[var(--mh-color-16a34a)]">已準備好訊息，祝溝通順利 🤞</div>}
         </div>
       )}
     </div>

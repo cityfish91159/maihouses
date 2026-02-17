@@ -12,7 +12,7 @@
  *   Effects: Subtle hover (200-250ms), smooth transitions, sharp shadows if any
  *
  * 【產品】
- * - Real Estate/Property: Trust Blue (#0077B6) + Gold accents + White
+ * - Real Estate/Property: Trust Blue (var(--mh-color-0077b6)) + Gold accents + White
  *   Dashboard Style: Sales Intelligence Dashboard
  *
  * 【字體】
@@ -21,8 +21,8 @@
  *
  * 【顏色】
  * - Financial Dashboard:
- *   Primary: #3B82F6, Secondary: #60A5FA, CTA: #F97316
- *   Background: #F8FAFC, Text: #1E293B, Border: #E2E8F0
+ *   Primary: var(--mh-color-3b82f6), Secondary: var(--mh-color-60a5fa), CTA: var(--mh-color-f97316)
+ *   Background: var(--mh-color-f8fafc), Text: var(--mh-color-1e293b), Border: var(--mh-color-e2e8f0)
  *
  * 【動畫】
  * - Micro-interactions: Small hover (50-100ms), success/error state anim
@@ -39,35 +39,35 @@
 /* ui-ux-pro-max: Real Estate + Financial Dashboard 色盤 */
 .deai-v2 {
   /* 品牌色 - 採用你的深藍 + ui-ux-pro-max Trust Blue 混合 */
-  --brand: #00385a;
-  --brand-light: #0077b6;
-  --brand-dark: #002a44;
+  --brand: var(--mh-color-00385a);
+  --brand-light: var(--mh-color-0077b6);
+  --brand-dark: var(--mh-color-002a44);
 
   /* ui-ux-pro-max: Financial Dashboard 色盤 */
-  --primary: #3b82f6;
-  --secondary: #60a5fa;
-  --cta: #f97316;
-  --bg: #f8fafc;
-  --text: #1e293b;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
+  --primary: var(--mh-color-3b82f6);
+  --secondary: var(--mh-color-60a5fa);
+  --cta: var(--mh-color-f97316);
+  --bg: var(--mh-color-f8fafc);
+  --text: var(--mh-color-1e293b);
+  --text-muted: var(--mh-color-64748b);
+  --border: var(--mh-color-e2e8f0);
 
   /* ui-ux-pro-max: Sales Intelligence Dashboard 等級色 */
-  --grade-s: #c2410c;
-  --grade-s-bg: #fff7ed;
-  --grade-a: #15803d;
-  --grade-a-bg: #f0fdf4;
-  --grade-b: #1d4ed8;
-  --grade-b-bg: #eff6ff;
-  --grade-c: #475569;
-  --grade-c-bg: #f8fafc;
-  --grade-f: #64748b;
-  --grade-f-bg: #f1f5f9;
+  --grade-s: var(--mh-color-c2410c);
+  --grade-s-bg: var(--mh-color-fff7ed);
+  --grade-a: var(--mh-color-15803d);
+  --grade-a-bg: var(--mh-color-f0fdf4);
+  --grade-b: var(--mh-color-1d4ed8);
+  --grade-b-bg: var(--mh-color-eff6ff);
+  --grade-c: var(--mh-color-475569);
+  --grade-c-bg: var(--mh-color-f8fafc);
+  --grade-f: var(--mh-color-64748b);
+  --grade-f-bg: var(--mh-color-f1f5f9);
 
   /* ui-ux-pro-max: Micro-interactions - feedback colors */
-  --success: #22c55e;
-  --error: #ef4444;
-  --warning: #f59e0b;
+  --success: var(--mh-color-22c55e);
+  --error: var(--mh-color-ef4444);
+  --warning: var(--mh-color-f59e0b);
 
   /* ui-ux-pro-max: Flat Design 過渡 (150-200ms) */
   --transition-fast: 100ms ease;
@@ -111,7 +111,7 @@
   position: sticky;
   top: 0;
   z-index: var(--z-layer-sticky);
-  background: #fff;
+  background: var(--mh-color-ffffff);
   border-bottom: 1px solid var(--border);
 }
 
@@ -136,7 +136,7 @@
   height: 36px;
   border-radius: var(--radius-md);
   background: var(--brand);
-  color: #fff;
+  color: var(--mh-color-ffffff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -171,13 +171,13 @@
   font-size: 12px;
   font-weight: 600;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--mh-color-ffffff);
   color: var(--text-muted);
 }
 
 .deai-v2-badge--active {
   background: var(--brand);
-  color: #fff;
+  color: var(--mh-color-ffffff);
   border-color: var(--brand);
 }
 
@@ -186,7 +186,7 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 10px 24px;
-  background: #fff;
+  background: var(--mh-color-ffffff);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -198,7 +198,7 @@
   height: 36px;
   border-radius: var(--radius-md);
   background: var(--brand);
-  color: #fff;
+  color: var(--mh-color-ffffff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,7 +266,7 @@
 /* ====== Card ====== */
 /* ui-ux-pro-max: html-tailwind stack - rounded-2xl shadow-lg p-6 */
 .deai-v2-card {
-  background: #fff;
+  background: var(--mh-color-ffffff);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   padding: 24px;
@@ -300,7 +300,7 @@
   min-height: 420px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--mh-color-ffffff);
   overflow: hidden;
 }
 
@@ -338,7 +338,7 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #fff;
+  background: var(--mh-color-ffffff);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 12px;
@@ -362,7 +362,7 @@
   width: var(--size);
   height: var(--size);
   border-radius: 50%;
-  background: #fff;
+  background: var(--mh-color-ffffff);
   border: 2px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -453,7 +453,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--mh-color-ffffff);
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -465,19 +465,19 @@
 
 .deai-v2-bubble[data-grade='S'] .deai-v2-bubble-grade {
   background: var(--grade-s);
-  color: #fff;
+  color: var(--mh-color-ffffff);
   border-color: var(--grade-s);
 }
 
 .deai-v2-bubble[data-grade='A'] .deai-v2-bubble-grade {
   background: var(--grade-a);
-  color: #fff;
+  color: var(--mh-color-ffffff);
   border-color: var(--grade-a);
 }
 
 .deai-v2-bubble[data-grade='B'] .deai-v2-bubble-grade {
   background: var(--grade-b);
-  color: #fff;
+  color: var(--mh-color-ffffff);
   border-color: var(--grade-b);
 }
 
@@ -501,7 +501,7 @@
   bottom: -22px;
   left: 50%;
   transform: translateX(-50%);
-  background: #fff;
+  background: var(--mh-color-ffffff);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
@@ -514,7 +514,7 @@
 
 /* ====== Action Panel ====== */
 .deai-v2-panel {
-  background: #fff;
+  background: var(--mh-color-ffffff);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -607,9 +607,9 @@
 }
 
 .deai-v2-ai-box--success {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #15803d;
+  background: var(--mh-color-f0fdf4);
+  border-color: var(--mh-color-bbf7d0);
+  color: var(--mh-color-15803d);
 }
 
 /* ====== CTA Button ====== */
@@ -621,7 +621,7 @@
   border: none;
   border-radius: var(--radius-md);
   background: var(--brand);
-  color: #fff;
+  color: var(--mh-color-ffffff);
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 15px;
@@ -635,7 +635,7 @@
 }
 
 .deai-v2-btn-cta:disabled {
-  background: #cbd5e1;
+  background: var(--mh-color-cbd5e1);
   cursor: not-allowed;
 }
 
@@ -665,7 +665,7 @@
   left: 0;
   right: 0;
   padding: 12px 24px;
-  background: #fff;
+  background: var(--mh-color-ffffff);
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -690,7 +690,7 @@
   padding: 6px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--mh-color-ffffff);
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
@@ -707,7 +707,7 @@
 
 .deai-v2-btn--primary {
   background: var(--brand);
-  color: #fff;
+  color: var(--mh-color-ffffff);
   border-color: var(--brand);
 }
 
@@ -832,7 +832,7 @@
   height: 24px;
   border-radius: 50%;
   background: var(--tone-color, var(--grade-b));
-  color: #fff;
+  color: var(--mh-color-ffffff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -913,13 +913,13 @@
 }
 
 .deai-v2-status--sent {
-  background: #dcfce7;
-  color: #16a34a;
+  background: var(--mh-color-dcfce7);
+  color: var(--mh-color-16a34a);
 }
 
 .deai-v2-status--pending {
-  background: #fef3c7;
-  color: #d97706;
+  background: var(--mh-color-fef3c7);
+  color: var(--mh-color-d97706);
 }
 
 /* ====== Listings ====== */
@@ -953,15 +953,15 @@
 }
 
 .deai-v2-thumb-tone-blue {
-  background: #3b82f6;
+  background: var(--mh-color-3b82f6);
 }
 
 .deai-v2-thumb-tone-green {
-  background: #10b981;
+  background: var(--mh-color-10b981);
 }
 
 .deai-v2-thumb-tone-amber {
-  background: #f59e0b;
+  background: var(--mh-color-f59e0b);
 }
 
 .deai-v2-listing-info {
@@ -1071,7 +1071,7 @@
   height: 22px;
   border-radius: var(--radius-sm);
   background: var(--brand);
-  color: #fff;
+  color: var(--mh-color-ffffff);
   font-size: 11px;
   font-weight: 700;
 }
@@ -1134,7 +1134,7 @@
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--mh-color-ffffff);
   cursor: pointer;
   transition: border-color var(--transition);
   text-align: left;
@@ -1152,7 +1152,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--mh-color-ffffff);
   flex-shrink: 0;
 }
 
@@ -1184,7 +1184,7 @@
   padding: 8px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--mh-color-ffffff);
   cursor: pointer;
   text-align: left;
   min-width: 120px;
@@ -1197,7 +1197,7 @@
 
 .deai-v2-trust-case--active {
   border-color: var(--brand);
-  background: #eef2ff;
+  background: var(--mh-color-eef2ff);
 }
 
 .deai-v2-trust-case-name {
@@ -1221,8 +1221,8 @@
   font-size: 10px;
   padding: 2px 6px;
   border-radius: var(--radius-sm);
-  background: #dcfce7;
-  color: #16a34a;
+  background: var(--mh-color-dcfce7);
+  color: var(--mh-color-16a34a);
   display: inline-block;
   font-weight: 600;
 }
@@ -1273,12 +1273,12 @@
 
 .deai-v2-trust-step--past {
   background: var(--success);
-  color: #fff;
+  color: var(--mh-color-ffffff);
 }
 
 .deai-v2-trust-step--current {
   background: var(--brand);
-  color: #fff;
+  color: var(--mh-color-ffffff);
 }
 
 .deai-v2-trust-step-name {
@@ -1355,7 +1355,7 @@
 
 /* ====== Button Variants ====== */
 .deai-v2-btn--secondary {
-  background: #fff;
+  background: var(--mh-color-ffffff);
   color: var(--text-muted);
   border-color: var(--border);
 }

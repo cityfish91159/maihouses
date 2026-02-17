@@ -37,7 +37,7 @@ export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
     <div className="fixed bottom-5 right-5 z-[1000]">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#1a1a2e] to-[#16213e] px-4 py-2.5 text-xs font-bold text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+        className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[var(--mh-color-1a1a2e)] to-[var(--mh-color-16213e)] px-4 py-2.5 text-xs font-bold text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-label={`目前身份：${roleNames[role]}，點擊切換`}
@@ -61,7 +61,7 @@ export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
                   onRoleChange(r);
                   setIsOpen(false);
                 }}
-                className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs ${role === r ? 'bg-brand-700/10 font-bold text-[var(--primary)]' : 'text-[var(--text-primary)] hover:bg-[#f6f9ff]'}`}
+                className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs ${role === r ? 'bg-brand-700/10 font-bold text-[var(--primary)]' : 'text-[var(--text-primary)] hover:bg-[var(--mh-color-f6f9ff)]'}`}
               >
                 {roleLabels[r]}
               </button>

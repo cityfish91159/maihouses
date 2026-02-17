@@ -36,7 +36,7 @@ export function SearchBox({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="mr-2 text-[#5b6b7b]"
+          className="mr-2 text-[var(--mh-color-5b6b7b)]"
         >
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />

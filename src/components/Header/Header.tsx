@@ -460,7 +460,7 @@ export default function Header() {
               >
                 <MaiMaiBase
                   mood="header"
-                  className="size-full [--maimai-body-fill:#F6F9FF]"
+                  className="size-full [--maimai-body-fill:var(--mh-color-f6f9ff)]"
                   animated={false}
                   showEffects={false}
                 />

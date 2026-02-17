@@ -42,46 +42,46 @@ export const DebriefMini: React.FC = () => {
   };
 
   return (
-    <div className="rounded-xl border border-[#eee] bg-white p-3">
+    <div className="rounded-xl border border-[var(--mh-color-eeeeee)] bg-white p-3">
       <div className="mb-1.5 font-semibold">看屋後三問（Mini Debrief）</div>
       <div className="grid gap-2">
         <input
           value={like}
           onChange={(e) => setLike(e.target.value)}
           placeholder="第一直覺如何？（例：採光很好）"
-          className="rounded-lg border border-[#ddd] p-2"
+          className="rounded-lg border border-[var(--mh-color-dddddd)] p-2"
         />
         <input
           value={pain}
           onChange={(e) => setPain(e.target.value)}
           placeholder="哪裡卡卡的？（例：廚房太小）"
-          className="rounded-lg border border-[#ddd] p-2"
+          className="rounded-lg border border-[var(--mh-color-dddddd)] p-2"
         />
         <input
           value={next}
           onChange={(e) => setNext(e.target.value)}
           placeholder="下一步想做什麼？（例：再看一間對比）"
-          className="rounded-lg border border-[#ddd] p-2"
+          className="rounded-lg border border-[var(--mh-color-dddddd)] p-2"
         />
       </div>
       <div className="mt-2 flex gap-2">
         <button
           onClick={handleGen}
           disabled={loading}
-          className="rounded-lg border border-[#1749D7] bg-[#1749D7] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg border border-[var(--mh-color-1749d7)] bg-[var(--mh-color-1749d7)] px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? '整理中…' : '生成 Must/Nice/Avoid + #tags'}
         </button>
         {out && (
           <button
             onClick={handleSave}
-            className="rounded-lg border border-[#1749D7] bg-white px-3 py-2 text-[#1749D7]"
+            className="rounded-lg border border-[var(--mh-color-1749d7)] bg-white px-3 py-2 text-[var(--mh-color-1749d7)]"
           >
             存到便條
           </button>
         )}
       </div>
-      {out && <div className="mt-2.5 whitespace-pre-wrap text-[#0a2246]">{out}</div>}
+      {out && <div className="mt-2.5 whitespace-pre-wrap text-[var(--mh-color-0a2246)]">{out}</div>}
     </div>
   );
 };

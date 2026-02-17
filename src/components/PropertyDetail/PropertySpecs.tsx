@@ -18,7 +18,7 @@ interface PropertySpecsProps {
  *
  * @remarks
  * 使用 React.memo 優化,規格資料變化才重新渲染
- * #20b-D9: 套用 Glassmorphism 設計語言（glass-card）
+ * var(--mh-color-2200bb)-D9: 套用 Glassmorphism 設計語言（glass-card）
  */
 export const PropertySpecs = memo(function PropertySpecs({ property }: PropertySpecsProps) {
   return (

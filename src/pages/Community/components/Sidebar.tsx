@@ -64,7 +64,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
           ].map(([num, lbl]) => (
             <div
               key={lbl as string}
-              className="rounded-[10px] bg-gradient-to-br from-[#f8faff] to-[#f0f5ff] p-3 text-center"
+              className="rounded-[10px] bg-gradient-to-br from-[var(--mh-color-f8faff)] to-[var(--mh-color-f0f5ff)] p-3 text-center"
             >
               <div className="text-xl font-black text-[var(--brand)]">{num}</div>
               <div className="mt-0.5 text-[11px] text-[var(--text-secondary)]">{lbl}</div>
@@ -86,7 +86,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
             <button
               key={link}
               type="button"
-              className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[13px] font-semibold text-[var(--text-primary)] transition-all hover:bg-[#f0f7ff]"
+              className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[13px] font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--mh-color-f0f7ff)]"
             >
               {link}
             </button>
@@ -104,7 +104,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
             <a
               key={q.id}
               href="#qa-section"
-              className="flex items-start gap-2 rounded-[10px] px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] no-underline transition-all hover:bg-[#f0f7ff]"
+              className="flex items-start gap-2 rounded-[10px] px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] no-underline transition-all hover:bg-[var(--mh-color-f0f7ff)]"
             >
               <span className="shrink-0" aria-hidden="true">
                 💬
@@ -133,7 +133,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
             <a
               key={p.id}
               href="#public-wall"
-              className="flex items-start gap-2 rounded-[10px] px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] no-underline transition-all hover:bg-[#f0f7ff]"
+              className="flex items-start gap-2 rounded-[10px] px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] no-underline transition-all hover:bg-[var(--mh-color-f0f7ff)]"
             >
               <span className="shrink-0" aria-hidden="true">
                 ❤️ {p.likes}
@@ -153,7 +153,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
       </div>
 
       {/* 公仔卡片 */}
-      <div className="rounded-[14px] border border-[var(--line)] bg-gradient-to-br from-[#f0f7ff] to-[#e8f4ff] p-3.5 text-center shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
+      <div className="rounded-[14px] border border-[var(--line)] bg-gradient-to-br from-[var(--mh-color-f0f7ff)] to-[var(--mh-color-e8f4ff)] p-3.5 text-center shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
         <svg
           className="mx-auto mb-2 h-24 w-20 text-brand-700"
           viewBox="0 0 200 240"

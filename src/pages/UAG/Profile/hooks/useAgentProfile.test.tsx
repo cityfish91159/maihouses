@@ -78,7 +78,7 @@ const makeLiveProfile = () => ({
   createdAt: '2023-01-01T00:00:00Z',
 });
 
-describe('useAgentProfile (#7 mock mode + #21b-P8 feedback)', () => {
+describe('useAgentProfile (#7 mock mode + var(--mh-color-2211bb)-P8 feedback)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUsePageMode.mockReturnValue('live');

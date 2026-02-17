@@ -10,11 +10,11 @@ const DEFAULT_COMMUNITY_ID = STRINGS.FEED.DEFAULT_COMMUNITY_ID;
 
 // 共用的 Badge 樣式（避免重複定義）
 const BADGE_CLASS =
-  'inline-flex items-center rounded-md border border-[#fde047] bg-[#fef9c3] px-2 py-[3px] align-middle text-[11px] font-extrabold text-[#854d0e]';
+  'inline-flex items-center rounded-md border border-[var(--mh-color-fde047)] bg-[var(--mh-color-fef9c3)] px-2 py-[3px] align-middle text-[11px] font-extrabold text-[var(--mh-color-854d0e)]';
 
 // 共用的統計標籤樣式
 const STAT_BADGE_CLASS =
-  'inline-flex items-center rounded-full border border-green-200 bg-gradient-to-b from-[#f3fff8] to-green-50 px-2.5 py-[5px] text-[12px] font-bold text-[#0e8d52]';
+  'inline-flex items-center rounded-full border border-green-200 bg-gradient-to-b from-[var(--mh-color-f3fff8)] to-green-50 px-2.5 py-[5px] text-[12px] font-bold text-[var(--mh-color-0e8d52)]';
 
 interface AgentProfileCardProps {
   profile: UserProfile;
@@ -68,11 +68,11 @@ export const AgentProfileCard = memo(function AgentProfileCard({
     >
       {/* Header Row */}
       <div className="flex items-center gap-3.5">
-        <div className="flex size-[60px] items-center justify-center rounded-full border border-brand-100 bg-gradient-to-br from-[#eef3ff] to-white text-[22px] font-black text-brand-700">
+        <div className="flex size-[60px] items-center justify-center rounded-full border border-brand-100 bg-gradient-to-br from-[var(--mh-color-eef3ff)] to-white text-[22px] font-black text-brand-700">
           {avatarLetter}
         </div>
         <div className="flex-1">
-          <h3 className="m-0 mb-1 text-[18px] font-black text-[#0b214a]">{profile.name}</h3>
+          <h3 className="m-0 mb-1 text-[18px] font-black text-[var(--mh-color-0b214a)]">{profile.name}</h3>
           <p className="m-0 flex items-center gap-1 text-[13px] text-slate-500">
             {STRINGS.AGENT.PROFILE.FROM_STORE} | {badges}
           </p>
@@ -92,7 +92,7 @@ export const AgentProfileCard = memo(function AgentProfileCard({
         </Link>
         <Link
           to={`/community/${profile.communityId || DEFAULT_COMMUNITY_ID}/wall`}
-          className="ml-auto inline-flex items-center justify-center gap-1.5 rounded-full border border-solid border-[#bfdbfe] bg-[#eff6ff] px-4 py-2.5 text-[13px] font-bold text-brand-700 no-underline opacity-100 transition-all max-[400px]:ml-0 max-[400px]:w-full"
+          className="ml-auto inline-flex items-center justify-center gap-1.5 rounded-full border border-solid border-[var(--mh-color-bfdbfe)] bg-[var(--mh-color-eff6ff)] px-4 py-2.5 text-[13px] font-bold text-brand-700 no-underline opacity-100 transition-all max-[400px]:ml-0 max-[400px]:w-full"
         >
           {STRINGS.AGENT.PROFILE.LINK_WALL}
         </Link>

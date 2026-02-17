@@ -79,7 +79,7 @@ export const PropertyDetailPage: React.FC = () => {
   const isLoggedIn = isAuthenticated;
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  // #13b: 評價列表 Modal
+  // var(--mh-color-1133bb): 評價列表 Modal
   const [reviewListOpen, setReviewListOpen] = useState(false);
 
   // S 級 VIP 攔截 Modal
@@ -330,7 +330,7 @@ export const PropertyDetailPage: React.FC = () => {
   if (isLoading) {
     return (
       <ErrorBoundary>
-        <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[#f8fafc] px-4 text-center">
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[var(--mh-color-f8fafc)] px-4 text-center">
           <MaiMaiBase mood="thinking" size="md" animated={!prefersReducedMotion} showEffects={!prefersReducedMotion} />
           <p className="text-base text-slate-600">
             {reloadAttempt > 0 ? LOADING_MESSAGES.retry : LOADING_MESSAGES.initial}
@@ -343,7 +343,7 @@ export const PropertyDetailPage: React.FC = () => {
   if (loadError) {
     return (
       <ErrorBoundary>
-        <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[#f8fafc] px-4 text-center">
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[var(--mh-color-f8fafc)] px-4 text-center">
           <MaiMaiBase mood="shy" size="md" animated={!prefersReducedMotion} showEffects={!prefersReducedMotion} />
           <p className="text-base text-slate-600">{LOADING_MESSAGES.error}</p>
           <p className="max-w-sm text-sm text-slate-500">{loadError}</p>
@@ -361,7 +361,7 @@ export const PropertyDetailPage: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-dvh bg-[#f8fafc] font-sans text-slate-800">
+      <div className="min-h-dvh bg-[var(--mh-color-f8fafc)] font-sans text-slate-800">
         {/* Header */}
         <nav
           aria-label="物件導覽"

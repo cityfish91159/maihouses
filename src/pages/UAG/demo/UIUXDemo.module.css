@@ -7,7 +7,7 @@
   padding: 32px;
   max-width: 1000px;
   margin: 0 auto;
-  background: #f8fafc;
+  background: var(--mh-color-f8fafc);
   min-height: 100vh;
 }
 
@@ -47,8 +47,8 @@
 }
 
 .demoCard {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--mh-color-ffffff);
+  border: 1px solid var(--mh-color-e2e8f0);
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
   padding: 24px;
@@ -56,7 +56,7 @@
 
 .demoCardHeader {
   align-items: center;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--mh-color-e2e8f0);
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
@@ -64,25 +64,25 @@
 }
 
 .demoBadgeBefore {
-  background: #fef2f2;
+  background: var(--mh-color-fef2f2);
   border-radius: 999px;
-  color: #dc2626;
+  color: var(--mh-color-dc2626);
   font-size: 12px;
   font-weight: 700;
   padding: 4px 10px;
 }
 
 .demoBadgeAfter {
-  background: #f0fdf4;
+  background: var(--mh-color-f0fdf4);
   border-radius: 999px;
-  color: #16a34a;
+  color: var(--mh-color-16a34a);
   font-size: 12px;
   font-weight: 700;
   padding: 4px 10px;
 }
 
 .demoEmptyBlock {
-  background: #f8fafc;
+  background: var(--mh-color-f8fafc);
   border-radius: 12px;
   padding: 40px 20px;
   text-align: center;
@@ -104,8 +104,8 @@
 }
 
 .demoProblemBox {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--mh-color-fef2f2);
+  border: 1px solid var(--mh-color-fecaca);
   border-radius: 8px;
   font-size: 12px;
   margin-top: 16px;
@@ -113,8 +113,8 @@
 }
 
 .demoFixBox {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: var(--mh-color-f0fdf4);
+  border: 1px solid var(--mh-color-bbf7d0);
   border-radius: 8px;
   font-size: 12px;
   margin-top: 16px;
@@ -122,9 +122,9 @@
 }
 
 .demoSourceBox {
-  background: #f1f5f9;
+  background: var(--mh-color-f1f5f9);
   border-radius: 8px;
-  color: #475569;
+  color: var(--mh-color-475569);
   font-family: monospace;
   font-size: 11px;
   line-height: 1.6;
@@ -138,10 +138,10 @@
 }
 
 .demoExclusiveBadgeBefore {
-  background: #fff7ed;
-  border: 1px solid #ffedd5;
+  background: var(--mh-color-fff7ed);
+  border: 1px solid var(--mh-color-ffedd5);
   border-radius: 6px;
-  color: #ea580c;
+  color: var(--mh-color-ea580c);
   font-size: 12px;
   font-weight: 700;
   padding: 10px;
@@ -150,10 +150,10 @@
 
 .demoExclusiveBadgeAfter {
   align-items: center;
-  background: #fff7ed;
-  border: 1px solid #ffedd5;
+  background: var(--mh-color-fff7ed);
+  border: 1px solid var(--mh-color-ffedd5);
   border-radius: 6px;
-  color: #ea580c;
+  color: var(--mh-color-ea580c);
   display: flex;
   font-size: 12px;
   font-weight: 700;
@@ -168,8 +168,8 @@
   padding: 16px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #1749d7, #2563eb);
-  color: #fff;
+  background: linear-gradient(135deg, var(--mh-color-1749d7), var(--mh-color-2563eb));
+  color: var(--mh-color-ffffff);
   font-weight: 800;
   font-size: 16px;
   cursor: pointer;
@@ -181,8 +181,8 @@
   padding: 16px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #1749d7, #2563eb);
-  color: #fff;
+  background: linear-gradient(135deg, var(--mh-color-1749d7), var(--mh-color-2563eb));
+  color: var(--mh-color-ffffff);
   font-weight: 800;
   font-size: 16px;
   cursor: pointer;
@@ -197,13 +197,13 @@
 }
 
 .demoBuyBtnAfter:hover {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: linear-gradient(135deg, var(--mh-color-2563eb), var(--mh-color-3b82f6));
   box-shadow: 0 20px 40px rgba(37, 99, 235, 0.55);
   transform: translateY(-2px);
 }
 
 .demoBuyBtnAfter:focus-visible {
-  outline: 2px solid #1d4ed8;
+  outline: 2px solid var(--mh-color-1d4ed8);
   outline-offset: 2px;
 }
 
@@ -217,8 +217,8 @@
   padding: 16px;
   border: none;
   border-radius: 12px;
-  background: #ef4444;
-  color: #fff;
+  background: var(--mh-color-ef4444);
+  color: var(--mh-color-ffffff);
   font-weight: 800;
   font-size: 16px;
   cursor: pointer;
@@ -229,8 +229,8 @@
   padding: 16px;
   border: none;
   border-radius: 12px;
-  background: #94a3b8;
-  color: #fff;
+  background: var(--mh-color-94a3b8);
+  color: var(--mh-color-ffffff);
   font-weight: 800;
   font-size: 16px;
   cursor: pointer;
@@ -241,8 +241,8 @@
   padding: 16px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #1749d7, #2563eb);
-  color: #fff;
+  background: linear-gradient(135deg, var(--mh-color-1749d7), var(--mh-color-2563eb));
+  color: var(--mh-color-ffffff);
   font-weight: 800;
   font-size: 16px;
   cursor: pointer;
@@ -258,8 +258,8 @@
   padding: 16px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #dc2626, #ef4444);
-  color: #fff;
+  background: linear-gradient(135deg, var(--mh-color-dc2626), var(--mh-color-ef4444));
+  color: var(--mh-color-ffffff);
   font-weight: 800;
   font-size: 15px;
   cursor: pointer;
@@ -276,7 +276,7 @@
   padding: 16px;
   border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: #fff;
+  background: var(--mh-color-ffffff);
   color: var(--ink-300);
   font-weight: 700;
   font-size: 15px;
@@ -293,8 +293,8 @@
   padding: 16px;
   border: none;
   border-radius: 12px;
-  background: #94a3b8;
-  color: #fff;
+  background: var(--mh-color-94a3b8);
+  color: var(--mh-color-ffffff);
   font-weight: 800;
   font-size: 16px;
   cursor: not-allowed;
@@ -307,7 +307,7 @@
 .demoSpinner {
   width: 18px;
   height: 18px;
-  border: 2px solid #fff;
+  border: 2px solid var(--mh-color-ffffff);
   border-top-color: transparent;
   border-radius: 50%;
   animation: demo-spin 1s linear infinite;
@@ -320,8 +320,8 @@
 }
 
 .demoSummaryCard {
-  background: linear-gradient(135deg, #eff6ff, #eef2ff);
-  border: 2px solid #3b82f6;
+  background: linear-gradient(135deg, var(--mh-color-eff6ff), var(--mh-color-eef2ff));
+  border: 2px solid var(--mh-color-3b82f6);
 }
 
 .demoSummaryTitle {
@@ -338,7 +338,7 @@
 }
 
 .demoSummaryHeadRow {
-  background: #dbeafe;
+  background: var(--mh-color-dbeafe);
 }
 
 .demoSummaryHeadCell {
@@ -348,7 +348,7 @@
 
 .demoSummaryCell {
   padding: 10px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--mh-color-e2e8f0);
 }
 
 .demoSummaryMono {

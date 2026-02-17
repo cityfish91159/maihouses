@@ -255,7 +255,7 @@ export function CommunityPicker({
           }}
           onFocus={() => setIsOpen(true)}
           placeholder="輸入或選擇社區名稱..."
-          className={`w-full rounded-xl border bg-slate-50 px-10 py-3 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#003366] ${selectedCommunity ? 'border-green-300 bg-green-50/50' : 'border-slate-200'} `}
+          className={`w-full rounded-xl border bg-slate-50 px-10 py-3 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[var(--mh-color-003366)] ${selectedCommunity ? 'border-green-300 bg-green-50/50' : 'border-slate-200'} `}
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           {loading ? (
