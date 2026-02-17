@@ -57,13 +57,14 @@ SELECT
 FROM information_schema.columns
 WHERE table_schema = 'public'
   AND table_name = 'audit_logs'
-  AND column_name IN ('status', 'error')
+  AND column_name IN ('role', 'status', 'error')
 ORDER BY column_name;
 
 -- 預期結果:
 -- column_name | data_type | is_nullable | column_default
 -- ------------|-----------|-------------|----------------
 -- error       | text      | YES         | NULL
+-- role        | text      | NO          | 'system'::text
 -- status      | text      | NO          | 'success'::text
 
 -- ============================================================================
@@ -77,10 +78,11 @@ WHERE conrelid = 'public.audit_logs'::regclass
   AND contype = 'c'
 ORDER BY conname;
 
--- 預期結果（2 條 constraints）:
+-- 預期結果（3 條 constraints）:
 -- constraint_name         | constraint_definition
 -- ------------------------|----------------------
--- audit_logs_action_check | CHECK (action IN (...))
+-- audit_logs_action_check | CHECK (action ~ '^(...)$')
+-- audit_logs_status_check | CHECK (status IN ('success', 'failed', 'pending'))
 -- audit_logs_role_check   | CHECK (role IN ('agent', 'buyer', 'system'))
 
 -- ============================================================================
@@ -108,24 +110,20 @@ ORDER BY indexname;
 -- ============================================================================
 SELECT
   col.column_name,
-  pgd.description
-FROM pg_catalog.pg_statio_all_tables AS st
-INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid = st.relid)
-INNER JOIN information_schema.columns col ON (
-  col.ordinal_position = pgd.objsubid
-  AND col.table_schema = st.schemaname
-  AND col.table_name = st.relname
-)
-WHERE st.schemaname = 'public'
-  AND st.relname = 'audit_logs'
-  AND col.column_name IN ('status', 'error')
+  col_description('public.audit_logs'::regclass, col.ordinal_position) AS description
+FROM information_schema.columns col
+WHERE col.table_schema = 'public'
+  AND col.table_name = 'audit_logs'
+  AND col.column_name IN ('role', 'status', 'error')
 ORDER BY col.column_name;
 
 -- 預期結果:
 -- column_name | description
 -- ------------|------------
+-- role        | 用戶角色：agent=房仲, buyer=買方, system=系統
 -- error       | 錯誤訊息（僅在 status=failed 時有值）
 -- status      | 稽核日誌狀態：success=成功, failed=失敗, pending=等待中
+-- 若 description 為 NULL，代表該欄位註解尚未套用成功
 
 -- ============================================================================
 -- 7. 驗證表級權限（Defense in Depth）
@@ -133,14 +131,14 @@ ORDER BY col.column_name;
 SELECT
   grantee,
   privilege_type
-FROM information_schema.role_table_grants
+FROM information_schema.table_privileges
 WHERE table_schema = 'public'
   AND table_name = 'audit_logs'
   AND grantee IN ('anon', 'authenticated', 'service_role')
 ORDER BY grantee, privilege_type;
 
 -- 預期結果:
--- - anon / authenticated 不應有任何資料列
+-- - anon / authenticated 不應有任何資料列（無 direct grant）
 -- - service_role 至少具備 SELECT / INSERT / UPDATE / DELETE
 
 -- ============================================================================
