@@ -3,9 +3,14 @@ import { MemoryRouter } from 'react-router-dom';
 import { UAGEmptyState } from '../UAGEmptyState';
 
 const useMaiMaiA11yPropsMock = vi.fn(() => ({ animated: true, showEffects: true }));
+const useMediaQueryMock = vi.fn(() => false);
 
 vi.mock('../../../../hooks/useMaiMaiA11yProps', () => ({
   useMaiMaiA11yProps: () => useMaiMaiA11yPropsMock(),
+}));
+
+vi.mock('../../../../hooks/useMediaQuery', () => ({
+  useMediaQuery: () => useMediaQueryMock(),
 }));
 
 vi.mock('../../../../components/MaiMai', () => ({
@@ -33,6 +38,7 @@ vi.mock('../../../../components/MaiMai', () => ({
 describe('UAGEmptyState', () => {
   beforeEach(() => {
     useMaiMaiA11yPropsMock.mockReturnValue({ animated: true, showEffects: true });
+    useMediaQueryMock.mockReturnValue(false);
   });
 
   const renderEmptyState = (onDismiss = vi.fn()) =>
@@ -85,5 +91,13 @@ describe('UAGEmptyState', () => {
     const maimai = screen.getByTestId('maimai-base');
     expect(maimai).toHaveAttribute('data-animated', 'false');
     expect(maimai).toHaveAttribute('data-effects', 'false');
+  });
+
+  it('uses size="sm" on mobile viewport', () => {
+    useMediaQueryMock.mockReturnValue(true);
+    renderEmptyState();
+
+    const maimai = screen.getByTestId('maimai-base');
+    expect(maimai).toHaveAttribute('data-size', 'sm');
   });
 });

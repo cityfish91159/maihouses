@@ -486,6 +486,12 @@ function successRedirect(user) {
 - `PostCommentSection` demo 模式支援本地 `add / like / delete`（不打 API）
 - `BottomCTA` 註冊導向統一改 `getAuthUrl('signup', getCurrentPath())`，移除社區頁面內硬編碼 `auth.html` 依賴
 - `PostsSection` 補接 `onRegisterGuide`，留言引導文案對齊「註冊後即可參與討論」
+- 第二輪修正（2026-02-17）：
+  - `Wall.tsx` 移除 inline `<style>`，主內容動畫改用 `animate-fadeIn`；`handleAskQuestion/handleAnswerQuestion` 補齊 `useModeAwareAction` 三模式分流；錯誤區按鈕補 `type="button"`
+  - `BottomCTA.tsx` 導向改為 `navigateToAuth('signup', getCurrentPath())`，不再直接操作 `window.location.href`
+  - `PostsSection.tsx` 移除重複權限判斷（`openPostWithPermissionCheck`），改由單一路徑派發；拆分 `PostCard.tsx`、`PostCommentSection.tsx` 與 `usePostCommentModeState.ts`，降低單一元件複雜度
+  - `QASection.tsx` 抽出 `useQAModalState`，並以 `useModeAwareAction` 控制發問/回答 modal 入口
+  - `LockedOverlay.tsx` `benefits.map` 改用內容值作為 key；`ReviewsSection.tsx` 鎖定文案改讀 `STRINGS.COMMUNITY` 常量
 
 **驗證**：
 - [x] `npm run check:utf8`
@@ -1245,6 +1251,25 @@ import styles from '../UAG.module.css';                    // 5. 樣式
 **驗證摘要**：
 - [x] `npm run check:utf8`
 - [x] `npx vitest run src/pages/UAG/components/__tests__/UAGEmptyState.test.tsx`（5 passed）
+- [x] `npx tsc --noEmit`
+- [x] `npm run gate`
+
+---
+
+#### 2026-02-17 strict-audit 修正（第三輪）
+
+**修改**：
+- `src/pages/UAG/UAG.module.css`
+- `src/pages/UAG/components/__tests__/UAGEmptyState.test.tsx`
+
+**修正項目**：
+- `UAG.module.css:496` 新增 `.welcome-desc:last-of-type { margin-bottom: 0; }`，消除最後一段文案與 actions 之間多餘 16px 空白
+- `UAGEmptyState.test.tsx` 新增 `useMediaQuery` mock（預設 `false` = 桌機），確保 isMobile 條件受測試控制
+- `UAGEmptyState.test.tsx` 新增測試案例 `'uses size="sm" on mobile viewport'`：mock `useMediaQuery` 回傳 `true`，驗證 MaiMai `data-size="sm"`
+
+**驗證摘要**：
+- [x] `npm run check:utf8`
+- [x] `npx vitest run src/pages/UAG/components/__tests__/UAGEmptyState.test.tsx`（6 passed）
 - [x] `npx tsc --noEmit`
 - [x] `npm run gate`
 
