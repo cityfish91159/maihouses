@@ -1,4 +1,4 @@
-﻿/**
+/**
  * LockedOverlay Component
  *
  * 通用的模糊遮罩 + 鎖定 CTA 組件

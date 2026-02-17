@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ReviewsSection Component
  *
  * 社區評價區塊

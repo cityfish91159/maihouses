@@ -1,5 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { STRINGS } from '../../../constants/strings';
+
+const LOADING_SKELETON_IDS = ['wall-loading-1', 'wall-loading-2', 'wall-loading-3'] as const;
 
 // Loading State
 export const WallLoading: React.FC = () => {
@@ -10,9 +12,9 @@ export const WallLoading: React.FC = () => {
       aria-busy="true"
       aria-label={STRINGS.WALL_STATES.LOADING_LABEL}
     >
-      {[1, 2, 3].map((i) => (
+      {LOADING_SKELETON_IDS.map((skeletonId) => (
         <div
-          key={i}
+          key={skeletonId}
           className="animate-pulse rounded-lg border border-gray-100 bg-white p-4 shadow-sm"
         >
           <div className="mb-2 flex items-start justify-between">
@@ -63,6 +65,7 @@ export const WallError: React.FC<WallErrorProps> = ({
       <p className="mb-6 text-gray-500">{message}</p>
       {onRetry && (
         <button
+          type="button"
           onClick={onRetry}
           className="rounded-md bg-brand-500 px-4 py-2 text-white transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
         >

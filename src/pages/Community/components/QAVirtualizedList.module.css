@@ -1,0 +1,20 @@
+.answeredMaxHeight {
+  max-height: 600px;
+}
+
+.unansweredMaxHeight {
+  max-height: 400px;
+}
+
+.virtualizedContainer {
+  max-height: var(--qa-max-height, 600px);
+}
+
+.virtualizedSpacer {
+  position: relative;
+  height: var(--qa-total-height, 0px);
+}
+
+.virtualizedOffset {
+  transform: translateY(var(--qa-offset-y, 0px));
+}

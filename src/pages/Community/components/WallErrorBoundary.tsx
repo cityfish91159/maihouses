@@ -1,4 +1,4 @@
-﻿/**
+/**
  * WallErrorBoundary
  *
  * 社區牆專用 Error Boundary
@@ -85,7 +85,11 @@ const categorizeError = (error: Error): CategorizedError => {
       title: '連線異常',
       message: '目前無法連接到伺服器，請稍後重試',
       actionText: '重新載入',
-      onAction: () => window.location.reload(),
+      onAction: () => {
+        if (typeof window !== 'undefined') {
+          window.location.assign(window.location.href);
+        }
+      },
     };
   }
 
@@ -214,6 +218,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               {categorized.onAction && (
                 <button
+                  type="button"
                   onClick={categorized.onAction ?? this.resetErrorBoundary}
                   className="border-brand/40 hover:bg-brand/10 rounded-lg border px-4 py-2 text-sm font-semibold text-brand transition"
                 >
@@ -230,6 +235,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
               )}
               {!categorized.onAction && !categorized.actionHref && (
                 <button
+                  type="button"
                   onClick={this.resetErrorBoundary}
                   className="border-brand/40 hover:bg-brand/10 rounded-lg border px-4 py-2 text-sm font-semibold text-brand transition"
                 >

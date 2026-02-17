@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Community Wall Page
  *
  * 社區牆主頁面
@@ -594,7 +594,7 @@ function WallInner() {
       </div>
 
       {/* 底部 CTA */}
-      <BottomCTA viewerRole={effectiveRole} mode={mode} />
+      <BottomCTA viewerRole={effectiveRole} />
 
       {/* Mock 切換僅於開發或白名單環境顯示 */}
       {(allowManualMockToggle || useMock) && (

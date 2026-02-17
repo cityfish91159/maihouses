@@ -8,6 +8,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { Question, Permissions } from '../types';
 import { QACard } from './QACard';
+import styles from './QAVirtualizedList.module.css';
 
 /** 虛擬化啟用門檻：超過此數量才啟用虛擬化 */
 const VIRTUALIZATION_THRESHOLD = 10;
@@ -42,11 +43,11 @@ function SimpleQAList({
   onUnlock,
   maxHeight,
 }: VirtualizedQAListProps) {
+  const maxHeightClass =
+    maxHeight === UNANSWERED_SECTION_MAX_HEIGHT ? styles.unansweredMaxHeight : styles.answeredMaxHeight;
+
   return (
-    <div
-      className="space-y-2 overflow-y-auto"
-      style={maxHeight ? { maxHeight: `${maxHeight}px` } : undefined}
-    >
+    <div className={`space-y-2 overflow-auto ${maxHeightClass}`}>
       {questions.map((q) => (
         <QACard
           key={q.id}
@@ -73,12 +74,18 @@ function VirtualizedQAListInner({
   maxHeight = ANSWERED_SECTION_MAX_HEIGHT,
 }: VirtualizedQAListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const spacerRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(maxHeight);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -87,7 +94,7 @@ function VirtualizedQAListInner({
     });
     observer.observe(container);
     return () => observer.disconnect();
-  }, []);
+  }, [maxHeight]);
 
   const handleScroll = useCallback(() => {
     const container = containerRef.current;
@@ -113,15 +120,27 @@ function VirtualizedQAListInner({
     };
   }, [questions, scrollTop, containerHeight]);
 
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.style.setProperty('--qa-max-height', `${maxHeight}px`);
+    }
+    if (spacerRef.current) {
+      spacerRef.current.style.setProperty('--qa-total-height', `${totalHeight}px`);
+    }
+    if (offsetRef.current) {
+      offsetRef.current.style.setProperty('--qa-offset-y', `${offsetY}px`);
+    }
+  }, [maxHeight, offsetY, totalHeight]);
+
   return (
     <div
       ref={containerRef}
-      className="overflow-y-auto"
-      style={{ maxHeight: `${maxHeight}px` }}
+      data-testid="virtualized-container"
+      className={`overflow-auto ${styles.virtualizedContainer}`}
       onScroll={handleScroll}
     >
-      <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
-        <div style={{ transform: `translateY(${offsetY}px)` }} className="space-y-2">
+      <div ref={spacerRef} className={styles.virtualizedSpacer}>
+        <div ref={offsetRef} className={`space-y-2 ${styles.virtualizedOffset}`}>
           {visibleItems.map(({ question: q }) => (
             <QACard
               key={q.id}

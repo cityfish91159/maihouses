@@ -5,30 +5,46 @@
  */
 
 import { useCallback } from 'react';
-import type { PageMode } from '../../../hooks/usePageMode';
 import { notify } from '../../../lib/notify';
 import { getCurrentPath, navigateToAuth } from '../../../lib/authUtils';
+import { useModeAwareAction } from '../../../hooks/useModeAwareAction';
 import type { Role } from '../types';
 import { getPermissions } from '../types';
 import { canPerformAction } from '../lib';
 
 interface BottomCTAProps {
   viewerRole: Role;
-  mode: PageMode;
 }
 
-export function BottomCTA({ viewerRole, mode }: BottomCTAProps) {
+const DEMO_SIGNUP_GUIDE_TITLE = '示範模式提示';
+const DEMO_SIGNUP_GUIDE_DESCRIPTION = '示範模式不會導向註冊頁，請切換正式模式後再註冊。';
+const SIGNUP_ACTION_ERROR_TITLE = '操作失敗';
+
+export function BottomCTA({ viewerRole }: BottomCTAProps) {
   const perm = getPermissions(viewerRole);
   const isMember = perm.isMember;
 
-  const handleSignupClick = useCallback(() => {
-    if (mode === 'demo') {
-      notify.info('示範模式提示', '示範模式不會導向註冊頁，請切換正式模式後再註冊。');
-      return;
-    }
-
+  const navigateToSignup = useCallback((_payload: undefined) => {
     navigateToAuth('signup', getCurrentPath());
-  }, [mode]);
+  }, []);
+
+  const showDemoSignupGuide = useCallback((_payload: undefined) => {
+    notify.info(DEMO_SIGNUP_GUIDE_TITLE, DEMO_SIGNUP_GUIDE_DESCRIPTION);
+  }, []);
+
+  const dispatchSignup = useModeAwareAction<undefined>({
+    visitor: navigateToSignup,
+    demo: showDemoSignupGuide,
+    live: navigateToSignup,
+  });
+
+  const handleSignupClick = useCallback(() => {
+    void dispatchSignup(undefined).then((result) => {
+      if (!result.ok) {
+        notify.error(SIGNUP_ACTION_ERROR_TITLE, result.error);
+      }
+    });
+  }, [dispatchSignup]);
 
   // 住戶與房仲已可查看完整內容，不顯示 CTA。
   if (canPerformAction(perm, 'view_private')) return null;
@@ -41,7 +57,7 @@ export function BottomCTA({ viewerRole, mode }: BottomCTAProps) {
       <button
         type="button"
         onClick={handleSignupClick}
-        className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] px-5 py-2.5 text-[13px] font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+        className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] px-5 py-2.5 text-[13px] font-bold text-white shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 active:scale-95"
       >
         {isMember ? '驗證住戶' : '免費註冊'}
       </button>

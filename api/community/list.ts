@@ -1,18 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { enforceCors } from '../lib/cors';
+import { cors, isAllowedOrigin } from '../lib/cors';
 import { logger } from '../lib/logger';
 import { getSupabaseAdmin } from '../lib/supabase';
 import { API_ERROR_CODES, errorResponse, successResponse } from '../lib/apiResponse';
 
+const DEFAULT_OFFSET = 0;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+const COMMUNITY_BATCH_SIZE = 100;
+const CACHE_CONTROL_HEADER = 's-maxage=60, stale-while-revalidate=300';
+
 const QuerySchema = z.object({
   offset: z.preprocess(
     (value) => (Array.isArray(value) ? value[0] : value),
-    z.coerce.number().int().min(0).default(0)
+    z.coerce.number().int().min(0).default(DEFAULT_OFFSET)
   ),
   limit: z.preprocess(
     (value) => (Array.isArray(value) ? value[0] : value),
-    z.coerce.number().int().min(1).max(100).default(20)
+    z.coerce.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT)
   ),
 });
 
@@ -38,8 +44,10 @@ const CommunityListItemSchema = z.object({
 });
 
 type CommunityListItem = z.infer<typeof CommunityListItemSchema>;
+type CommunityRow = z.infer<typeof CommunityRowSchema>;
+type PublicPostRow = z.infer<typeof PublicPostRowSchema>;
 
-function buildPostCountMap(rows: z.infer<typeof PublicPostRowSchema>[]): Map<string, number> {
+function buildPostCountMap(rows: PublicPostRow[]): Map<string, number> {
   const map = new Map<string, number>();
 
   for (const row of rows) {
@@ -51,7 +59,7 @@ function buildPostCountMap(rows: z.infer<typeof PublicPostRowSchema>[]): Map<str
 }
 
 function buildCommunityListItems(
-  communities: z.infer<typeof CommunityRowSchema>[],
+  communities: CommunityRow[],
   postCountMap: Map<string, number>
 ): CommunityListItem[] {
   const mapped = communities.map((community) => {
@@ -71,14 +79,98 @@ function buildCommunityListItems(
   return mapped.filter((item) => item.post_count > 0 || item.review_count > 0);
 }
 
+function enforceListCors(req: VercelRequest, res: VercelResponse): boolean {
+  cors(req, res);
+
+  const rawOrigin = req?.headers?.origin;
+  const origin = typeof rawOrigin === 'string' ? rawOrigin : undefined;
+
+  if (origin && !isAllowedOrigin(origin)) {
+    res
+      .status(403)
+      .json(errorResponse(API_ERROR_CODES.FORBIDDEN, '來源網域未被允許'));
+    return false;
+  }
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return false;
+  }
+
+  return true;
+}
+
+async function fetchCommunityBatch(
+  start: number,
+  batchSize: number
+): Promise<{ rows: CommunityRow[]; reachedEnd: boolean }> {
+  const supabase = getSupabaseAdmin();
+  const { data: communityBatchData, error: communityError } = await supabase
+    .from('communities')
+    .select('id, name, address, cover_image, review_count')
+    .order('created_at', { ascending: false })
+    .range(start, start + batchSize - 1);
+
+  if (communityError) {
+    logger.error('[community/list] failed to fetch communities', communityError, { start, batchSize });
+    throw new Error('COMMUNITY_FETCH_FAILED');
+  }
+
+  const parsed = CommunityRowSchema.array().safeParse(communityBatchData ?? []);
+  if (!parsed.success) {
+    logger.error('[community/list] communities schema validation failed', parsed.error, {
+      start,
+      batchSize,
+    });
+    throw new Error('COMMUNITY_SCHEMA_INVALID');
+  }
+
+  return {
+    rows: parsed.data,
+    reachedEnd: parsed.data.length < batchSize,
+  };
+}
+
+async function fetchPostCountMap(communities: CommunityRow[]): Promise<Map<string, number>> {
+  const needsPostCountIds = communities.map((community) => community.id);
+
+  if (needsPostCountIds.length === 0) {
+    return new Map<string, number>();
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data: publicPostData, error: publicPostError } = await supabase
+    .from('community_posts')
+    .select('community_id')
+    .eq('visibility', 'public')
+    .in('community_id', needsPostCountIds);
+
+  if (publicPostError) {
+    logger.error('[community/list] failed to fetch public post counts', publicPostError, {
+      communityCount: needsPostCountIds.length,
+    });
+    throw new Error('POST_COUNT_FETCH_FAILED');
+  }
+
+  const parsedPublicPosts = PublicPostRowSchema.array().safeParse(publicPostData ?? []);
+  if (!parsedPublicPosts.success) {
+    logger.error('[community/list] post-count schema validation failed', parsedPublicPosts.error, {
+      communityCount: needsPostCountIds.length,
+    });
+    throw new Error('POST_COUNT_SCHEMA_INVALID');
+  }
+
+  return buildPostCountMap(parsedPublicPosts.data);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
-  if (!enforceCors(req, res)) return;
+  if (!enforceListCors(req, res)) return;
 
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET, OPTIONS');
     res
       .status(405)
-      .json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, `Method ${req.method} Not Allowed`));
+      .json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, '僅支援 GET 請求'));
     return;
   }
 
@@ -95,62 +187,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const { offset, limit } = queryResult.data;
 
   try {
-    const supabase = getSupabaseAdmin();
-    const { data: communityData, error: communityError } = await supabase
-      .from('communities')
-      .select('id, name, address, cover_image, review_count')
-      .order('created_at', { ascending: false });
+    const targetVisibleCount = offset + limit;
+    const visibleItems: CommunityListItem[] = [];
+    let cursor = 0;
+    let reachedEnd = false;
 
-    if (communityError) {
-      logger.error('[community/list] failed to fetch communities', communityError);
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '社區清單載入失敗'));
-      return;
+    while (visibleItems.length < targetVisibleCount && !reachedEnd) {
+      const { rows, reachedEnd: batchEnd } = await fetchCommunityBatch(cursor, COMMUNITY_BATCH_SIZE);
+
+      if (rows.length === 0) {
+        reachedEnd = true;
+        break;
+      }
+
+      const postCountMap = await fetchPostCountMap(rows);
+      const batchVisibleItems = buildCommunityListItems(rows, postCountMap);
+      visibleItems.push(...batchVisibleItems);
+
+      reachedEnd = batchEnd;
+      cursor += COMMUNITY_BATCH_SIZE;
     }
 
-    const parsedCommunities = CommunityRowSchema.array().safeParse(communityData ?? []);
-    if (!parsedCommunities.success) {
-      logger.error('[community/list] communities schema validation failed', parsedCommunities.error);
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '社區資料格式錯誤'));
-      return;
-    }
-
-    if (parsedCommunities.data.length === 0) {
-      res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
-      res.status(200).json(successResponse<CommunityListItem[]>([]));
-      return;
-    }
-
-    const communityIds = parsedCommunities.data.map((community) => community.id);
-    const { data: publicPostData, error: publicPostError } = await supabase
-      .from('community_posts')
-      .select('community_id')
-      .eq('visibility', 'public')
-      .in('community_id', communityIds);
-
-    if (publicPostError) {
-      logger.error('[community/list] failed to fetch public post counts', publicPostError);
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '社區貼文統計載入失敗'));
-      return;
-    }
-
-    const parsedPublicPosts = PublicPostRowSchema.array().safeParse(publicPostData ?? []);
-    if (!parsedPublicPosts.success) {
-      logger.error('[community/list] post-count schema validation failed', parsedPublicPosts.error);
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '社區貼文統計格式錯誤'));
-      return;
-    }
-
-    const postCountMap = buildPostCountMap(parsedPublicPosts.data);
-    const allItems = buildCommunityListItems(parsedCommunities.data, postCountMap);
-    const pagedItems = allItems.slice(offset, offset + limit);
+    const pagedItems = visibleItems.slice(offset, offset + limit);
 
     const responseValidation = CommunityListItemSchema.array().safeParse(pagedItems);
     if (!responseValidation.success) {
@@ -161,9 +219,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return;
     }
 
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    res.setHeader('Cache-Control', CACHE_CONTROL_HEADER);
     res.status(200).json(successResponse(responseValidation.data));
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : '';
+
+    if (errorMessage === 'COMMUNITY_FETCH_FAILED') {
+      res.status(500).json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '社區清單載入失敗'));
+      return;
+    }
+    if (errorMessage === 'POST_COUNT_FETCH_FAILED') {
+      res.status(500).json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '社區貼文統計載入失敗'));
+      return;
+    }
+    if (errorMessage === 'COMMUNITY_SCHEMA_INVALID') {
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '社區資料格式錯誤'));
+      return;
+    }
+    if (errorMessage === 'POST_COUNT_SCHEMA_INVALID') {
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '社區貼文統計格式錯誤'));
+      return;
+    }
+
     logger.error('[community/list] unexpected error', error, {
       method: req.method,
       query: req.query,

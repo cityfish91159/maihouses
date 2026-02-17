@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -243,7 +243,6 @@ function UAGPageContent() {
   if (!appData) return null;
 
   const showWelcome =
-    mode === 'live' &&
     appData.leads.length === 0 &&
     appData.listings.length === 0 &&
     !welcomeDismissed;

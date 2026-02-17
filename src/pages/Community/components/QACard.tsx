@@ -19,6 +19,19 @@ export interface QACardProps {
   hideUnlockButton?: boolean | undefined;
 }
 
+type QuestionAnswer = Question['answers'][number];
+
+function buildAnswerKey(
+  questionId: Question['id'],
+  answer: QuestionAnswer,
+  signatureCounts: Map<string, number>
+): string {
+  const signature = `${questionId}-${answer.author}-${answer.type}-${answer.content}`;
+  const count = (signatureCounts.get(signature) ?? 0) + 1;
+  signatureCounts.set(signature, count);
+  return count === 1 ? signature : `${signature}-${count}`;
+}
+
 export function QACard({
   q,
   perm,
@@ -31,6 +44,7 @@ export function QACard({
   const totalAnswers = q.totalAnswers ?? q.answersCount ?? q.answers.length;
   const visibleAnswers = q.answers;
   const hasMore = q.hasMoreAnswers ?? totalAnswers > visibleAnswers.length;
+  const answerSignatureCounts = new Map<string, number>();
 
   return (
     <div
@@ -55,8 +69,11 @@ export function QACard({
       </div>
       {visibleAnswers.length > 0 && (
         <div className="mt-2 space-y-2">
-          {visibleAnswers.map((a, idx) => (
-            <div key={idx} className="bg-ink-50/40 rounded-xl px-3 py-2">
+          {visibleAnswers.map((a) => (
+            <div
+              key={buildAnswerKey(q.id, a, answerSignatureCounts)}
+              className="bg-ink-50/40 rounded-xl px-3 py-2"
+            >
               <p className="text-xs leading-relaxed text-ink-700">{a.content}</p>
               <div className="text-ink-500 mt-1 flex items-center gap-2 text-[10px]">
                 <span>{a.author}</span>

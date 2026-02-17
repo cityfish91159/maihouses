@@ -17,6 +17,7 @@ export interface ModeAwareHandlers<TData> {
  *
  * @param handlers - mode-specific handlers; memoize at call-site when possible
  * to avoid unnecessary ref updates in the internal effect.
+ * @returns async dispatcher that returns `{ ok: true }` on success or `{ ok: false, error }` on failure.
  */
 export function useModeAwareAction<TData>(handlers: ModeAwareHandlers<TData>) {
   const mode = usePageMode();

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AUDIT-01 Phase 8: QA 卡片虛擬化測試
  *
  * 測試目標：
@@ -9,8 +9,8 @@
  * 5. 邊界案例處理
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QASection } from '../QASection';
 import type { Question } from '../../types';
 
@@ -68,8 +68,19 @@ function generateAnsweredQuestions(count: number): Question[] {
 }
 
 describe('QASection 虛擬化測試', () => {
+  class ResizeObserverMock {
+    observe = vi.fn();
+    disconnect = vi.fn();
+    unobserve = vi.fn();
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe('虛擬化啟用條件', () => {
@@ -83,8 +94,8 @@ describe('QASection 虛擬化測試', () => {
       expect(virtualContainer).toBeNull();
 
       // 應該能找到第一個和最後一個問題（驗證所有問題都被渲染）
-      expect(screen.getByText(/Q: 已回答問題第1題/)).toBeInTheDocument();
-      expect(screen.getByText(/Q: 已回答問題第10題/)).toBeInTheDocument();
+      expect(screen.getByText(/已回答問題第1題/)).toBeInTheDocument();
+      expect(screen.getByText(/已回答問題第10題/)).toBeInTheDocument();
     });
 
     it(`超過 ${VIRTUALIZATION_THRESHOLD} 個問題時，啟用虛擬化（有 data-testid="virtualized-container"）`, () => {
@@ -111,9 +122,9 @@ describe('QASection 虛擬化測試', () => {
       // 容器應有 overflow-auto class
       expect(virtualContainer).toHaveClass('overflow-auto');
 
-      // 容器應有 maxHeight 樣式
-      const style = virtualContainer?.getAttribute('style');
-      expect(style).toContain('max-height');
+      // 容器應有 maxHeight CSS 變數
+      const style = virtualContainer?.getAttribute('style') ?? '';
+      expect(style).toContain('--qa-max-height');
     });
   });
 
@@ -274,7 +285,7 @@ describe('QASection 虛擬化測試', () => {
       render(<QASection viewerRole="resident" questions={{ items: questions }} />);
 
       // 應該能找到第一個問題
-      expect(screen.getByText(/Q: 已回答問題第1題/)).toBeInTheDocument();
+      expect(screen.getByText(/已回答問題第1題/)).toBeInTheDocument();
     });
 
     it('混合已回答與未回答問題時應分別處理', () => {
@@ -288,7 +299,7 @@ describe('QASection 虛擬化測試', () => {
   });
 
   describe('虛擬化容器樣式', () => {
-    it('虛擬化容器應有 maxHeight 樣式限制', () => {
+    it('虛擬化容器應有 maxHeight 樣式限制', async () => {
       const questions = generateAnsweredQuestions(20);
 
       const { container } = render(<QASection viewerRole="resident" questions={questions} />);
@@ -296,9 +307,10 @@ describe('QASection 虛擬化測試', () => {
       const virtualContainer = container.querySelector('[data-testid="virtualized-container"]');
       expect(virtualContainer).not.toBeNull();
 
-      // 檢查 maxHeight 樣式存在
-      const style = virtualContainer?.getAttribute('style');
-      expect(style).toContain('max-height');
+      await waitFor(() => {
+        const style = virtualContainer?.getAttribute('style') ?? '';
+        expect(style).toContain('--qa-max-height');
+      });
     });
 
     it('虛擬化容器應有 overflow-auto class', () => {
