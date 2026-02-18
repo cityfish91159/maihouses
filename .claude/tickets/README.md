@@ -2,7 +2,7 @@
 
 > 所有進行中、待辦、計畫中的工單集中於此目錄。
 > 已完成工單歸入 `.context/archive/`。
-> 最後更新：2026-02-17
+> 最後更新：2026-02-18
 
 ---
 
@@ -13,6 +13,7 @@
 | 工單 | 檔案 | 狀態 | 說明 |
 |------|------|------|------|
 | MOCK-SYSTEM-UNIFY | [MOCK-SYSTEM.md](./MOCK-SYSTEM.md) | 🔄 進行中 | 全站三模式架構（visitor/demo/live）統一 |
+| COMMUNITY-EXPLORE-8D | [COMMUNITY-EXPLORE-8D.md](./COMMUNITY-EXPLORE-8D.md) | 🔄 進行中 | #8d 社區探索著陸頁（visitor/無歸屬會員） |
 | MAIMAI-ENRICH | [MAIMAI-ENRICH.md](./MAIMAI-ENRICH.md) | 🆕 新建 | MaiMai 吉祥物全面擴充（6 Phase） |
 
 ### 安全 / 維運
@@ -57,8 +58,8 @@
 - `#28` Zod 收緊 + as 斷言消除（5 檔）
 - `#29` 跨裝置三模式驗證（iOS Safari / 手機 / 私隱模式）
 - `#8b` 社區牆發文/留言本地化
-- `#8c` 社區列表 API
-- `#8d` 社區探索頁
+- `#8c` 社區列表 API ✅
+- `#8d` 社區探索頁 🔄（計劃已核准，待實作）
 - `#12b` Header 社區導航分層
 - `#9` 移除靜態 HTML mock 頁
 - `#10a` DemoBadge.tsx 浮動標籤

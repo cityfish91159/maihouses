@@ -4,7 +4,6 @@ import clsx from 'clsx';
 import { Logo } from '../Logo/Logo';
 import { DemoGate } from '../DemoGate/DemoGate';
 import { ROUTES, RouteUtils } from '../../constants/routes';
-import { SEED_COMMUNITY_ID } from '../../constants/seed';
 import { getCurrentPath, getLoginUrl, getSignupUrl } from '../../lib/authUtils';
 import { notify } from '../../lib/notify';
 import { MaiMaiBase } from '../MaiMai';
@@ -386,7 +385,7 @@ export default function Header() {
                 <span>房地產列表</span>
               </a>
               <a
-                href={ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)}
+                href={ROUTES.COMMUNITY_EXPLORE}
                 className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -440,9 +439,9 @@ export default function Header() {
           {/* Search Bar Area Wrapper */}
           <div className="relative mx-auto max-w-3xl">
             {/* Mascot & Bubble Group */}
-            <div className="absolute right-[5%] top-[-60px] z-0 animate-float select-none md:right-[10%] md:animate-float-desktop">
+            <div className="absolute right-[5%] top-[-60px] z-30 animate-float select-none md:right-[10%] md:animate-float-desktop">
               {/* Speech Bubble */}
-              <div className="md:bottom-4/5 pointer-events-none absolute bottom-3/4 right-[55%] w-[260px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-5 py-2 shadow-lg md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">
+              <div className="pointer-events-none absolute bottom-[90%] right-[55%] w-[220px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-4 py-2 shadow-lg sm:w-[260px] sm:px-5 md:bottom-[85%] md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">
                 <p className="text-left text-[11px] font-bold leading-relaxed text-ink-700 md:text-sm">
                   買房這麼大的事，先到 <span className="font-black text-brand-700">邁鄰居</span>
                   ，為未來的家查口碑、找評價，最放心！
@@ -503,7 +502,7 @@ export default function Header() {
             <div className="relative z-10 mt-6 grid grid-cols-3 gap-2">
               {['社區評價', '房仲專區', '邁鄰居'].map((text) => {
                 const getHref = (label: string) => {
-                  if (label === '社區評價') return ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID);
+                  if (label === '社區評價') return ROUTES.COMMUNITY_EXPLORE;
                   if (label === '房仲專區') return ROUTES.UAG;
                   return ROUTES.HOME_CONVERSATIONS;
                 };

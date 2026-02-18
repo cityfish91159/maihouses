@@ -41,6 +41,9 @@ export const ROUTES = {
   /** 社區頁面 - 需要 communityId 參數 */
   COMMUNITY: (communityId: string): string => `/maihouses/community/${communityId}`,
 
+  /** 社區探索著陸頁 — visitor/無歸屬會員入口 */
+  COMMUNITY_EXPLORE: '/maihouses/community',
+
   /** 社區牆頁面 - 需要 communityId 參數 */
   COMMUNITY_WALL: (communityId: string): string => `/maihouses/community/${communityId}/wall`,
 

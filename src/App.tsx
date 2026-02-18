@@ -13,6 +13,7 @@ import { notify } from './lib/notify';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import Wall from './pages/Community/Wall';
+import Explore from './pages/Community/Explore';
 import Suggested from './pages/Community/Suggested';
 import Detail from './pages/Property/Detail';
 import AssureDetail from './pages/Assure/Detail';
@@ -176,6 +177,22 @@ export default function App() {
                 element={
                   <ErrorBoundary>
                     <UIUXDemo />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/community"
+                element={
+                  <ErrorBoundary>
+                    <Explore />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/community"
+                element={
+                  <ErrorBoundary>
+                    <Explore />
                   </ErrorBoundary>
                 }
               />

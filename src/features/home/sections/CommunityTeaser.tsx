@@ -7,7 +7,6 @@ import { HomeCard } from '../components/HomeCard';
 import { ReviewCard } from '../components/ReviewCard';
 import { getFeaturedHomeReviews } from '../../../services/communityService';
 import { usePageMode } from '../../../hooks/usePageMode';
-import { SEED_COMMUNITY_ID } from '../../../constants/seed';
 import type { ReviewForUI } from '../../../types/review';
 
 /**
@@ -75,7 +74,7 @@ function mapBackupToReviewWithNavigation(
 export default function CommunityTeaser() {
   const navigate = useNavigate();
   const mode = usePageMode();
-  const seedWallPath = RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID));
+  const explorePath = RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE);
 
   // V2: Use React Query instead of useEffect + useState
   const {
@@ -102,10 +101,10 @@ export default function CommunityTeaser() {
       if (review.source === 'real' && review.communityId) {
         navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(review.communityId)));
       } else {
-        navigate(seedWallPath);
+        navigate(explorePath);
       }
     },
-    [navigate, seedWallPath]
+    [navigate, explorePath]
   );
 
   // Loading skeleton
@@ -205,7 +204,7 @@ export default function CommunityTeaser() {
       <button
         type="button"
         className="hover:border-brand-700/20 group relative mt-4 flex items-center gap-2.5 rounded-xl border border-brand-100 bg-gradient-to-b from-white to-brand-50 p-3.5 font-black text-brand-700 no-underline transition-all duration-200 hover:shadow-brand-md active:translate-y-px lg:justify-center lg:text-center"
-        onClick={() => navigate(seedWallPath)}
+        onClick={() => navigate(explorePath)}
         aria-label="點我看更多社區評價"
       >
         <span className="text-[15px] tracking-wide transition-colors group-hover:text-brand-600 lg:mx-auto">

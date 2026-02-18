@@ -45,7 +45,7 @@
 ### P2 — 社區牆導航修正
 
 - [x] **#8c** 社區列表 API — `GET /api/community/list`（1 新檔案）✅ 2026-02-17
-- [ ] **#8d** 社區探索頁 — visitor/無歸屬會員的著陸頁（1 新頁面 + 路由，需 `/ui-ux-pro-max`）
+- [x] **#8d** 社區探索頁 — visitor/無歸屬會員的著陸頁（1 新頁面 + 路由，需 `/ui-ux-pro-max`）✅ 2026-02-18
 - [ ] **#12b** Header 社區導航分層 — `useUserCommunity` + `api/community/my` + 導航規則（依賴 #8d + #12）
 
 ### P2 — 收尾清理
@@ -53,6 +53,7 @@
 - [ ] **#10a** `DemoBadge.tsx` 浮動標籤 UI（1 新檔案，需 `/ui-ux-pro-max`）
 - [x] **#10b** `exitDemoMode()` 退出清理 + 確認 dialog（4 檔 + 4 測試）✅ 2026-02-18
 - [ ] **#11** Feed 產品定位確認（待決策）
+- [ ] **#31** UAG 頁面深藍主色統一 + 現代化外觀升級（1 CSS 檔，需 `/ui-ux-pro-max`）
 - [ ] **#16** 全站文案健康檢查 — 亂碼 + emoji + CI lint
 - [ ] **#21** 全站 `console.log` 改用 `logger`（整合 getErrorMessage）
 - [ ] **#22** Tailwind classnames 排序修復（2 檔）
@@ -61,6 +62,7 @@
 ### P2 — 跨頁面三模式 + 清理
 
 - [ ] **#24** Chat 三模式支持（`Chat/index.tsx`）
+- [ ] **#24a** UAG Mock 對話 Modal — demo 模式「查看對話」內嵌對話框（1 新組件 + 3 修改）
 - [ ] **#25** Assure 三模式支持 — `isMock` → usePageMode（`Assure/Detail.tsx`）
 - [ ] **#26** 登出清理 — `cleanupAuthState()` 統一函數 + onAuthStateChange（2 檔）
 - [x] **#27** UAG 新房仲空狀態 + MaiMai 引導（1 新組件）✅ 2026-02-17
@@ -87,7 +89,7 @@
                        ├→ #10a DemoBadge
                        ├→ #12 Header 三模式 UI
                        ├→ #20 Mock 整合
-                       ├→ #24 Chat / #25 Assure
+                       ├→ #24 Chat / #24a UAG Mock Chat / #25 Assure
                        └→ #26 登出清理
 
 #1b useModeAwareAction ✅ ┬→ #3 按讚 / #8a 社區牆按讚 / #5b UAG Lead
@@ -108,6 +110,7 @@
 #8d 社區探索頁 ─┬──────→ #12b Header 社區導航分層（探索頁須先存在）
 #12 Header UI ──┘
 
+#31 UAG 深藍主色統一 ──（無依賴，獨立 CSS 工作）
 #12 Header 三模式 UI ──→ #13 PropertyListPage Header 統一
 #13 ──────────────────→ #30a PropertyListPage 頁面骨架 + 6 區塊
 #1a usePageMode ───────→ #30a（三模式驅動）
@@ -128,8 +131,8 @@
 | Wave 2 | #2、#3、#5a、#12、#20 | 可平行（#12 只做三模式 UI，不含導航分層）|
 | Wave 3 | #4a、#4b、#5b、#6a、#6b、#8a、#27 | 逐頁接入（#8a 升 P1 併入）|
 | Wave 3B | #8b | 依賴 #8a |
-| Wave 4 | #8c、#9、#10a、#13、#16、#21、#22、#23 | 收尾清理 + 社區列表 API |
-| Wave 4B | #8d、#10b、#24、#25、#29 | 社區探索頁 + 退出清理 + Chat/Assure + 跨裝置修復 |
+| Wave 4 | #8c、#9、#10a、#13、#16、#21、#22、#23、#31 | 收尾清理 + 社區列表 API + UAG 深藍主色統一 |
+| Wave 4B | #8d、#10b、#24、#24a、#25、#29 | 社區探索頁 + 退出清理 + Chat/Assure + UAG Mock Chat + 跨裝置修復 |
 | Wave 4C | #12b、#26 | Header 社區導航分層（依賴 #8d + #12）+ 登出清理 |
 | Wave 5 | #7、#11 | 登入重定向 + 註冊加社區選擇（依賴 #8c）+ 產品方向確認 |
 | Wave 4-PL | #30a | 頁面骨架 + 6 區塊 Section（依賴 #13）|
@@ -888,6 +891,342 @@ function useRegisterGuide() {
 **驗收**：
 - `rg "usePageMode" src/pages/Chat/` → 有結果
 - `npm run gate` 通過
+
+---
+
+### #24a UAG Mock 對話 Modal
+
+**目標**：demo 模式下 AssetMonitor「查看對話」按鈕開啟內嵌對話框，而非 toast 攔截
+
+**依賴**：無（不依賴 #24，獨立於 Chat 頁面三模式）
+
+**Context**：目前 demo 模式下，4 筆已購 lead 都有 `conversation_id`（`mockData.ts:97,114,131,148`），AssetMonitor 按鈕顯示「查看對話」，但 `handleViewChat`（`index.tsx:74-84`）直接 `notify.info('Mock 模式', '聊天室功能需要切換到 Live 模式')` 然後 return。房仲在演示模式下完全無法體驗「與客戶對話」的核心功能。
+
+Chat 頁面（`Chat/index.tsx:64`）Guard 4 要求 `isAuthenticated || hasValidSession`，demo 模式兩者都不成立，直接顯示「請先登入」。即使修了 handleViewChat 導航過去也會被擋。因此不走 Chat 頁面路由，改在 UAG 內部彈出 Mock 對話 Modal。
+
+**修改檔案清單**：
+
+| 操作 | 檔案 | 用途 |
+|------|------|------|
+| 新增 | `src/pages/UAG/components/MockChatModal.tsx` | Mock 對話 Modal 主組件 |
+| 修改 | `src/pages/UAG/mockData.ts` | 新增 `MOCK_CONVERSATIONS` 預設對話歷史 |
+| 修改 | `src/pages/UAG/index.tsx` | 接入 MockChatModal + 修改 handleViewChat |
+| 修改 | `src/pages/UAG/UAG.module.css` | 新增 Mock 對話演示提示樣式 |
+
+**不動的東西**：`Chat/index.tsx`（留給 #24）、`SendMessageModal.tsx`（mock 邏輯已正常）、`AssetMonitor.tsx`（按鈕回調已正確，問題在父層 handler）
+
+---
+
+#### 步驟 1：mockData.ts — 新增 `MOCK_CONVERSATIONS`
+
+在 `MOCK_DB` 之後新增 mock 對話歷史資料。
+
+**型別**：
+```typescript
+interface MockMessage {
+  id: string;
+  sender_type: 'agent' | 'consumer';
+  content: string;
+  created_at: string;
+}
+```
+
+**資料結構**：`Record<string, MockMessage[]>`，key 為 `conversation_id`
+
+**資料內容**：4 筆已購 lead 各 3-5 則對話（agent/consumer 交替），時間戳用 `new Date(Date.now() - N * 60000).toISOString()` 相對計算
+
+```typescript
+export const MOCK_CONVERSATIONS: Readonly<Record<string, readonly MockMessage[]>> = deepFreeze({
+  'mock-conv-S5566-001': [
+    { id: 'msg-s5566-1', sender_type: 'agent', content: '您好！我是專業房仲，看到您對捷運宅很感興趣，想跟您分享一些最新資訊。', created_at: ... },
+    { id: 'msg-s5566-2', sender_type: 'consumer', content: '你好，我確實在看捷運站附近的房子，有什麼推薦嗎？', created_at: ... },
+    { id: 'msg-s5566-3', sender_type: 'agent', content: '目前惠宇上晴 12F 視野戶正好有釋出，採光棟距都很好，要不要安排看屋？', created_at: ... },
+    { id: 'msg-s5566-4', sender_type: 'consumer', content: '聽起來不錯耶，可以約這週末嗎？', created_at: ... },
+  ],
+  'mock-conv-S9011-002': [
+    { ..., content: '您好！注意到您連續三天在看高樓景觀宅，有什麼需要幫忙的嗎？', ... },
+    { ..., content: '對，我想找 20 樓以上、面東的，預算 2000 萬左右。', ... },
+    { ..., content: '有幾間蠻符合的，我整理好傳給你。', ... },
+  ],
+  'mock-conv-A7788-003': [
+    { ..., content: '您好！看到您在搜尋學區房，有特別偏好哪個學區嗎？', ... },
+    { ..., content: '想找惠文國小學區的，最好 3 房有車位。', ... },
+    { ..., content: '瞭解，這邊有兩間很適合您的條件，我傳資料給您參考。', ... },
+  ],
+  'mock-conv-A6600-001': [
+    { ..., content: '您好！我是負責這區預售案的專員，想跟您聊聊您感興趣的捷運宅。', ... },
+    { ..., content: '好啊，我想了解付款方式和交屋時間。', ... },
+    { ..., content: '這個案子預計明年 Q3 交屋，付款可以談，我們約時間詳細說明？', ... },
+  ],
+});
+```
+
+- `deepFreeze` 確保 immutable（照 `MOCK_DB` pattern）
+- 動態生成的 conversation_id（`SendMessageModal` 成功後）在 `MOCK_CONVERSATIONS` 找不到時，MockChatModal 顯示空對話 + 只有 agent 剛發的訊息
+
+---
+
+#### 步驟 2：MockChatModal.tsx — 新增 Mock 對話 Modal 組件
+
+**設計規範（`/ui-ux-pro-max`）**：
+
+| 規範項目 | 實作 |
+|---------|------|
+| 風格 | 與 `SendMessageModal` / `CreateCaseModal` 一致的三段式 Modal（Header / Content / Footer） |
+| 配色 | 首頁深藍主色系：`--brand`(`#00385a`)、`--primary-dark`(`#002a44`)、`--text-primary`(`#0a2246`)、`--text-secondary`(`#526070`) |
+| Agent 氣泡 | 右對齊、`background: var(--brand)` `#00385a`、白色文字 |
+| Consumer 氣泡 | 左對齊、`background: var(--bg-card)` 白底、`border: 1px solid var(--border)` `#e6edf7`、深色文字 |
+| 圓角 | Modal: `16px`（`--radius-lg`）、氣泡: `16px`（`--radius-lg`）、輸入框: `10px`（`--radius-md`） |
+| 陰影 | Modal: `var(--shadow-lg)`、氣泡: `0 1px 3px rgba(0,0,0,0.06)` |
+| 動畫 | Modal 進場: CSS Module `fadeIn 0.3s`（照 UAGEmptyState pattern）；consumer 自動回覆進場: `fadeIn 0.2s` |
+| 無障礙 | `role="dialog"` + `aria-modal="true"` + `aria-labelledby` + Escape 關閉 + Focus Trap（照 CreateCaseModal pattern）|
+| RWD | `max-width: 32rem`（比 SendMessageModal 稍大）；手機板 `margin: 0 16px`；對話區域高度 `min(360px, 50dvh)` |
+| 觸控 | 所有按鈕 min 44×44px（Apple HIG） |
+| `focus-visible` | 關閉按鈕、發送按鈕：`outline: 2px solid var(--brand); outline-offset: 2px` |
+
+**Props**：
+```typescript
+interface MockChatModalProps {
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly lead: Lead;
+  readonly conversationId: string;
+}
+```
+
+**組件結構**：
+```
+MockChatModal
+├── Overlay（`position: fixed; inset: 0; z-index: var(--z-modal); background: rgba(0,0,0,0.5)`）
+├── Dialog Container
+│   ├── Header
+│   │   ├── 左：客戶等級徽章（復用 `lead-grade-pill` + `lead-grade-{x}` CSS Module class）+ 客戶名 + 物件名
+│   │   └── 右：關閉按鈕（X icon, 44×44px）
+│   ├── MessageArea（CSS Module `.mock-chat-messages`）
+│   │   ├── 歷史訊息（從 MOCK_CONVERSATIONS[conversationId] 載入，找不到則空陣列）
+│   │   ├── 本地新增訊息（React state `localMessages`）
+│   │   ├── 「對方輸入中...」typing indicator（consumer 回覆延遲期間顯示）
+│   │   └── Auto-scroll to bottom（`useEffect` + `scrollIntoView`）
+│   ├── InputArea
+│   │   ├── textarea（CSS Module `.modal-textarea`，復用既有樣式）
+│   │   ├── 字數顯示（`{length}/500`）
+│   │   └── 發送按鈕（`background: var(--brand)`，disabled 時 `var(--bg-alt)`）
+│   └── DemoHint（CSS Module `.mock-chat-demo-hint`）
+│       └── 文字：「演示模式 — 對話內容不會被儲存」
+```
+
+**互動邏輯**：
+
+1. 開啟 Modal → 載入 `MOCK_CONVERSATIONS[conversationId]` 作為 `initialMessages`（`useMemo`，只在 open 時計算）
+2. 找不到（動態 ID）→ `initialMessages = []`
+3. 房仲輸入 + 點發送 → `localMessages` push agent 訊息 → `setIsTyping(true)` → `setTimeout 800-1200ms` → push consumer 自動回覆 → `setIsTyping(false)`
+4. Consumer 自動回覆池（`MOCK_AUTO_REPLIES`，`deepFreeze` 陣列）：
+   - `'好的，我了解了，謝謝你的說明！'`
+   - `'這個價位我可以考慮，方便約時間看嗎？'`
+   - `'請問有其他類似的物件可以推薦嗎？'`
+   - `'我跟家人討論一下，晚點再回覆你。'`
+   - `'收到，我會看一下你傳的資料。'`
+   - `'聽起來蠻吸引人的，可以再多了解一下嗎？'`
+5. 回覆選取：用 `localMessages.length % MOCK_AUTO_REPLIES.length` 輪播（穩定、不用 random）
+6. Ctrl+Enter 快捷發送（照 SendMessageModal pattern）
+7. Escape 關閉（照 CreateCaseModal pattern）
+8. 關閉後 `localMessages` 清空（demo 不持久化，符合 #1b 規則：「本地操作全存 React state，重新整理消失」）
+
+**CSS Module 樣式**（加在 `UAG.module.css`）：
+
+```css
+/* ====== #24a Mock Chat Modal ====== */
+.mock-chat-messages {
+  height: min(360px, 50dvh);
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-alt);
+}
+
+.mock-chat-bubble {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  line-height: 1.6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.mock-chat-bubble-agent {
+  align-self: flex-end;
+  background: var(--brand);
+  color: var(--mh-color-ffffff);
+  border-bottom-right-radius: 4px;
+}
+
+.mock-chat-bubble-consumer {
+  align-self: flex-start;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+
+.mock-chat-time {
+  font-size: 10px;
+  margin-top: 4px;
+  opacity: 0.6;
+}
+
+.mock-chat-time-agent {
+  color: rgba(255, 255, 255, 0.7);
+  text-align: right;
+}
+
+.mock-chat-time-consumer {
+  color: var(--text-muted);
+}
+
+.mock-chat-typing {
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  animation: fadeIn 0.2s ease;
+}
+
+.mock-chat-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line-soft);
+  align-items: flex-end;
+}
+
+.mock-chat-send-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  color: var(--mh-color-ffffff);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mock-chat-send-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 4px 12px rgba(0, 56, 90, 0.2);
+}
+
+.mock-chat-send-btn:disabled {
+  background: var(--bg-alt);
+  color: var(--ink-400);
+  cursor: not-allowed;
+}
+
+.mock-chat-send-btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.mock-chat-demo-hint {
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-alt);
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mock-chat-typing {
+    animation: none;
+  }
+}
+```
+
+---
+
+#### 步驟 3：index.tsx — 修改 handleViewChat + 接入 MockChatModal
+
+**新增 import**：
+```typescript
+import MockChatModal from './components/MockChatModal';
+```
+
+**新增 state**（在既有 `assetMessageLead` 附近）：
+```typescript
+// #24a: MockChatModal 狀態
+const [mockChatLead, setMockChatLead] = useState<Lead | null>(null);
+const [mockChatConvId, setMockChatConvId] = useState<string | null>(null);
+```
+
+**修改 `handleViewChat`**：
+```typescript
+const handleViewChat = useCallback(
+  (conversationId: string) => {
+    if (useMock) {
+      // #24a: Demo 模式 → 打開 MockChatModal
+      const lead = appData?.leads.find(l => l.conversation_id === conversationId);
+      if (lead) {
+        setMockChatLead(lead);
+        setMockChatConvId(conversationId);
+      }
+      return;
+    }
+    navigate(RouteUtils.toNavigatePath(ROUTES.CHAT(conversationId)));
+  },
+  [navigate, useMock, appData?.leads]
+);
+```
+
+**新增關閉回調**：
+```typescript
+const handleCloseMockChat = useCallback(() => {
+  setMockChatLead(null);
+  setMockChatConvId(null);
+}, []);
+```
+
+**渲染 MockChatModal**（在 `{/* 修9: AssetMonitor 發送訊息 Modal */}` 之後）：
+```tsx
+{/* #24a: Mock 對話 Modal */}
+{mockChatLead && mockChatConvId && (
+  <MockChatModal
+    isOpen={!!mockChatLead}
+    onClose={handleCloseMockChat}
+    lead={mockChatLead}
+    conversationId={mockChatConvId}
+  />
+)}
+```
+
+---
+
+#### 步驟 4：驗證
+
+**自動化**：
+- `npm run gate`（typecheck + lint）通過
+
+**手動三模式驗證**：
+| 模式 | 操作 | 預期結果 |
+|------|------|---------|
+| visitor | 進入 `/maihouses/uag` | 看到 Landing Page，不觸及 AssetMonitor |
+| demo | 點 AssetMonitor「查看對話」（4 筆已購 lead） | 彈出 MockChatModal，顯示預設對話歷史 |
+| demo | 在 MockChatModal 輸入訊息並發送 | 訊息出現在右側 → 800ms 後 consumer 自動回覆出現在左側 |
+| demo | SendMessageModal 成功 → lead 更新 conversation_id → 再點「查看對話」 | MockChatModal 正常開啟（空歷史 + 可發送新訊息） |
+| demo | 手機板（375px）測試 | Modal 寬度自適應、氣泡不溢出、按鈕可觸控 |
+| live | 點 AssetMonitor「查看對話」 | 導航到 Chat 頁面（行為不變） |
+
+**回歸確認**：
+- `rg "Mock 模式.*聊天室" src/pages/UAG/index.tsx` → 0 筆（舊 toast 攔截已移除）
+- AssetMonitor 按鈕在三模式下行為正確
+- SendMessageModal mock 模式行為不受影響
 
 ---
 
@@ -1756,14 +2095,34 @@ hover 社區卡片         excited          「這個社區評價不錯喔！」
 
 #### 驗收
 
-- [ ] 頁面可正常載入並顯示社區列表
-- [ ] 點擊卡片正確導向對應社區牆
-- [ ] Header 2 處（L389 手機選單、L506 Hero 膠囊）+ `CommunityTeaser.tsx:78` 共 3 處已改指向探索頁
-- [ ] MaiMai 互動正常（mood 隨行為變化、氣泡顯示）
-- [ ] 搜尋過濾正常
-- [ ] 響應式 4 斷點（320px / 768px / 1024px / 1440px）正常
-- [ ] 零硬編碼 hex 色碼（`rg "#[0-9a-fA-F]{6}" src/pages/Community/Explore.tsx` → 0 筆）
-- [ ] `npm run gate` 通過
+- [x] 頁面可正常載入並顯示社區列表
+- [x] 點擊卡片正確導向對應社區牆
+- [x] Header 2 處（L389 手機選單、L506 Hero 膠囊）+ `CommunityTeaser.tsx` 共 3 處已改指向探索頁
+- [x] MaiMai 互動正常（mood 隨行為變化、氣泡顯示）
+- [x] 搜尋過濾正常
+- [x] 響應式 4 斷點（320px / 768px / 1024px / 1440px）正常
+- [x] 零硬編碼 hex 色碼（`grep "#[0-9a-fA-F]{6}" src/pages/Community/Explore.tsx` → 0 筆）
+- [x] `npm run gate` 通過
+
+#### 施作紀錄 2026-02-18
+
+**新增**：
+- `src/pages/Community/hooks/useCommunityList.ts` — React Query hook，Zod 驗證，staleTime 2 分鐘
+- `src/pages/Community/hooks/__tests__/useCommunityList.test.ts` — 5 tests ✅
+- `src/pages/Community/components/CommunityCard.tsx` — 社區卡片，hover 互動，觸控 ≥ 44px
+- `src/pages/Community/Explore.tsx` — 探索頁主組件，MaiMai 心情狀態機，前端搜尋過濾
+
+**修改**：
+- `src/constants/routes.ts` — 新增 `COMMUNITY_EXPLORE`
+- `src/App.tsx` — 新增 `/community` Route
+- `src/components/Header/Header.tsx` — L389, L506 已指向 `ROUTES.COMMUNITY_EXPLORE`（工單前已完成）
+- `src/features/home/sections/CommunityTeaser.tsx` — `explorePath` 已指向 `ROUTES.COMMUNITY_EXPLORE`（工單前已完成）
+
+**驗證**：
+- [x] `npm run check:utf8` 通過（無亂碼）
+- [x] `npx tsc --noEmit` exit 0
+- [x] `npm run gate` 全通過（typecheck + lint）
+- [x] 29 tests 全通過（社區相關）
 
 ---
 
