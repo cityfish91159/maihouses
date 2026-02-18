@@ -2,11 +2,10 @@ import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { notify } from '../lib/notify';
 import {
-  clearDemoMode,
   DEMO_WARN_BEFORE_MS,
+  exitDemoMode,
   getDemoRemainingMinutes,
   getDemoTimeRemaining,
-  reloadPage,
 } from '../lib/pageMode';
 import { usePageMode } from './usePageMode';
 
@@ -18,18 +17,22 @@ export function useDemoTimer(): void {
   // queryClient 通常是 app 生命週期不變的單例，但 ref 確保安全
   const queryClientRef = useRef(queryClient);
   const mode = usePageMode();
+  const modeRef = useRef(mode);
 
   useEffect(() => {
     queryClientRef.current = queryClient;
   }, [queryClient]);
 
   useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
+  useEffect(() => {
     if (mode !== 'demo') return;
 
     const handleDemoExpire = () => {
-      clearDemoMode();
-      queryClientRef.current.clear();
-      reloadPage();
+      if (modeRef.current !== 'demo') return;
+      exitDemoMode(queryClientRef.current);
     };
 
     const remaining = getDemoTimeRemaining();

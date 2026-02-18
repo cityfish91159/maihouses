@@ -1,9 +1,13 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  clearDemoArtifacts,
   clearDemoMode,
   DEMO_STORAGE_KEY,
   DEMO_STORAGE_SYNC_DEBOUNCE_MS,
   DEMO_TTL_MS,
+  DEMO_UAG_MODE_STORAGE_KEY,
+  exitDemoMode,
+  FEED_DEMO_ROLE_STORAGE_KEY,
   getDemoRemainingMinutes,
   getDemoTimeRemaining,
   isDemoMode,
@@ -13,6 +17,7 @@ import {
   setDemoMode,
   subscribeDemoModeStorageSync,
 } from '../pageMode';
+import { ROUTES } from '../../constants/routes';
 
 describe('pageMode utils (#1a)', () => {
   beforeEach(() => {
@@ -146,6 +151,45 @@ describe('pageMode utils (#1a)', () => {
 
       expect(() => reloadPage()).not.toThrow();
       expect(reloadMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('exitDemoMode (#10b)', () => {
+    it('clearDemoArtifacts 應先清 cache 再清 demo storage/session', () => {
+      const queryClient = { clear: vi.fn() };
+      setDemoMode();
+      localStorage.setItem(DEMO_UAG_MODE_STORAGE_KEY, '1');
+      sessionStorage.setItem(FEED_DEMO_ROLE_STORAGE_KEY, 'resident');
+
+      clearDemoArtifacts(queryClient);
+
+      expect(queryClient.clear).toHaveBeenCalledTimes(1);
+      expect(localStorage.getItem(DEMO_STORAGE_KEY)).toBeNull();
+      expect(localStorage.getItem(DEMO_UAG_MODE_STORAGE_KEY)).toBeNull();
+      expect(sessionStorage.getItem(FEED_DEMO_ROLE_STORAGE_KEY)).toBeNull();
+    });
+
+    it('exitDemoMode 應標記 __DEMO_EXPIRING 並 replace 首頁', () => {
+      const replaceMock = vi.fn();
+      Object.defineProperty(window, 'location', {
+        value: { ...window.location, replace: replaceMock },
+        writable: true,
+        configurable: true,
+      });
+
+      const queryClient = { clear: vi.fn() };
+      setDemoMode();
+      localStorage.setItem(DEMO_UAG_MODE_STORAGE_KEY, '1');
+      sessionStorage.setItem(FEED_DEMO_ROLE_STORAGE_KEY, 'resident');
+
+      exitDemoMode(queryClient);
+
+      expect(window.__DEMO_EXPIRING).toBe(true);
+      expect(replaceMock).toHaveBeenCalledWith(ROUTES.HOME);
+      expect(queryClient.clear).toHaveBeenCalledTimes(1);
+      expect(localStorage.getItem(DEMO_STORAGE_KEY)).toBeNull();
+      expect(localStorage.getItem(DEMO_UAG_MODE_STORAGE_KEY)).toBeNull();
+      expect(sessionStorage.getItem(FEED_DEMO_ROLE_STORAGE_KEY)).toBeNull();
     });
   });
 });

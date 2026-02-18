@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { safeLocalStorage } from './safeStorage';
+import { safeSessionStorage } from './safeStorage';
+import { ROUTES } from '../constants/routes';
 
 export type PageMode = 'visitor' | 'demo' | 'live';
 
@@ -7,6 +9,18 @@ export const DEMO_STORAGE_KEY = 'mai-demo-verified';
 export const DEMO_TTL_MS = 2 * 60 * 60 * 1000; // 2 小時
 export const DEMO_WARN_BEFORE_MS = 5 * 60 * 1000; // 5 分鐘
 export const DEMO_STORAGE_SYNC_DEBOUNCE_MS = 120;
+export const DEMO_UAG_MODE_STORAGE_KEY = 'mai-uag-mode';
+export const FEED_DEMO_ROLE_STORAGE_KEY = 'feed-demo-role';
+
+interface QueryClientLike {
+  clear: () => void;
+}
+
+declare global {
+  interface Window {
+    __DEMO_EXPIRING?: boolean;
+  }
+}
 
 const DemoStorageSchema = z.object({
   t: z.number().finite().positive(),
@@ -54,6 +68,31 @@ export function setDemoMode(timestamp = Date.now()): boolean {
 
 export function clearDemoMode(): void {
   safeLocalStorage.removeItem(DEMO_STORAGE_KEY);
+}
+
+/**
+ * 清理 demo 相關快取與 storage 殘留（不導頁）
+ * 順序：先清 query cache，再清 storage，避免 race condition。
+ */
+export function clearDemoArtifacts(queryClient: QueryClientLike): void {
+  queryClient.clear();
+  clearDemoMode();
+  safeLocalStorage.removeItem(DEMO_UAG_MODE_STORAGE_KEY);
+  safeSessionStorage.removeItem(FEED_DEMO_ROLE_STORAGE_KEY);
+}
+
+/**
+ * 完整退出 demo：清理殘留後導回首頁（replace 避免返回鍵回失效頁）。
+ */
+export function exitDemoMode(queryClient: QueryClientLike): void {
+  clearDemoArtifacts(queryClient);
+
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.__DEMO_EXPIRING = true;
+  window.location.replace(ROUTES.HOME);
 }
 
 export function getDemoTimeRemaining(now = Date.now()): number {

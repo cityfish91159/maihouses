@@ -5,8 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDemoExit } from '../useDemoExit';
 
 const pageModeMocks = vi.hoisted(() => ({
-  clearDemoMode: vi.fn(),
-  reloadPage: vi.fn(),
+  exitDemoMode: vi.fn(),
 }));
 
 const notifyMocks = vi.hoisted(() => ({
@@ -14,14 +13,8 @@ const notifyMocks = vi.hoisted(() => ({
   info: vi.fn(),
 }));
 
-const storageMocks = vi.hoisted(() => ({
-  safeLocalStorage: { removeItem: vi.fn() },
-  safeSessionStorage: { removeItem: vi.fn() },
-}));
-
 vi.mock('../../lib/pageMode', () => ({
-  clearDemoMode: pageModeMocks.clearDemoMode,
-  reloadPage: pageModeMocks.reloadPage,
+  exitDemoMode: pageModeMocks.exitDemoMode,
 }));
 
 vi.mock('../../lib/notify', () => ({
@@ -30,8 +23,6 @@ vi.mock('../../lib/notify', () => ({
     info: notifyMocks.info,
   },
 }));
-
-vi.mock('../../lib/safeStorage', () => storageMocks);
 
 interface DemoExitToastAction {
   label: string;
@@ -54,12 +45,9 @@ function createWrapper(queryClient: QueryClient) {
 
 describe('useDemoExit', () => {
   beforeEach(() => {
-    pageModeMocks.clearDemoMode.mockReset();
-    pageModeMocks.reloadPage.mockReset();
+    pageModeMocks.exitDemoMode.mockReset();
     notifyMocks.dismiss.mockReset();
     notifyMocks.info.mockReset();
-    storageMocks.safeLocalStorage.removeItem.mockReset();
-    storageMocks.safeSessionStorage.removeItem.mockReset();
   });
 
   it('requestDemoExit 應顯示確認 toast', () => {
@@ -83,9 +71,8 @@ describe('useDemoExit', () => {
     );
   });
 
-  it('點擊 toast action 應執行完整清理鏈', () => {
+  it('點擊 toast action 應執行退出流程', () => {
     const queryClient = new QueryClient();
-    const clearSpy = vi.spyOn(queryClient, 'clear');
 
     const { result } = renderHook(() => useDemoExit(), {
       wrapper: createWrapper(queryClient),
@@ -106,10 +93,7 @@ describe('useDemoExit', () => {
     });
 
     expect(notifyMocks.dismiss).toHaveBeenCalledWith('demo-exit-confirm');
-    expect(pageModeMocks.clearDemoMode).toHaveBeenCalledTimes(1);
-    expect(storageMocks.safeLocalStorage.removeItem).toHaveBeenCalledWith('mai-uag-mode');
-    expect(storageMocks.safeSessionStorage.removeItem).toHaveBeenCalledWith('feed-demo-role');
-    expect(clearSpy).toHaveBeenCalledTimes(1);
-    expect(pageModeMocks.reloadPage).toHaveBeenCalledTimes(1);
+    expect(pageModeMocks.exitDemoMode).toHaveBeenCalledTimes(1);
+    expect(pageModeMocks.exitDemoMode).toHaveBeenCalledWith(queryClient);
   });
 });

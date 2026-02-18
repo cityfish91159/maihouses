@@ -51,7 +51,7 @@
 ### P2 — 收尾清理
 - [ ] **#9** 移除靜態 HTML mock 頁 + vercel.json 同步（6 檔）
 - [ ] **#10a** `DemoBadge.tsx` 浮動標籤 UI（1 新檔案，需 `/ui-ux-pro-max`）
-- [ ] **#10b** `exitDemoMode()` 退出清理 + 確認 dialog
+- [x] **#10b** `exitDemoMode()` 退出清理 + 確認 dialog（4 檔 + 4 測試）✅ 2026-02-18
 - [ ] **#11** Feed 產品定位確認（待決策）
 - [ ] **#16** 全站文案健康檢查 — 亂碼 + emoji + CI lint
 - [ ] **#21** 全站 `console.log` 改用 `logger`（整合 getErrorMessage）
@@ -554,15 +554,37 @@ function successRedirect(user) {
 
 **依賴**：#10a
 
+**已完成** 2026-02-18
+
+**修改檔案**：
+- `src/lib/pageMode.ts`
+- `src/hooks/useDemoExit.ts`
+- `src/hooks/useDemoTimer.ts`
+- `src/hooks/usePageMode.ts`
+- `src/lib/__tests__/pageMode.test.ts`
+- `src/hooks/__tests__/useDemoExit.test.tsx`
+- `src/hooks/__tests__/useDemoTimer.test.tsx`
+- `src/hooks/__tests__/usePageMode.test.tsx`
+
+**核心變更**：
+- 新增 `clearDemoArtifacts(queryClient)`：統一清理 demo cache + storage 殘留
+- 新增 `exitDemoMode(queryClient)`：執行完整退出鏈（含 `window.__DEMO_EXPIRING = true` 與 `location.replace(ROUTES.HOME)`）
+- `useDemoExit` 改為呼叫 `exitDemoMode`，避免各處重複清理邏輯
+- `useDemoTimer` 到期處理改走 `exitDemoMode`，並加入 `modeRef` 防守，避免非 demo 狀態誤清
+- `usePageMode` 登入清理改為 `clearDemoArtifacts`（同步清 `queryClient`）
+- `usePageMode` 跨分頁同步：當 `demo -> visitor` 轉換時，會清 cache 並 `replace` 回首頁，避免非觸發分頁殘留
+- 清理 key 常數化：`DEMO_UAG_MODE_STORAGE_KEY`、`FEED_DEMO_ROLE_STORAGE_KEY`
+
 **清理順序**（防 Race Condition）：
 
 ```typescript
 function exitDemoMode(queryClient: QueryClient) {
-  clearDemoMode()                                    // 1. localStorage
+  queryClient.clear()                                // 1. React Query cache
+  clearDemoMode()                                    // 2. localStorage
   try { localStorage.removeItem('mai-uag-mode') } catch {}
   try { sessionStorage.removeItem('feed-demo-role') } catch {}
-  queryClient.clear()                                // 2. React Query cache
-  window.location.replace('/')                       // 3. 跳首頁
+  window.__DEMO_EXPIRING = true                      // 3. 防 iOS reload race
+  window.location.replace('/maihouses/')             // 4. 跳首頁（replace）
 }
 ```
 
@@ -574,7 +596,10 @@ function exitDemoMode(queryClient: QueryClient) {
 
 **登入清理**：`usePageMode` 的 `clearDemoMode()` 需同步 `queryClient.clear()`。
 
-**驗收**：退出後 localStorage/sessionStorage 無殘留、多分頁場景 cache 乾淨
+**驗證**：
+- [x] `npm run check:utf8`
+- [x] `cmd /c npm run test -- src/lib/__tests__/pageMode.test.ts src/hooks/__tests__/usePageMode.test.tsx src/hooks/__tests__/useDemoExit.test.tsx src/hooks/__tests__/useDemoTimer.test.tsx`（24 passed）
+- [x] `npm run gate`
 
 ---
 
@@ -1407,6 +1432,53 @@ import styles from '../UAG.module.css';                    // 5. 樣式
 
 **依賴**：#8c（`GET /api/community/list` 已完成）
 
+---
+
+#### 國際設計研究洞察
+
+| 平台 | 關鍵設計決策 | 採納 |
+|------|------------|------|
+| **Discord** Server Discovery | 類別導航 + 卡片預覽 + 訪客可瀏覽不強迫加入 | ✅ 訪客可看清單，CTA 置底 |
+| **Nextdoor** 2025 | 「內容優先」，移除雜亂側邊欄，浮動導航欄 | ✅ 乾淨 Hero + Grid |
+| **Airbnb** Neighborhoods | 問題引導篩選「你要找什麼類型的鄰域？」 | ✅ 搜尋框 + placeholder 引導 |
+| **Mighty Networks** | 訪客有「探索」+「加入」雙路徑，強調社群價值 | ✅ 底部 visitor CTA |
+| **小紅書** | 卡片展示精華內容吸引加入，信任指標（貼文數/評價數）顯著 | ✅ 評價數 + 貼文數 pills |
+| **Reddit** Discover | 分類標籤 + 實時搜尋過濾 | ✅ 即時篩選（前端過濾） |
+| **房地產 landing page** | 單一清晰 CTA，Above the fold，避免選擇困難 | ✅ 底部 CTA 只給 visitor |
+
+**核心設計原則**：
+1. 訪客可無摩擦瀏覽：不強制登入即可看社區清單，底部放 CTA
+2. 搜尋優先：Hero 區搜尋框是主互動，placeholder 引導
+3. 信任訊號外顯：評價數 + 貼文數 pills 作為社會證明
+4. 漸進式引導：visitor → 看清單 → hover 卡片 → 點進社區牆 → 底部 CTA 引導加入
+
+---
+
+#### 採用色彩系統（對齊 Header.tsx 首頁實際用法）
+
+| 角色 | Tailwind Class | 使用場景 | 首頁對照 |
+|------|---------------|---------|---------|
+| Hero 背景 | `bg-brand-50` | Hero 區淡藍底 | ✅ `Header.tsx:437` |
+| 頁面背景 | `bg-brand-50/30` 或 `bg-[var(--bg-page)]` | 卡片 Grid 底 | 同首頁 |
+| 卡片背景 | `bg-white` | 社區卡片 | ✅ 首頁標準 |
+| 主文字 | `text-brand-700` | 社區名稱、社區評價標題 | ✅ `Header.tsx:382` |
+| 次要文字 | `text-brand-700/60` 或 `text-gray-500` | 地址 | 首頁搜尋框 placeholder |
+| 主 CTA 按鈕 | `bg-brand-700 text-white` | 搜尋按鈕、「查看社區牆」 | ✅ `Header.tsx:495` |
+| hover CTA | `hover:bg-brand-600` | 按鈕 hover | ✅ 首頁一致 |
+| 邊框 | `border-brand-100` | 卡片、搜尋框 | ✅ `Header.tsx:378` |
+| 膠囊按鈕 | `border border-brand-700 bg-brand-700 text-white` | 「社區評價」膠囊 | ✅ `Header.tsx:519` |
+
+**點綴色（≤5%，用在關鍵數字徽章）**：
+
+| 點綴 | 場景 | Class |
+|------|------|-------|
+| 綠色 | 評價數徽章（正向指標）| `bg-green-50 text-green-700` |
+| 橘色/暖 | 貼文數徽章（活躍指標）或 visitor CTA | `bg-orange-50 text-orange-600` |
+
+**禁用**：漸層、多彩、紫色。只用首頁已有的 brand-* 色階。
+
+---
+
 **背景**：Header「社區評價」按鈕（3 處）hardcode 導向 `SEED_COMMUNITY_ID`（`test-uuid` → 惠宇上晴）：
 - `Header.tsx:389` — 手機漢堡選單「社區評價」
 - `Header.tsx:506` — Hero 膠囊按鈕「社區評價」
@@ -1421,8 +1493,8 @@ import styles from '../UAG.module.css';                    // 5. 樣式
 | 檔案 | 用途 |
 |------|------|
 | `src/pages/Community/Explore.tsx` | 社區探索頁主組件 |
-| `src/pages/Community/components/CommunityCard.tsx` | 社區卡片組件 |
-| `src/pages/Community/hooks/useCommunityList.ts` | React Query hook，呼叫 `GET /api/community/list` |
+| `src/pages/Community/components/CommunityCard.tsx` | 社區卡片組件；Props: `CommunityListItem + onClick`；`bg-white border border-border-light rounded-[18px] cursor-pointer`；hover: `hover:border-brand/30 hover:shadow-brand-xs hover:scale-[1.01] transition-all duration-200` |
+| `src/pages/Community/hooks/useCommunityList.ts` | React Query hook，呼叫 `GET /api/community/list`；Zod 驗證回應；staleTime 2 分鐘；回傳 `{ data, isLoading, isError, refetch }` |
 
 #### 修改檔案
 
@@ -1431,6 +1503,7 @@ import styles from '../UAG.module.css';                    // 5. 樣式
 | `src/constants/routes.ts` | 新增 `COMMUNITY_EXPLORE: '/maihouses/community'` |
 | `src/App.tsx` | 新增 `<Route path="/community" element={<Explore />} />` |
 | `src/components/Header/Header.tsx` | L389, L506：`SEED_COMMUNITY_ID` → `ROUTES.COMMUNITY_EXPLORE` |
+| `src/components/Community/CommunityTeaser.tsx` | L78「查看完整社區牆」：`SEED_COMMUNITY_ID` → `ROUTES.COMMUNITY_EXPLORE` |
 
 #### API 回傳格式（#8c 已定義）
 
@@ -1447,13 +1520,56 @@ interface CommunityListItem {
 }
 ```
 
+#### Explore.tsx 頁面結構
+
+```tsx
+<GlobalHeader />
+<main bg-page min-h-screen>
+  {/* Hero 區 bg-brand-50 */}
+  <section>
+    <MaiMaiBase mood={mood} size={isMobile ? 'sm' : 'md'} animated />
+    <MaiMaiSpeech text={speechText} />
+    <h1>探索社區評價</h1>
+    <p>找到你關心的社區，看看鄰居怎麼說</p>
+    <搜尋框 onFocus→thinking, onChange→excited/results />
+  </section>
+
+  {/* 卡片 Grid max-w-[1120px] */}
+  <section>
+    {isLoading → 骨架屏 ×3}
+    {isError → 錯誤 + 重試}
+    {filtered.length === 0 → MaiMai confused + 空狀態}
+    {filtered.map → <CommunityCard />}
+  </section>
+
+  {/* 底部 CTA（僅 visitor） */}
+  {mode === 'visitor' && <BottomCTASection />}
+</main>
+```
+
+#### 現有可復用組件與 Hooks
+
+| 復用對象 | 路徑 | 用途 |
+|---------|------|------|
+| `GlobalHeader` | `src/components/layout/GlobalHeader.tsx` | Header（不動） |
+| `MaiMaiBase` | `src/components/MaiMai/MaiMaiBase.tsx` | 角色展示 |
+| `MaiMaiSpeech` | `src/components/MaiMai/MaiMaiSpeech.tsx` | 對話氣泡 |
+| `useMaiMaiMood` | `src/hooks/useMaiMaiMood.ts`（若存在）| mood 狀態管理 |
+| `usePageMode` | `src/hooks/usePageMode.ts` | 三模式判斷 |
+| `usePageModeWithAuthState` | `src/hooks/usePageMode.ts` | 帶 auth 的模式 |
+| `ROUTES` | `src/constants/routes.ts` | 路由常數 |
+| `RouteUtils.toNavigatePath()` | `src/constants/routes.ts` | basename 相容 |
+| `getErrorMessage` | `src/lib/error.ts` | 錯誤訊息 |
+| `logger` | `src/lib/logger.ts` | 日誌（禁 console.log）|
+| `BottomCTA` pattern | `src/pages/Community/components/BottomCTA.tsx` | CTA 樣式參考 |
+
 #### UI 規格（`/ui-ux-pro-max`）
 
 **佈局**：
 - `<GlobalHeader />`（mode 由 `usePageMode()` 自動判定）
 - Hero 區：MaiMai + 標題 + 搜尋框
 - 卡片 Grid：桌面 3 col / 平板 2 col / 手機 1 col
-- 底部 CTA（僅 visitor）
+- 底部 CTA（僅 visitor）：`bg-brand text-white rounded-[24px] p-8`，標題「免費加入，追蹤社區最新評價」，按鈕「免費註冊」→ `navigateToAuth('register')`
 
 **MaiMai 互動**（使用既有分子元素，非裝飾）：
 - `MaiMaiBase`：mood 由 `useMaiMaiMood` 動態驅動，size 桌面 `md` / 手機 `sm`
@@ -1474,11 +1590,17 @@ interface CommunityListItem {
 **搜尋**：前端過濾（社區數量有限），即時篩選名稱和地址
 
 **狀態處理**：
-- Loading：3 張卡片骨架屏
-- Error：錯誤提示 + 重試按鈕
+- Loading：3 張卡片骨架屏（`animate-pulse bg-border-light rounded-[18px] h-[140px]`）
+- Error：`text-danger` + 「載入失敗，請稍後再試」+ `[重試]` button → `refetch()`
 - 空狀態（API 回傳空 / 搜尋無結果）：MaiMai confused + 「目前暫無社區資料」
 
-**響應式**：320px / 768px / 1024px / 1440px
+**響應式**：
+
+| 斷點 | 卡片欄數 | MaiMai 大小 | 最大寬度 |
+|------|---------|------------|--------|
+| `< 768px` | 1 col | `sm` (80px) | 100% padding |
+| `768–1023px` | 2 col | `md` (96px) | `max-w-2xl` |
+| `≥ 1024px` | 3 col | `md` (128px) | `max-w-[1120px]` |
 
 #### 視覺意圖圖（Wireframe）
 
@@ -1618,15 +1740,29 @@ hover 社區卡片         excited          「這個社區評價不錯喔！」
 點擊 MaiMai 5 次       celebrate        「你找到我的彩蛋了！」
 ```
 
+#### 關鍵設計意圖
+
+1. **Hero 保持輕量**：MaiMai + 標題 + 搜尋框即可，不需要 Bento Grid 統計數字
+2. **搜尋即過濾，無需 API 往返**：社區數量初期有限（< 100），前端 filter 足夠，UX 更流暢
+3. **訪客 CTA 置底而非 Modal**：避免打斷瀏覽流程，讓用戶先探索、再引導
+4. **卡片不需封面圖**：`image` 欄位可能為 null，初期以文字卡片為主，避免 broken image；未來有圖才加
+5. **MaiMai 彩蛋**（點 5 次 celebrate）：與其他頁面一致的有趣互動，品牌個性而非裝飾
+
+#### 已確認決策
+
+1. `CommunityTeaser.tsx:78` — 一起改，導向 `ROUTES.COMMUNITY_EXPLORE`（共改 4 處）
+2. 卡片封面圖 — 純文字卡，`image` 欄位暫不使用，避免 broken image
+3. 底部 CTA — 只限 `mode === 'visitor'`（未登入）顯示，已登入用戶（含無社區歸屬）不顯示
+
 #### 驗收
 
 - [ ] 頁面可正常載入並顯示社區列表
 - [ ] 點擊卡片正確導向對應社區牆
-- [ ] Header 3 處「社區評價」連結已改指向探索頁
+- [ ] Header 2 處（L389 手機選單、L506 Hero 膠囊）+ `CommunityTeaser.tsx:78` 共 3 處已改指向探索頁
 - [ ] MaiMai 互動正常（mood 隨行為變化、氣泡顯示）
 - [ ] 搜尋過濾正常
-- [ ] 響應式 4 斷點正常
-- [ ] 零硬編碼 hex 色碼
+- [ ] 響應式 4 斷點（320px / 768px / 1024px / 1440px）正常
+- [ ] 零硬編碼 hex 色碼（`rg "#[0-9a-fA-F]{6}" src/pages/Community/Explore.tsx` → 0 筆）
 - [ ] `npm run gate` 通過
 
 ---
@@ -2279,5 +2415,5 @@ rg "SEED_COMMUNITY_ID" src/components/Header/            # #12b 後僅存於 dem
 | 2 | `SEED_COMMUNITY_ID` 已定值 ✅、SEO 勿索引 seed（#9 加 robots）、`Object.freeze` ✅ | 部分完成 |
 | 3 | `getSafeReturnPath()` 加黑名單 `/uag`（#7）、auth 角色用 `app_metadata`（#7）、`?mock=true` 301（#9 vercel.json） | 待施工 |
 | 4 | `maimai-mood-v1` / `uag_last_aid` 確認列入 #26 `AUTH_CLEANUP_KEYS` | 待驗證 |
-| 4B/C | `exitDemoMode()` 順序：clear cache → 清 storage → `location.replace('/')`、跨分頁 storage handler 需清 cache（#10b） | 待施工 |
+| 4B/C | `exitDemoMode()` 順序：clear cache → 清 storage → `location.replace('/')`、跨分頁 storage handler 需清 cache（#10b） | ✅ 已完成 |
 | 4B (#29) | P0 已修 ✅（visibilitychange 補償、safeStorage 探測、warn 條件）。剩餘：`100vh` → `dvh`（3 檔 CSS）+ `safe-area-inset-bottom` fallback（1 檔） | 部分完成 |

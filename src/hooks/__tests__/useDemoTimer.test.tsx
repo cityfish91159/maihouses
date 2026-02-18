@@ -9,10 +9,9 @@ const modeState = {
 };
 
 const pageModeMocks = vi.hoisted(() => ({
-  clearDemoMode: vi.fn(),
+  exitDemoMode: vi.fn(),
   getDemoRemainingMinutes: vi.fn(),
   getDemoTimeRemaining: vi.fn(),
-  reloadPage: vi.fn(),
 }));
 
 const notifyMocks = vi.hoisted(() => ({
@@ -25,10 +24,9 @@ vi.mock('../usePageMode', () => ({
 
 vi.mock('../../lib/pageMode', () => ({
   DEMO_WARN_BEFORE_MS: 5 * 60 * 1000,
-  clearDemoMode: pageModeMocks.clearDemoMode,
+  exitDemoMode: pageModeMocks.exitDemoMode,
   getDemoRemainingMinutes: pageModeMocks.getDemoRemainingMinutes,
   getDemoTimeRemaining: pageModeMocks.getDemoTimeRemaining,
-  reloadPage: pageModeMocks.reloadPage,
 }));
 
 vi.mock('../../lib/notify', () => ({
@@ -47,16 +45,14 @@ describe('useDemoTimer', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     notifyMocks.info.mockReset();
-    pageModeMocks.clearDemoMode.mockReset();
+    pageModeMocks.exitDemoMode.mockReset();
     pageModeMocks.getDemoRemainingMinutes.mockReset();
     pageModeMocks.getDemoTimeRemaining.mockReset();
-    pageModeMocks.reloadPage.mockReset();
     modeState.value = 'visitor';
   });
 
   it('非 demo 模式不應啟動任何提醒或清理', () => {
     const queryClient = new QueryClient();
-    const clearSpy = vi.spyOn(queryClient, 'clear');
 
     renderHook(() => useDemoTimer(), { wrapper: createWrapper(queryClient) });
     act(() => {
@@ -64,14 +60,11 @@ describe('useDemoTimer', () => {
     });
 
     expect(notifyMocks.info).not.toHaveBeenCalled();
-    expect(pageModeMocks.clearDemoMode).not.toHaveBeenCalled();
-    expect(clearSpy).not.toHaveBeenCalled();
-    expect(pageModeMocks.reloadPage).not.toHaveBeenCalled();
+    expect(pageModeMocks.exitDemoMode).not.toHaveBeenCalled();
   });
 
-  it('demo 模式應在 5 分鐘前提醒，並於到期時清理與 reload', () => {
+  it('demo 模式應在 5 分鐘前提醒，並於到期時執行退出流程', () => {
     const queryClient = new QueryClient();
-    const clearSpy = vi.spyOn(queryClient, 'clear');
 
     modeState.value = 'demo';
     pageModeMocks.getDemoTimeRemaining.mockReturnValue(10 * 60 * 1000);
@@ -84,20 +77,18 @@ describe('useDemoTimer', () => {
     });
 
     expect(notifyMocks.info).toHaveBeenCalledWith('演示即將結束', '剩餘 5 分鐘');
-    expect(pageModeMocks.clearDemoMode).not.toHaveBeenCalled();
+    expect(pageModeMocks.exitDemoMode).not.toHaveBeenCalled();
 
     act(() => {
       vi.advanceTimersByTime(5 * 60 * 1000);
     });
 
-    expect(pageModeMocks.clearDemoMode).toHaveBeenCalledTimes(1);
-    expect(clearSpy).toHaveBeenCalledTimes(1);
-    expect(pageModeMocks.reloadPage).toHaveBeenCalledTimes(1);
+    expect(pageModeMocks.exitDemoMode).toHaveBeenCalledTimes(1);
+    expect(pageModeMocks.exitDemoMode).toHaveBeenCalledWith(queryClient);
   });
 
-  it('remaining < 30 秒時應跳過 warn，直接到期清理', () => {
+  it('remaining < 30 秒時應跳過 warn，直接到期退出', () => {
     const queryClient = new QueryClient();
-    const clearSpy = vi.spyOn(queryClient, 'clear');
 
     modeState.value = 'demo';
     pageModeMocks.getDemoTimeRemaining.mockReturnValue(10_000); // 10 秒
@@ -109,8 +100,7 @@ describe('useDemoTimer', () => {
     });
 
     expect(notifyMocks.info).not.toHaveBeenCalled();
-    expect(pageModeMocks.clearDemoMode).toHaveBeenCalledTimes(1);
-    expect(clearSpy).toHaveBeenCalledTimes(1);
-    expect(pageModeMocks.reloadPage).toHaveBeenCalledTimes(1);
+    expect(pageModeMocks.exitDemoMode).toHaveBeenCalledTimes(1);
+    expect(pageModeMocks.exitDemoMode).toHaveBeenCalledWith(queryClient);
   });
 });

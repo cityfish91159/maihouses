@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { clearDemoMode, reloadPage } from '../lib/pageMode';
+import { exitDemoMode } from '../lib/pageMode';
 import { notify } from '../lib/notify';
-import { safeLocalStorage, safeSessionStorage } from '../lib/safeStorage';
 
 const EXIT_CONFIRM_TOAST_ID = 'demo-exit-confirm';
 
@@ -16,11 +15,7 @@ export function useDemoExit() {
 
   const executeDemoExit = useCallback(() => {
     notify.dismiss(EXIT_CONFIRM_TOAST_ID);
-    clearDemoMode();
-    safeLocalStorage.removeItem('mai-uag-mode');
-    safeSessionStorage.removeItem('feed-demo-role');
-    queryClientRef.current.clear();
-    reloadPage();
+    exitDemoMode(queryClientRef.current);
   }, []);
 
   const requestDemoExit = useCallback(() => {

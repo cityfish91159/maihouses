@@ -1,3 +1,5 @@
+import { type ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -6,6 +8,7 @@ import {
   setDemoMode,
   clearDemoMode,
 } from '../../lib/pageMode';
+import { ROUTES } from '../../constants/routes';
 import { usePageMode } from '../usePageMode';
 
 const mockUseAuth = vi.fn();
@@ -14,10 +17,21 @@ vi.mock('../useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+function createWrapper(queryClient: QueryClient) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  };
+}
+
 describe('usePageMode (#1a)', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.useFakeTimers();
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, replace: vi.fn() },
+      writable: true,
+      configurable: true,
+    });
     mockUseAuth.mockReset();
     mockUseAuth.mockReturnValue({
       isAuthenticated: false,
@@ -29,34 +43,50 @@ describe('usePageMode (#1a)', () => {
   });
 
   it('未登入且非 demo 應回傳 visitor', () => {
-    const { result } = renderHook(() => usePageMode());
+    const queryClient = new QueryClient();
+    const { result } = renderHook(() => usePageMode(), {
+      wrapper: createWrapper(queryClient),
+    });
     expect(result.current).toBe('visitor');
   });
 
   it('未登入且 demo 有效時應回傳 demo', () => {
+    const queryClient = new QueryClient();
     setDemoMode();
-    const { result } = renderHook(() => usePageMode());
+    const { result } = renderHook(() => usePageMode(), {
+      wrapper: createWrapper(queryClient),
+    });
     expect(result.current).toBe('demo');
   });
 
-  it('登入時應回傳 live 並清除 demo 狀態', async () => {
+  it('登入時應回傳 live、清除 demo 狀態與 query cache', async () => {
+    const queryClient = new QueryClient();
+    const clearSpy = vi.spyOn(queryClient, 'clear');
     vi.useRealTimers();
     setDemoMode();
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
     });
 
-    const { result } = renderHook(() => usePageMode());
+    const { result } = renderHook(() => usePageMode(), {
+      wrapper: createWrapper(queryClient),
+    });
     expect(result.current).toBe('live');
 
     await waitFor(() => {
       expect(localStorage.getItem(DEMO_STORAGE_KEY)).toBeNull();
     });
+    expect(clearSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('跨分頁 StorageEvent 應觸發 re-render 重新計算 mode', () => {
+  it('跨分頁 StorageEvent：demo -> visitor 時應清 cache 並 replace 首頁', () => {
+    const queryClient = new QueryClient();
+    const clearSpy = vi.spyOn(queryClient, 'clear');
+
     setDemoMode();
-    const { result } = renderHook(() => usePageMode());
+    const { result } = renderHook(() => usePageMode(), {
+      wrapper: createWrapper(queryClient),
+    });
     expect(result.current).toBe('demo');
 
     // 模擬其他分頁清除 demo 狀態
@@ -68,6 +98,7 @@ describe('usePageMode (#1a)', () => {
       vi.advanceTimersByTime(DEMO_STORAGE_SYNC_DEBOUNCE_MS + 10);
     });
 
-    expect(result.current).toBe('visitor');
+    expect(clearSpy).toHaveBeenCalledTimes(1);
+    expect(window.location.replace).toHaveBeenCalledWith(ROUTES.HOME);
   });
 });
