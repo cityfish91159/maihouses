@@ -43,7 +43,7 @@ const MOOD_SPEECH: Record<MaiMaiMood, string> = {
 
 function CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-[18px] border border-[var(--border)] bg-[var(--border)] h-[140px]" />
+    <div className="h-[140px] animate-pulse rounded-[18px] border border-[var(--border)] bg-[var(--border)]" />
   );
 }
 
@@ -58,7 +58,7 @@ function EmptyState({ hasQuery, a11yProps }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center gap-4 py-16">
       <MaiMaiBase mood="confused" size="sm" {...a11yProps} />
-      <p className="text-sm text-brand-700/60">
+      <p className="text-brand-700/60 text-sm">
         {hasQuery ? '沒找到符合的社區，換個關鍵字？' : '目前暫無社區資料'}
       </p>
     </div>
@@ -127,6 +127,7 @@ export default function Explore() {
     MOOD_SPEECH.wave,
   ]);
   const clickCountRef = useRef(0);
+  const queryRef = useRef('');
 
   // 前端即時過濾
   const filtered = useMemo(() => {
@@ -155,6 +156,7 @@ export default function Explore() {
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
+      queryRef.current = val;
       setQuery(val);
       if (!val.trim()) {
         pushMood('wave', MOOD_SPEECH.wave);
@@ -170,13 +172,13 @@ export default function Explore() {
   }, [pushMood]);
 
   const handleCardLeave = useCallback(() => {
-    // 回到搜尋中或初始
-    if (query.trim()) {
+    // 讀 ref 取最新 query，避免依賴 query state 造成卡片全量 re-render
+    if (queryRef.current.trim()) {
       pushMood('excited', MOOD_SPEECH.excited);
     } else {
       pushMood('wave', MOOD_SPEECH.wave);
     }
-  }, [pushMood, query]);
+  }, [pushMood]);
 
   const handleMaiMaiClick = useCallback(() => {
     clickCountRef.current += 1;
@@ -193,21 +195,17 @@ export default function Explore() {
     [navigate]
   );
 
-  // 結果數更新 mood
-  const resultsMood: MaiMaiMood | null = useMemo(() => {
-    if (!query.trim()) return null;
+  // 搜尋有結果時，直接 derive effective mood/speech，不需 setState
+  const effectiveMood: MaiMaiMood = useMemo(() => {
+    if (!query.trim()) return mood;
     return filtered.length === 0 ? 'confused' : 'happy';
-  }, [query, filtered.length]);
+  }, [query, filtered.length, mood]);
 
-  // 同步結果 mood（只在有搜尋時）
-  useMemo(() => {
-    if (resultsMood === 'confused') {
-      pushMood('confused', MOOD_SPEECH.confused);
-    } else if (resultsMood === 'happy') {
-      pushMood('happy', `有 ${filtered.length} 個社區！`);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resultsMood, filtered.length]);
+  const effectiveSpeech: string[] = useMemo(() => {
+    if (!query.trim()) return speechMessages;
+    if (filtered.length === 0) return [...speechMessages.slice(-2), MOOD_SPEECH.confused];
+    return [...speechMessages.slice(-2), `有 ${filtered.length} 個社區！`];
+  }, [query, filtered.length, speechMessages]);
 
   return (
     <>
@@ -215,7 +213,7 @@ export default function Explore() {
 
       <main className="min-h-screen bg-[var(--bg-page)]">
         {/* ── Hero 區 ── */}
-        <section className="border-b border-brand-100/50 bg-brand-50 pb-10 pt-8">
+        <section className="border-brand-100/50 border-b bg-brand-50 pb-10 pt-8">
           <div className="mx-auto flex max-w-[1120px] flex-col items-center gap-4 px-4 text-center">
             {/* MaiMai */}
             <div className="relative">
@@ -226,20 +224,20 @@ export default function Explore() {
                 aria-label="點擊邁邁"
               >
                 <MaiMaiBase
-                  mood={mood}
+                  mood={effectiveMood}
                   size="md"
                   {...a11yProps}
                   className="size-24 md:size-32"
                 />
               </button>
-              <MaiMaiSpeech messages={speechMessages} />
+              <MaiMaiSpeech messages={effectiveSpeech} />
             </div>
 
             {/* 標題 */}
             <h1 className="text-2xl font-bold text-brand-700 md:text-3xl">
               探索社區評價
             </h1>
-            <p className="text-sm text-brand-700/60 md:text-base">
+            <p className="text-brand-700/60 text-sm md:text-base">
               找到你關心的社區，看看鄰居怎麼說
             </p>
 

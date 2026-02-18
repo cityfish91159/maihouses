@@ -4,6 +4,7 @@
  * 呼叫 GET /api/community/list，回傳公開社區清單。
  * #8d 社區探索頁
  */
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { getErrorMessage } from '../../../lib/error';
@@ -66,9 +67,11 @@ export function useCommunityList() {
     staleTime: STALE_TIME_MS,
   });
 
-  if (isError) {
-    logger.warn('[useCommunityList] 查詢失敗', { error: getErrorMessage(error) });
-  }
+  useEffect(() => {
+    if (isError) {
+      logger.warn('[useCommunityList] 查詢失敗', { error: getErrorMessage(error) });
+    }
+  }, [isError, error]);
 
   return { data, isLoading, isError, refetch };
 }

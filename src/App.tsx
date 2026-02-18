@@ -189,14 +189,6 @@ export default function App() {
                 }
               />
               <Route
-                path="/community"
-                element={
-                  <ErrorBoundary>
-                    <Explore />
-                  </ErrorBoundary>
-                }
-              />
-              <Route
                 path="/community/:id/wall"
                 element={
                   <ErrorBoundary>

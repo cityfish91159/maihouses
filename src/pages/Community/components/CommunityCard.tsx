@@ -4,6 +4,7 @@
  * 社區探索頁的社區卡片組件
  * #8d 社區探索頁
  */
+import { Star, MessageSquare } from 'lucide-react';
 import type { CommunityListItem } from '../hooks/useCommunityList';
 
 interface CommunityCardProps {
@@ -27,24 +28,26 @@ export function CommunityCard({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className="w-full cursor-pointer rounded-[18px] border border-[var(--border)] bg-white p-5 text-left transition-all duration-200 hover:scale-[1.01] hover:border-brand-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 active:scale-[0.99]"
+      className="focus-visible:ring-brand-400 w-full cursor-pointer rounded-[18px] border border-[var(--border)] bg-white p-5 text-left transition-all duration-200 hover:scale-[1.01] hover:border-brand-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.99]"
       aria-label={`查看 ${name} 社區牆`}
     >
       {/* 社區名稱 */}
-      <p className="mb-1 text-base font-bold text-brand-700">{name}</p>
+      <h3 className="mb-1 text-base font-bold text-brand-700">{name}</h3>
 
       {/* 地址 */}
       {address && (
-        <p className="mb-3 text-sm text-brand-700/60">{address}</p>
+        <p className="text-brand-700/60 mb-3 text-sm">{address}</p>
       )}
 
       {/* 統計 pills */}
       <div className="mb-4 flex flex-wrap gap-2">
         <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-          ⭐ {review_count} 則評價
+          <Star size={12} aria-hidden="true" />
+          {review_count} 則評價
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600">
-          💬 {post_count} 則貼文
+          <MessageSquare size={12} aria-hidden="true" />
+          {post_count} 則貼文
         </span>
       </div>
 

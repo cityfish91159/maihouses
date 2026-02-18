@@ -61,7 +61,7 @@
 
 ### P2 — 跨頁面三模式 + 清理
 
-- [ ] **#24** Chat 三模式支持（`Chat/index.tsx`）
+- [x] **#24** Chat 三模式支持（`Chat/index.tsx`）✅ 2026-02-18
 - [ ] **#24a** UAG Mock 對話 Modal — demo 模式「查看對話」內嵌對話框（1 新組件 + 3 修改）
 - [ ] **#25** Assure 三模式支持 — `isMock` → usePageMode（`Assure/Detail.tsx`）
 - [ ] **#26** 登出清理 — `cleanupAuthState()` 統一函數 + onAuthStateChange（2 檔）
@@ -874,13 +874,17 @@ function useRegisterGuide() {
 
 ---
 
-### #24 Chat 三模式
+### #24 ✅ Chat 三模式
 
 **目標**：Chat 接入 `usePageMode()`
 
 **依賴**：#1a
 
-**修改**：`src/pages/Chat/index.tsx`
+**已完成** 2026-02-18（`/superpowers` 流程驗證）
+
+**修改**：
+- `src/pages/Chat/index.tsx`
+- `src/pages/Chat/__tests__/ChatModeRouting.test.tsx`
 
 | mode | 行為 |
 |------|------|
@@ -888,9 +892,18 @@ function useRegisterGuide() {
 | demo | 本地化聊天（React state）|
 | live | 現有邏輯 |
 
+**核心變更**：
+- 修復 `Chat/index.tsx` 中文亂碼（`????`）與不完整文案，恢復三模式頁面可讀性
+- 保留例外規則：`visitor` 只要 `hasValidSession=true` 仍可進入 `LiveChatView`
+- demo 模式維持本地 state 對話，不呼叫 `useChat`（避免不必要 API / auth 依賴）
+- 新增/修正 `ChatModeRouting` 測試，覆蓋 `visitor / visitor+session / demo / live` 四路徑
+
 **驗收**：
-- `rg "usePageMode" src/pages/Chat/` → 有結果
-- `npm run gate` 通過
+- [x] `rg "usePageMode" src/pages/Chat/` → 有結果
+- [x] visitor 且有 `hasValidSession` 仍走 live chat（保留例外）
+- [x] `npm run check:utf8`
+- [x] `cmd /c npm run test -- src/pages/Chat/__tests__/ChatModeRouting.test.tsx`（4 passed）
+- [x] `npm run gate` 通過
 
 ---
 
@@ -2730,6 +2743,171 @@ viewBox="0 0 200 240", stroke="currentColor", color="white"
 - [ ] 觸控目標 ≥ 44px
 - [ ] `scroll-behavior: smooth`
 - [ ] `font-display: swap`
+
+---
+
+### #31 UAG 頁面深藍主色統一 + 現代化外觀升級
+
+**目標**：將 UAG 頁面從獨立亮藍色系（`#1749d7`）切換到首頁深藍主色（`#00385a`），消除從首頁進 UAG 的品牌割裂感，同時去除工程風背景、統一邊框語言、柔化陰影
+
+**依賴**：無（純 CSS 工作，不動元件邏輯）
+
+**修改檔案清單**：
+
+| 操作 | 檔案 | 用途 |
+|------|------|------|
+| 修改 | `src/pages/UAG/UAG.module.css` | Design tokens 換色 + 背景 + 邊框 + 陰影統一 |
+
+**不動的東西**：所有 `.tsx` 元件邏輯、雷達泡泡 grade 色系（S 橙/A 綠/B 藍/C 灰/F 淡灰）、通知狀態色（success/warning/error）、ink 色系、RWD 斷點（1280/1024/768/380）、a11y 屬性、泡泡 float/pulse 動畫、Footer（已正確用深藍）
+
+---
+
+#### 現況問題
+
+| 問題 | 位置 | 說明 |
+|------|------|------|
+| 色系割裂 | `:root` L3 | UAG `--uag-brand: #1749d7` 與首頁 `--brand: #00385a` 完全不同色系 |
+| 工程風背景 | `.uag-page::before` L79 | 40px 方格網格背景偏工程 Dashboard，不像房地產平台 |
+| 三色漸層背景 | `.uag-container` L430 | `#f8fafc → #eef2ff → #f0f9ff` 三色漸層不必要 |
+| 邊框不統一 | 多處 | 散落的 `rgba(255,255,255,0.2)`、`rgba(23,73,215,0.12)` 與首頁 `--border: #e6edf7` 不一致 |
+| 陰影偏亮藍 | 多處 | `rgba(23,73,215,*)` / `rgba(37,99,235,*)` / `rgba(59,130,246,*)` 應統一為深藍系 |
+| Glassmorphism 過透 | `.uag-card` L729 | `rgba(255,255,255,0.75)` 過透明，實體感不足 |
+| Action Panel 色系 | `.btn-attack` L1494 | 漸層和陰影用亮藍，應跟隨深藍主色 |
+| 雷達外框陰影過重 | `.uag-cluster` L948 | `rgba(15,23,42,0.28)` 過深，需柔化 |
+
+---
+
+#### 步驟 1：Design Tokens 換色
+
+**位置**：`:root`（L1-61）
+
+| Token | 現值 | 改為 |
+|-------|------|------|
+| `--uag-brand` | `var(--mh-color-1749d7)` `#1749d7` | `var(--brand)` = `#00385a` |
+| `--uag-brand-light` | `var(--mh-color-3b6bf0)` `#3b6bf0` | `var(--brand-light)` = `#009fe8` |
+| `--uag-brand-dark` | `var(--mh-color-0f36a6)` `#0f36a6` | `var(--primary-dark)` = `#002a44` |
+| `--line` | `rgba(23, 73, 215, 0.12)` | `var(--border)` = `#e6edf7` |
+| `--shadow-glow` | `0 0 20px rgba(23, 73, 215, 0.25)` | `0 0 20px rgba(0, 56, 90, 0.20)` |
+
+不動的 tokens：`--grade-*`、`--notif-*`、`--ink-*`、`--bg-*`、`--radius-*`、z-index 層
+
+---
+
+#### 步驟 2：頁面背景
+
+**`.uag-page`**（L64-77）：
+- `background:` 漸層改為 `radial-gradient(ellipse at top, rgba(0, 56, 90, 0.05), transparent 60%), var(--bg-page)`
+- 移除亮藍 `rgba(23, 73, 215, 0.08)`
+
+**`.uag-page::before`**（L79-90）：
+- 移除 40px 方格網格背景（`display: none`）
+- 理由：方格背景是工程/科技 Dashboard 風格，不符合房地產品牌的乾淨現代感
+
+**`.uag-container`**（L424-431）：
+- `background:` 改為 `transparent`
+- 移除三色漸層，讓卡片自己撐視覺
+
+---
+
+#### 步驟 3：Header 換色
+
+所有 hover 陰影中的 `rgba(23, 73, 215, 0.18)` 統一改為 `rgba(0, 56, 90, 0.15)`：
+
+| 選擇器 | 改動 |
+|--------|------|
+| `.uag-company` L231 | `rgba(23, 73, 215, 0.08)` → `rgba(0, 56, 90, 0.06)` |
+| `.uag-home-link:hover` L251 | `rgba(23, 73, 215, 0.18)` → `rgba(0, 56, 90, 0.15)` |
+| `.uag-notification-btn:hover` L272 | 同上 |
+| `.uag-user-button:hover` L310 | 同上 |
+| `.uag-user-avatar` L322 | `rgba(23, 73, 215, 0.08)` → `rgba(0, 56, 90, 0.08)` |
+
+---
+
+#### 步驟 4：卡片（`.uag-card`）
+
+| 屬性 | 現值 | 改為 | 理由 |
+|------|------|------|------|
+| `background` | `rgba(255,255,255,0.75)` | `rgba(255,255,255,0.85)` | 增加實體感 |
+| `border` | `1px solid rgba(255,255,255,0.2)` | `1px solid var(--border)` | 統一邊框 |
+| hover `border-color` | `rgba(23,73,215,0.2)` | `rgba(0,56,90,0.15)` | 深藍系 |
+
+`.uag-card-title` 的左線 `border-left: 4px solid var(--uag-brand)` 會自動跟隨 token 改變。
+
+---
+
+#### 步驟 5：按鈕系統
+
+| 選擇器 | 改動 |
+|--------|------|
+| `.uag-btn.primary` 漸層 | `var(--uag-brand), #2563eb` → `var(--brand), var(--brand-600)` |
+| `.uag-btn.primary` box-shadow | `rgba(23,73,215,0.35)` → `rgba(0,56,90,0.30)` |
+| `.uag-btn.primary:hover` 漸層 | `var(--uag-brand-light), #3b82f6` → `var(--brand-light), var(--brand-600)` |
+| `.btn-attack` 漸層 | `var(--uag-brand), #2563eb` → `var(--brand), var(--brand-600)` |
+| `.btn-attack` box-shadow | `rgba(37,99,235,0.45)` → `rgba(0,56,90,0.35)` |
+| `.btn-attack:hover` box-shadow | `rgba(37,99,235,0.55)` → `rgba(0,56,90,0.45)` |
+| `.btn-attack:active` box-shadow | `rgba(37,99,235,0.32)` → `rgba(0,56,90,0.25)` |
+| `.btn-attack:focus-visible` outline | `var(--mh-color-3b82f6)` → `var(--brand)` |
+| `.btn-attack` shimmer | 保留（CTA 需要吸引力），色系自動跟隨 |
+
+---
+
+#### 步驟 6：雷達區域（泡泡不動，只改外框）
+
+| 選擇器 | 改動 |
+|--------|------|
+| `.uag-cluster` 背景 | `#ffffff → #e5edff → #eef2ff` → `#ffffff → var(--bg-alt) → var(--mh-color-eef2f7)` |
+| `.uag-cluster` 外框陰影 | `rgba(15,23,42,0.28)` → `rgba(0,56,90,0.15)` |
+| `.uag-bubble:hover` box-shadow | `rgba(59,130,246,0.25)` → `rgba(0,56,90,0.20)` |
+| `.uag-bubble[data-selected]` box-shadow | `rgba(59,130,246,0.35)` → `rgba(0,56,90,0.25)` |
+| `.uag-grade-chip[data-active][data-grade='all']` | `#1d4ed8/#3b82f6` → `var(--brand)/var(--brand-600)` |
+| `@keyframes pulse` | `rgba(59,130,246,0.3)` → `rgba(0,56,90,0.25)` |
+
+**不動**：`.uag-bubble[data-grade='S/A/B/C/F']` 的 background/border-color（grade 色系保持）
+
+---
+
+#### 步驟 7：Action Panel
+
+| 選擇器 | 改動 |
+|--------|------|
+| `.uag-action-panel` border | `rgba(37,99,235,0.45)` → `rgba(0,56,90,0.20)` |
+| `.uag-action-panel` inner shadow | `rgba(59,130,246,0.18)` → `rgba(0,56,90,0.10)` |
+| `.uag-action-panel` 背景 | `#f8fafc → #eef2ff` → `#f8fafc → var(--bg-alt)` |
+| `.ap-head` 背景 | `#e5edff → #eef2ff` → `var(--bg-alt) → #f8fafc` |
+
+---
+
+#### 步驟 8：Listings / Mai Card 散落色值
+
+| 選擇器 | 改動 |
+|--------|------|
+| `.listing-item:hover` box-shadow | `rgba(37,99,235,0.26)` → `rgba(0,56,90,0.15)` |
+| `.mai-btn.primary` 漸層 | `#1749d7/#3ed0e6` → `var(--brand)/var(--brand-light)` |
+| `.mai-tag` 漸層 | `var(--uag-brand)/#3ed0e6` → `var(--brand)/var(--brand-light)` |
+
+Confirm/Cancel 按鈕不動（用 danger 紅色/中性灰，是語意色非品牌色）。
+
+---
+
+#### 總結
+
+- **1 個檔案**：`UAG.module.css`
+- **~40 處色值替換**：`rgba(23,73,215,*)` / `rgba(37,99,235,*)` / `rgba(59,130,246,*)` → `rgba(0,56,90,*)`
+- **3 處結構改動**：方格背景移除、container 漸層移除、卡片透明度調整
+- **0 個 TSX 檔案**
+
+---
+
+#### 驗收
+
+- [ ] Design tokens 已統一為深藍系：`rg "1749d7|3b6bf0|0f36a6" src/pages/UAG/UAG.module.css` → 0 筆
+- [ ] 方格背景已移除
+- [ ] 卡片邊框統一為 `var(--border)`
+- [ ] 雷達泡泡 grade 色系不變
+- [ ] Footer capsule 不變（已正確）
+- [ ] 手機板（375px）所有區塊正常顯示
+- [ ] 桌面板（1280px+）ActionPanel + AssetMonitor 並排正常
+- [ ] `npm run gate` 通過
 
 ---
 
