@@ -103,4 +103,24 @@ describe('useDemoTimer', () => {
     expect(pageModeMocks.exitDemoMode).toHaveBeenCalledTimes(1);
     expect(pageModeMocks.exitDemoMode).toHaveBeenCalledWith(queryClient);
   });
+
+  it('demo 模式回前景且已過期時應立即退出', () => {
+    const queryClient = new QueryClient();
+
+    modeState.value = 'demo';
+    pageModeMocks.getDemoTimeRemaining.mockReturnValueOnce(60_000).mockReturnValueOnce(0);
+    const visibilitySpy = vi.spyOn(document, 'visibilityState', 'get');
+    visibilitySpy.mockReturnValue('visible');
+
+    renderHook(() => useDemoTimer(), { wrapper: createWrapper(queryClient) });
+
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    expect(pageModeMocks.exitDemoMode).toHaveBeenCalledTimes(1);
+    expect(pageModeMocks.exitDemoMode).toHaveBeenCalledWith(queryClient);
+
+    visibilitySpy.mockRestore();
+  });
 });

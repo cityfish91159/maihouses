@@ -82,6 +82,23 @@ describe('pageMode utils (#1a)', () => {
     unsubscribe();
   });
 
+  it('subscribeDemoModeStorageSync 在回到前景時應觸發同步', () => {
+    const onSync = vi.fn();
+    const unsubscribe = subscribeDemoModeStorageSync(onSync);
+    const visibilitySpy = vi.spyOn(document, 'visibilityState', 'get');
+
+    visibilitySpy.mockReturnValue('hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(onSync).not.toHaveBeenCalled();
+
+    visibilitySpy.mockReturnValue('visible');
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(onSync).toHaveBeenCalledTimes(1);
+
+    visibilitySpy.mockRestore();
+    unsubscribe();
+  });
+
   it('clearDemoMode 應移除 demo storage', () => {
     setDemoMode();
     clearDemoMode();

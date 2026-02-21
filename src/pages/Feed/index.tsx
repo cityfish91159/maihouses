@@ -15,6 +15,7 @@ import { RoleToggle } from '../../components/Feed/RoleToggle';
 import { logger } from '../../lib/logger';
 import { useAuth } from '../../hooks/useAuth';
 import { usePageMode } from '../../hooks/usePageMode';
+import { FEED_DEMO_ROLE_STORAGE_KEY } from '../../lib/pageMode';
 import { safeSessionStorage } from '../../lib/safeStorage';
 import { ROUTES, RouteUtils } from '../../constants/routes';
 
@@ -22,11 +23,9 @@ type Role = 'agent' | 'member' | 'guest';
 /** Demo 模式只支援 agent/member 兩種切換角色（使用 Extract 確保型別來源一致）。 */
 type DemoRole = Extract<Role, 'agent' | 'member'>;
 
-const FEED_DEMO_ROLE_KEY = 'feed-demo-role';
-
 /** 讀取 demo 角色；若無資料或值異常，一律回退 member。 */
 function readDemoRole(): DemoRole {
-  const persistedRole = safeSessionStorage.getItem(FEED_DEMO_ROLE_KEY);
+  const persistedRole = safeSessionStorage.getItem(FEED_DEMO_ROLE_STORAGE_KEY);
   return persistedRole === 'agent' ? 'agent' : 'member';
 }
 
@@ -105,7 +104,7 @@ export default function Feed() {
   useEffect(() => {
     if (!isDemoMode) return;
     if (role !== 'agent' && role !== 'member') return;
-    safeSessionStorage.setItem(FEED_DEMO_ROLE_KEY, role);
+    safeSessionStorage.setItem(FEED_DEMO_ROLE_STORAGE_KEY, role);
   }, [isDemoMode, role]);
 
   if (loading || (isDemoRoute && authLoading)) {
