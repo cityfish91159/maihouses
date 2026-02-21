@@ -27,6 +27,7 @@ describe('usePageMode (#1a)', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.useFakeTimers();
+    delete window.__DEMO_EXPIRING;
     Object.defineProperty(window, 'location', {
       value: { ...window.location, replace: vi.fn() },
       writable: true,
@@ -100,5 +101,28 @@ describe('usePageMode (#1a)', () => {
 
     expect(clearSpy).toHaveBeenCalledTimes(1);
     expect(window.location.replace).toHaveBeenCalledWith(ROUTES.HOME);
+  });
+
+  it('跨分頁同步時若已進入 expiring 狀態，不應重複觸發退出流程', () => {
+    const queryClient = new QueryClient();
+    const clearSpy = vi.spyOn(queryClient, 'clear');
+
+    setDemoMode();
+    const { result } = renderHook(() => usePageMode(), {
+      wrapper: createWrapper(queryClient),
+    });
+    expect(result.current).toBe('demo');
+
+    window.__DEMO_EXPIRING = true;
+    clearDemoMode();
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: DEMO_STORAGE_KEY, newValue: null })
+      );
+      vi.advanceTimersByTime(DEMO_STORAGE_SYNC_DEBOUNCE_MS + 10);
+    });
+
+    expect(clearSpy).not.toHaveBeenCalled();
+    expect(window.location.replace).not.toHaveBeenCalled();
   });
 });

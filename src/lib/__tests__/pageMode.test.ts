@@ -82,6 +82,17 @@ describe('pageMode utils (#1a)', () => {
     unsubscribe();
   });
 
+  it('subscribeDemoModeStorageSync 在 storage.clear（key=null）時應觸發同步', () => {
+    const onSync = vi.fn();
+    const unsubscribe = subscribeDemoModeStorageSync(onSync);
+
+    window.dispatchEvent(new StorageEvent('storage', { key: null, newValue: null }));
+    vi.advanceTimersByTime(DEMO_STORAGE_SYNC_DEBOUNCE_MS + 10);
+    expect(onSync).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+  });
+
   it('subscribeDemoModeStorageSync 在回到前景時應觸發同步', () => {
     const onSync = vi.fn();
     const unsubscribe = subscribeDemoModeStorageSync(onSync);
@@ -207,6 +218,19 @@ describe('pageMode utils (#1a)', () => {
       expect(localStorage.getItem(DEMO_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem(DEMO_UAG_MODE_STORAGE_KEY)).toBeNull();
       expect(sessionStorage.getItem(FEED_DEMO_ROLE_STORAGE_KEY)).toBeNull();
+    });
+
+    it('exitDemoMode 在 SSR 環境不應清 cache 或存取導頁', () => {
+      const queryClient = { clear: vi.fn() };
+
+      try {
+        vi.stubGlobal('window', undefined);
+
+        expect(() => exitDemoMode(queryClient)).not.toThrow();
+        expect(queryClient.clear).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
   });
 });

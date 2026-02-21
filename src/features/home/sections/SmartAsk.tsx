@@ -19,6 +19,13 @@ type ChatMsg = {
   content: string;
   timestamp: string;
 };
+const LAST_CHAT_STORAGE_KEY = 'mai-last-chat';
+const GOODNIGHT_STORAGE_PREFIX = 'mai-goodnight-';
+const GOODNIGHT_SENT_VALUE = '1';
+
+function getGoodnightStorageKey(date: Date): string {
+  return `${GOODNIGHT_STORAGE_PREFIX}${date.toDateString()}`;
+}
 
 export default function SmartAsk() {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -39,7 +46,7 @@ export default function SmartAsk() {
   useEffect(() => {
     loadPainPointsFromStorage();
 
-    const lastChat = safeLocalStorage.getItem('mai-last-chat');
+    const lastChat = safeLocalStorage.getItem(LAST_CHAT_STORAGE_KEY);
     const today = new Date().toDateString();
 
     // 今天還沒聊過 → 主動打招呼
@@ -59,7 +66,7 @@ export default function SmartAsk() {
             timestamp: new Date().toISOString(),
           },
         ]);
-        safeLocalStorage.setItem('mai-last-chat', today);
+        safeLocalStorage.setItem(LAST_CHAT_STORAGE_KEY, today);
       }, 1500);
 
       return () => clearTimeout(timer);
@@ -76,7 +83,7 @@ export default function SmartAsk() {
 
     // 晚上 10:00 - 10:30 之間
     if (hour === 22 && minute < 30) {
-      const todayGoodnight = safeLocalStorage.getItem('mai-goodnight-' + now.toDateString());
+      const todayGoodnight = safeLocalStorage.getItem(getGoodnightStorageKey(now));
       if (!todayGoodnight && messages.length > 0) {
         const timer = setTimeout(() => {
           setMessages((prev) => [
@@ -88,7 +95,7 @@ export default function SmartAsk() {
               timestamp: new Date().toISOString(),
             },
           ]);
-          safeLocalStorage.setItem('mai-goodnight-' + now.toDateString(), '1');
+          safeLocalStorage.setItem(getGoodnightStorageKey(now), GOODNIGHT_SENT_VALUE);
         }, 5000);
 
         return () => clearTimeout(timer);
@@ -242,23 +249,24 @@ export default function SmartAsk() {
           </div>
         </div>
 
+        {/* MaiMai 公仔（獨立於滾動區域，避免泡泡被 overflow 裁切） */}
+        <div className="mb-2 flex justify-center">
+          <MascotInteractive
+            size="lg"
+            messages={messages.map((m) => m.content)}
+            isLoading={loading || !!input.trim()}
+            isSuccess={status === 'success'}
+            hasError={status === 'error'}
+          />
+        </div>
+
         {/* Chat Display Area */}
         <div
           ref={chatRef}
-          className="border-brand-100/60 mb-4 flex h-[380px] flex-col gap-4 overflow-y-auto scroll-smooth rounded-2xl border bg-white/50 p-5 shadow-inner backdrop-blur-md"
+          className="border-brand-100/60 mb-4 flex h-[320px] flex-col gap-4 overflow-y-auto scroll-smooth rounded-2xl border bg-white/50 p-5 shadow-inner backdrop-blur-md"
           role="log"
           aria-live="polite"
         >
-          <div className="flex shrink-0 justify-center pt-16">
-            <MascotInteractive
-              size="lg"
-              messages={messages.map((m) => m.content)}
-              isLoading={loading || !!input.trim()}
-              isSuccess={status === 'success'}
-              hasError={status === 'error'}
-            />
-          </div>
-
           {messages.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center p-4 text-center opacity-80">
               <p className="mb-2 text-base font-black text-brand-700">
@@ -281,8 +289,13 @@ export default function SmartAsk() {
               </p>
             </div>
           ) : (
-            messages.map((m, i) => (
-              <ChatMessage key={i} sender={m.role} content={m.content} timestamp={m.timestamp} />
+            messages.map((m) => (
+              <ChatMessage
+                key={`${m.timestamp}-${m.role}-${m.content}`}
+                sender={m.role}
+                content={m.content}
+                timestamp={m.timestamp}
+              />
             ))
           )}
           {loading && (

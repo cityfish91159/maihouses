@@ -9,6 +9,7 @@ import {
 } from '../lib/pageMode';
 import { usePageMode } from './usePageMode';
 
+// 剩餘 30 秒內直接到期退出，不再顯示提醒，避免「提醒後立刻到期」的重複干擾。
 const WARN_SKIP_THRESHOLD_MS = 30_000;
 
 export function useDemoTimer(): void {

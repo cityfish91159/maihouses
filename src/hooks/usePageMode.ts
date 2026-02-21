@@ -44,7 +44,11 @@ export function usePageModeWithAuthState(isAuthenticated: boolean): PageMode {
       const nextMode = resolvePageMode(isAuthenticated);
       const isDemoToVisitorTransition = modeRef.current === 'demo' && nextMode === 'visitor';
       if (isDemoToVisitorTransition) {
-        exitDemoMode(queryClientRef.current);
+        const isAlreadyExpiring =
+          typeof window !== 'undefined' && window.__DEMO_EXPIRING === true;
+        if (!isAlreadyExpiring) {
+          exitDemoMode(queryClientRef.current);
+        }
         return;
       }
 

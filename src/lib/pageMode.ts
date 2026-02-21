@@ -85,12 +85,11 @@ export function clearDemoArtifacts(queryClient: QueryClientLike): void {
  * 完整退出 demo：清理殘留後導回首頁（replace 避免返回鍵回失效頁）。
  */
 export function exitDemoMode(queryClient: QueryClientLike): void {
-  clearDemoArtifacts(queryClient);
-
   if (typeof window === 'undefined') {
     return;
   }
 
+  clearDemoArtifacts(queryClient);
   window.__DEMO_EXPIRING = true;
   window.location.replace(ROUTES.HOME);
 }
@@ -122,7 +121,9 @@ export function subscribeDemoModeStorageSync(onSync: () => void): () => void {
   let reloadTimer: ReturnType<typeof setTimeout> | null = null;
 
   const handler = (event: StorageEvent) => {
-    if (event.key !== DEMO_STORAGE_KEY) return;
+    const isDemoKey = event.key === DEMO_STORAGE_KEY;
+    const isStorageClear = event.key === null;
+    if (!isDemoKey && !isStorageClear) return;
 
     if (reloadTimer) {
       clearTimeout(reloadTimer);

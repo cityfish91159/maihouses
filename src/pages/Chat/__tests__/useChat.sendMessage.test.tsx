@@ -1,6 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useChat } from '../useChat';
-import { supabase } from '../../../lib/supabase';
 
 const authState = {
   user: null as { id: string } | null,
@@ -14,6 +13,12 @@ const sessionState = {
   isExpired: false,
 };
 const channelSendMock = vi.fn();
+const supabaseMocks = vi.hoisted(() => ({
+  from: vi.fn(),
+  rpc: vi.fn(),
+  channel: vi.fn(),
+  removeChannel: vi.fn(),
+}));
 
 vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => authState,
@@ -40,10 +45,10 @@ vi.mock('../../../lib/logger', () => ({
 
 vi.mock('../../../lib/supabase', () => ({
   supabase: {
-    from: vi.fn(),
-    rpc: vi.fn(),
-    channel: vi.fn(),
-    removeChannel: vi.fn(),
+    from: supabaseMocks.from,
+    rpc: supabaseMocks.rpc,
+    channel: supabaseMocks.channel,
+    removeChannel: supabaseMocks.removeChannel,
   },
 }));
 
@@ -102,38 +107,36 @@ describe('useChat sendMessage (visitor + valid session)', () => {
       maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     };
 
-    vi.mocked(supabase.from).mockImplementation((table: string) => {
+    supabaseMocks.from.mockImplementation((table: string) => {
       if (table === 'conversations') {
-        return conversationsChain as never;
+        return conversationsChain;
       }
       if (table === 'messages') {
-        return messagesChain as never;
+        return messagesChain;
       }
       if (table === 'properties') {
-        return propertiesChain as never;
+        return propertiesChain;
       }
       throw new Error(`Unexpected table: ${table}`);
     });
 
-    vi.mocked(supabase.rpc).mockImplementation(
-      ((fn: string) => {
-        if (fn === 'fn_send_message') {
-          return buildRpcResponse('123e4567-e89b-12d3-a456-426614174099') as never;
-        }
-        if (fn === 'fn_mark_messages_read') {
-          return buildRpcResponse(null) as never;
-        }
-        throw new Error(`Unexpected rpc: ${fn}`);
-      }) as never
-    );
+    supabaseMocks.rpc.mockImplementation((fn: string) => {
+      if (fn === 'fn_send_message') {
+        return buildRpcResponse('123e4567-e89b-12d3-a456-426614174099');
+      }
+      if (fn === 'fn_mark_messages_read') {
+        return buildRpcResponse(null);
+      }
+      throw new Error(`Unexpected rpc: ${fn}`);
+    });
 
     const channelMock = {
       on: vi.fn().mockReturnThis(),
       subscribe: vi.fn().mockReturnThis(),
       send: channelSendMock,
     };
-    vi.mocked(supabase.channel).mockReturnValue(channelMock as never);
-    vi.mocked(supabase.removeChannel).mockReturnValue(undefined as never);
+    supabaseMocks.channel.mockReturnValue(channelMock);
+    supabaseMocks.removeChannel.mockReturnValue(undefined);
   });
 
   it('允許 visitor+session 發送訊息，並以 null sender_id 呼叫 RPC', async () => {
@@ -149,7 +152,7 @@ describe('useChat sendMessage (visitor + valid session)', () => {
       await result.current.sendMessage('guest hello');
     });
 
-    expect(supabase.rpc).toHaveBeenCalledWith('fn_send_message', {
+    expect(supabaseMocks.rpc).toHaveBeenCalledWith('fn_send_message', {
       p_conversation_id: conversationId,
       p_sender_type: 'consumer',
       p_sender_id: null,
