@@ -164,7 +164,13 @@ describe('PropertyDetailPage phase11 interactions', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { case_id: 'case-1' } }),
+        json: async () => ({
+          data: {
+            token: '11111111-1111-4111-8111-111111111111',
+            case_id: '22222222-2222-4222-8222-222222222222',
+            buyer_name: '測試用戶',
+          },
+        }),
       })
     );
   });

@@ -61,7 +61,7 @@
 
 ### P2 — 跨頁面三模式 + 清理
 
-- [x] **#24** Chat 三模式支持（`Chat/index.tsx`）✅ 2026-02-18
+- [x] **#24** Chat 三模式支持（`Chat/index.tsx`）✅ 2026-02-18（strict-audit 收斂：2026-02-21）
 - [ ] **#24a** UAG Mock 對話 Modal — demo 模式「查看對話」內嵌對話框（1 新組件 + 3 修改）
 - [ ] **#25** Assure 三模式支持 — `isMock` → usePageMode（`Assure/Detail.tsx`）
 - [ ] **#26** 登出清理 — `cleanupAuthState()` 統一函數 + onAuthStateChange（2 檔）
@@ -904,6 +904,39 @@ function useRegisterGuide() {
 - [x] `npm run check:utf8`
 - [x] `cmd /c npm run test -- src/pages/Chat/__tests__/ChatModeRouting.test.tsx`（4 passed）
 - [x] `npm run gate` 通過
+
+#### 2026-02-21 strict-audit + /zero-slack-coder 收斂（回歸修復）
+
+本輪以 `#24` 為核心，補齊審核發現的回歸與跨模組一致性問題：
+
+1. `src/hooks/useConsumerSession.ts`
+   - 修正 session 過期邏輯：有 session 但缺 `uag_session_created` 時改為「過期」，避免舊資料永久有效。
+   - 新增 session 狀態同步機制：`storage`、`visibilitychange`、每 60 秒輪詢，避免長時間停留造成 UI 與實際 TTL 漂移。
+2. `src/hooks/__tests__/useConsumerSession.test.ts`
+   - 測試更新為新規格（缺建立時間視為過期）。
+   - 新增長時間停留後自動同步過期狀態測試（fake timer）。
+3. `src/pages/Chat/useChat.ts`
+   - `sendMessage` 放寬為「`isAuthenticated` 或 `hasValidSession` 其一成立即可送出」，支援 visitor + valid session。
+   - `p_sender_id` 在 visitor 情境明確送 `null`，避免錯誤依賴 `user.id`。
+   - 補齊錯誤路徑：`CHAT_SEND_NOT_READY` / `CHAT_SEND_AUTH_REQUIRED` / `CHAT_SEND_AGENT_REQUIRES_USER`，並在 catch 後 rethrow。
+   - realtime 訂閱移除多餘依賴，降低重複 subscribe/unsubscribe 抖動。
+   - `markRead` 移除對 `hasAccess` 的 callback 依賴，避免 effect 連鎖重跑造成 send path 被誤判未就緒。
+4. `src/pages/Chat/__tests__/ChatModeRouting.test.tsx`
+   - 新增 visitor + valid session 可透過 UI 送訊測試。
+5. `src/pages/Chat/__tests__/useChat.sendMessage.test.tsx`（新增）
+   - 新增 hook 級回歸測試，驗證 visitor + session 會呼叫 `fn_send_message` 且 `p_sender_id = null`。
+6. 連帶回歸修正（避免 gate 被非 #24 回歸阻斷）
+   - `src/features/home/sections/__tests__/CommunityTeaser.test.tsx`
+   - `src/pages/Feed/__tests__/useConsumer.test.ts`
+   - `src/components/Feed/__tests__/AgentProfileCard.perf.test.tsx`
+   - `src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx`
+   - `src/pages/UAG/services/__tests__/uagService.test.ts`
+   - `src/pages/__tests__/PropertyDetailPage.phase11.test.tsx`
+
+**本輪驗證**：
+- [x] `cmd /c npm run check:utf8`
+- [x] `cmd /c npm run test -- src/pages/Chat/__tests__/ChatModeRouting.test.tsx src/pages/Chat/__tests__/useChat.sendMessage.test.tsx src/hooks/__tests__/useConsumerSession.test.ts src/features/home/sections/__tests__/CommunityTeaser.test.tsx src/pages/Feed/__tests__/useConsumer.test.ts src/components/Feed/__tests__/AgentProfileCard.perf.test.tsx src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx src/pages/UAG/services/__tests__/uagService.test.ts src/pages/__tests__/PropertyDetailPage.phase11.test.tsx`（9 files, 74 passed）
+- [x] `cmd /c npm run gate`（typecheck + lint 全通過）
 
 ---
 

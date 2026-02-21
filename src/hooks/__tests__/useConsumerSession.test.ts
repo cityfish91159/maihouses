@@ -24,26 +24,20 @@ describe('useConsumerSession', () => {
 
   describe('SSR 安全', () => {
     it('在沒有 window 時應該返回 null', () => {
-      // 模擬 SSR 環境（localStorage 不可用）
-      // 使用 Object.defineProperty 暫時隱藏 window，無需 TypeScript 指令
-      const originalWindow = global.window;
-      const windowDescriptor = Object.getOwnPropertyDescriptor(global, 'window');
+      const windowDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'window');
 
-      Object.defineProperty(global, 'window', {
-        value: undefined,
-        writable: true,
-        configurable: true,
-      });
-
-      // 重新 import 會很複雜，直接測試函數邏輯
-      // 這裡測試 localStorage 不存在的情況
-      expect(getSessionId()).toBe(null);
-
-      // 恢復 window
-      if (windowDescriptor) {
-        Object.defineProperty(global, 'window', windowDescriptor);
-      } else {
-        global.window = originalWindow;
+      try {
+        Object.defineProperty(globalThis, 'window', {
+          value: undefined,
+          writable: true,
+          configurable: true,
+        });
+        expect(typeof window).toBe('undefined');
+        expect(getSessionId()).toBe(null);
+      } finally {
+        if (windowDescriptor) {
+          Object.defineProperty(globalThis, 'window', windowDescriptor);
+        }
       }
     });
   });
@@ -121,11 +115,11 @@ describe('useConsumerSession', () => {
       expect(isSessionExpired()).toBe(true);
     });
 
-    it('沒有建立時間記錄時應該視為未過期（向後相容）', () => {
+    it('沒有建立時間記錄時應該視為過期', () => {
       localStorage.setItem(SESSION_KEY, 'old-session');
       // 沒有設置 SESSION_CREATED_KEY
 
-      expect(isSessionExpired()).toBe(false);
+      expect(isSessionExpired()).toBe(true);
     });
 
     it('過期的 session 應該 hasValidSession = false', () => {
@@ -144,16 +138,48 @@ describe('useConsumerSession', () => {
       expect(result.current.isExpired).toBe(true);
       expect(result.current.hasValidSession).toBe(false);
     });
+
+    it('hook 在長時間停留後應重新同步過期狀態', () => {
+      const now = Date.now();
+      vi.setSystemTime(now);
+
+      localStorage.setItem(SESSION_KEY, 'test-session');
+      localStorage.setItem(SESSION_CREATED_KEY, String(now));
+
+      const { result } = renderHook(() => useConsumerSession());
+      expect(result.current.hasValidSession).toBe(true);
+
+      vi.setSystemTime(now + 8 * 24 * 60 * 60 * 1000);
+      act(() => {
+        vi.advanceTimersByTime(60 * 1000);
+      });
+
+      expect(result.current.isExpired).toBe(true);
+      expect(result.current.hasValidSession).toBe(false);
+    });
   });
 
   describe('邊界情況', () => {
     it('setSession 不應該覆蓋已有的建立時間', () => {
-      const originalTime = Date.now() - 1000;
+      const now = new Date('2026-02-21T10:00:00.000Z').getTime();
+      vi.setSystemTime(now);
+      const originalTime = now - 1000;
       localStorage.setItem(SESSION_CREATED_KEY, String(originalTime));
 
       setSession('new-session');
 
       expect(localStorage.getItem(SESSION_CREATED_KEY)).toBe(String(originalTime));
+    });
+
+    it('setSession 遇到已過期建立時間時應重設 timestamp', () => {
+      const now = new Date('2026-02-21T10:00:00.000Z').getTime();
+      const expiredTimestamp = now - 8 * 24 * 60 * 60 * 1000;
+
+      localStorage.setItem(SESSION_CREATED_KEY, String(expiredTimestamp));
+      vi.setSystemTime(now);
+      setSession('new-session');
+
+      expect(localStorage.getItem(SESSION_CREATED_KEY)).toBe(String(now));
     });
 
     it('localStorage 錯誤時應該優雅處理', () => {

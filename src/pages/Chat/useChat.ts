@@ -73,6 +73,10 @@ const STATUS_LABELS: Record<Conversation['status'], string> = {
   active: '對話中',
   closed: '已結束',
 };
+const TYPING_EVENT_THROTTLE_MS = 1000;
+const TYPING_INDICATOR_DURATION_MS = 1500;
+const TYPING_SENDER_USER_PREFIX = 'user:';
+const TYPING_SENDER_SESSION_PREFIX = 'session:';
 
 export function useChat(conversationId?: string) {
   const { user, role, isAuthenticated } = useAuth();
@@ -97,6 +101,15 @@ export function useChat(conversationId?: string) {
     if (!conversation) return '';
     return STATUS_LABELS[conversation.status];
   }, [conversation]);
+  const typingSenderId = useMemo(() => {
+    if (user?.id) {
+      return `${TYPING_SENDER_USER_PREFIX}${user.id}`;
+    }
+    if (hasValidSession && sessionId) {
+      return `${TYPING_SENDER_SESSION_PREFIX}${sessionId}`;
+    }
+    return null;
+  }, [hasValidSession, sessionId, user?.id]);
 
   /**
    * 問題 #5 修復：移除 property JOIN，改為分開查詢
@@ -216,7 +229,7 @@ export function useChat(conversationId?: string) {
   }, [conversationId, user, hasValidSession]);
 
   const markRead = useCallback(async () => {
-    if (!conversationId || !isAuthenticated || !user || !hasAccess) return;
+    if (!conversationId || !isAuthenticated || !user) return;
     const { error } = await supabase.rpc('fn_mark_messages_read', {
       p_conversation_id: conversationId,
       p_reader_type: senderType,
@@ -228,19 +241,29 @@ export function useChat(conversationId?: string) {
         senderType,
       });
     }
-  }, [conversationId, isAuthenticated, user, senderType, hasAccess]);
+  }, [conversationId, isAuthenticated, senderType, user]);
 
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!conversationId || !isAuthenticated || !user || !hasAccess) return;
+      if (!conversationId || !hasAccess) {
+        throw new Error('CHAT_SEND_NOT_READY');
+      }
+      if (!isAuthenticated && !hasValidSession) {
+        throw new Error('CHAT_SEND_AUTH_REQUIRED');
+      }
+      if (senderType === 'agent' && !user) {
+        throw new Error('CHAT_SEND_AGENT_REQUIRES_USER');
+      }
+
       const trimmed = content.trim();
       if (!trimmed) return;
+      const senderId = user?.id ?? null;
       const tempId = `temp-${crypto.randomUUID?.() ?? Date.now()}`;
       const optimisticMessage: Message = {
         id: tempId,
         conversation_id: conversationId,
         sender_type: senderType,
-        sender_id: user.id,
+        sender_id: senderId,
         content: trimmed,
         created_at: new Date().toISOString(),
         read_at: null,
@@ -252,7 +275,7 @@ export function useChat(conversationId?: string) {
         const { data: messageId, error } = await supabase.rpc('fn_send_message', {
           p_conversation_id: conversationId,
           p_sender_type: senderType,
-          p_sender_id: user.id,
+          p_sender_id: senderId,
           p_content: trimmed,
         });
 
@@ -279,11 +302,12 @@ export function useChat(conversationId?: string) {
         });
         setError(err instanceof Error ? err : new Error('Failed to send message'));
         setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+        throw err;
       } finally {
         setIsSending(false);
       }
     },
-    [conversationId, isAuthenticated, user, senderType, hasAccess]
+    [conversationId, hasAccess, hasValidSession, isAuthenticated, senderType, user]
   );
 
   useEffect(() => {
@@ -310,7 +334,7 @@ export function useChat(conversationId?: string) {
       try {
         await loadConversation();
         await loadMessages();
-        if (isMounted) {
+        if (isMounted && isAuthenticated && user) {
           await markRead();
         }
       } catch (err) {
@@ -340,19 +364,21 @@ export function useChat(conversationId?: string) {
   ]);
 
   useEffect(() => {
-    if (!conversationId || !conversation || !user || !hasAccess) return;
+    if (!conversationId || !hasAccess) return;
 
     const channel = supabase
       .channel(`chat-${conversationId}`)
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        if (payload?.senderId === user.id) return;
+        const payloadSenderId =
+          typeof payload?.senderId === 'string' ? payload.senderId : null;
+        if (payloadSenderId && typingSenderId && payloadSenderId === typingSenderId) return;
         setIsTyping(true);
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current);
         }
         typingTimeoutRef.current = window.setTimeout(() => {
           setIsTyping(false);
-        }, 1500);
+        }, TYPING_INDICATOR_DURATION_MS);
       })
       .on(
         'postgres_changes',
@@ -426,19 +452,19 @@ export function useChat(conversationId?: string) {
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [conversationId, conversation, user, senderType, markRead, hasAccess]);
+  }, [conversationId, hasAccess, markRead, senderType, typingSenderId]);
 
   const sendTyping = useCallback(() => {
-    if (!channelRef.current || !user || !hasAccess) return;
+    if (!channelRef.current || !hasAccess || !typingSenderId) return;
     const now = Date.now();
-    if (now - typingSentAtRef.current < 1000) return;
+    if (now - typingSentAtRef.current < TYPING_EVENT_THROTTLE_MS) return;
     typingSentAtRef.current = now;
     channelRef.current.send({
       type: 'broadcast',
       event: 'typing',
-      payload: { senderId: user.id },
+      payload: { senderId: typingSenderId },
     });
-  }, [user, hasAccess]);
+  }, [hasAccess, typingSenderId]);
 
   return {
     conversation,

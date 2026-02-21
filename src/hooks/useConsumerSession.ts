@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { safeLocalStorage } from '../lib/safeStorage';
 
 /**
@@ -14,6 +14,7 @@ import { safeLocalStorage } from '../lib/safeStorage';
 const SESSION_KEY = 'uag_session';
 const SESSION_CREATED_KEY = 'uag_session_created';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 天
+const SESSION_SYNC_INTERVAL_MS = 60 * 1000;
 
 /**
  * 獲取 session ID（SSR 安全）
@@ -36,11 +37,36 @@ function getSessionCreatedAt(): number | null {
  * 檢查 session 是否過期
  */
 function isSessionExpired(): boolean {
+  const sessionId = getSessionId();
+  if (!sessionId) return false;
+
   const createdAt = getSessionCreatedAt();
-  if (!createdAt) {
-    // 沒有建立時間記錄，視為未過期（向後相容舊 session）
-    return false;
+  if (!createdAt || Number.isNaN(createdAt) || createdAt <= 0) {
+    // 缺少建立時間時視為過期，避免舊資料永久有效
+    return true;
   }
+  return Date.now() - createdAt > SESSION_TTL_MS;
+}
+
+function readSessionState() {
+  const sessionId = getSessionId();
+  if (!sessionId) {
+    return {
+      sessionId: null,
+      isExpired: false,
+    };
+  }
+
+  return {
+    sessionId,
+    isExpired: isSessionExpired(),
+  };
+}
+
+function shouldResetSessionCreatedAt(createdAtRaw: string | null): boolean {
+  if (!createdAtRaw) return true;
+  const createdAt = Number.parseInt(createdAtRaw, 10);
+  if (Number.isNaN(createdAt) || createdAt <= 0) return true;
   return Date.now() - createdAt > SESSION_TTL_MS;
 }
 
@@ -50,8 +76,9 @@ function isSessionExpired(): boolean {
 function setSession(sessionId: string): void {
   if (typeof window === 'undefined') return;
   safeLocalStorage.setItem(SESSION_KEY, sessionId);
-  // 只有在沒有建立時間時才設置（避免覆蓋）
-  if (!safeLocalStorage.getItem(SESSION_CREATED_KEY)) {
+  const createdAtRaw = safeLocalStorage.getItem(SESSION_CREATED_KEY);
+  // 建立時間缺失/無效/已過期時重設，避免新 session 套用到舊時間戳
+  if (shouldResetSessionCreatedAt(createdAtRaw)) {
     safeLocalStorage.setItem(SESSION_CREATED_KEY, String(Date.now()));
   }
 }
@@ -102,11 +129,38 @@ export function useConsumerSession(): ConsumerSessionResult {
   const [sessionState, setSessionState] = useState<{
     sessionId: string | null;
     isExpired: boolean;
-  }>(() => ({
-    // 初始值：SSR 時為 null，CSR 時讀取 localStorage
-    sessionId: getSessionId(),
-    isExpired: isSessionExpired(),
-  }));
+  }>(() => readSessionState());
+
+  const syncSessionState = useCallback(() => {
+    setSessionState(readSessionState());
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== SESSION_KEY && event.key !== SESSION_CREATED_KEY) {
+        return;
+      }
+      syncSessionState();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncSessionState();
+      }
+    };
+
+    const intervalId = window.setInterval(syncSessionState, SESSION_SYNC_INTERVAL_MS);
+    window.addEventListener('storage', handleStorage);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [syncSessionState]);
 
   // 包裝 setSession 以同步更新 state
   const handleSetSession = useCallback((newSessionId: string) => {

@@ -145,7 +145,7 @@ describe('UAGService', () => {
       // Arrange
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain(mockSessions);
@@ -187,7 +187,7 @@ describe('UAGService', () => {
 
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain(allSessions);
@@ -215,7 +215,7 @@ describe('UAGService', () => {
     it('應處理用戶資料獲取失敗', async () => {
       // Arrange
       const mockFrom = vi.fn((table: string) => {
-        if (table === 'users') {
+        if (table === 'agents') {
           return createMockChain(null, new Error('User not found'));
         }
         return createMockChain([]);
@@ -231,7 +231,7 @@ describe('UAGService', () => {
       // Arrange
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain(null, new Error('Sessions fetch failed'));
@@ -258,7 +258,7 @@ describe('UAGService', () => {
 
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain([{ ...mockSessions[0], session_id: 'session-recent' }]);
@@ -286,7 +286,7 @@ describe('UAGService', () => {
       // Arrange
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain([]);
@@ -314,7 +314,7 @@ describe('UAGService', () => {
       // Arrange
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain(mockSessions);
@@ -343,7 +343,7 @@ describe('UAGService', () => {
       // Arrange
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain(mockSessions);
@@ -377,7 +377,7 @@ describe('UAGService', () => {
       // Arrange
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain(mockSessions);
@@ -632,7 +632,7 @@ describe('UAGService', () => {
       };
 
       const mockFrom = vi.fn((table: string) => {
-        if (table === 'users') {
+        if (table === 'agents') {
           return createMockChain(invalidUserData);
         }
         return createMockChain([]);
@@ -654,7 +654,7 @@ describe('UAGService', () => {
 
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain([invalidSession]);
@@ -727,7 +727,7 @@ describe('UAGService', () => {
       // Arrange - community_posts 失敗但不阻斷整體
       const mockFrom = vi.fn((table: string) => {
         switch (table) {
-          case 'users':
+          case 'agents':
             return createMockChain(mockUserData);
           case 'uag_sessions':
             return createMockChain(mockSessions);

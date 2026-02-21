@@ -101,7 +101,7 @@ describe('useConsumer', () => {
       await result.current.handleCreatePost('New Post');
     });
 
-    expect(defaultFeedData.createPost).toHaveBeenCalledWith('New Post', expect.any(String));
+    expect(defaultFeedData.createPost).toHaveBeenCalledWith('New Post', expect.any(String), undefined);
   });
 
   it('should handle reply as no-op (P6 Phase 1: UI handles toggle)', () => {

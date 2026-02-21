@@ -3,7 +3,7 @@
  * 驗證 P2 優化：useMemo 快取和樣式常數提取
  */
 
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AgentProfileCard } from '../AgentProfileCard';
 
@@ -30,16 +30,16 @@ const mockStats = {
 };
 
 describe('AgentProfileCard Performance', () => {
-  it('應該在相同 props 下重用快取的元素', () => {
+  it('相同 props 重渲染時不應重算格式化分數', () => {
+    const toLocaleStringSpy = vi.spyOn(Number.prototype, 'toLocaleString');
     const { rerender } = render(
       <MemoryRouter>
         <AgentProfileCard profile={mockProfile} stats={mockStats} />
       </MemoryRouter>
     );
 
-    // 第一次渲染
-    const firstRender = document.querySelector('section');
-    expect(firstRender).toBeInTheDocument();
+    const callsAfterFirstRender = toLocaleStringSpy.mock.calls.length;
+    expect(callsAfterFirstRender).toBeGreaterThan(0);
 
     // 使用相同 props 重新渲染
     rerender(
@@ -48,9 +48,9 @@ describe('AgentProfileCard Performance', () => {
       </MemoryRouter>
     );
 
-    // memo 應該阻止重新渲染
-    const secondRender = document.querySelector('section');
-    expect(secondRender).toBe(firstRender);
+    const callsAfterSecondRender = toLocaleStringSpy.mock.calls.length;
+    expect(callsAfterSecondRender).toBe(callsAfterFirstRender);
+    toLocaleStringSpy.mockRestore();
   });
 
   it('應該在 stats 變化時正確更新', () => {
@@ -88,15 +88,17 @@ describe('AgentProfileCard Performance', () => {
   });
 
   it('應該渲染兩個 badge 使用共用樣式', () => {
-    const { container } = render(
+    render(
       <MemoryRouter>
         <AgentProfileCard profile={mockProfile} stats={mockStats} />
       </MemoryRouter>
     );
 
-    // 檢查 badge 樣式類名（共用的部分）
-    const badges = container.querySelectorAll('.border-\\[\\var(--mh-color-fde047)\\]');
-    expect(badges.length).toBeGreaterThanOrEqual(2);
+    const goldBadge = screen.getByText('黃金住戶');
+    const verifiedBadge = screen.getByText('認證房仲');
+
+    expect(goldBadge.className).toContain('border-[var(--mh-color-fde047)]');
+    expect(verifiedBadge.className).toContain('border-[var(--mh-color-fde047)]');
   });
 
   it('應該渲染三個統計標籤使用共用樣式', () => {

@@ -28,6 +28,7 @@ const authState: {
 };
 
 const mockedUseChat = vi.hoisted(() => vi.fn());
+const mockSendMessage = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../hooks/usePageMode', () => ({
   usePageMode: () => modeState.value,
@@ -108,10 +109,11 @@ describe('ChatPage mode routing', () => {
       isSending: false,
       isTyping: false,
       error: null,
-      sendMessage: vi.fn(),
+      sendMessage: mockSendMessage,
       sendTyping: vi.fn(),
       isAgent: false,
     });
+    mockSendMessage.mockReset();
   });
 
   it('visitor 且無 session 時顯示登入提示', () => {
@@ -123,6 +125,18 @@ describe('ChatPage mode routing', () => {
     expect(mockedUseChat).not.toHaveBeenCalled();
   });
 
+  it('visitor 且 session 已過期時仍應顯示登入提示', () => {
+    sessionState.hasValidSession = false;
+    sessionState.isExpired = true;
+    sessionState.sessionId = 'expired-session-1';
+
+    renderChatPage();
+
+    const loginLink = screen.getByRole('link', { name: '立即登入' });
+    expect(loginLink).toBeInTheDocument();
+    expect(mockedUseChat).not.toHaveBeenCalled();
+  });
+
   it('visitor 但有 valid session 時走 live 對話流程', () => {
     sessionState.hasValidSession = true;
     sessionState.sessionId = 'guest-session-1';
@@ -131,6 +145,21 @@ describe('ChatPage mode routing', () => {
 
     expect(mockedUseChat).toHaveBeenCalledWith(TEST_CONVERSATION_ID);
     expect(screen.getByText('Test Client')).toBeInTheDocument();
+  });
+
+  it('visitor 但有 valid session 時可透過 UI 觸發送訊', async () => {
+    sessionState.hasValidSession = true;
+    sessionState.sessionId = 'guest-session-1';
+
+    renderChatPage();
+
+    const input = screen.getByRole('textbox', { name: '輸入訊息' });
+    fireEvent.change(input, { target: { value: 'guest hello' } });
+    fireEvent.click(screen.getByRole('button', { name: /發送/i }));
+
+    await waitFor(() => {
+      expect(mockSendMessage).toHaveBeenCalledWith('guest hello');
+    });
   });
 
   it('demo 模式走本地聊天且不呼叫 useChat', async () => {

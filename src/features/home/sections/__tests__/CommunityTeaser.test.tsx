@@ -4,10 +4,10 @@ import type { ReactNode } from 'react';
 import CommunityTeaser from '../CommunityTeaser';
 import { BACKUP_REVIEWS } from '../../../../constants/data';
 import { ROUTES, RouteUtils } from '../../../../constants/routes';
-import { SEED_COMMUNITY_ID } from '../../../../constants/seed';
 
 const mockNavigate = vi.fn();
 const mockUsePageMode = vi.fn();
+const originalLocationDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
@@ -49,7 +49,14 @@ describe('CommunityTeaser', () => {
     Object.defineProperty(window, 'location', {
       value: { href: '' },
       writable: true,
+      configurable: true,
     });
+  });
+
+  afterEach(() => {
+    if (originalLocationDescriptor) {
+      Object.defineProperty(window, 'location', originalLocationDescriptor);
+    }
   });
 
   it('passes mode-aware query key to useQuery', () => {
@@ -152,7 +159,7 @@ describe('CommunityTeaser', () => {
     );
   });
 
-  it('navigates to seed community wall when clicking seed review', () => {
+  it('navigates to community explore when clicking seed review', () => {
     const mockData = [
       {
         id: 'seed-1',
@@ -178,11 +185,11 @@ describe('CommunityTeaser', () => {
     fireEvent.click(card!);
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID))
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE)
     );
   });
 
-  it('navigates to seed community wall when clicking see more button', () => {
+  it('navigates to community explore when clicking see more button', () => {
     mockUseQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -196,7 +203,7 @@ describe('CommunityTeaser', () => {
 
     expect(ctaButton.tagName).toBe('BUTTON');
     expect(mockNavigate).toHaveBeenCalledWith(
-      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID))
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE)
     );
   });
 });
