@@ -938,6 +938,37 @@ function useRegisterGuide() {
 - [x] `cmd /c npm run test -- src/pages/Chat/__tests__/ChatModeRouting.test.tsx src/pages/Chat/__tests__/useChat.sendMessage.test.tsx src/hooks/__tests__/useConsumerSession.test.ts src/features/home/sections/__tests__/CommunityTeaser.test.tsx src/pages/Feed/__tests__/useConsumer.test.ts src/components/Feed/__tests__/AgentProfileCard.perf.test.tsx src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx src/pages/UAG/services/__tests__/uagService.test.ts src/pages/__tests__/PropertyDetailPage.phase11.test.tsx`（9 files, 74 passed）
 - [x] `cmd /c npm run gate`（typecheck + lint 全通過）
 
+#### 2026-02-21 strict-audit + /zero-slack-coder 收斂（第二輪：23 項缺陷對照）
+
+本輪依外部審核清單 #1~#23 逐條對照落地，結果如下：
+
+- 已修復並驗證：23 / 23
+- 未修復：0
+- 回歸風險：已用關聯測試與 gate 收斂（見下方驗證）
+
+本輪落地重點（對照審核問題編號）：
+
+1. `#1 #2` `src/lib/pageMode.ts`：`exitDemoMode` SSR guard 先行、`storage key=null` 同步路徑納入。
+2. `#3` `src/hooks/usePageMode.ts`：跨分頁 demo->visitor 轉換加入 `window.__DEMO_EXPIRING` 防雙重導頁。
+3. `#4` `src/hooks/useDemoTimer.ts`：`WARN_SKIP_THRESHOLD_MS` 補設計意圖註解，條件改為嚴格 `&&`。
+4. `#5` `src/hooks/useConsumerSession.ts`：`setSession` 對過期/無效 `SESSION_CREATED_KEY` 會重設時間戳。
+5. `#6 #7 #8` `src/pages/Chat/useChat.ts`：`markRead` 僅 authenticated 路徑呼叫；typing 事件支援匿名 session 並排除 self-echo。
+6. `#9 #10` `src/features/home/sections/SmartAsk.tsx`：storage key 常數化、訊息 key 移除 index。
+7. `#11 #12` `src/pages/Community/Explore.tsx`：移除 `undefined` 泛型 callback，hover 文案改集中常數來源。
+8. `#13` `src/components/Header/Header.tsx`：移除 `useNavigate` 依賴，改安全路由跳轉函式避免 Router context 風險。
+9. `#14 #15` `src/hooks/__tests__/useConsumerSession.test.ts`、`src/lib/__tests__/pageMode.test.ts`：SSR 測試改 `vi.stubGlobal('window', undefined)`。
+10. `#16` `src/pages/Chat/__tests__/ChatModeRouting.test.tsx`：補 `visitor + isExpired=true` 關鍵邊界測試。
+11. `#17 #20 #22 #23`：移除 `as never/as any/as unknown as` 斷言，改 typed mock helper（`useChat.sendMessage`/`useConsumer`/`uagService`/`PropertyDetailPage`）。
+12. `#18` `src/features/home/sections/__tests__/CommunityTeaser.test.tsx`：`window.location` mock 增加 `afterEach` 還原。
+13. `#19` `src/components/Feed/__tests__/AgentProfileCard.perf.test.tsx`：改用 `toLocaleString` call-count 驗證，不再依賴 DOM identity。
+14. `#21` `src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx`：移除 `readFileSync + regex CSS`，改語意 class hook 驗證。
+
+本輪驗證（第二輪）：
+
+- [x] `cmd /c npm run check:utf8`
+- [x] `cmd /c npm run gate`（QUALITY GATE PASSED）
+- [x] `cmd /c npm run test -- src/features/home/sections/__tests__/CommunityTeaser.test.tsx src/hooks/__tests__/useConsumerSession.test.ts src/pages/Community/hooks/__tests__/useCommunityList.test.ts src/pages/Feed/__tests__/useConsumer.test.ts src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx src/pages/UAG/services/__tests__/uagService.test.ts src/pages/__tests__/PropertyDetailPage.phase11.test.tsx`（7 files, 73 passed）
+
 ---
 
 ### #24a UAG Mock 對話 Modal

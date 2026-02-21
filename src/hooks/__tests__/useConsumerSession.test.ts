@@ -24,20 +24,12 @@ describe('useConsumerSession', () => {
 
   describe('SSR 安全', () => {
     it('在沒有 window 時應該返回 null', () => {
-      const windowDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'window');
-
       try {
-        Object.defineProperty(globalThis, 'window', {
-          value: undefined,
-          writable: true,
-          configurable: true,
-        });
+        vi.stubGlobal('window', undefined);
         expect(typeof window).toBe('undefined');
         expect(getSessionId()).toBe(null);
       } finally {
-        if (windowDescriptor) {
-          Object.defineProperty(globalThis, 'window', windowDescriptor);
-        }
+        vi.unstubAllGlobals();
       }
     });
   });

@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useDemoExit } from '../useDemoExit';
+import { useDemoExit, EXIT_CONFIRM_TOAST_ID } from '../useDemoExit';
 
 const pageModeMocks = vi.hoisted(() => ({
   exitDemoMode: vi.fn(),
@@ -65,7 +65,7 @@ describe('useDemoExit', () => {
       '確定退出演示模式？',
       '退出後將返回訪客首頁。',
       expect.objectContaining({
-        id: 'demo-exit-confirm',
+        id: EXIT_CONFIRM_TOAST_ID,
         duration: Number.POSITIVE_INFINITY,
       })
     );
@@ -92,7 +92,7 @@ describe('useDemoExit', () => {
       action?.onClick();
     });
 
-    expect(notifyMocks.dismiss).toHaveBeenCalledWith('demo-exit-confirm');
+    expect(notifyMocks.dismiss).toHaveBeenCalledWith(EXIT_CONFIRM_TOAST_ID);
     expect(pageModeMocks.exitDemoMode).toHaveBeenCalledTimes(1);
     expect(pageModeMocks.exitDemoMode).toHaveBeenCalledWith(queryClient);
   });

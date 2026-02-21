@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { exitDemoMode } from '../lib/pageMode';
 import { notify } from '../lib/notify';
 
-const EXIT_CONFIRM_TOAST_ID = 'demo-exit-confirm';
+export const EXIT_CONFIRM_TOAST_ID = 'demo-exit-confirm';
 
 export function useDemoExit() {
   const queryClient = useQueryClient();
@@ -21,6 +21,8 @@ export function useDemoExit() {
   const requestDemoExit = useCallback(() => {
     notify.info('確定退出演示模式？', '退出後將返回訪客首頁。', {
       id: EXIT_CONFIRM_TOAST_ID,
+      // sonner: duration === Infinity 表示不自動關閉，需手動 dismiss
+      // （sonner 內部以 === Infinity 判斷，Number.POSITIVE_INFINITY 等價於 Infinity）
       duration: Number.POSITIVE_INFINITY,
       action: {
         label: '確定退出',

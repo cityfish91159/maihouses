@@ -22,11 +22,16 @@ import { UAGService } from '../uagService';
 // Mocks
 // ============================================================================
 
+const supabaseMocks = vi.hoisted(() => ({
+  from: vi.fn(),
+  rpc: vi.fn(),
+}));
+
 // Mock Supabase
 vi.mock('../../../../lib/supabase', () => ({
   supabase: {
-    from: vi.fn(),
-    rpc: vi.fn(),
+    from: supabaseMocks.from,
+    rpc: supabaseMocks.rpc,
   },
 }));
 
@@ -39,7 +44,6 @@ vi.mock('../../../../lib/logger', () => ({
   },
 }));
 
-import { supabase } from '../../../../lib/supabase';
 import { logger } from '../../../../lib/logger';
 
 // ============================================================================
@@ -165,8 +169,8 @@ describe('UAGService', () => {
         error: null,
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       const result = await UAGService.fetchAppData(mockUserId);
@@ -202,7 +206,7 @@ describe('UAGService', () => {
         }
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act
       const result = await UAGService.fetchAppData(mockUserId);
@@ -221,7 +225,7 @@ describe('UAGService', () => {
         return createMockChain([]);
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act & Assert
       await expect(UAGService.fetchAppData(mockUserId)).rejects.toThrow('User not found');
@@ -240,7 +244,7 @@ describe('UAGService', () => {
         }
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act & Assert
       await expect(UAGService.fetchAppData(mockUserId)).rejects.toThrow('Sessions fetch failed');
@@ -273,7 +277,7 @@ describe('UAGService', () => {
         }
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act
       const result = await UAGService.fetchAppData(mockUserId);
@@ -301,7 +305,7 @@ describe('UAGService', () => {
         }
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act
       const result = await UAGService.fetchAppData(mockUserId);
@@ -329,7 +333,7 @@ describe('UAGService', () => {
         }
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act
       const result = await UAGService.fetchAppData(mockUserId);
@@ -359,8 +363,8 @@ describe('UAGService', () => {
       });
 
       const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
-      vi.mocked(supabase).from = mockFrom as any;
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       const result = await UAGService.fetchAppData(mockUserId);
@@ -394,8 +398,8 @@ describe('UAGService', () => {
       });
 
       const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
-      vi.mocked(supabase).from = mockFrom as any;
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       const result = await UAGService.fetchAppData(mockUserId);
@@ -417,7 +421,7 @@ describe('UAGService', () => {
         data: { unexpected: true },
         error: null,
       });
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       const result = await UAGService.fetchPropertyViewStats(mockUserId);
 
@@ -429,7 +433,7 @@ describe('UAGService', () => {
 
     it('agentId 空白時應 fail fast 並返回空陣列', async () => {
       const mockRpc = vi.fn();
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       const result = await UAGService.fetchPropertyViewStats('   ');
 
@@ -460,7 +464,7 @@ describe('UAGService', () => {
         error: null,
       });
 
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       const result = await UAGService.purchaseLead(mockUserId, leadId, cost, grade);
@@ -485,7 +489,7 @@ describe('UAGService', () => {
         error: { message: 'RPC failed' },
       });
 
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act & Assert
       await expect(UAGService.purchaseLead(mockUserId, leadId, cost, grade)).rejects.toThrow(
@@ -503,7 +507,7 @@ describe('UAGService', () => {
         error: null,
       });
 
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       const result = await UAGService.purchaseLead(mockUserId, leadId, cost, grade);
@@ -523,7 +527,7 @@ describe('UAGService', () => {
         error: null,
       });
 
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       const result = await UAGService.purchaseLead(mockUserId, leadId, cost, grade);
@@ -544,7 +548,7 @@ describe('UAGService', () => {
         error: null,
       });
 
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       await UAGService.purchaseLead(mockUserId, leadId, cost, grade);
@@ -561,7 +565,7 @@ describe('UAGService', () => {
         error: { message: 'Purchase failed' },
       });
 
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       try {
@@ -586,7 +590,7 @@ describe('UAGService', () => {
         error: null,
       });
 
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       const result = await UAGService.purchaseLead(mockUserId, leadId, 0, grade);
@@ -598,7 +602,7 @@ describe('UAGService', () => {
 
     it('cost 為負數時應 fail fast 並避免呼叫 RPC', async () => {
       const mockRpc = vi.fn();
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       const result = await UAGService.purchaseLead(mockUserId, leadId, -1, grade);
 
@@ -609,7 +613,7 @@ describe('UAGService', () => {
 
     it('userId 空字串時應 fail fast 並拋錯', async () => {
       const mockRpc = vi.fn();
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       await expect(UAGService.purchaseLead('', leadId, cost, grade)).rejects.toThrow(
         'userId is required'
@@ -638,7 +642,7 @@ describe('UAGService', () => {
         return createMockChain([]);
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act & Assert
       await expect(UAGService.fetchAppData(mockUserId)).rejects.toThrow();
@@ -663,7 +667,7 @@ describe('UAGService', () => {
         }
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act & Assert
       await expect(UAGService.fetchAppData(mockUserId)).rejects.toThrow();
@@ -680,7 +684,7 @@ describe('UAGService', () => {
         error: null,
       });
 
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       const result = await UAGService.purchaseLead(mockUserId, 'lead-1', 50, 'S');
@@ -702,7 +706,7 @@ describe('UAGService', () => {
         throw new Error('Network timeout');
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act & Assert
       await expect(UAGService.fetchAppData(mockUserId)).rejects.toThrow('Network timeout');
@@ -717,7 +721,7 @@ describe('UAGService', () => {
         });
       });
 
-      vi.mocked(supabase).from = mockFrom as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
 
       // Act & Assert
       await expect(UAGService.fetchAppData(mockUserId)).rejects.toThrow();
@@ -744,8 +748,8 @@ describe('UAGService', () => {
 
       // 修復: RPC 必須返回陣列，不然會導致 latestProperties is not iterable
       const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
-      vi.mocked(supabase).from = mockFrom as any;
-      vi.mocked(supabase).rpc = mockRpc as any;
+      supabaseMocks.from.mockImplementation(mockFrom);
+      supabaseMocks.rpc.mockImplementation(mockRpc);
 
       // Act
       const result = await UAGService.fetchAppData(mockUserId);

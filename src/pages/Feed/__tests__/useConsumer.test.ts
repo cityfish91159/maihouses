@@ -12,8 +12,9 @@ vi.mock('../../../config/env', () => ({
 
 import { useConsumer } from '../useConsumer';
 import { useAuth } from '../../../hooks/useAuth';
-import { useFeedData } from '../../../hooks/useFeedData';
+import { useFeedData, type UseFeedDataReturn } from '../../../hooks/useFeedData';
 import { notify } from '../../../lib/notify';
+import type { User } from '@supabase/supabase-js';
 
 // Mock dependencies
 vi.mock('../../../hooks/useAuth');
@@ -21,28 +22,32 @@ vi.mock('../../../hooks/useFeedData');
 vi.mock('../../../lib/notify');
 
 // Define specific types for mocks
-type MockUseAuth = typeof useAuth;
-type MockUseFeedData = typeof useFeedData;
-type MockNotify = typeof notify;
-
-const mockUseAuth = useAuth as unknown as ReturnType<typeof vi.fn>;
-const mockUseFeedData = useFeedData as unknown as ReturnType<typeof vi.fn>;
-const mockNotify = notify as unknown as MockNotify;
+const mockUseAuth = vi.mocked(useAuth);
+const mockUseFeedData = vi.mocked(useFeedData);
+const mockNotify = vi.mocked(notify);
 
 describe('useConsumer', () => {
-  const defaultAuth = {
-    user: {
-      id: 'user-123',
-      email: 'test@example.com',
-      user_metadata: { name: 'Test User' },
-    },
-    isAuthenticated: true,
-    role: 'resident',
-    loading: false,
+  const defaultUser: User = {
+    id: 'user-123',
+    app_metadata: {},
+    user_metadata: { name: 'Test User' },
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+    email: 'test@example.com',
   };
 
-  const defaultFeedData = {
-    data: { posts: [], totalPosts: 0 },
+  const defaultAuth = {
+    user: defaultUser,
+    session: null,
+    isAuthenticated: true,
+    role: 'resident' as const,
+    loading: false,
+    error: null,
+    signOut: vi.fn().mockResolvedValue(undefined),
+  };
+
+  const defaultFeedData: UseFeedDataReturn = {
+    data: { posts: [], totalPosts: 0, sidebarData: { hotPosts: [], saleItems: [] } },
     useMock: false,
     setUseMock: vi.fn(),
     isLoading: false,
@@ -50,7 +55,10 @@ describe('useConsumer', () => {
     refresh: vi.fn(),
     toggleLike: vi.fn(),
     createPost: vi.fn(),
+    addComment: vi.fn().mockResolvedValue(undefined),
     isLiked: vi.fn(),
+    viewerRole: 'resident',
+    isAuthenticated: true,
   };
 
   beforeEach(() => {

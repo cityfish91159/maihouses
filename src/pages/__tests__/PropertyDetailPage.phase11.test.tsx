@@ -129,6 +129,14 @@ const mockPropertyWithoutLineId = {
   },
 };
 
+type PropertyLookupResult = NonNullable<
+  Awaited<ReturnType<typeof propertyService.getPropertyByPublicId>>
+>;
+
+function mockPropertyLookup(data: PropertyLookupResult) {
+  vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(data);
+}
+
 const renderWithClient = (ui: ReactElement) => {
   const client = new QueryClient({
     defaultOptions: {
@@ -177,7 +185,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
 
   it('點擊加 LINE 後應開啟 LineLinkPanel', async () => {
     const user = userEvent.setup();
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+    mockPropertyLookup(mockPropertyData);
 
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
@@ -198,7 +206,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
 
   it('點擊致電後應開啟 CallConfirmPanel', async () => {
     const user = userEvent.setup();
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+    mockPropertyLookup(mockPropertyData);
 
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
@@ -217,7 +225,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
 
   it('點擊側欄 LINE 按鈕應開啟 LineLinkPanel', async () => {
     const user = userEvent.setup();
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+    mockPropertyLookup(mockPropertyData);
 
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
@@ -236,7 +244,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
 
   it('點擊側欄致電按鈕應開啟 CallConfirmPanel', async () => {
     const user = userEvent.setup();
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+    mockPropertyLookup(mockPropertyData);
 
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
@@ -255,9 +263,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
 
   it('LINE fallback 且勾選安心留痕時，ContactModal 應顯示附帶需求提示', async () => {
     const user = userEvent.setup();
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(
-      mockPropertyWithoutLineId as never
-    );
+    mockPropertyLookup(mockPropertyWithoutLineId);
 
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
@@ -283,7 +289,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
     const openSpy = vi.fn().mockReturnValue({ closed: false });
     vi.spyOn(window, 'open').mockImplementation(openSpy);
 
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+    mockPropertyLookup(mockPropertyData);
 
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
@@ -326,10 +332,10 @@ describe('PropertyDetailPage phase11 interactions', () => {
     const openSpy = vi.fn().mockReturnValue({ closed: false });
     vi.spyOn(window, 'open').mockImplementation(openSpy);
 
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue({
+    mockPropertyLookup({
       ...mockPropertyData,
       trustEnabled: false,
-    } as never);
+    });
 
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
@@ -366,7 +372,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
     mockAuthState.user = null;
     mockAuthState.session = null;
 
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+    mockPropertyLookup(mockPropertyData);
 
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
@@ -401,7 +407,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
   });
 
   it('不應渲染 30秒回電與生成報告浮動按鈕', async () => {
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+    mockPropertyLookup(mockPropertyData);
 
     renderWithClient(
       <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
