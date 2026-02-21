@@ -70,10 +70,7 @@ export const RouteUtils = {
   isActive: (currentPath: string, route: string): boolean => {
     const normalizedCurrentPath = normalizeRoutePath(currentPath);
     const normalizedRoute = normalizeRoutePath(route);
-    return (
-      normalizedCurrentPath === normalizedRoute ||
-      normalizedCurrentPath.startsWith(`${normalizedRoute}/`)
-    );
+    return normalizedCurrentPath === normalizedRoute;
   },
 
   /** 取得帶有查詢參數的路由 */
