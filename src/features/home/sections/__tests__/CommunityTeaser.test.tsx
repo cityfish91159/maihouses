@@ -1,6 +1,7 @@
 ﻿import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import type { ReactNode } from 'react';
+import type { UseQueryOptions } from '@tanstack/react-query';
 import CommunityTeaser from '../CommunityTeaser';
 import { BACKUP_REVIEWS } from '../../../../constants/data';
 import { ROUTES, RouteUtils } from '../../../../constants/routes';
@@ -8,6 +9,12 @@ import { ROUTES, RouteUtils } from '../../../../constants/routes';
 const mockNavigate = vi.fn();
 const mockUsePageMode = vi.fn();
 const originalLocationDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
+type FeaturedReviewsQueryOptions = UseQueryOptions<
+  unknown,
+  Error,
+  unknown,
+  readonly [string, string]
+>;
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
@@ -15,7 +22,7 @@ vi.mock('react-router-dom', () => ({
 
 const mockUseQuery = vi.fn();
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: (options: unknown) => mockUseQuery(options),
+  useQuery: (options: FeaturedReviewsQueryOptions) => mockUseQuery(options),
 }));
 
 vi.mock('../../../../services/communityService', () => ({
@@ -151,8 +158,8 @@ describe('CommunityTeaser', () => {
 
     render(<CommunityTeaser />);
 
-    const card = screen.getByText('Real User: Real content').closest('div[role="button"]');
-    fireEvent.click(card!);
+    const card = screen.getByRole('button', { name: '查看 Real User 的評價詳情' });
+    fireEvent.click(card);
 
     expect(mockNavigate).toHaveBeenCalledWith(
       RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL('comm-123'))
@@ -181,8 +188,8 @@ describe('CommunityTeaser', () => {
 
     render(<CommunityTeaser />);
 
-    const card = screen.getByText('Seed User: Seed content').closest('div[role="button"]');
-    fireEvent.click(card!);
+    const card = screen.getByRole('button', { name: '查看 Seed User 的評價詳情' });
+    fireEvent.click(card);
 
     expect(mockNavigate).toHaveBeenCalledWith(
       RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE)

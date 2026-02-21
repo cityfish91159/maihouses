@@ -181,10 +181,10 @@ export default function App() {
                 }
               />
               <Route
-                path="/community"
+                path="/community/suggested"
                 element={
                   <ErrorBoundary>
-                    <Explore />
+                    <Suggested />
                   </ErrorBoundary>
                 }
               />
@@ -197,10 +197,10 @@ export default function App() {
                 }
               />
               <Route
-                path="/community/suggested"
+                path="/community"
                 element={
                   <ErrorBoundary>
-                    <Suggested />
+                    <Explore />
                   </ErrorBoundary>
                 }
               />

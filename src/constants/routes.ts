@@ -3,6 +3,13 @@
  * 集中管理所有路由路徑，避免硬編碼
  */
 const APP_BASENAME = '/maihouses';
+const communityDetailPath = (communityId: string): string => `/maihouses/community/${communityId}`;
+
+function normalizeRoutePath(path: string): string {
+  const pathWithoutQuery = path.split(/[?#]/)[0] ?? path;
+  const normalized = pathWithoutQuery.replace(/\/+$/, '');
+  return normalized.length > 0 ? normalized : '/';
+}
 
 export const ROUTES = {
   /** 首頁 */
@@ -38,8 +45,11 @@ export const ROUTES = {
   /** 對話入口 */
   CHAT_HOME: '/maihouses/chat',
 
-  /** 社區頁面 - 需要 communityId 參數 */
-  COMMUNITY: (communityId: string): string => `/maihouses/community/${communityId}`,
+  /** 社區詳情頁面 - 需要 communityId 參數 */
+  COMMUNITY_DETAIL: communityDetailPath,
+
+  /** 社區頁面（向後相容別名） - 需要 communityId 參數 */
+  COMMUNITY: communityDetailPath,
 
   /** 社區探索著陸頁 — visitor/無歸屬會員入口 */
   COMMUNITY_EXPLORE: '/maihouses/community',
@@ -58,7 +68,12 @@ export const ROUTES = {
 export const RouteUtils = {
   /** 檢查當前路徑是否匹配指定路由 */
   isActive: (currentPath: string, route: string): boolean => {
-    return currentPath === route || currentPath.startsWith(route);
+    const normalizedCurrentPath = normalizeRoutePath(currentPath);
+    const normalizedRoute = normalizeRoutePath(route);
+    return (
+      normalizedCurrentPath === normalizedRoute ||
+      normalizedCurrentPath.startsWith(`${normalizedRoute}/`)
+    );
   },
 
   /** 取得帶有查詢參數的路由 */

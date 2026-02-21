@@ -87,6 +87,18 @@ describe('useCommunityList', () => {
     expect(result.current.isError).toBe(true);
   });
 
+  it('fetch reject（網路錯誤）時 isError=true', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('network down'));
+
+    const { result } = renderHook(() => useCommunityList(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isError).toBe(true);
+    expect(result.current.data).toBeUndefined();
+  });
+
   it('API 回傳空陣列時 data 為 []', async () => {
     vi.mocked(fetch).mockResolvedValue(
       new Response(
@@ -118,5 +130,58 @@ describe('useCommunityList', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(typeof result.current.refetch).toBe('function');
+  });
+
+  it('API 回傳 success=false 時 isError=true（Zod 驗證失敗）', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({ success: false, error: { code: 'INTERNAL_ERROR', message: '系統錯誤' } }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+
+    const { result } = renderHook(() => useCommunityList(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isError).toBe(true);
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it('API 回傳 item UUID 格式錯誤時 isError=true（Zod schema 驗證失敗）', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: [{ id: 'not-a-valid-uuid', name: '無效社區', address: null, image: null, post_count: 0, review_count: 0 }],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+
+    const { result } = renderHook(() => useCommunityList(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isError).toBe(true);
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it('API 回傳結構完全不符預期時 isError=true（Zod 深層驗證失敗）', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({ message: '完全不符合格式' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+
+    const { result } = renderHook(() => useCommunityList(), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isError).toBe(true);
   });
 });

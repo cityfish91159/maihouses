@@ -15,6 +15,7 @@ import type { MaiMaiMood } from '../../components/MaiMai/types';
 
 import { usePageMode } from '../../hooks/usePageMode';
 import { useMaiMaiA11yProps } from '../../hooks/useMaiMaiA11yProps';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { navigateToAuth, getCurrentPath } from '../../lib/authUtils';
 import { ROUTES, RouteUtils } from '../../constants/routes';
 
@@ -24,19 +25,21 @@ import { CommunityCard } from './components/CommunityCard';
 // ─── 常數 ────────────────────────────────────────────────────────────────────
 
 const CLICK_EASTER_EGG_COUNT = 5;
+const COMMUNITY_COUNT_SPEECH_PREFIX = '\u6709 ';
+const COMMUNITY_COUNT_SPEECH_SUFFIX = ' \u500b\u793e\u5340\uff01';
 
-const MOOD_SPEECH: Record<MaiMaiMood, string> = {
+function buildCommunityCountSpeech(count: number): string {
+  return `${COMMUNITY_COUNT_SPEECH_PREFIX}${count}${COMMUNITY_COUNT_SPEECH_SUFFIX}`;
+}
+
+// 只宣告此頁面實際使用的 mood，避免 idle/peek/shy/sleep/header 空字串造成誤解
+const MOOD_SPEECH: Partial<Record<MaiMaiMood, string>> = {
   wave: '嗨！想找哪個社區的鄰居評價？',
   thinking: '輸入社區名或地址試試看…',
   excited: '找到了嗎？',
   confused: '沒找到耶…換個關鍵字？',
-  happy: '',          // 動態設定（帶數量）
   celebrate: '你找到我的彩蛋了！',
-  idle: '',
-  peek: '',
-  shy: '',
-  sleep: '',
-  header: '',
+  // happy：動態設定（帶數量），不在此預設
 };
 
 // ─── 骨架屏 ──────────────────────────────────────────────────────────────────
@@ -51,7 +54,7 @@ function CardSkeleton() {
 
 interface EmptyStateProps {
   hasQuery: boolean;
-  a11yProps: { animated: boolean; showEffects: boolean };
+  a11yProps: ReturnType<typeof useMaiMaiA11yProps>;
 }
 
 function EmptyState({ hasQuery, a11yProps }: EmptyStateProps) {
@@ -89,9 +92,13 @@ function ErrorState({ onRetry }: ErrorStateProps) {
 // ─── 底部 visitor CTA ─────────────────────────────────────────────────────────
 
 function BottomCTASection() {
-  const handleRegister = useCallback(() => {
+  const navigateToSignup = useCallback(() => {
     navigateToAuth('signup', getCurrentPath());
   }, []);
+
+  const handleRegister = useCallback(() => {
+    navigateToSignup();
+  }, [navigateToSignup]);
 
   return (
     <section className="mx-auto mt-10 max-w-[1120px] px-4 pb-16">
@@ -103,7 +110,7 @@ function BottomCTASection() {
         <button
           type="button"
           onClick={handleRegister}
-          className="shrink-0 rounded-full bg-white px-6 py-2.5 text-sm font-bold text-brand-700 transition-colors hover:bg-brand-50"
+          className="min-h-[44px] shrink-0 rounded-full bg-white px-6 py-2.5 text-sm font-bold text-brand-700 transition-colors hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-700"
         >
           免費註冊
         </button>
@@ -118,13 +125,15 @@ export default function Explore() {
   const mode = usePageMode();
   const navigate = useNavigate();
   const a11yProps = useMaiMaiA11yProps();
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   const { data: communities, isLoading, isError, refetch } = useCommunityList();
 
   const [query, setQuery] = useState('');
+  // mood：無搜尋詞時的基礎心情（hover/focus/彩蛋驅動）
   const [mood, setMood] = useState<MaiMaiMood>('wave');
   const [speechMessages, setSpeechMessages] = useState<string[]>([
-    MOOD_SPEECH.wave,
+    MOOD_SPEECH.wave ?? '',
   ]);
   const clickCountRef = useRef(0);
   const queryRef = useRef('');
@@ -141,7 +150,7 @@ export default function Explore() {
     );
   }, [communities, query]);
 
-  // 更新 mood + speech
+  // 更新基礎 mood + speech（只在無搜尋詞時有效，有搜尋詞時由 effectiveMood 覆蓋）
   const pushMood = useCallback((newMood: MaiMaiMood, text: string) => {
     setMood(newMood);
     if (text) {
@@ -150,7 +159,7 @@ export default function Explore() {
   }, []);
 
   const handleSearchFocus = useCallback(() => {
-    pushMood('thinking', MOOD_SPEECH.thinking);
+    pushMood('thinking', MOOD_SPEECH.thinking ?? '');
   }, [pushMood]);
 
   const handleSearchChange = useCallback(
@@ -159,24 +168,24 @@ export default function Explore() {
       queryRef.current = val;
       setQuery(val);
       if (!val.trim()) {
-        pushMood('wave', MOOD_SPEECH.wave);
+        pushMood('wave', MOOD_SPEECH.wave ?? '');
       } else {
-        pushMood('excited', MOOD_SPEECH.excited);
+        pushMood('excited', MOOD_SPEECH.excited ?? '');
       }
     },
     [pushMood]
   );
 
   const handleCardHover = useCallback(() => {
-    pushMood('excited', '這個社區評價不錯喔！');
+    pushMood('excited', MOOD_SPEECH.excited ?? '');
   }, [pushMood]);
 
   const handleCardLeave = useCallback(() => {
     // 讀 ref 取最新 query，避免依賴 query state 造成卡片全量 re-render
     if (queryRef.current.trim()) {
-      pushMood('excited', MOOD_SPEECH.excited);
+      pushMood('excited', MOOD_SPEECH.excited ?? '');
     } else {
-      pushMood('wave', MOOD_SPEECH.wave);
+      pushMood('wave', MOOD_SPEECH.wave ?? '');
     }
   }, [pushMood]);
 
@@ -184,7 +193,7 @@ export default function Explore() {
     clickCountRef.current += 1;
     if (clickCountRef.current >= CLICK_EASTER_EGG_COUNT) {
       clickCountRef.current = 0;
-      pushMood('celebrate', MOOD_SPEECH.celebrate);
+      pushMood('celebrate', MOOD_SPEECH.celebrate ?? '');
     }
   }, [pushMood]);
 
@@ -195,7 +204,7 @@ export default function Explore() {
     [navigate]
   );
 
-  // 搜尋有結果時，直接 derive effective mood/speech，不需 setState
+  // 有搜尋詞時：搜尋結果決定 mood/speech；無搜尋詞時：回歸基礎 mood/speech
   const effectiveMood: MaiMaiMood = useMemo(() => {
     if (!query.trim()) return mood;
     return filtered.length === 0 ? 'confused' : 'happy';
@@ -203,8 +212,8 @@ export default function Explore() {
 
   const effectiveSpeech: string[] = useMemo(() => {
     if (!query.trim()) return speechMessages;
-    if (filtered.length === 0) return [...speechMessages.slice(-2), MOOD_SPEECH.confused];
-    return [...speechMessages.slice(-2), `有 ${filtered.length} 個社區！`];
+    if (filtered.length === 0) return [...speechMessages.slice(-2), MOOD_SPEECH.confused ?? ''];
+    return [...speechMessages.slice(-2), buildCommunityCountSpeech(filtered.length)];
   }, [query, filtered.length, speechMessages]);
 
   return (
@@ -225,9 +234,8 @@ export default function Explore() {
               >
                 <MaiMaiBase
                   mood={effectiveMood}
-                  size="md"
+                  size={isMobile ? 'sm' : 'md'}
                   {...a11yProps}
-                  className="size-24 md:size-32"
                 />
               </button>
               <MaiMaiSpeech messages={effectiveSpeech} />

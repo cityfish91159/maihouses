@@ -26,6 +26,15 @@ interface ReviewWithNavigation {
   communityId: string | null;
 }
 
+const SKELETON_CARD_KEYS = [
+  'community-skeleton-1',
+  'community-skeleton-2',
+  'community-skeleton-3',
+  'community-skeleton-4',
+  'community-skeleton-5',
+  'community-skeleton-6',
+] as const;
+
 /**
  * 將 API 回傳的 ReviewForUI 轉換為組件需要的格式
  * 保留原始 UUID 用於 React key，displayId 用於顯示
@@ -126,9 +135,9 @@ export default function CommunityTeaser() {
 
         {/* Skeleton Grid */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+          {SKELETON_CARD_KEYS.map((skeletonKey) => (
             <div
-              key={i}
+              key={skeletonKey}
               className="animate-pulse rounded-2xl border border-brand-100 bg-white p-3.5 motion-reduce:animate-none"
             >
               <div className="flex gap-3">
@@ -175,19 +184,11 @@ export default function CommunityTeaser() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {reviews.map((review) => (
-          <div
+          <button
+            type="button"
             key={review.originalId}
             onClick={() => handleReviewClick(review)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                // Fix Lie 7: Support Space key
-                e.preventDefault(); // Prevent scrolling for Space
-                handleReviewClick(review);
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            className="cursor-pointer"
+            className="cursor-pointer text-left"
             aria-label={`查看 ${review.name} 的評價詳情`}
           >
             <ReviewCard
@@ -197,7 +198,7 @@ export default function CommunityTeaser() {
               tags={review.tags}
               content={review.content}
             />
-          </div>
+          </button>
         ))}
       </div>
 

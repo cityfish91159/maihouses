@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Search, LogIn, LogOut, UserPlus, List, Menu, X, ChevronDown, User } from 'lucide-react';
+import { Search, LogIn, LogOut, UserPlus, List, Menu, X, ChevronDown, User, Users } from 'lucide-react';
 import clsx from 'clsx';
 import { Logo } from '../Logo/Logo';
 import { DemoGate } from '../DemoGate/DemoGate';
@@ -29,6 +29,9 @@ export default function Header() {
   const authReturnPath = getCurrentPath();
   const loginUrl = getLoginUrl(authReturnPath);
   const signupUrl = getSignupUrl(authReturnPath);
+  const navigateToCommunityExplore = useCallback(() => {
+    window.location.href = RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE);
+  }, []);
 
   const handleAuthEntryClick = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -152,7 +155,7 @@ export default function Header() {
             <Logo
               showSlogan={true}
               showBadge={true}
-              href=""
+              href={ROUTES.HOME}
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             />
           </DemoGate>
@@ -384,27 +387,17 @@ export default function Header() {
                 <List size={20} strokeWidth={2.5} className="opacity-80" />
                 <span>房地產列表</span>
               </a>
-              <a
-                href={ROUTES.COMMUNITY_EXPLORE}
-                className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
-                onClick={() => setMobileMenuOpen(false)}
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  navigateToCommunityExplore();
+                }}
               >
-                <svg
-                  className="size-5 opacity-80"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
+                <Users size={20} strokeWidth={2.5} className="opacity-80" />
                 <span>社區評價</span>
-              </a>
+              </button>
               <a
                 href={ROUTES.UAG}
                 target="_blank"
@@ -500,27 +493,30 @@ export default function Header() {
 
             {/* Capsules */}
             <div className="relative z-10 mt-6 grid grid-cols-3 gap-2">
-              {['社區評價', '房仲專區', '邁鄰居'].map((text) => {
-                const getHref = (label: string) => {
-                  if (label === '社區評價') return ROUTES.COMMUNITY_EXPLORE;
-                  if (label === '房仲專區') return ROUTES.UAG;
-                  return ROUTES.HOME_CONVERSATIONS;
-                };
-                const href = getHref(text);
-                const target = text === '房仲專區' ? '_blank' : undefined;
-
-                return (
-                  <a
-                    key={text}
-                    href={href}
-                    target={target}
-                    rel={target ? 'noopener noreferrer' : undefined}
-                    className="flex items-center justify-center rounded-2xl border border-brand-700 bg-brand-700 py-3 text-lg font-bold tracking-wide text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md active:scale-[0.98]"
-                  >
-                    {text}
-                  </a>
-                );
-              })}
+              {/* 社區評價 */}
+              <button
+                type="button"
+                onClick={navigateToCommunityExplore}
+                className="flex items-center justify-center rounded-2xl border border-brand-700 bg-brand-700 py-3 text-lg font-bold tracking-wide text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md active:scale-[0.98]"
+              >
+                社區評價
+              </button>
+              {/* 房仲專區：外部連結，保持 <a> + target="_blank" */}
+              <a
+                href={ROUTES.UAG}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center rounded-2xl border border-brand-700 bg-brand-700 py-3 text-lg font-bold tracking-wide text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md active:scale-[0.98]"
+              >
+                房仲專區
+              </a>
+              {/* 邁鄰居：頁內錨點，保持 <a> */}
+              <a
+                href={ROUTES.HOME_CONVERSATIONS}
+                className="flex items-center justify-center rounded-2xl border border-brand-700 bg-brand-700 py-3 text-lg font-bold tracking-wide text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md active:scale-[0.98]"
+              >
+                邁鄰居
+              </a>
             </div>
           </div>
         </div>

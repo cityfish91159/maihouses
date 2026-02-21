@@ -23,12 +23,13 @@ export function CommunityCard({
   const { name, address, review_count, post_count } = community;
 
   return (
+    // min-h-20 = 80px, keeps card height stable when title/address length differs.
     <button
       type="button"
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className="focus-visible:ring-brand-400 w-full cursor-pointer rounded-[18px] border border-[var(--border)] bg-white p-5 text-left transition-all duration-200 hover:scale-[1.01] hover:border-brand-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.99]"
+      className="focus-visible:ring-brand-400 min-h-20 w-full cursor-pointer rounded-[18px] border border-[var(--border)] bg-white p-5 text-left transition duration-200 hover:border-brand-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       aria-label={`查看 ${name} 社區牆`}
     >
       {/* 社區名稱 */}
