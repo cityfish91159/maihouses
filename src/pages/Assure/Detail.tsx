@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { logger } from '../../lib/logger';
 import { safeLocalStorage } from '../../lib/safeStorage';
 import { calcProgressWidthClass } from '../../constants/progress';
+import { usePageMode } from '../../hooks/usePageMode';
 import { StepCard } from '../../components/Assure/StepCard';
 import { StepContent } from '../../components/Assure/StepContent';
 import { ReviewPromptModal } from '../../components/Assure/ReviewPromptModal';
@@ -22,7 +23,6 @@ const MODAL_DELAY_MS = 500;
 
 export default function AssureDetail() {
   const {
-    isMock,
     caseId,
     role,
     setRole,
@@ -34,6 +34,8 @@ export default function AssureDetail() {
     dispatchAction,
     fetchData,
   } = useTrustRoom();
+  const mode = usePageMode();
+  const isDemoMode = mode === 'demo';
 
   // Inputs
   const [inputBuffer, setInputBuffer] = useState('');
@@ -207,8 +209,9 @@ export default function AssureDetail() {
           <p className="mb-6 text-sm text-text-muted">沒有找到你的交易紀錄，想先體驗看看嗎？</p>
 
           <button
+            type="button"
             onClick={startMockMode}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold text-white shadow-brand-sm transition hover:bg-brand-600 hover:shadow-brand-md"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold text-white shadow-brand-sm transition hover:bg-brand-600 hover:shadow-brand-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             <Zap size={18} />
             體驗看看
@@ -238,13 +241,13 @@ export default function AssureDetail() {
 
       {/* Header */}
       <header
-        className={`sticky top-0 z-overlay flex items-center justify-between p-4 text-white shadow-header transition-colors ${isMock ? 'bg-brand-600' : 'bg-brand-700'}`}
+        className={`sticky top-0 z-overlay flex items-center justify-between p-4 text-white shadow-header transition-colors ${isDemoMode ? 'bg-brand-600' : 'bg-brand-700'}`}
       >
         <div>
           <h1 className="flex items-center gap-2 text-lg font-bold tracking-wide">
             <ShieldCheck className="size-5 text-brand-light" />
             安心留痕
-            {isMock && (
+            {isDemoMode && (
               <span className="rounded bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-200">
                 演示模式
               </span>
@@ -263,15 +266,17 @@ export default function AssureDetail() {
         </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={reset}
             aria-label="重置案件"
-            className="flex size-11 items-center justify-center rounded bg-white/10 transition hover:bg-white/20"
+            className="flex size-11 items-center justify-center rounded bg-white/10 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-700"
           >
             <RotateCcw size={14} />
           </button>
           <button
+            type="button"
             onClick={toggleRole}
-            className={`flex min-h-[44px] items-center gap-1 rounded-md border border-white/20 px-3 py-2 text-xs font-bold transition ${role === 'agent' ? 'bg-brand-500' : 'bg-success'}`}
+            className={`flex min-h-[44px] items-center gap-1 rounded-md border border-white/20 px-3 py-2 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-700 ${role === 'agent' ? 'bg-brand-500' : 'bg-success'}`}
           >
             {role === 'agent' ? <Briefcase size={12} /> : <User size={12} />}
             {role === 'agent' ? '房仲' : '買方'}
@@ -355,10 +360,11 @@ export default function AssureDetail() {
               placeholder="輸入備註..."
             />
             <button
+              type="button"
               onClick={addSupplement}
               disabled={!supplementInput.trim()}
               aria-label="送出補充紀錄"
-              className="min-h-[44px] rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-h-[44px] rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               送出
             </button>
