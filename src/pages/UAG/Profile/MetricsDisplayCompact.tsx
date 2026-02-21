@@ -1,14 +1,19 @@
 ﻿import React from 'react';
 import { ShieldCheck, Star, BadgeCheck, Briefcase } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import type { MetricsDisplayProps } from './MetricsDisplay';
+import type { MetricsDisplayProps } from './displayTypes';
 
 type MetricsDisplayCompactProps = Pick<MetricsDisplayProps, 'profile' | 'className'>;
 
-export const MetricsDisplayCompact: React.FC<MetricsDisplayCompactProps> = ({ profile, className }) => {
+export const MetricsDisplayCompact: React.FC<MetricsDisplayCompactProps> = ({
+  profile,
+  className,
+}) => {
   const hasRating = Number.isFinite(profile.serviceRating);
   const ratingText = hasRating ? profile.serviceRating.toFixed(1) : 'N/A';
-  const serviceYearsText = Number.isFinite(profile.serviceYears) ? `${profile.serviceYears} 年` : 'N/A';
+  const serviceYearsText = Number.isFinite(profile.serviceYears)
+    ? `${profile.serviceYears} 年`
+    : 'N/A';
 
   return (
     <div className={cn('grid grid-cols-2 gap-2', className)}>

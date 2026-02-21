@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import styles from './UAG-deai-v2.module.css';
 import type { Lead } from './types/uag.types';
+import { getPercentWidthClass } from '../../lib/percentClass';
 
 // ============================================================
 // Mock Data
@@ -617,10 +618,7 @@ export default function UAGDeAIDemoV2() {
                             </div>
                             <div className={styles['deai-v2-progress-bg']}>
                               <div
-                                className={`${styles['deai-v2-progress-fill']} ${toneClass}`}
-                                style={{
-                                  width: `${percent}%`,
-                                }}
+                                className={`${styles['deai-v2-progress-fill']} ${toneClass} ${getPercentWidthClass(percent)}`}
                               />
                             </div>
                           </td>

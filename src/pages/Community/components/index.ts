@@ -14,3 +14,5 @@ export { LockedOverlay } from './LockedOverlay';
 export { WallSkeleton } from './PostSkeleton';
 export { WallErrorBoundary } from './WallErrorBoundary';
 export { VersionBadge } from './VersionBadge';
+export { CommunityQuickFilters } from './CommunityQuickFilters';
+export { CommunityResultsBar } from './CommunityResultsBar';

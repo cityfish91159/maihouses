@@ -62,7 +62,8 @@ export function useDemoTimer(): void {
     );
 
     // iOS Safari 背景分頁 setTimeout 暫停補償
-    // 回前景時檢查 TTL 是否已過期
+    // 回前景時重新取得最新 remaining，不復用 effect 開頭的快照
+    // （背景期間時間已過，舊快照會誤判為尚未到期）
     const visibilityHandler = () => {
       if (document.visibilityState !== 'visible') return;
       const nowRemaining = getDemoTimeRemaining();

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEMO_STORAGE_KEY,
   DEMO_STORAGE_SYNC_DEBOUNCE_MS,
+  resolvePageMode,
   setDemoMode,
   clearDemoMode,
 } from '../../lib/pageMode';
@@ -101,6 +102,15 @@ describe('usePageMode (#1a)', () => {
 
     expect(clearSpy).toHaveBeenCalledTimes(1);
     expect(window.location.replace).toHaveBeenCalledWith(ROUTES.HOME);
+  });
+
+  it('SSR 環境（window=undefined）resolvePageMode 不應拋錯', () => {
+    try {
+      vi.stubGlobal('window', undefined);
+      expect(() => resolvePageMode(false)).not.toThrow();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('跨分頁同步時若已進入 expiring 狀態，不應重複觸發退出流程', () => {

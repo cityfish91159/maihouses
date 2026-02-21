@@ -258,7 +258,7 @@ export function useChat(conversationId?: string) {
       const trimmed = content.trim();
       if (!trimmed) return;
       const senderId = user?.id ?? null;
-      const tempId = `temp-${crypto.randomUUID?.() ?? Date.now()}`;
+      const tempId = `temp-${crypto.randomUUID()}`;
       const optimisticMessage: Message = {
         id: tempId,
         conversation_id: conversationId,

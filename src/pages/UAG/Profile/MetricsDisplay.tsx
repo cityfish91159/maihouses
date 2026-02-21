@@ -1,15 +1,7 @@
 import React from 'react';
-import type { AgentProfileMe } from '../../../types/agent.types';
 import { MetricsDisplayCard } from './MetricsDisplayCard';
 import { MetricsDisplayCompact } from './MetricsDisplayCompact';
-
-export type MetricsDisplayVariant = 'card' | 'compact' | 'default';
-
-export interface MetricsDisplayProps {
-  profile: AgentProfileMe;
-  variant?: MetricsDisplayVariant;
-  className?: string;
-}
+import type { MetricsDisplayProps, MetricsDisplayVariant } from './displayTypes';
 
 const METRICS_VARIANT_COMPONENTS = {
   card: MetricsDisplayCard,
@@ -21,8 +13,12 @@ function isMetricsDisplayVariant(value: unknown): value is MetricsDisplayVariant
   return value === 'card' || value === 'compact' || value === 'default';
 }
 
-export const MetricsDisplay: React.FC<MetricsDisplayProps> = ({ variant = 'default', ...props }) => {
+export const MetricsDisplay: React.FC<MetricsDisplayProps> = ({
+  variant = 'default',
+  ...props
+}) => {
   const safeVariant = isMetricsDisplayVariant(variant) ? variant : 'default';
-  const VariantComponent = METRICS_VARIANT_COMPONENTS[safeVariant] ?? METRICS_VARIANT_COMPONENTS.default;
+  const VariantComponent =
+    METRICS_VARIANT_COMPONENTS[safeVariant] ?? METRICS_VARIANT_COMPONENTS.default;
   return <VariantComponent {...props} />;
 };

@@ -15,6 +15,7 @@ export type { PageMode };
 export function usePageModeWithAuthState(isAuthenticated: boolean): PageMode {
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
   const queryClient = useQueryClient();
+  // ref 追蹤最新 queryClient，避免 subscribeDemoModeStorageSync callback 閉包捕獲過時實例
   const queryClientRef = useRef(queryClient);
 
   const mode = resolvePageMode(isAuthenticated);

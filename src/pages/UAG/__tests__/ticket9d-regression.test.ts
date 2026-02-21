@@ -1,7 +1,7 @@
 ﻿import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { MOCK_DB, MOCK_IDS } from '../mockData';
+import { MOCK_CONVERSATIONS, MOCK_CONVERSATION_IDS, MOCK_DB, MOCK_IDS } from '../mockData';
 
 const UAG_STYLES_PATH = resolve(process.cwd(), 'src/pages/UAG/UAG.module.css');
 const ACTION_PANEL_PATH = resolve(process.cwd(), 'src/pages/UAG/components/ActionPanel.tsx');
@@ -15,11 +15,21 @@ describe('#9d regression checks', () => {
 
     expect(purchasedLeads.length).toBeGreaterThan(0);
     expect(a6600?.status).toBe('purchased');
-    expect(a6600?.conversation_id).toBe('mock-conv-A6600-001');
+    expect(a6600?.conversation_id).toBe(MOCK_CONVERSATION_IDS.A6600);
 
     for (const lead of purchasedLeads) {
       expect(typeof lead.conversation_id).toBe('string');
       expect((lead.conversation_id ?? '').trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it('U10: purchased lead conversation_id should map to MOCK_CONVERSATIONS keys', () => {
+    const conversationKeys = new Set(Object.keys(MOCK_CONVERSATIONS));
+    const purchasedLeads = MOCK_DB.leads.filter((item) => item.status === 'purchased');
+
+    for (const lead of purchasedLeads) {
+      expect(lead.conversation_id).toBeDefined();
+      expect(conversationKeys.has(lead.conversation_id ?? '')).toBe(true);
     }
   });
 

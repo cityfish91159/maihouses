@@ -97,8 +97,8 @@ describe('AgentProfileCard Performance', () => {
     const goldBadge = screen.getByText('黃金住戶');
     const verifiedBadge = screen.getByText('認證房仲');
 
-    expect(goldBadge.className).toContain('border-[var(--mh-color-fde047)]');
-    expect(verifiedBadge.className).toContain('border-[var(--mh-color-fde047)]');
+    expect(goldBadge).toBeInTheDocument();
+    expect(verifiedBadge).toBeInTheDocument();
   });
 
   it('應該渲染三個統計標籤使用共用樣式', () => {

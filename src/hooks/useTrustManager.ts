@@ -20,6 +20,8 @@ import {
   cancelTrustCase,
 } from '../services/trustManagerService';
 
+const DELETE_CONFIRM_TIMEOUT_MS = 3000;
+
 interface UseTrustManagerOptions {
   defaultCaseName?: string;
   showList?: boolean;
@@ -59,6 +61,15 @@ export function useTrustManager(options: UseTrustManagerOptions = {}): UseTrustM
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingStep, setUpdatingStep] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pendingDeleteId) return;
+    const timer = window.setTimeout(() => {
+      setPendingDeleteId(null);
+    }, DELETE_CONFIRM_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [pendingDeleteId]);
 
   // 載入案件列表
   const loadCases = useCallback(async (agentId: string) => {
@@ -102,9 +113,7 @@ export function useTrustManager(options: UseTrustManagerOptions = {}): UseTrustM
       const profileResult = await getUserProfile(currentUserId);
 
       const agentName =
-        profileResult.data?.full_name ||
-        userResult.data?.email?.split('@')[0] ||
-        '房仲';
+        profileResult.data?.full_name || userResult.data?.email?.split('@')[0] || '房仲';
 
       const result = await createTrustCase({
         caseName: newCaseName.trim(),
@@ -124,7 +133,7 @@ export function useTrustManager(options: UseTrustManagerOptions = {}): UseTrustM
         await navigator.clipboard.writeText(link);
         notify.success('連結已複製', '已複製案件分享連結');
       } catch {
-        // TODO: 替換為自訂 Modal 顯示連結
+        // 剪貼簿失敗時先用通知帶出連結，避免流程中斷
         notify.info('請手動複製連結', link);
       }
 
@@ -141,17 +150,20 @@ export function useTrustManager(options: UseTrustManagerOptions = {}): UseTrustM
   }, [newCaseName, currentUserId, linkPath, loadCases]);
 
   // 複製連結
-  const handleCopyLink = useCallback(async (tx: TrustTransaction) => {
-    const origin = import.meta.env.VITE_APP_URL || window.location.origin;
-    const link = `${origin}${linkPath}?id=${tx.id}&token=${tx.guest_token}`;
-    try {
-      await navigator.clipboard.writeText(link);
-      notify.success('連結已複製', '已複製案件分享連結');
-    } catch {
-      // TODO: 替換為自訂 Modal 顯示連結
-      notify.info('請手動複製連結', link);
-    }
-  }, [linkPath]);
+  const handleCopyLink = useCallback(
+    async (tx: TrustTransaction) => {
+      const origin = import.meta.env.VITE_APP_URL || window.location.origin;
+      const link = `${origin}${linkPath}?id=${tx.id}&token=${tx.guest_token}`;
+      try {
+        await navigator.clipboard.writeText(link);
+        notify.success('連結已複製', '已複製案件分享連結');
+      } catch {
+        // 剪貼簿失敗時先用通知帶出連結，避免流程中斷
+        notify.info('請手動複製連結', link);
+      }
+    },
+    [linkPath]
+  );
 
   // 切換步驟完成狀態
   const handleToggleStepDone = useCallback(
@@ -212,8 +224,13 @@ export function useTrustManager(options: UseTrustManagerOptions = {}): UseTrustM
   // 刪除案件
   const handleDeleteCase = useCallback(
     async (tx: TrustTransaction) => {
-      // TODO: 替換為自訂 ConfirmModal
-      if (!window.confirm(`刪除「${tx.case_name}」？`) || !currentUserId) return;
+      if (!currentUserId) return;
+      if (pendingDeleteId !== tx.id) {
+        setPendingDeleteId(tx.id);
+        notify.warning('再點一次確認刪除', `即將刪除「${tx.case_name}」`);
+        return;
+      }
+      setPendingDeleteId(null);
 
       try {
         const result = await cancelTrustCase(tx.id);
@@ -231,7 +248,7 @@ export function useTrustManager(options: UseTrustManagerOptions = {}): UseTrustM
         notify.error('刪除失敗', errorMessage);
       }
     },
-    [currentUserId, loadCases]
+    [currentUserId, loadCases, pendingDeleteId]
   );
 
   return {

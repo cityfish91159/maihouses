@@ -9,6 +9,7 @@ import { getErrorMessage } from '../../lib/error';
 import { safeSessionStorage } from '../../lib/safeStorage';
 import { createPost } from '../../services/communityService';
 import type { AppData } from './types/uag.types';
+import { createMockConversationId, isMockConversationId } from './uag-config';
 
 import styles from './UAG.module.css';
 import { useUAG } from './hooks/useUAG';
@@ -27,6 +28,7 @@ import { UAGErrorState } from './components/UAGErrorState';
 import RadarCluster from './components/RadarCluster';
 import ActionPanel from './components/ActionPanel';
 import AssetMonitor from './components/AssetMonitor';
+import { MockChatModal } from './components/MockChatModal';
 import ListingFeed from './components/ListingFeed';
 import { UAGEmptyState } from './components/UAGEmptyState';
 import ReportGenerator from './components/ReportGenerator';
@@ -63,29 +65,40 @@ function UAGPageContent() {
 
   // 修9: AssetMonitor 發送訊息狀態
   const [assetMessageLead, setAssetMessageLead] = useState<Lead | null>(null);
-  const [showAssetMessageModal, setShowAssetMessageModal] = useState(false);
+  const [mockChatLead, setMockChatLead] = useState<Lead | null>(null);
+  const [mockChatConversationId, setMockChatConversationId] = useState('');
 
   // 修9: AssetMonitor 回調
   const handleSendMessageFromAsset = useCallback((lead: Lead) => {
     setAssetMessageLead(lead);
-    setShowAssetMessageModal(true);
   }, []);
 
   const handleViewChat = useCallback(
     (conversationId: string) => {
-      // Mock 模式下的聊天室導航處理
-      if (useMock && conversationId.startsWith('mock-conv-')) {
-        notify.info('Mock 模式', '聊天室功能需要切換到 Live 模式');
+      // #24a: demo 模式改為 UAG 內嵌 Mock 對話，不跳轉 Chat 頁面
+      if (useMock && isMockConversationId(conversationId)) {
+        const targetLead =
+          appData?.leads.find((leadItem) => leadItem.conversation_id === conversationId) ?? null;
+        if (!targetLead) {
+          notify.warning('找不到對話資料', '此對話資料尚未同步，請稍後再試。');
+          return;
+        }
+        setMockChatLead(targetLead);
+        setMockChatConversationId(conversationId);
         return;
       }
       navigate(RouteUtils.toNavigatePath(ROUTES.CHAT(conversationId)));
     },
-    [navigate, useMock]
+    [appData?.leads, navigate, useMock]
   );
 
   const handleCloseAssetModal = useCallback(() => {
-    setShowAssetMessageModal(false);
     setAssetMessageLead(null);
+  }, []);
+
+  const handleCloseMockChatModal = useCallback(() => {
+    setMockChatLead(null);
+    setMockChatConversationId('');
   }, []);
 
   const handleDismissWelcome = useCallback(() => {
@@ -110,7 +123,7 @@ function UAGPageContent() {
               // API 模式：使用後端返回的 conversationId
               const finalConversationId =
                 conversationId ||
-                (useMock ? `mock-conv-${assetMessageLead.id}-${Date.now()}` : undefined);
+                (useMock ? createMockConversationId(assetMessageLead.id) : undefined);
 
               return {
                 ...item,
@@ -124,7 +137,6 @@ function UAGPageContent() {
       });
 
       // 關閉 Modal
-      setShowAssetMessageModal(false);
       setAssetMessageLead(null);
     },
     [assetMessageLead, queryClient, uagCacheKey, useMock]
@@ -186,7 +198,7 @@ function UAGPageContent() {
               // API 模式：使用後端返回的 conversationId（如果有的話）
               const finalConversationId =
                 conversationId ||
-                (useMock ? `mock-conv-${purchasedLead.id}-${Date.now()}` : undefined);
+                (useMock ? createMockConversationId(purchasedLead.id) : undefined);
 
               return {
                 ...item,
@@ -343,7 +355,7 @@ function UAGPageContent() {
       {/* 修9: AssetMonitor 發送訊息 Modal */}
       {assetMessageLead && agentId && (
         <SendMessageModal
-          isOpen={showAssetMessageModal}
+          isOpen={Boolean(assetMessageLead)}
           onClose={handleCloseAssetModal}
           onSuccess={handleAssetMessageSuccess}
           lead={assetMessageLead}
@@ -354,6 +366,15 @@ function UAGPageContent() {
             conversationId: assetMessageLead.conversation_id,
           })}
           {...(assetMessageLead.property_id ? { propertyId: assetMessageLead.property_id } : {})}
+        />
+      )}
+
+      {mockChatLead && (
+        <MockChatModal
+          isOpen={Boolean(mockChatLead)}
+          onClose={handleCloseMockChatModal}
+          lead={mockChatLead}
+          conversationId={mockChatConversationId}
         />
       )}
     </div>

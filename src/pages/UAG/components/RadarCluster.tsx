@@ -57,8 +57,8 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
-  const [containerWidth, setContainerWidth] = useState(
-    () => (typeof window !== 'undefined' ? window.innerWidth : 0)
+  const [containerWidth, setContainerWidth] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth : 0
   );
   const [activeGrade, setActiveGrade] = useState<RadarGradeFilter>('all');
   const [clickedLeadId, setClickedLeadId] = useState<string | null>(null);
@@ -215,12 +215,19 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
   );
 
   const hasSelection = selectedLeadId != null;
+  const radarHeightClass =
+    containerHeight === 240
+      ? styles['radar-height-240']
+      : containerHeight === 320
+        ? styles['radar-height-320']
+        : containerHeight === 380
+          ? styles['radar-height-380']
+          : styles['radar-height-450'];
 
   return (
     <section
-      className={`${styles['uag-card']} ${styles['k-span-6']}`}
+      className={`${styles['uag-card']} ${styles['k-span-6']} ${radarHeightClass}`}
       id="radar-section"
-      style={{ minHeight: `${containerHeight}px` }}
     >
       <div className={styles['uag-card-header']}>
         <div>
@@ -247,17 +254,18 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
               aria-pressed={isActive}
               onClick={() => handleGradeFilterChange(grade)}
             >
-              <span className={styles['uag-grade-chip-label']}>{grade === 'all' ? '全部' : grade}</span>
+              <span className={styles['uag-grade-chip-label']}>
+                {grade === 'all' ? '全部' : grade}
+              </span>
               <span className={styles['uag-grade-chip-count']}>{count}</span>
             </button>
           );
         })}
       </div>
       <div
-        className={styles['uag-cluster']}
+        className={`${styles['uag-cluster']} ${radarHeightClass}`}
         id="radar-container"
         data-has-selection={hasSelection ? 'true' : undefined}
-        style={{ minHeight: `${containerHeight}px` }}
         ref={containerRef}
       >
         <div className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-outer']}`}></div>
@@ -268,64 +276,59 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
         </div>
 
         {filteredLeads.length === 0 ? (
-          <div className={styles['uag-cluster-empty-state']}>
-            目前無符合條件的潛客
-          </div>
+          <div className={styles['uag-cluster-empty-state']}>目前無符合條件的潛客</div>
         ) : (
           filteredLeads.map((lead, index) => {
-          const size = sizeMap[lead.grade as keyof typeof sizeMap] ?? 60;
-          const floatDuration = floatDurations[lead.id] ?? '6s';
-          const resolvedPos = resolvedPositions[index];
+            const size = sizeMap[lead.grade as keyof typeof sizeMap] ?? 60;
+            const floatDuration = floatDurations[lead.id] ?? '6s';
+            const resolvedPos = resolvedPositions[index];
 
-          // 若 resolvedPositions 陣列長度不足（containerWidth=0 等邊界情況），
-          // 使用原始百分比位置作為安全回退
-          const x = resolvedPos ? (resolvedPos.x / containerWidth) * 100 : (lead.x ?? 50);
-          const y = resolvedPos ? (resolvedPos.y / containerHeight) * 100 : (lead.y ?? 50);
+            // 若 resolvedPositions 陣列長度不足（containerWidth=0 等邊界情況），
+            // 使用原始百分比位置作為安全回退
+            const x = resolvedPos ? (resolvedPos.x / containerWidth) * 100 : (lead.x ?? 50);
+            const y = resolvedPos ? (resolvedPos.y / containerHeight) * 100 : (lead.y ?? 50);
 
-          const isClicked = selectedLeadId === lead.id;
+            const isClicked = selectedLeadId === lead.id;
 
-          return (
-            <div
-              key={lead.id}
-              className={styles['uag-bubble']}
-              data-grade={lead.grade}
-              data-selected={isClicked ? 'true' : undefined}
-              data-clicked={isClicked ? 'true' : undefined}
-              role="button"
-              aria-label={`${lead.name || lead.id} - ${lead.grade}級`}
-              tabIndex={0}
-              style={
-                {
-                  // --w: bubble size (px), --float: animation duration
-                  '--w': size + 'px',
-                  '--float': floatDuration,
-                  left: x + '%',
-                  top: y + '%',
-                } as React.CSSProperties
-              }
-              onClick={() => {
-                handleLeadSelect(lead);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleLeadSelect(lead);
-                }
-              }}
-            >
+            return (
               <div
-                className={styles['uag-bubble-grade']}
+                key={lead.id}
+                className={styles['uag-bubble']}
+                data-grade={lead.grade}
+                data-selected={isClicked ? 'true' : undefined}
+                data-clicked={isClicked ? 'true' : undefined}
+                role="button"
+                aria-label={`${lead.name || lead.id} - ${lead.grade}級`}
+                tabIndex={0}
+                style={
+                  {
+                    // --w: bubble size (px), --float: animation duration
+                    '--w': size + 'px',
+                    '--float': floatDuration,
+                    left: x + '%',
+                    top: y + '%',
+                  } as React.CSSProperties
+                }
+                onClick={() => {
+                  handleLeadSelect(lead);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleLeadSelect(lead);
+                  }
+                }}
               >
-                {lead.grade}
+                <div className={styles['uag-bubble-grade']}>{lead.grade}</div>
+                <div className={styles['uag-bubble-content']}>
+                  <div className={styles['uag-bubble-id']}>{leadLabels[lead.id] || lead.grade}</div>
+                  <div className={styles['uag-bubble-intent']}>{lead.intent}%</div>
+                </div>
+                <div className={styles['uag-bubble-label']}>{lead.prop}</div>
               </div>
-              <div className={styles['uag-bubble-content']}>
-                <div className={styles['uag-bubble-id']}>{leadLabels[lead.id] || lead.grade}</div>
-                <div className={styles['uag-bubble-intent']}>{lead.intent}%</div>
-              </div>
-              <div className={styles['uag-bubble-label']}>{lead.prop}</div>
-            </div>
-          );
-        }))}
+            );
+          })
+        )}
       </div>
     </section>
   );

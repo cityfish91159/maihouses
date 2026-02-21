@@ -1,4 +1,5 @@
 ﻿import { safeLocalStorage } from './safeStorage';
+import { UAG_LAST_AID_STORAGE_KEY } from '../constants/strings';
 
 /**
  * URL 工具函數 - 統一管理物件連結 (UAG v8.4)
@@ -147,10 +148,10 @@ export function parseTrackingParams(): {
   // 優先從 URL 取，其次從 localStorage（修復 #6: 註記不一致性）
   let agentId = params.get('aid');
   if (!agentId || agentId === 'unknown') {
-    agentId = safeLocalStorage.getItem('uag_last_aid') || 'unknown';
+    agentId = safeLocalStorage.getItem(UAG_LAST_AID_STORAGE_KEY) || 'unknown';
   } else {
     // 記住這個 agent
-    safeLocalStorage.setItem('uag_last_aid', agentId);
+    safeLocalStorage.setItem(UAG_LAST_AID_STORAGE_KEY, agentId);
   }
 
   // [NASA TypeScript Safety] 使用類型守衛取代 as TrafficSource

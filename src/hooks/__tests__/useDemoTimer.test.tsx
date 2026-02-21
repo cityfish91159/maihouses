@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useDemoTimer } from '../useDemoTimer';
+import { useDemoTimer, WARN_SKIP_THRESHOLD_MS } from '../useDemoTimer';
 
 const modeState = {
   value: 'visitor' as 'visitor' | 'demo' | 'live',
@@ -23,6 +23,8 @@ vi.mock('../usePageMode', () => ({
 }));
 
 vi.mock('../../lib/pageMode', () => ({
+  // 與 src/lib/pageMode.ts 的 DEMO_WARN_BEFORE_MS 保持一致（5 分鐘）
+  // vi.mock factory 因 hoisting 無法直接 import 常數，需手動同步
   DEMO_WARN_BEFORE_MS: 5 * 60 * 1000,
   exitDemoMode: pageModeMocks.exitDemoMode,
   getDemoRemainingMinutes: pageModeMocks.getDemoRemainingMinutes,
@@ -91,12 +93,12 @@ describe('useDemoTimer', () => {
     const queryClient = new QueryClient();
 
     modeState.value = 'demo';
-    pageModeMocks.getDemoTimeRemaining.mockReturnValue(10_000); // 10 秒
+    pageModeMocks.getDemoTimeRemaining.mockReturnValue(WARN_SKIP_THRESHOLD_MS - 1); // 剛好低於跳過門檻
 
     renderHook(() => useDemoTimer(), { wrapper: createWrapper(queryClient) });
 
     act(() => {
-      vi.advanceTimersByTime(10_000);
+      vi.advanceTimersByTime(WARN_SKIP_THRESHOLD_MS - 1);
     });
 
     expect(notifyMocks.info).not.toHaveBeenCalled();

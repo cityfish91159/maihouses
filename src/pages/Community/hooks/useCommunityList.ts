@@ -6,7 +6,6 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import { getErrorMessage } from '../../../lib/error';
 import { logger } from '../../../lib/logger';
 
 // ─── 型別 ────────────────────────────────────────────────────────────────────
@@ -57,7 +56,6 @@ async function fetchCommunityList(): Promise<CommunityListItem[]> {
 
     return parsed.data.data;
   } catch (error) {
-    logger.warn('[useCommunityList] 查詢失敗', { error: getErrorMessage(error) });
     throw error;
   }
 }

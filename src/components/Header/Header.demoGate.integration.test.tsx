@@ -85,7 +85,7 @@ describe('Header + DemoGate integration', () => {
 
   it('visitor 點 Logo 一次不應被攔截（保留按鈕預設行為）', () => {
     const { getByRole } = render(<Header />);
-    const logoButton = getByRole('button', { name: /邁房子/ });
+    const logoButton = getByRole('link', { name: /邁房子/ });
 
     const isCanceled = wasCanceledByHandler(logoButton);
 
@@ -95,7 +95,7 @@ describe('Header + DemoGate integration', () => {
 
   it('visitor 點 Logo 五次時，第五次應觸發 DemoGate 攔截', () => {
     const { getByRole } = render(<Header />);
-    const logoButton = getByRole('button', { name: /邁房子/ });
+    const logoButton = getByRole('link', { name: /邁房子/ });
 
     for (let index = 0; index < 4; index += 1) {
       const canceled = wasCanceledByHandler(logoButton);

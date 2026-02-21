@@ -130,7 +130,7 @@ export default function UAGProfilePage() {
   return (
     <div
       style={PROFILE_LAYOUT_STYLE}
-      className="min-h-screen bg-bg-base pb-[calc(var(--page-uag-profile-sticky-save-bar-height)+env(safe-area-inset-bottom))] text-slate-900 lg:pb-0"
+      className="min-h-screen bg-bg-base pb-[calc(var(--page-uag-profile-sticky-save-bar-height)+env(safe-area-inset-bottom,0px))] text-slate-900 lg:pb-0"
     >
       <div className="mx-auto max-w-5xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -204,7 +204,7 @@ export default function UAGProfilePage() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 min-h-[var(--page-uag-profile-sticky-save-bar-height)] border-t border-slate-200 bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-lg lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-50 min-h-[var(--page-uag-profile-sticky-save-bar-height)] border-t border-slate-200 bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom,0px))] pt-3 shadow-lg lg:hidden">
         <button
           type="submit"
           form="profile-form"

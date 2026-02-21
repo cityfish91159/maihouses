@@ -1,12 +1,15 @@
 ﻿import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTrustRoom } from '../../hooks/useTrustRoom';
 import { RotateCcw, User, Briefcase, Zap, ShieldCheck, FilePlus } from 'lucide-react';
 import { getAgentDisplayInfo } from '../../lib/trustPrivacy';
 import { DataCollectionModal } from '../../components/TrustRoom/DataCollectionModal';
-import { toast } from 'sonner';
+import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
 import { safeLocalStorage } from '../../lib/safeStorage';
 import { calcProgressWidthClass } from '../../constants/progress';
+import { UAG_LAST_AID_STORAGE_KEY } from '../../constants/strings';
+import { mockService, realService } from '../../services/trustService';
 import { usePageMode } from '../../hooks/usePageMode';
 import { StepCard } from '../../components/Assure/StepCard';
 import { StepContent } from '../../components/Assure/StepContent';
@@ -20,8 +23,14 @@ const PENDING_ACTION_TIMEOUT_MS = 3000;
 
 /** Modal 延遲顯示時間（毫秒），避免與頁面渲染衝突 */
 const MODAL_DELAY_MS = 500;
+/** Step 2 確認成功後顯示評價提示的延遲（毫秒） */
+const REVIEW_PROMPT_DELAY_MS = 500;
 
 export default function AssureDetail() {
+  const mode = usePageMode();
+  const isDemoMode = mode === 'demo';
+  const navigate = useNavigate();
+
   const {
     caseId,
     role,
@@ -33,9 +42,7 @@ export default function AssureDetail() {
     startMockMode,
     dispatchAction,
     fetchData,
-  } = useTrustRoom();
-  const mode = usePageMode();
-  const isDemoMode = mode === 'demo';
+  } = useTrustRoom({ isDemoMode });
 
   // Inputs
   const [inputBuffer, setInputBuffer] = useState('');
@@ -71,13 +78,13 @@ export default function AssureDetail() {
     if (success && step === '2' && role === 'buyer') {
       setTimeout(() => {
         setShowReviewPrompt(true);
-      }, 500);
+      }, REVIEW_PROMPT_DELAY_MS);
     }
   };
   const pay = () => {
     if (pendingAction !== 'pay') {
       setPendingAction('pay');
-      toast.info('再點一次確認付款');
+      notify.info('再點一次確認付款');
       return;
     }
     setPendingAction(null);
@@ -94,7 +101,7 @@ export default function AssureDetail() {
   const reset = () => {
     if (pendingAction !== 'reset') {
       setPendingAction('reset');
-      toast.warning('再點一次確認重置');
+      notify.warning('再點一次確認重置');
       return;
     }
     setPendingAction(null);
@@ -111,6 +118,21 @@ export default function AssureDetail() {
     const newRole = role === 'agent' ? 'buyer' : 'agent';
     setRole(newRole);
   };
+
+  // visitor mode guard：visitor 不允許進入 /assure 頁面，導回首頁
+  useEffect(() => {
+    if (mode === 'visitor') {
+      notify.info('請先登入或進入演示模式', '安心留痕功能需要登入後才能使用。');
+      navigate('/', { replace: true });
+    }
+  }, [mode, navigate]);
+
+  // demo mode 進入時自動啟動 mock 資料（避免 tx=null 顯示訪客 CTA）
+  useEffect(() => {
+    if (isDemoMode && !tx && !loading) {
+      void startMockMode();
+    }
+  }, [isDemoMode, tx, loading, startMockMode]);
 
   // [Team 3 修復] M4 資料收集 Modal 觸發邏輯
   useEffect(() => {
@@ -145,41 +167,28 @@ export default function AssureDetail() {
   const handleDataSubmit = async (data: { name: string; phone: string; email: string }) => {
     setIsSubmittingData(true);
     try {
-      const res = await fetch('/api/trust/complete-buyer-info', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          caseId: caseId,
-          name: data.name,
-          phone: data.phone,
-          email: data.email || undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({
-          error: '提交失敗',
-        }));
-        throw new Error(errorData.error || '提交失敗');
+      const service = isDemoMode ? mockService : realService;
+      const buyerInfoPayload: { name: string; phone: string; email?: string } = {
+        name: data.name,
+        phone: data.phone,
+      };
+      if (data.email) {
+        buyerInfoPayload.email = data.email;
       }
+      await service.completeBuyerInfo(caseId ?? '', buyerInfoPayload);
 
-      toast.success('資料提交成功！', {
-        description: '資料已安全儲存，感謝你的配合。',
-      });
+      notify.success('資料提交成功！', '資料已安全儲存，感謝你的配合。');
       setHasDismissedDataModal(false);
       setShowDataModal(false);
 
       // 重新載入案件資料（觸發 useTrustRoom 重新 fetch）
-      // Note: useTrustRoom 會自動偵測 tx 變化並重新載入
       await fetchData(caseId || undefined);
     } catch (error) {
       logger.error('handleDataSubmit error', {
         error: error instanceof Error ? error.message : 'Unknown',
         caseId,
       });
-      toast.error('提交失敗', {
-        description: error instanceof Error ? error.message : '請稍後再試',
-      });
+      notify.error('提交失敗', error instanceof Error ? error.message : '請稍後再試');
     } finally {
       setIsSubmittingData(false);
     }
@@ -187,18 +196,16 @@ export default function AssureDetail() {
 
   // [Team 3 修復] M4 Modal 跳過處理
   const handleDataSkip = () => {
-    toast.info('已跳過資料填寫', {
-      description: '你可以稍後在案件頁面中補充資料。',
-    });
+    notify.info('已跳過資料填寫', '你可以稍後在案件頁面中補充資料。');
     setHasDismissedDataModal(true);
     setShowDataModal(false);
   };
 
-  const lastAgentId = safeLocalStorage.getItem('uag_last_aid');
+  const lastAgentId = safeLocalStorage.getItem(UAG_LAST_AID_STORAGE_KEY);
 
   // --- RENDERING ---
 
-  if (!tx && !loading) {
+  if (!tx && !loading && !isDemoMode) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-bg-page p-4 font-sans">
         <div className="w-full max-w-sm rounded-2xl bg-bg-card p-8 text-center shadow-brand-lg">
@@ -304,7 +311,7 @@ export default function AssureDetail() {
       {/* Steps */}
       <div className="space-y-0 p-4">
         {Object.entries(tx.steps).map(([key, step]) => {
-          const stepNum = parseInt(key);
+          const stepNum = parseInt(key, 10);
           const isCurrent = stepNum === tx.currentStep;
           const isPast = stepNum < tx.currentStep;
           const isFuture = stepNum > tx.currentStep;
@@ -392,7 +399,7 @@ export default function AssureDetail() {
           onClose={() => setShowReviewPrompt(false)}
           onSubmitted={() => {
             logger.info('Review submitted successfully from Assure Detail');
-            toast.success('評價已送出！');
+            notify.success('評價已送出！');
           }}
         />
       )}

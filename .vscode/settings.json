@@ -1,11 +1,12 @@
 ﻿{
+  "workbench.statusBar.visible": true,
   "css.validate": true,
   "css.lint.unknownAtRules": "ignore",
   "stylelint.enable": true,
   "github.copilot.chat.terminalChatLocation": "terminal",
   "github.copilot.chat.runCommand.enabled": true,
   "github.copilot.chat.executeCommand.enabled": true,
-  "files.encoding": "utf8bom",
+  "files.encoding": "utf8",
   "files.autoGuessEncoding": false,
   "files.eol": "\n",
 

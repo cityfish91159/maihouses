@@ -59,3 +59,22 @@ export const FEED_TITLE_PREVIEW_LENGTH = 40;
  * 當 grade 不在 GRADE_PROTECTION_HOURS 中時使用
  */
 export const DEFAULT_PROTECTION_HOURS = 336;
+
+/**
+ * Mock 對話 ID 前綴
+ */
+export const MOCK_CONVERSATION_ID_PREFIX = 'mock-conv-';
+
+/**
+ * 判斷是否為 Mock 對話 ID
+ */
+export function isMockConversationId(conversationId: string): boolean {
+  return conversationId.startsWith(MOCK_CONVERSATION_ID_PREFIX);
+}
+
+/**
+ * 建立 Mock 對話 ID
+ */
+export function createMockConversationId(leadId: string, timestamp = Date.now()): string {
+  return `${MOCK_CONVERSATION_ID_PREFIX}${leadId}-${timestamp}`;
+}

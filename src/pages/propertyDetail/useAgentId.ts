@@ -2,6 +2,7 @@
 import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { safeLocalStorage } from '../../lib/safeStorage';
+import { UAG_LAST_AID_STORAGE_KEY } from '../../constants/strings';
 
 function normalizeAgentId(aid: string | null | undefined): string | null {
   if (!aid) return null;
@@ -19,7 +20,7 @@ export function useAgentId(propertyAgentId: string | null | undefined) {
 
   const agentId = useMemo(() => {
     let aid = normalizeAgentId(searchParams.get('aid'));
-    if (!aid) aid = normalizeAgentId(safeLocalStorage.getItem('uag_last_aid'));
+    if (!aid) aid = normalizeAgentId(safeLocalStorage.getItem(UAG_LAST_AID_STORAGE_KEY));
     if (!aid) aid = normalizeAgentId(propertyAgentId);
     return aid || 'unknown';
   }, [searchParams, propertyAgentId]);
@@ -33,7 +34,7 @@ export function useAgentId(propertyAgentId: string | null | undefined) {
 
   useEffect(() => {
     if (agentId && agentId !== 'unknown') {
-      safeLocalStorage.setItem('uag_last_aid', agentId);
+      safeLocalStorage.setItem(UAG_LAST_AID_STORAGE_KEY, agentId);
     }
   }, [agentId]);
 

@@ -117,8 +117,18 @@ describe('pageMode utils (#1a)', () => {
   });
 
   describe('getDemoRemainingMinutes 邊界值', () => {
-    it('remaining = 0 → 回傳 0', () => {
-      expect(getDemoRemainingMinutes(Date.now())).toBe(0);
+    it('無 demo session 時回傳 0', () => {
+      // beforeEach 已清空 localStorage，等同無 session
+      expect(getDemoRemainingMinutes()).toBe(0);
+    });
+
+    it('demo 剛好過期（remaining=0）時回傳 0', () => {
+      const now = new Date('2026-02-12T10:00:00.000Z').getTime();
+      vi.setSystemTime(now);
+      setDemoMode(now);
+      // 模擬過期後
+      vi.setSystemTime(now + DEMO_TTL_MS + 1);
+      expect(getDemoRemainingMinutes()).toBe(0);
     });
 
     it('remaining = 1ms → 回傳 1（無條件進位）', () => {
@@ -184,7 +194,21 @@ describe('pageMode utils (#1a)', () => {
 
   describe('exitDemoMode (#10b)', () => {
     it('clearDemoArtifacts 應先清 cache 再清 demo storage/session', () => {
-      const queryClient = { clear: vi.fn() };
+      const callOrder: string[] = [];
+      const queryClient = {
+        clear: vi.fn(() => {
+          callOrder.push('queryClient.clear');
+        }),
+      };
+      // spy 在記錄順序同時呼叫真實 removeItem，確保 storage 實際被清除
+      const originalRemoveItem = Storage.prototype.removeItem;
+      const removeItemSpy = vi
+        .spyOn(Storage.prototype, 'removeItem')
+        .mockImplementation(function (this: Storage, key: string) {
+          callOrder.push(`removeItem:${key}`);
+          originalRemoveItem.call(this, key);
+        });
+
       setDemoMode();
       localStorage.setItem(DEMO_UAG_MODE_STORAGE_KEY, '1');
       sessionStorage.setItem(FEED_DEMO_ROLE_STORAGE_KEY, 'resident');
@@ -192,6 +216,15 @@ describe('pageMode utils (#1a)', () => {
       clearDemoArtifacts(queryClient);
 
       expect(queryClient.clear).toHaveBeenCalledTimes(1);
+      // 驗證 queryClient.clear 必須先於所有 storage 清除（防止 race condition）
+      expect(callOrder[0]).toBe('queryClient.clear');
+      expect(callOrder.indexOf('queryClient.clear')).toBeLessThan(
+        callOrder.indexOf(`removeItem:${DEMO_STORAGE_KEY}`)
+      );
+
+      removeItemSpy.mockRestore();
+
+      // 驗證 storage 最終狀態
       expect(localStorage.getItem(DEMO_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem(DEMO_UAG_MODE_STORAGE_KEY)).toBeNull();
       expect(sessionStorage.getItem(FEED_DEMO_ROLE_STORAGE_KEY)).toBeNull();

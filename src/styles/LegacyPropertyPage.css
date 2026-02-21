@@ -57,7 +57,7 @@
   color: var(--text-primary);
   background: var(--bg-base);
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .legacy-property-page h1,

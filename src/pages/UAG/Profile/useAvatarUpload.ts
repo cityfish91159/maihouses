@@ -1,7 +1,7 @@
 ﻿import { useEffect, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import { notify } from '../../../lib/notify';
-import type { AvatarUploaderBaseProps } from './AvatarUploader';
+import type { AvatarUploaderBaseProps } from './displayTypes';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE_IN_BYTES = 2 * 1024 * 1024;

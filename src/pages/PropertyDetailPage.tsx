@@ -94,18 +94,28 @@ export const PropertyDetailPage: React.FC = () => {
 
   // === 抽取的 Hooks ===
   const { property, isLoading, loadError, reloadAttempt, handleRetry } = usePropertyData({
-    id, mode, isDemoMode, mockTrustEnabled,
+    id,
+    mode,
+    isDemoMode,
+    mockTrustEnabled,
   });
   const { agentId, leadAgentId } = useAgentId(property.agent?.id);
 
   const isTrustEnabled = property.trustEnabled ?? false;
-  const safeAgentName = useMemo(() => normalizeAgentName(property.agent?.name), [property.agent?.name]);
+  const safeAgentName = useMemo(
+    () => normalizeAgentName(property.agent?.name),
+    [property.agent?.name]
+  );
 
   // 正式版瀏覽基準值：同一物件頁面保持穩定，避免重算導致數字抖動
   const [liveViewerBaseline] = useState(() => Math.floor(Math.random() * 16) + 3);
 
   const socialProof = useSocialProof({
-    publicId: property.publicId, mode, isDemoMode, isTrustEnabled, liveViewerBaseline,
+    publicId: property.publicId,
+    mode,
+    isDemoMode,
+    isTrustEnabled,
+    liveViewerBaseline,
   });
 
   // S 級客戶即時攔截回調
@@ -122,14 +132,27 @@ export const PropertyDetailPage: React.FC = () => {
   }, []);
 
   const propertyTracker = usePropertyTracker(
-    id || '', agentId, extractDistrict(property.address), handleGradeUpgrade
+    id || '',
+    agentId,
+    extractDistrict(property.address),
+    handleGradeUpgrade
   );
 
   const {
-    showContactModal, contactSource, contactDefaultChannel, contactTrustAssureRequested,
-    linePanelOpen, callPanelOpen, linePanelSource, callPanelSource,
-    openContactModal, closeContactModal,
-    openLinePanel, openCallPanel, closeLinePanel, closeCallPanel,
+    showContactModal,
+    contactSource,
+    contactDefaultChannel,
+    contactTrustAssureRequested,
+    linePanelOpen,
+    callPanelOpen,
+    linePanelSource,
+    callPanelSource,
+    openContactModal,
+    closeContactModal,
+    openLinePanel,
+    openCallPanel,
+    closeLinePanel,
+    closeCallPanel,
     isActionLocked,
   } = useContactPanels(propertyTracker.trackLineClick, propertyTracker.trackCallClick);
   const assurePath = RouteUtils.toNavigatePath(ROUTES.ASSURE);
@@ -147,7 +170,9 @@ export const PropertyDetailPage: React.FC = () => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const res = await fetch('/api/trust/auto-create-case', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,7 +193,8 @@ export const PropertyDetailPage: React.FC = () => {
 
       if (!parseResult.success) {
         logger.error('Invalid API response from auto-create-case', {
-          error: parseResult.error.message, response: json,
+          error: parseResult.error.message,
+          response: json,
         });
         notify.error('系統錯誤', '請稍後再試');
         return;
@@ -191,7 +217,9 @@ export const PropertyDetailPage: React.FC = () => {
           : '';
 
       logger.error('handleEnterService error', {
-        error: errorMessage, code: errorCode, propertyId: property.publicId,
+        error: errorMessage,
+        code: errorCode,
+        propertyId: property.publicId,
       });
 
       const { title, description } = classifyTrustServiceError(error);
@@ -227,7 +255,7 @@ export const PropertyDetailPage: React.FC = () => {
     }).slice(0, 4);
   }, [property]);
 
-  // TODO: 實作收藏功能時啟用
+  // 收藏功能尚未啟用，先保留空實作避免觸發未完成流程
   const handleFavoriteToggle = useCallback(() => undefined, []);
 
   const handleLineShare = useCallback(() => {
@@ -276,7 +304,8 @@ export const PropertyDetailPage: React.FC = () => {
       const parseResult = AUTO_CREATE_CASE_RESPONSE_SCHEMA.safeParse(json);
       if (!parseResult.success) {
         logger.error('Invalid API response from auto-create-case-public', {
-          error: parseResult.error.message, response: json,
+          error: parseResult.error.message,
+          response: json,
         });
         throw new Error('AUTO_CREATE_FAILED');
       }
@@ -287,7 +316,8 @@ export const PropertyDetailPage: React.FC = () => {
   );
 
   const { handleTrustAssureAction } = useTrustAssureFlow({
-    isLoggedIn, isTrustEnabled,
+    isLoggedIn,
+    isTrustEnabled,
     propertyPublicId: property.publicId,
     ...(property.id ? { propertyInternalId: property.id } : {}),
     ...(session?.access_token ? { sessionAccessToken: session.access_token } : {}),
@@ -322,7 +352,11 @@ export const PropertyDetailPage: React.FC = () => {
 
   const handleCallFallbackContact = useCallback(
     (trustAssureChecked: boolean) => {
-      openContactModal(callPanelSource, 'phone', shouldAttachContactTrustAssure(trustAssureChecked));
+      openContactModal(
+        callPanelSource,
+        'phone',
+        shouldAttachContactTrustAssure(trustAssureChecked)
+      );
     },
     [callPanelSource, openContactModal, shouldAttachContactTrustAssure]
   );
@@ -331,7 +365,12 @@ export const PropertyDetailPage: React.FC = () => {
     return (
       <ErrorBoundary>
         <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[var(--mh-color-f8fafc)] px-4 text-center">
-          <MaiMaiBase mood="thinking" size="md" animated={!prefersReducedMotion} showEffects={!prefersReducedMotion} />
+          <MaiMaiBase
+            mood="thinking"
+            size="md"
+            animated={!prefersReducedMotion}
+            showEffects={!prefersReducedMotion}
+          />
           <p className="text-base text-slate-600">
             {reloadAttempt > 0 ? LOADING_MESSAGES.retry : LOADING_MESSAGES.initial}
           </p>
@@ -344,7 +383,12 @@ export const PropertyDetailPage: React.FC = () => {
     return (
       <ErrorBoundary>
         <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[var(--mh-color-f8fafc)] px-4 text-center">
-          <MaiMaiBase mood="shy" size="md" animated={!prefersReducedMotion} showEffects={!prefersReducedMotion} />
+          <MaiMaiBase
+            mood="shy"
+            size="md"
+            animated={!prefersReducedMotion}
+            showEffects={!prefersReducedMotion}
+          />
           <p className="text-base text-slate-600">{LOADING_MESSAGES.error}</p>
           <p className="max-w-sm text-sm text-slate-500">{loadError}</p>
           <button
@@ -376,7 +420,12 @@ export const PropertyDetailPage: React.FC = () => {
             >
               <ArrowLeft size={20} className="text-slate-600" />
             </button>
-            <Logo showSlogan={false} showBadge={true} href="/maihouses/" ariaLabel="回到邁房子首頁" />
+            <Logo
+              showSlogan={false}
+              showBadge={true}
+              href="/maihouses/"
+              ariaLabel="回到邁房子首頁"
+            />
           </div>
         </nav>
 
@@ -386,7 +435,10 @@ export const PropertyDetailPage: React.FC = () => {
             <div className="flex items-center gap-2 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 p-3">
               <div className="flex-1">
                 <p className="text-xs font-bold text-amber-900">
-                  <span className="mr-1 inline-block size-3 rounded-full bg-amber-500" aria-hidden="true" />
+                  <span
+                    className="mr-1 inline-block size-3 rounded-full bg-amber-500"
+                    aria-hidden="true"
+                  />
                   開發測試模式 (僅 Mock 頁面)
                 </p>
                 <p className="text-[10px] text-amber-700">切換安心留痕狀態查看不同 UI 效果</p>
@@ -395,7 +447,9 @@ export const PropertyDetailPage: React.FC = () => {
                 onClick={() =>
                   setMockTrustEnabled((prev) => {
                     const newValue = prev === null ? true : !prev;
-                    notify.info(`切換為：${newValue ? '已開啟' : '未開啟'}`, undefined, { duration: 1500 });
+                    notify.info(`切換為：${newValue ? '已開啟' : '未開啟'}`, undefined, {
+                      duration: 1500,
+                    });
                     return newValue;
                   })
                 }

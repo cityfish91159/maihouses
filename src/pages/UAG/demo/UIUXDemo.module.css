@@ -8,7 +8,7 @@
   max-width: 1000px;
   margin: 0 auto;
   background: var(--mh-color-f8fafc);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .demoPageTitle {

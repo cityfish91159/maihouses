@@ -1,6 +1,9 @@
 import { SEED_COMMUNITY_ID } from './seed';
 import { deepFreeze } from '../lib/deepFreeze';
 
+/** UAG 最後服務房仲的 localStorage key */
+export const UAG_LAST_AID_STORAGE_KEY = 'uag_last_aid';
+
 export const STRINGS = deepFreeze({
   FEED: {
     TITLE: '我的社區',

@@ -7,9 +7,11 @@ import type { Transaction, Step, StepData, StepRisks } from '../types/trust';
 // Re-export types for backward compatibility
 export type { Transaction, Step, StepData, StepRisks };
 
-export function useTrustRoom() {
+export function useTrustRoom(options?: { isDemoMode?: boolean }) {
+  const externalIsDemoMode = options?.isDemoMode ?? false;
+
   // States
-  const [isMock, setIsMock] = useState(false);
+  const [isMock, setIsMock] = useState(externalIsDemoMode);
   const [caseId, setCaseId] = useState('');
   const [role, setRole] = useState<'agent' | 'buyer'>('agent');
   const [tx, setTx] = useState<Transaction | null>(null);
@@ -67,6 +69,13 @@ export function useTrustRoom() {
 
     init();
   }, []);
+
+  // 同步外部 isDemoMode 變化（當全域 demo mode 啟動時，自動切換 isMock）
+  useEffect(() => {
+    if (externalIsDemoMode && !isMock) {
+      setIsMock(true);
+    }
+  }, [externalIsDemoMode, isMock]);
 
   // Mock Mode Toggle
   const startMockMode = useCallback(async () => {

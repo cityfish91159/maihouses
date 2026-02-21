@@ -155,12 +155,13 @@ export default function SmartAsk() {
     try {
       const fullResponse = await postLLM([...messages, userMsg], (chunk) => {
         setMessages((prev) => {
-          const newMsgs = [...prev];
-          const last = newMsgs.at(-1);
-          if (last && last.role === 'assistant') {
-            last.content += chunk;
-          }
-          return newMsgs;
+          const lastIdx = prev.length - 1;
+          const last = prev[lastIdx];
+          if (!last || last.role !== 'assistant') return prev;
+          return [
+            ...prev.slice(0, lastIdx),
+            { ...last, content: last.content + chunk },
+          ];
         });
       });
 
@@ -170,12 +171,13 @@ export default function SmartAsk() {
     } catch (e) {
       logger.error('[SmartAsk] Chat error', { error: e });
       setMessages((prev) => {
-        const newMsgs = [...prev];
-        const last = newMsgs.at(-1);
-        if (last) {
-          last.content = '抱歉，我這邊好像有點問題，等一下再試試？';
-        }
-        return newMsgs;
+        const lastIdx = prev.length - 1;
+        const last = prev[lastIdx];
+        if (!last) return prev;
+        return [
+          ...prev.slice(0, lastIdx),
+          { ...last, content: '抱歉，我這邊好像有點問題，等一下再試試？' },
+        ];
       });
       setStatus('error');
     } finally {

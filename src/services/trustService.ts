@@ -96,6 +96,10 @@ export interface TrustService {
   checklist: (caseId: string, token: string, itemId: string, checked: boolean) => Promise<boolean>;
   supplement: (caseId: string, token: string, content: string) => Promise<boolean>;
   reset: (caseId: string, token: string) => Promise<boolean>;
+  completeBuyerInfo: (
+    caseId: string,
+    data: { name: string; phone: string; email?: string }
+  ) => Promise<void>;
 }
 
 // --- MOCK IMPLEMENTATION ---
@@ -191,6 +195,10 @@ const saveMockTx = (tx: Transaction) => {
 export const mockService = {
   fetchData: async (caseId: string) => {
     return getMockTx(caseId);
+  },
+
+  completeBuyerInfo: async (_caseId: string, _data: { name: string; phone: string; email?: string }) => {
+    // Mock: 模擬成功，不真的呼叫 API
   },
 
   dispatch: async (
@@ -381,6 +389,21 @@ export const realService = {
         success: false,
         error: e instanceof Error ? e.message : 'Unknown error',
       };
+    }
+  },
+
+  completeBuyerInfo: async (
+    caseId: string,
+    data: { name: string; phone: string; email?: string }
+  ): Promise<void> => {
+    const res = await fetch('/api/trust/complete-buyer-info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ caseId, ...data }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: '提交失敗' }));
+      throw new Error((errorData as { error?: string }).error ?? '提交失敗');
     }
   },
 };

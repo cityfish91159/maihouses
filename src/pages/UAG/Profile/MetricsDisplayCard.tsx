@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { ShieldCheck, Star, BadgeCheck, Briefcase } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import type { MetricsDisplayProps } from './MetricsDisplay';
+import type { MetricsDisplayProps } from './displayTypes';
 
 type MetricsDisplayCardProps = Pick<MetricsDisplayProps, 'profile' | 'className'>;
 
@@ -9,7 +9,9 @@ export const MetricsDisplayCard: React.FC<MetricsDisplayCardProps> = ({ profile,
   const hasRating = Number.isFinite(profile.serviceRating);
   const ratingText = hasRating ? profile.serviceRating.toFixed(1) : 'N/A';
   const ratingCount = Number.isFinite(profile.reviewCount) ? profile.reviewCount : 0;
-  const serviceYearsText = Number.isFinite(profile.serviceYears) ? `${profile.serviceYears} 年` : 'N/A';
+  const serviceYearsText = Number.isFinite(profile.serviceYears)
+    ? `${profile.serviceYears} 年`
+    : 'N/A';
 
   return (
     <div className={cn('rounded-2xl border border-slate-100 bg-white p-5 shadow-sm', className)}>

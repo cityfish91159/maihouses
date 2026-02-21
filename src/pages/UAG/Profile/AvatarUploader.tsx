@@ -1,20 +1,11 @@
 import React from 'react';
 import { AvatarUploaderCard } from './AvatarUploaderCard';
 import { AvatarUploaderCompact } from './AvatarUploaderCompact';
-
-export type AvatarUploaderVariant = 'card' | 'compact';
-
-export interface AvatarUploaderBaseProps {
-  name: string;
-  avatarUrl: string | null;
-  isUploading: boolean;
-  onUpload: (file: File) => Promise<void>;
-  className?: string;
-}
-
-export interface AvatarUploaderProps extends AvatarUploaderBaseProps {
-  variant?: AvatarUploaderVariant;
-}
+import type {
+  AvatarUploaderBaseProps,
+  AvatarUploaderProps,
+  AvatarUploaderVariant,
+} from './displayTypes';
 
 const AVATAR_VARIANT_COMPONENTS: Record<
   AvatarUploaderVariant,

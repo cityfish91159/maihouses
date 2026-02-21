@@ -75,6 +75,122 @@ export const MOCK_IDS = deepFreeze({
 // Mock 房仲個人資料（用於 UAG Header 房仲資訊條）
 export const MOCK_AGENT_PROFILE: AgentProfile = SHARED_MOCK_AGENT_PROFILE;
 
+export interface MockMessage {
+  readonly id: string;
+  readonly sender_type: 'agent' | 'consumer';
+  readonly content: string;
+  readonly created_at: string;
+}
+
+const toIsoMinutesAgo = (minutesAgo: number): string =>
+  new Date(Date.now() - minutesAgo * 60 * 1000).toISOString();
+
+export const MOCK_AUTO_REPLIES: readonly string[] = deepFreeze([
+  '好的，我了解了，謝謝你的說明！',
+  '這個價位我可以考慮，方便約時間看嗎？',
+  '請問有其他類似的物件可以推薦嗎？',
+  '我跟家人討論一下，晚點再回覆你。',
+  '收到，我會看一下你傳的資料。',
+  '聽起來蠻吸引人的，可以再多了解一下嗎？',
+]);
+
+// 注意：以下 ID 必須與 MOCK_CONVERSATIONS key 與 MOCK_DB.leads[].conversation_id 保持一致
+export const MOCK_CONVERSATION_IDS = deepFreeze({
+  S5566: 'mock-conv-S5566-001',
+  S9011: 'mock-conv-S9011-002',
+  A7788: 'mock-conv-A7788-003',
+  A6600: 'mock-conv-A6600-001',
+} as const);
+
+export const MOCK_CONVERSATIONS: Readonly<Record<string, readonly MockMessage[]>> = deepFreeze({
+  [MOCK_CONVERSATION_IDS.S5566]: [
+    {
+      id: 'msg-s5566-1',
+      sender_type: 'agent',
+      content: '您好！我是專業房仲，看到您對捷運宅很感興趣，想跟您分享一些最新資訊。',
+      created_at: toIsoMinutesAgo(35),
+    },
+    {
+      id: 'msg-s5566-2',
+      sender_type: 'consumer',
+      content: '你好，我確實在看捷運站附近的房子，有什麼推薦嗎？',
+      created_at: toIsoMinutesAgo(33),
+    },
+    {
+      id: 'msg-s5566-3',
+      sender_type: 'agent',
+      content: '目前惠宇上晴 12F 視野戶正好有釋出，採光棟距都很好，要不要安排看屋？',
+      created_at: toIsoMinutesAgo(31),
+    },
+    {
+      id: 'msg-s5566-4',
+      sender_type: 'consumer',
+      content: '聽起來不錯耶，可以約這週末嗎？',
+      created_at: toIsoMinutesAgo(30),
+    },
+  ],
+  [MOCK_CONVERSATION_IDS.S9011]: [
+    {
+      id: 'msg-s9011-1',
+      sender_type: 'agent',
+      content: '您好！注意到您連續三天在看高樓景觀宅，有什麼需要幫忙的嗎？',
+      created_at: toIsoMinutesAgo(48),
+    },
+    {
+      id: 'msg-s9011-2',
+      sender_type: 'consumer',
+      content: '對，我想找 20 樓以上、面東的，預算 2000 萬左右。',
+      created_at: toIsoMinutesAgo(46),
+    },
+    {
+      id: 'msg-s9011-3',
+      sender_type: 'agent',
+      content: '有幾間蠻符合的，我整理好傳給你。',
+      created_at: toIsoMinutesAgo(43),
+    },
+  ],
+  [MOCK_CONVERSATION_IDS.A7788]: [
+    {
+      id: 'msg-a7788-1',
+      sender_type: 'agent',
+      content: '您好！看到您在搜尋學區房，有特別偏好哪個學區嗎？',
+      created_at: toIsoMinutesAgo(57),
+    },
+    {
+      id: 'msg-a7788-2',
+      sender_type: 'consumer',
+      content: '想找惠文國小學區的，最好 3 房有車位。',
+      created_at: toIsoMinutesAgo(55),
+    },
+    {
+      id: 'msg-a7788-3',
+      sender_type: 'agent',
+      content: '瞭解，這邊有兩間很適合您的條件，我傳資料給您參考。',
+      created_at: toIsoMinutesAgo(53),
+    },
+  ],
+  [MOCK_CONVERSATION_IDS.A6600]: [
+    {
+      id: 'msg-a6600-1',
+      sender_type: 'agent',
+      content: '您好！我是負責這區預售案的專員，想跟您聊聊您感興趣的捷運宅。',
+      created_at: toIsoMinutesAgo(70),
+    },
+    {
+      id: 'msg-a6600-2',
+      sender_type: 'consumer',
+      content: '好啊，我想了解付款方式和交屋時間。',
+      created_at: toIsoMinutesAgo(67),
+    },
+    {
+      id: 'msg-a6600-3',
+      sender_type: 'agent',
+      content: '這個案子預計明年 Q3 交屋，付款可以談，我們約時間詳細說明？',
+      created_at: toIsoMinutesAgo(64),
+    },
+  ],
+});
+
 export const MOCK_DB: AppData = deepFreeze({
   user: { points: 1280, quota: { s: 2, a: 3 } },
   leads: [
@@ -94,7 +210,7 @@ export const MOCK_DB: AppData = deepFreeze({
       session_id: MOCK_IDS.sessions.S5566,
       property_id: MOCK_IDS.properties.metro,
       notification_status: 'sent',
-      conversation_id: 'mock-conv-S5566-001',
+      conversation_id: MOCK_CONVERSATION_IDS.S5566,
     },
     {
       id: MOCK_IDS.leads.S9011,
@@ -111,7 +227,7 @@ export const MOCK_DB: AppData = deepFreeze({
       session_id: MOCK_IDS.sessions.S9011,
       property_id: MOCK_IDS.properties.highview,
       notification_status: 'no_line',
-      conversation_id: 'mock-conv-S9011-002',
+      conversation_id: MOCK_CONVERSATION_IDS.S9011,
     },
     {
       id: MOCK_IDS.leads.A7788,
@@ -128,7 +244,7 @@ export const MOCK_DB: AppData = deepFreeze({
       session_id: MOCK_IDS.sessions.A7788,
       property_id: MOCK_IDS.properties.school,
       notification_status: 'unreachable',
-      conversation_id: 'mock-conv-A7788-003',
+      conversation_id: MOCK_CONVERSATION_IDS.A7788,
     },
     {
       id: MOCK_IDS.leads.A6600,
@@ -145,7 +261,7 @@ export const MOCK_DB: AppData = deepFreeze({
       session_id: MOCK_IDS.sessions.A6600,
       property_id: MOCK_IDS.properties.presale,
       notification_status: 'pending',
-      conversation_id: 'mock-conv-A6600-001',
+      conversation_id: MOCK_CONVERSATION_IDS.A6600,
     },
 
     // 雷達：更多可購買的模擬圓點 (status = new)
@@ -158,7 +274,7 @@ export const MOCK_DB: AppData = deepFreeze({
       visit: 7,
       price: 20,
       status: 'new',
-      ai: '🔥 強烈建議立即發送訊息！',
+      ai: '強烈建議立即發送訊息！',
       x: 25,
       y: 25,
       session_id: MOCK_IDS.sessions.B218,

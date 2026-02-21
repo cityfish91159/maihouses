@@ -11,6 +11,12 @@ import RadarCluster, {
 } from './RadarCluster';
 import type { Lead } from '../types/uag.types';
 import * as overlapUtils from '../utils/resolveOverlap';
+import styles from '../UAG.module.css';
+
+const RADAR_HEIGHT_240_CLASS = styles['radar-height-240'] ?? 'radar-height-240';
+const RADAR_HEIGHT_320_CLASS = styles['radar-height-320'] ?? 'radar-height-320';
+const RADAR_HEIGHT_380_CLASS = styles['radar-height-380'] ?? 'radar-height-380';
+const RADAR_HEIGHT_450_CLASS = styles['radar-height-450'] ?? 'radar-height-450';
 
 const UAG_STYLES_PATH = resolve(process.cwd(), 'src/pages/UAG/UAG.module.css');
 const cssContent = readFileSync(UAG_STYLES_PATH, 'utf8');
@@ -74,9 +80,11 @@ function parseBubblePositionPx(
 function getRenderedRadarContainerHeightPx(container: HTMLElement): number {
   const radarContainer = container.querySelector('#radar-container') as HTMLElement | null;
   if (!radarContainer) throw new Error('radar-container not found');
-  const parsed = Number.parseFloat(radarContainer.style.minHeight);
-  if (!Number.isFinite(parsed)) throw new Error('radar-container min-height is invalid');
-  return parsed;
+  if (radarContainer.classList.contains(RADAR_HEIGHT_240_CLASS)) return 240;
+  if (radarContainer.classList.contains(RADAR_HEIGHT_320_CLASS)) return 320;
+  if (radarContainer.classList.contains(RADAR_HEIGHT_380_CLASS)) return 380;
+  if (radarContainer.classList.contains(RADAR_HEIGHT_450_CLASS)) return 450;
+  throw new Error('radar-container min-height class is invalid');
 }
 
 const sampleLeads: Lead[] = [
@@ -189,7 +197,9 @@ describe('RadarCluster integration', () => {
     expect(fBubble).toHaveStyle('--w: 40px');
     expect(containerHeightPx).toBe(380);
 
-    const bubbles = Array.from(container.querySelectorAll('[role="button"][data-grade]')) as HTMLElement[];
+    const bubbles = Array.from(
+      container.querySelectorAll('[role="button"][data-grade]')
+    ) as HTMLElement[];
     expect(bubbles).toHaveLength(12);
 
     const parsed = bubbles.map((bubble) => parseBubblePositionPx(bubble, containerHeightPx));
@@ -280,7 +290,9 @@ describe('RadarCluster integration', () => {
     vi.useFakeTimers();
     const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
 
-    const { container, unmount } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+    const { container, unmount } = render(
+      <RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />
+    );
     const firstBubble = container.querySelector('[aria-label="S Lead 2 - S級"]') as HTMLElement;
     const secondBubble = container.querySelector('[aria-label="S Lead 1 - S級"]') as HTMLElement;
 
@@ -306,7 +318,9 @@ describe('RadarCluster integration', () => {
     expect(bubble).toHaveAttribute('data-clicked', 'true');
 
     // Switch to A grade filter (sampleLeads has 1 A lead)
-    const aGradeChip = container.querySelector('[data-grade="a"][aria-pressed="false"]') as HTMLElement;
+    const aGradeChip = container.querySelector(
+      '[data-grade="a"][aria-pressed="false"]'
+    ) as HTMLElement;
     fireEvent.click(aGradeChip);
 
     // Tooltip should be cleared immediately

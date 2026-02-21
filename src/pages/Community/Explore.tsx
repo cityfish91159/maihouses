@@ -4,7 +4,7 @@
  * 社區探索著陸頁 — visitor 和無歸屬會員的社區瀏覽入口
  * #8d 社區探索頁
  */
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 
@@ -19,17 +19,130 @@ import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { navigateToAuth, getCurrentPath } from '../../lib/authUtils';
 import { ROUTES, RouteUtils } from '../../constants/routes';
 
-import { useCommunityList } from './hooks/useCommunityList';
+import { useCommunityList, type CommunityListItem } from './hooks/useCommunityList';
 import { CommunityCard } from './components/CommunityCard';
+import { CommunityQuickFilters } from './components/CommunityQuickFilters';
+import { CommunityResultsBar } from './components/CommunityResultsBar';
 
 // ─── 常數 ────────────────────────────────────────────────────────────────────
 
 const CLICK_EASTER_EGG_COUNT = 5;
-const COMMUNITY_COUNT_SPEECH_PREFIX = '\u6709 ';
-const COMMUNITY_COUNT_SPEECH_SUFFIX = ' \u500b\u793e\u5340\uff01';
+const COMMUNITY_COUNT_SPEECH_PREFIX = '有 ';
+const COMMUNITY_COUNT_SPEECH_SUFFIX = ' 個社區！';
+const HIGH_REVIEW_THRESHOLD = 10;
+const HIGH_ACTIVITY_THRESHOLD = 20;
+const TRANSIT_KEYWORDS = ['捷運', '車站', '站'] as const;
+const SCHOOL_KEYWORDS = ['學區', '國小', '國中'] as const;
+
+type ExploreFilterKey =
+  | 'all'
+  | 'highReview'
+  | 'highActivity'
+  | 'nearTransit'
+  | 'schoolZone';
+
+type ExploreSortKey = 'recommended' | 'reviewDesc' | 'postDesc' | 'nameAsc';
+
+interface ExploreFilterOption {
+  key: ExploreFilterKey;
+  label: string;
+  predicate: (community: CommunityListItem) => boolean;
+}
+
+interface ExploreSortOption {
+  key: ExploreSortKey;
+  label: string;
+}
 
 function buildCommunityCountSpeech(count: number): string {
   return `${COMMUNITY_COUNT_SPEECH_PREFIX}${count}${COMMUNITY_COUNT_SPEECH_SUFFIX}`;
+}
+
+function includesKeyword(content: string, keywords: readonly string[]): boolean {
+  return keywords.some((keyword) => content.includes(keyword));
+}
+
+function matchByKeywords(community: CommunityListItem, keywords: readonly string[]): boolean {
+  const content = `${community.name} ${community.address ?? ''}`;
+  return includesKeyword(content, keywords);
+}
+
+function compareByName(a: CommunityListItem, b: CommunityListItem): number {
+  return a.name.localeCompare(b.name, 'zh-Hant-TW', {
+    sensitivity: 'base',
+  });
+}
+
+function getRecommendationScore(community: CommunityListItem): number {
+  return community.review_count * 2 + community.post_count;
+}
+
+function getSortComparator(sortBy: ExploreSortKey) {
+  switch (sortBy) {
+    case 'reviewDesc':
+      return (a: CommunityListItem, b: CommunityListItem) => {
+        const diff = b.review_count - a.review_count;
+        return diff !== 0 ? diff : compareByName(a, b);
+      };
+    case 'postDesc':
+      return (a: CommunityListItem, b: CommunityListItem) => {
+        const diff = b.post_count - a.post_count;
+        return diff !== 0 ? diff : compareByName(a, b);
+      };
+    case 'nameAsc':
+      return compareByName;
+    case 'recommended':
+    default:
+      return (a: CommunityListItem, b: CommunityListItem) => {
+        const diff = getRecommendationScore(b) - getRecommendationScore(a);
+        return diff !== 0 ? diff : compareByName(a, b);
+      };
+  }
+}
+
+const DEFAULT_FILTER_OPTION: ExploreFilterOption = {
+  key: 'all',
+  label: '全部',
+  predicate: () => true,
+};
+
+const EXPLORE_FILTER_OPTIONS: readonly ExploreFilterOption[] = [
+  DEFAULT_FILTER_OPTION,
+  {
+    key: 'highReview',
+    label: '評價高',
+    predicate: (community) => community.review_count >= HIGH_REVIEW_THRESHOLD,
+  },
+  {
+    key: 'highActivity',
+    label: '討論熱',
+    predicate: (community) => community.post_count >= HIGH_ACTIVITY_THRESHOLD,
+  },
+  {
+    key: 'nearTransit',
+    label: '捷運生活',
+    predicate: (community) => matchByKeywords(community, TRANSIT_KEYWORDS),
+  },
+  {
+    key: 'schoolZone',
+    label: '學區關注',
+    predicate: (community) => matchByKeywords(community, SCHOOL_KEYWORDS),
+  },
+];
+
+const EXPLORE_SORT_OPTIONS: readonly ExploreSortOption[] = [
+  { key: 'recommended', label: '推薦' },
+  { key: 'reviewDesc', label: '評價數' },
+  { key: 'postDesc', label: '貼文數' },
+  { key: 'nameAsc', label: '名稱 A-Z' },
+];
+
+function isExploreFilterKey(value: string): value is ExploreFilterKey {
+  return EXPLORE_FILTER_OPTIONS.some((option) => option.key === value);
+}
+
+function isExploreSortKey(value: string): value is ExploreSortKey {
+  return EXPLORE_SORT_OPTIONS.some((option) => option.key === value);
 }
 
 // 只宣告此頁面實際使用的 mood，避免 idle/peek/shy/sleep/header 空字串造成誤解
@@ -81,7 +194,7 @@ function ErrorState({ onRetry }: ErrorStateProps) {
       <button
         type="button"
         onClick={onRetry}
-        className="rounded-full bg-brand-700 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-brand-600"
+        className="focus-visible:ring-brand-400 rounded-full bg-brand-700 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       >
         重試
       </button>
@@ -96,10 +209,6 @@ function BottomCTASection() {
     navigateToAuth('signup', getCurrentPath());
   }, []);
 
-  const handleRegister = useCallback(() => {
-    navigateToSignup();
-  }, [navigateToSignup]);
-
   return (
     <section className="mx-auto mt-10 max-w-[1120px] px-4 pb-16">
       <div className="flex flex-col items-center gap-4 rounded-[24px] bg-brand-700 p-8 text-center text-white sm:flex-row sm:justify-between sm:text-left">
@@ -109,7 +218,7 @@ function BottomCTASection() {
         </div>
         <button
           type="button"
-          onClick={handleRegister}
+          onClick={navigateToSignup}
           className="min-h-[44px] shrink-0 rounded-full bg-white px-6 py-2.5 text-sm font-bold text-brand-700 transition-colors hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-700"
         >
           免費註冊
@@ -130,6 +239,9 @@ export default function Explore() {
   const { data: communities, isLoading, isError, refetch } = useCommunityList();
 
   const [query, setQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<ExploreFilterKey>('all');
+  const [sortBy, setSortBy] = useState<ExploreSortKey>('recommended');
+  const deferredQuery = useDeferredValue(query);
   // mood：無搜尋詞時的基礎心情（hover/focus/彩蛋驅動）
   const [mood, setMood] = useState<MaiMaiMood>('wave');
   const [speechMessages, setSpeechMessages] = useState<string[]>([
@@ -138,17 +250,31 @@ export default function Explore() {
   const clickCountRef = useRef(0);
   const queryRef = useRef('');
 
-  // 前端即時過濾
+  const activeFilterOption = useMemo(
+    () =>
+      EXPLORE_FILTER_OPTIONS.find((option) => option.key === activeFilter) ??
+      DEFAULT_FILTER_OPTION,
+    [activeFilter]
+  );
+
+  // 以 deferred query + filter + sort 組成單一路徑，避免輸入時同步大量重算
   const filtered = useMemo(() => {
     if (!communities) return [];
-    const q = query.trim().toLowerCase();
-    if (!q) return communities;
-    return communities.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        (c.address?.toLowerCase().includes(q) ?? false)
+    const q = deferredQuery.trim().toLowerCase();
+    const filteredByQuickFilter = communities.filter((community) =>
+      activeFilterOption.predicate(community)
     );
-  }, [communities, query]);
+
+    const filteredBySearch = q
+      ? filteredByQuickFilter.filter(
+          (community) =>
+            community.name.toLowerCase().includes(q) ||
+            (community.address?.toLowerCase().includes(q) ?? false)
+        )
+      : filteredByQuickFilter;
+
+    return [...filteredBySearch].sort(getSortComparator(sortBy));
+  }, [communities, deferredQuery, activeFilterOption, sortBy]);
 
   // 更新基礎 mood + speech（只在無搜尋詞時有效，有搜尋詞時由 effectiveMood 覆蓋）
   const pushMood = useCallback((newMood: MaiMaiMood, text: string) => {
@@ -175,6 +301,16 @@ export default function Explore() {
     },
     [pushMood]
   );
+
+  const handleFilterChange = useCallback((nextFilter: string) => {
+    if (!isExploreFilterKey(nextFilter)) return;
+    setActiveFilter(nextFilter);
+  }, []);
+
+  const handleSortChange = useCallback((nextSortBy: string) => {
+    if (!isExploreSortKey(nextSortBy)) return;
+    setSortBy(nextSortBy);
+  }, []);
 
   const handleCardHover = useCallback(() => {
     pushMood('excited', MOOD_SPEECH.excited ?? '');
@@ -229,7 +365,7 @@ export default function Explore() {
               <button
                 type="button"
                 onClick={handleMaiMaiClick}
-                className="relative block cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                className="focus-visible:ring-brand-400 relative block cursor-pointer transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-50 active:scale-95"
                 aria-label="點擊邁邁"
               >
                 <MaiMaiBase
@@ -264,11 +400,29 @@ export default function Explore() {
                 aria-label="搜尋社區"
               />
             </div>
+
+            {!isLoading && !isError && (communities?.length ?? 0) > 0 && (
+              <CommunityQuickFilters
+                options={EXPLORE_FILTER_OPTIONS}
+                activeKey={activeFilter}
+                onChange={handleFilterChange}
+              />
+            )}
           </div>
         </section>
 
         {/* ── 卡片 Grid ── */}
         <section className="mx-auto max-w-[1120px] px-4 py-8">
+          {!isLoading && !isError && (
+            <CommunityResultsBar
+              total={filtered.length}
+              activeFilterLabel={activeFilterOption.label}
+              sortBy={sortBy}
+              sortOptions={EXPLORE_SORT_OPTIONS}
+              onSortChange={handleSortChange}
+            />
+          )}
+
           {isLoading && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <CardSkeleton />
@@ -280,7 +434,10 @@ export default function Explore() {
           {isError && <ErrorState onRetry={refetch} />}
 
           {!isLoading && !isError && filtered.length === 0 && (
-            <EmptyState hasQuery={query.trim().length > 0} a11yProps={a11yProps} />
+            <EmptyState
+              hasQuery={query.trim().length > 0 || activeFilter !== 'all'}
+              a11yProps={a11yProps}
+            />
           )}
 
           {!isLoading && !isError && filtered.length > 0 && (

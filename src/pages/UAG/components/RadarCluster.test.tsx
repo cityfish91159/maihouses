@@ -4,6 +4,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import RadarCluster, { seededRandom } from './RadarCluster';
 import type { Lead } from '../types/uag.types';
+import styles from '../UAG.module.css';
+
+const RADAR_HEIGHT_240_CLASS = styles['radar-height-240'] ?? 'radar-height-240';
+const RADAR_HEIGHT_380_CLASS = styles['radar-height-380'] ?? 'radar-height-380';
 
 const UAG_STYLES_PATH = resolve(process.cwd(), 'src/pages/UAG/UAG.module.css');
 const cssContent = readFileSync(UAG_STYLES_PATH, 'utf8');
@@ -155,7 +159,10 @@ describe('RadarCluster', () => {
 
     fireEvent.click(bubble);
     expect(bubble).toHaveAttribute('data-selected', 'true');
-    expect(container.querySelector('#radar-container')).toHaveAttribute('data-has-selection', 'true');
+    expect(container.querySelector('#radar-container')).toHaveAttribute(
+      'data-has-selection',
+      'true'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /S\s*1/ }));
     expect(bubble).not.toBeInTheDocument();
@@ -164,16 +171,18 @@ describe('RadarCluster', () => {
 
   it('uses dynamic mobile container height from visible bubble count', () => {
     setMockContainerWidth(375);
-    const { container, rerender } = render(<RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />);
+    const { container, rerender } = render(
+      <RadarCluster leads={sampleLeads} onSelectLead={vi.fn()} />
+    );
 
     const radarSection = container.querySelector('#radar-section');
     const radarContainer = container.querySelector('#radar-container');
-    expect(radarSection).toHaveStyle('min-height: 240px');
-    expect(radarContainer).toHaveStyle('min-height: 240px');
+    expect(radarSection).toHaveClass(RADAR_HEIGHT_240_CLASS);
+    expect(radarContainer).toHaveClass(RADAR_HEIGHT_240_CLASS);
 
     rerender(<RadarCluster leads={mobileDenseLeads} onSelectLead={vi.fn()} />);
-    expect(radarSection).toHaveStyle('min-height: 380px');
-    expect(radarContainer).toHaveStyle('min-height: 380px');
+    expect(radarSection).toHaveClass(RADAR_HEIGHT_380_CLASS);
+    expect(radarContainer).toHaveClass(RADAR_HEIGHT_380_CLASS);
   });
 
   it('supports click and keyboard selection', () => {
@@ -204,11 +213,15 @@ describe('RadarCluster', () => {
 
   it('keeps focus and reduced-motion safeguards in CSS', () => {
     // Only verifies existence, not numerical correctness (values should match BUBBLE_SIZE constants)
-    expect(cssContent).toMatch(/\.uag-bubble\s*{[\s\S]*?min-width:\s*40px;[\s\S]*?min-height:\s*40px;/);
+    expect(cssContent).toMatch(
+      /\.uag-bubble\s*{[\s\S]*?min-width:\s*40px;[\s\S]*?min-height:\s*40px;/
+    );
     expect(cssContent).toContain('.uag-bubble:focus-visible');
     expect(cssContent).toContain('outline: 3px solid var(--uag-brand);');
     expect(cssContent).toContain(".uag-bubble[data-selected='true']");
-    expect(cssContent).toContain(".uag-cluster[data-has-selection='true'] .uag-bubble:not([data-selected='true'])");
+    expect(cssContent).toContain(
+      ".uag-cluster[data-has-selection='true'] .uag-bubble:not([data-selected='true'])"
+    );
     expect(cssContent).toContain('.uag-grade-chip');
     expect(cssContent).toContain('.uag-bubble::after');
     expect(cssContent).toContain('min-width: 48px');

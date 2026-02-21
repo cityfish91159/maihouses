@@ -1,7 +1,7 @@
-import React from 'react';
+﻿import React from 'react';
 import { Camera } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import type { AvatarUploaderBaseProps } from './AvatarUploader';
+import type { AvatarUploaderBaseProps } from './displayTypes';
 import { useAvatarUpload } from './useAvatarUpload';
 
 export const AvatarUploaderCard: React.FC<AvatarUploaderBaseProps> = ({
@@ -14,7 +14,9 @@ export const AvatarUploaderCard: React.FC<AvatarUploaderBaseProps> = ({
   const { inputRef, handleFileChange } = useAvatarUpload({ avatarUrl, onUpload });
 
   return (
-    <div className={cn('rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5', className)}>
+    <div
+      className={cn('rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5', className)}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-slate-900">頭像</p>

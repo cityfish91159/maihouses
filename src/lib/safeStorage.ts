@@ -63,6 +63,8 @@ function getStorage(type: 'localStorage' | 'sessionStorage'): SafeStorage {
   }
 }
 
+// 模組載入時即 eager evaluate（CSR-only 架構，無 SSR/RSC）。
+// SSR 環境 typeof window === 'undefined'，會回傳 noopStorage 且後續不重算——屬已知設計取捨。
 export const safeLocalStorage = getStorage('localStorage');
 export const safeSessionStorage = getStorage('sessionStorage');
 

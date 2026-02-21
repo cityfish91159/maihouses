@@ -367,7 +367,7 @@ function gradeToPrice(grade: string): number {
  */
 function generateAiSuggestion(grade: string, visitCount: number): string {
   if (grade === 'S') {
-    return visitCount >= 3 ? '🔥 強烈建議立即發送訊息！' : '高意願客戶，請優先處理';
+    return visitCount >= 3 ? '強烈建議立即發送訊息！' : '高意願客戶，請優先處理';
   }
   if (grade === 'A') {
     return visitCount >= 2 ? '深度瀏覽用戶，建議發送邀約' : 'A 級客戶，適合推薦物件';

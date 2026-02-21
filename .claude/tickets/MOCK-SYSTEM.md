@@ -62,7 +62,7 @@
 ### P2 — 跨頁面三模式 + 清理
 
 - [x] **#24** Chat 三模式支持（`Chat/index.tsx`）✅ 2026-02-18（strict-audit 收斂：2026-02-21）
-- [ ] **#24a** UAG Mock 對話 Modal — demo 模式「查看對話」內嵌對話框（1 新組件 + 3 修改）
+- [x] **#24a** UAG Mock 對話 Modal — demo 模式「查看對話」內嵌對話框（1 新組件 + 3 修改）✅ 2026-02-21
 - [ ] **#25** Assure 三模式支持 — `isMock` → usePageMode（`Assure/Detail.tsx`）
 - [ ] **#26** 登出清理 — `cleanupAuthState()` 統一函數 + onAuthStateChange（2 檔）
 - [x] **#27** UAG 新房仲空狀態 + MaiMai 引導（1 新組件）✅ 2026-02-17
@@ -991,6 +991,21 @@ Chat 頁面（`Chat/index.tsx:64`）Guard 4 要求 `isAuthenticated || hasValidS
 | 修改 | `src/pages/UAG/UAG.module.css` | 新增 Mock 對話演示提示樣式 |
 
 **不動的東西**：`Chat/index.tsx`（留給 #24）、`SendMessageModal.tsx`（mock 邏輯已正常）、`AssetMonitor.tsx`（按鈕回調已正確，問題在父層 handler）
+
+**已完成** 2026-02-21（`/ui-ux-pro-max` + strict-audit 規範）
+
+**實作落地檔案**：
+- 新增：`src/pages/UAG/components/MockChatModal.tsx`
+- 新增：`src/pages/UAG/components/__tests__/MockChatModal.test.tsx`
+- 修改：`src/pages/UAG/mockData.ts`（`MockMessage` / `MOCK_CONVERSATIONS` / `MOCK_AUTO_REPLIES`）
+- 修改：`src/pages/UAG/index.tsx`（`handleViewChat` 分流：demo + `mock-conv-*` 開 modal）
+- 修改：`src/pages/UAG/UAG.module.css`（`.mock-chat-*` 樣式群組、RWD、focus-visible、reduced-motion）
+- 修改：`src/pages/UAG/index.test.tsx`（整合測試：開啟/關閉 modal、不跳 chat 路由）
+
+**本輪驗證**：
+- [x] `cmd /c npm run check:utf8`
+- [x] `cmd /c npm run test -- src/pages/UAG/components/__tests__/MockChatModal.test.tsx src/pages/UAG/index.test.tsx src/pages/UAG/components/__tests__/AssetMonitor-buttons.test.tsx`（3 files, 33 passed）
+- [x] `cmd /c npm run gate`（QUALITY GATE PASSED）
 
 ---
 

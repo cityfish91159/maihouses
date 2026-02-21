@@ -1,7 +1,7 @@
-import React from 'react';
+﻿import React from 'react';
 import { Camera } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import type { AvatarUploaderBaseProps } from './AvatarUploader';
+import type { AvatarUploaderBaseProps } from './displayTypes';
 import { useAvatarUpload } from './useAvatarUpload';
 
 export const AvatarUploaderCompact: React.FC<AvatarUploaderBaseProps> = ({
