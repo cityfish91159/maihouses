@@ -159,6 +159,22 @@ describe('authUtils (#15)', () => {
   });
 
   describe('cleanupAuthState (#26)', () => {
+    it('should include required cleanup keys in AUTH_CLEANUP_KEYS contract', () => {
+      const requiredAuthCleanupKeys = [
+        'mh.auth.pending_role',
+        'uag_session',
+        'uag_session_created',
+        'uag_last_aid',
+        'mai-uag-mode',
+        'mai-demo-verified',
+        'maimai-mood-v1',
+      ];
+
+      requiredAuthCleanupKeys.forEach((requiredKey) => {
+        expect(AUTH_CLEANUP_KEYS).toContain(requiredKey);
+      });
+    });
+
     it('should clear query cache and all auth cleanup keys', () => {
       const queryClient = { clear: vi.fn() };
 

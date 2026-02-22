@@ -1334,29 +1334,33 @@ const handleCloseMockChat = useCallback(() => {
 
 ---
 
-### #26 登出完整清理
+### #26 ✅ 登出完整清理
 
 **目標**：統一 `cleanupAuthState()` + `onAuthStateChange` 防禦
 
 **依賴**：#12、#10b
 
-**新增位置**：`src/lib/authUtils.ts`（與 #15 同檔）
+**已完成** 2026-02-22
 
-```typescript
-const AUTH_CLEANUP_KEYS = [
-  'mh.auth.pending_role', 'uag_session', 'uag_session_created',
-  'uag_last_aid', 'mai-uag-mode', 'mai-demo-verified', 'maimai-mood-v1',
-] as const
+**修改檔案**：
+- `src/lib/authUtils.ts`
+- `src/App.tsx`
+- `src/lib/__tests__/authUtils.test.ts`
+- `src/App.auth-state.test.tsx`
 
-function cleanupAuthState(queryClient: QueryClient) {
-  queryClient.clear()
-  AUTH_CLEANUP_KEYS.forEach(k => { try { localStorage.removeItem(k) } catch {} })
-  try { sessionStorage.removeItem('feed-demo-role') } catch {}
-}
-```
+**核心變更**：
+- `src/lib/authUtils.ts` 新增 `AUTH_CLEANUP_KEYS` 與 `cleanupAuthState(queryClient)`，統一清理 auth/demo/UAG 殘留。
+- `cleanupAuthState` 會清理 `mh.auth.pending_role`、`uag_session`、`uag_session_created`、`uag_last_aid`、`mai-uag-mode`、`mai-demo-verified`、`maimai-mood-v1`，並同步清理 session key `feed-demo-role`。
+- `src/App.tsx` 新增 `supabase.auth.onAuthStateChange` 單一監聽：`SIGNED_IN` 執行 `queryClient.clear()`；`SIGNED_OUT` 執行 `cleanupAuthState(queryClient)`。
+- 登出清理鏈路改為全域事件驅動，GlobalHeader/UAG 等呼叫 `signOut()` 的入口可共用同一套清理行為。
+- `src/lib/__tests__/authUtils.test.ts` 補 #26 測試：驗證 query cache 清理、所有 cleanup keys 清除、以及非瀏覽器環境 fail-safe。
+- `src/App.auth-state.test.tsx` 新增 auth-state bridge 測試：`SIGNED_IN` 清 cache、`SIGNED_OUT` 清 auth state、unmount 解除訂閱。
 
-GlobalHeader + UAG 的 `handleSignOut` 統一呼叫。
-App.tsx 加 `onAuthStateChange('SIGNED_IN')` → `queryClient.clear()`。
+**驗證摘要**：
+- [x] `npm run check:utf8`
+- [x] `cmd /c npm run test -- src/lib/__tests__/authUtils.test.ts`（30 passed）
+- [x] `cmd /c npm run test -- src/App.auth-state.test.tsx src/lib/__tests__/authUtils.test.ts`（2 files, 33 passed）
+- [ ] `cmd /c npm run gate`（本輪失敗：既有 `src/pages/Community/hooks/useQAFocusTrap.ts` TS2540，非本次 #26 變更範圍）
 
 ---
 
@@ -3028,6 +3032,6 @@ rg "SEED_COMMUNITY_ID" src/components/Header/            # #12b 後僅存於 dem
 | 1B | Toast duration Infinity、`queryClient.clear()` vs `invalidateQueries`、Logo 連按 5 次（1500ms） | ✅ 已解決 |
 | 2 | `SEED_COMMUNITY_ID` 已定值 ✅、SEO 勿索引 seed（#9 加 robots）、`Object.freeze` ✅ | 部分完成 |
 | 3 | `getSafeReturnPath()` 加黑名單 `/uag`（#7）、auth 角色用 `app_metadata`（#7）、`?mock=true` 301（#9 vercel.json） | 待施工 |
-| 4 | `maimai-mood-v1` / `uag_last_aid` 確認列入 #26 `AUTH_CLEANUP_KEYS` | 待驗證 |
+| 4 | `maimai-mood-v1` / `uag_last_aid` 確認列入 #26 `AUTH_CLEANUP_KEYS` | ✅ 已驗證（`authUtils.test.ts` + `AUTH_CLEANUP_KEYS`） |
 | 4B/C | `exitDemoMode()` 順序：clear cache → 清 storage → `location.replace('/')`、跨分頁 storage handler 需清 cache（#10b） | ✅ 已完成 |
 | 4B (#29) | P0 已修 ✅（visibilitychange 補償、safeStorage 探測、warn 條件）。剩餘：`100vh` → `dvh`（3 檔 CSS）+ `safe-area-inset-bottom` fallback（1 檔） | 部分完成 |
