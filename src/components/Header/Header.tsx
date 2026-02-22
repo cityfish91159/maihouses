@@ -460,7 +460,7 @@ export default function Header() {
           {/* Search Bar Area Wrapper */}
           <div className="relative mx-auto max-w-3xl">
             {/* Mascot & Bubble Group */}
-            <div className="absolute right-[5%] top-[-60px] z-30 animate-float select-none md:right-[10%] md:animate-float-desktop">
+            <div className="absolute right-[5%] top-[-60px] z-0 animate-float select-none md:right-[10%] md:animate-float-desktop">
               {/* Speech Bubble */}
               <div className="pointer-events-none absolute bottom-[90%] right-[55%] w-[220px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-4 py-2 shadow-lg sm:w-[260px] sm:px-5 md:bottom-[85%] md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">
                 <p className="text-left text-[11px] font-bold leading-relaxed text-ink-700 md:text-sm">
