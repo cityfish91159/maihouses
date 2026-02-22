@@ -119,9 +119,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
           />
 
           {/* User Menu */}
-          {isAuthenticated ? (
-            <UserMenu user={user} role={role} signOut={signOut} />
-          ) : pageMode === 'demo' ? (
+          {pageMode === 'demo' ? (
             <button
               type="button"
               onClick={requestDemoExit}
@@ -130,6 +128,8 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
               <LogOut size={14} strokeWidth={2.5} />
               <span>退出演示</span>
             </button>
+          ) : isAuthenticated ? (
+            <UserMenu user={user} role={role} signOut={signOut} />
           ) : (
             <a
               href={loginUrl}

@@ -691,6 +691,27 @@ function exitDemoMode(queryClient: QueryClient) {
 - [x] `cmd /c npm run gate`
 - [x] 摘要與施作紀錄已回填到本工單
 
+#### 2026-02-22 strict-audit 收斂（第三輪）
+
+**修正檔案**：
+- `api/community/my.ts`
+- `api/community/__tests__/my.test.ts`
+- `src/components/layout/GlobalHeader.tsx`
+- `src/components/layout/GlobalHeader.test.tsx`
+- `src/lib/authUtils.ts`
+- `src/lib/__tests__/authUtils.test.ts`
+
+**修正重點**：
+- `api/community/my.ts` 補 `Vary: Origin, Authorization`，避免個人化社區歸屬回應被不同授權上下文錯誤重用。
+- `GlobalHeader` 右側入口改為 demo 優先：demo 模式即使已登入也先顯示「退出演示」，與首頁 Header 三模式規則一致。
+- `cleanupAuthState()` 清理順序調整為「先清 storage、後清 query cache」，降低登出瞬間被舊 key 觸發殘留查詢的風險。
+
+**本輪驗證**：
+- [x] `npm run check:utf8`
+- [x] `cmd /c npm run test -- src/hooks/__tests__/useUserCommunity.test.tsx api/community/__tests__/my.test.ts src/components/layout/GlobalHeader.test.tsx src/lib/__tests__/authUtils.test.ts src/App.auth-state.test.tsx src/components/Header/Header.demoGate.integration.test.tsx`（6 files, 60 passed）
+- [x] `cmd /c npm run gate`
+- [x] 摘要已勾選
+
 ---
 
 ### #13 PropertyListPage Header 統一
@@ -1363,6 +1384,18 @@ const handleCloseMockChat = useCallback(() => {
 - [x] `cmd /c npm run test -- src/lib/__tests__/authUtils.test.ts`（30 passed）
 - [x] `cmd /c npm run test -- src/App.auth-state.test.tsx src/lib/__tests__/authUtils.test.ts`（2 files, 33 passed）
 - [ ] `cmd /c npm run gate`（本輪失敗：既有 `src/pages/Community/hooks/useQAFocusTrap.ts` TS2540，非本次 #26 變更範圍）
+
+#### 2026-02-22 strict-audit 收斂（第三輪）
+
+**補強**：
+- `src/lib/authUtils.ts`：`cleanupAuthState()` 清理順序改為先移除 local/session key，再 `queryClient.clear()`。
+- `src/lib/__tests__/authUtils.test.ts`：新增順序測試，驗證清理 key 先於 query cache 清空。
+
+**本輪驗證**：
+- [x] `npm run check:utf8`
+- [x] `cmd /c npm run test -- src/lib/__tests__/authUtils.test.ts src/App.auth-state.test.tsx`（2 files, 34 passed）
+- [x] `cmd /c npm run gate`
+- [x] 摘要已勾選
 
 ---
 

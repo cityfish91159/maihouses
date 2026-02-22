@@ -24,8 +24,10 @@ vi.mock('../logger', () => ({
 describe('authUtils (#15)', () => {
   const originalLocation = window.location;
   // 繞過 TypeScript 型別檢查，測試 runtime 參數驗證
-  const invokeGetAuthUrlAtRuntime = (...args: unknown[]) =>
-    (getAuthUrl as (...a: unknown[]) => string)(...args);
+  const invokeGetAuthUrlAtRuntime = (...args: unknown[]): string => {
+    // @ts-expect-error: 故意傳入非法參數以測試 runtime 驗證邏輯
+    return getAuthUrl(...args);
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -188,6 +190,39 @@ describe('authUtils (#15)', () => {
         expect(localStorage.getItem(key)).toBeNull();
       });
       expect(sessionStorage.getItem(FEED_DEMO_ROLE_STORAGE_KEY)).toBeNull();
+    });
+
+    it('should remove storage keys before clearing query cache', () => {
+      const callOrder: string[] = [];
+      const queryClient = {
+        clear: vi.fn(() => {
+          callOrder.push('query.clear');
+        }),
+      };
+
+      const removeItemSpy = vi
+        .spyOn(Storage.prototype, 'removeItem')
+        .mockImplementation(function mockedRemoveItem(this: Storage, key: string) {
+          if (this === window.sessionStorage) {
+            callOrder.push(`session:${key}`);
+            return;
+          }
+          callOrder.push(`local:${key}`);
+        });
+
+      try {
+        cleanupAuthState(queryClient);
+
+        const clearIndex = callOrder.indexOf('query.clear');
+        expect(clearIndex).toBeGreaterThan(-1);
+
+        AUTH_CLEANUP_KEYS.forEach((key) => {
+          expect(callOrder.indexOf(`local:${key}`)).toBeLessThan(clearIndex);
+        });
+        expect(callOrder.indexOf(`session:${FEED_DEMO_ROLE_STORAGE_KEY}`)).toBeLessThan(clearIndex);
+      } finally {
+        removeItemSpy.mockRestore();
+      }
     });
 
     it('should fail safe in non-browser runtime and still clear query cache', () => {

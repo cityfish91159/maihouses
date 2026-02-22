@@ -142,4 +142,15 @@ describe('GlobalHeader community navigation (#12b)', () => {
     fireEvent.click(exitButton);
     expect(demoExitMocks.requestDemoExit).toHaveBeenCalledTimes(1);
   });
+
+  it('demo 模式即使已登入也優先顯示退出演示按鈕', () => {
+    mockUsePageMode.mockReturnValue('demo');
+    authMocks.isAuthenticated = true;
+    authMocks.user = { id: 'user-1' };
+
+    const { getByRole, queryByText } = render(<GlobalHeader mode="consumer" />);
+
+    expect(getByRole('button', { name: '退出演示' })).toBeDefined();
+    expect(queryByText('登入')).toBeNull();
+  });
 });

@@ -30,6 +30,7 @@ type MockRequest = {
 type MockResponse = {
   statusCode: number;
   jsonData: unknown;
+  headers: Record<string, string>;
   status: ReturnType<typeof vi.fn>;
   json: ReturnType<typeof vi.fn>;
   end: ReturnType<typeof vi.fn>;
@@ -50,6 +51,7 @@ function createMockResponse(): MockResponse {
   const res: MockResponse = {
     statusCode: 0,
     jsonData: null,
+    headers: {},
     status: vi.fn(),
     json: vi.fn(),
     end: vi.fn(),
@@ -65,7 +67,10 @@ function createMockResponse(): MockResponse {
     return res;
   });
   res.end.mockReturnValue(res);
-  res.setHeader.mockReturnValue(res);
+  res.setHeader.mockImplementation((name: string, value: string) => {
+    res.headers[name] = value;
+    return res;
+  });
 
   return res;
 }
@@ -166,6 +171,8 @@ describe('/api/community/my (#12b)', () => {
     expect(queryBuilder.order).toHaveBeenCalledWith('joined_at', { ascending: false });
     expect(queryBuilder.order).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(res.statusCode).toBe(200);
+    expect(res.headers['Vary']).toBe('Origin, Authorization');
+    expect(res.headers['Cache-Control']).toBe('private, max-age=60');
     expect(res.jsonData).toEqual({
       success: true,
       data: {
@@ -217,4 +224,3 @@ describe('/api/community/my (#12b)', () => {
     });
   });
 });
-

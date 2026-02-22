@@ -7,6 +7,7 @@ import { verifyAuth } from '../lib/auth';
 import { API_ERROR_CODES, errorResponse, successResponse } from '../lib/apiResponse';
 
 const CACHE_CONTROL_HEADER = 'private, max-age=60';
+const VARY_HEADER = 'Origin, Authorization';
 
 const CommunityMembershipRowSchema = z.object({
   community_id: z.string().uuid(),
@@ -14,6 +15,7 @@ const CommunityMembershipRowSchema = z.object({
 
 function enforceMyCors(req: VercelRequest, res: VercelResponse): boolean {
   cors(req, res);
+  res.setHeader('Vary', VARY_HEADER);
 
   const rawOrigin = req?.headers?.origin;
   const origin = typeof rawOrigin === 'string' ? rawOrigin : undefined;
