@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Header from './Header';
 import { ROUTES, RouteUtils } from '../../constants/routes';
+import { SEED_COMMUNITY_ID } from '../../constants/seed';
 
 const mockUsePageMode = vi.fn<() => 'visitor' | 'demo' | 'live'>();
 const mockNavigate = vi.fn();
@@ -187,7 +188,7 @@ describe('Header + DemoGate integration', () => {
     fireEvent.click(getByRole('button', { name: '社區評價' }));
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL('test-uuid'))
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID))
     );
   });
 

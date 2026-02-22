@@ -664,6 +664,7 @@ function exitDemoMode(queryClient: QueryClient) {
 | 新增 | `api/community/my.ts` |
 | 新增 | `api/community/__tests__/my.test.ts` |
 | 新增 | `supabase/migrations/20260222193000_community_members_latest_lookup_index.sql` |
+| 新增 | `supabase/migrations/20260222194000_community_members_active_latest_partial_covering_index.sql` |
 | 修改 | `src/components/Header/Header.tsx` |
 | 修改 | `src/components/layout/GlobalHeader.tsx` |
 | 修改 | `src/components/Header/Header.demoGate.integration.test.tsx` |
@@ -671,7 +672,8 @@ function exitDemoMode(queryClient: QueryClient) {
 **SQL 設計（重構）**：
 - `/api/community/my` 改為只查 `status='active'` 的歸屬。
 - 排序策略改為 `joined_at DESC` + `created_at DESC`，符合「最近加入」語意且 deterministic。
-- 補索引 `idx_community_members_user_status_joined_created (user_id, status, joined_at DESC, created_at DESC)`，避免 header 導航查詢退化。
+- 索引重構為 partial covering index：`idx_community_members_active_latest_covering (user_id, joined_at DESC, created_at DESC) INCLUDE (community_id) WHERE status='active'`，提升查詢命中效率。
+- 舊索引 `idx_community_members_user_status_joined_created` 由後續 migration 移除，避免重複維護。
 
 **導航規則**：
 

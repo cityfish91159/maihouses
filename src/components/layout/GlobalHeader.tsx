@@ -7,9 +7,10 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { User, ExternalLink, Users } from 'lucide-react';
+import { User, ExternalLink, Users, LogOut } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { usePageMode } from '../../hooks/usePageMode';
+import { useDemoExit } from '../../hooks/useDemoExit';
 import { useUserCommunity } from '../../hooks/useUserCommunity';
 import { useNotifications } from '../../hooks/useNotifications';
 import { getCurrentPath, getLoginUrl } from '../../lib/authUtils';
@@ -34,6 +35,7 @@ interface GlobalHeaderProps {
 export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
   const { isAuthenticated, user, signOut, role } = useAuth();
   const pageMode = usePageMode();
+  const { requestDemoExit } = useDemoExit();
   const { communityId: userCommunityId, isLoading: isUserCommunityLoading } = useUserCommunity({
     isAuthenticated: pageMode === 'live' && isAuthenticated,
     userId: user?.id ?? null,
@@ -119,6 +121,15 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
           {/* User Menu */}
           {isAuthenticated ? (
             <UserMenu user={user} role={role} signOut={signOut} />
+          ) : pageMode === 'demo' ? (
+            <button
+              type="button"
+              onClick={requestDemoExit}
+              className="flex items-center gap-1 rounded-xl border border-brand-700 bg-white px-3 py-1.5 text-xs font-bold text-brand-700 shadow-sm transition-all hover:bg-brand-50 hover:shadow-md active:scale-95"
+            >
+              <LogOut size={14} strokeWidth={2.5} />
+              <span>退出演示</span>
+            </button>
           ) : (
             <a
               href={loginUrl}
