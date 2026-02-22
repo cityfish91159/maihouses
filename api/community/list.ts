@@ -100,6 +100,7 @@ async function fetchCommunityBatch(
   const { data: communityBatchData, error: communityError } = await supabase
     .from('communities')
     .select('id, name, address, cover_image, review_count')
+    .eq('is_seed', false)
     .order('created_at', { ascending: false })
     .range(start, start + batchSize - 1);
 
@@ -183,12 +184,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const postCountMap = await fetchPostCountMap(rows);
     const pagedItems = buildCommunityListItems(rows, postCountMap);
 
-    // #8c: 僅回傳有公開內容的社區
-    const visibleItems = pagedItems.filter(
-      (item) => item.post_count > 0 || item.review_count > 0
-    );
-
-    const responseValidation = CommunityListItemSchema.array().safeParse(visibleItems);
+    const responseValidation = CommunityListItemSchema.array().safeParse(pagedItems);
     if (!responseValidation.success) {
       logger.error('[community/list] response schema validation failed', responseValidation.error);
       res

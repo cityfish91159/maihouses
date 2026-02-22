@@ -65,7 +65,7 @@ BEGIN
   INSERT INTO communities (
     id, name, address, district, city, story_vibe,
     two_good, one_fair, lifestyle_tags, completeness_score,
-    total_units, management_fee, builder
+    total_units, management_fee, builder, is_seed
   ) VALUES (
     mock_community_id,
     '榮耀城示範社區',
@@ -79,7 +79,8 @@ BEGIN
     88,
     420,
     95,
-    '榮耀建設'
+    '榮耀建設',
+    true
   )
   ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -94,6 +95,7 @@ BEGIN
     total_units = EXCLUDED.total_units,
     management_fee = EXCLUDED.management_fee,
     builder = EXCLUDED.builder,
+    is_seed = EXCLUDED.is_seed,
     updated_at = NOW();
 
   INSERT INTO properties (

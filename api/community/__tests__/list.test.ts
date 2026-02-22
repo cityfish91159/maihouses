@@ -72,7 +72,8 @@ function createMockResponse(): MockResponse {
 function setupSupabaseMock() {
   const mockCommunityRange = vi.fn();
   const mockCommunityOrder = vi.fn().mockReturnValue({ range: mockCommunityRange });
-  const mockCommunitySelect = vi.fn().mockReturnValue({ order: mockCommunityOrder });
+  const mockCommunityEq = vi.fn().mockReturnValue({ order: mockCommunityOrder });
+  const mockCommunitySelect = vi.fn().mockReturnValue({ eq: mockCommunityEq });
 
   const mockPostIn = vi.fn();
   const mockPostEq = vi.fn().mockReturnValue({ in: mockPostIn });
@@ -226,6 +227,14 @@ describe('/api/community/list (#8c)', () => {
           address: '台北市 B 路',
           image: 'https://img.example.com/b.jpg',
           post_count: 2,
+          review_count: 0,
+        },
+        {
+          id: COMMUNITY_C,
+          name: 'C 社區',
+          address: null,
+          image: null,
+          post_count: 0,
           review_count: 0,
         },
       ],
