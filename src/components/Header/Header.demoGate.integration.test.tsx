@@ -1,8 +1,10 @@
 import { fireEvent, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Header from './Header';
+import { ROUTES, RouteUtils } from '../../constants/routes';
 
 const mockUsePageMode = vi.fn<() => 'visitor' | 'demo' | 'live'>();
+const mockNavigate = vi.fn();
 
 const notifyMocks = vi.hoisted(() => ({
   info: vi.fn(),
@@ -25,12 +27,31 @@ const authMocks = vi.hoisted(() => ({
   loading: false,
 }));
 
+const userCommunityMocks = vi.hoisted(() => ({
+  communityId: null as string | null,
+  isLoading: false,
+  isError: false,
+  refetch: vi.fn(),
+}));
+
 vi.mock('../../hooks/usePageMode', () => ({
   usePageMode: () => mockUsePageMode(),
 }));
 
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 vi.mock('../../hooks/useAuth', () => ({
   useAuth: () => authMocks,
+}));
+
+vi.mock('../../hooks/useUserCommunity', () => ({
+  useUserCommunity: () => userCommunityMocks,
 }));
 
 vi.mock('../../hooks/useDemoExit', () => ({
@@ -75,6 +96,16 @@ describe('Header + DemoGate integration', () => {
     demoExitMocks.requestDemoExit.mockReset();
     maimaiContextMocks.addMessage.mockReset();
     maimaiContextMocks.setMood.mockReset();
+    userCommunityMocks.communityId = null;
+    userCommunityMocks.isLoading = false;
+    userCommunityMocks.isError = false;
+    userCommunityMocks.refetch.mockReset();
+    authMocks.isAuthenticated = false;
+    authMocks.user = null;
+    authMocks.role = 'guest';
+    authMocks.loading = false;
+    authMocks.signOut.mockReset();
+    mockNavigate.mockReset();
 
     Object.defineProperty(window, 'scrollTo', {
       configurable: true,
@@ -137,5 +168,53 @@ describe('Header + DemoGate integration', () => {
     fireEvent.click(exitButton);
 
     expect(demoExitMocks.requestDemoExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('visitor 點社區評價應導向社區探索頁', () => {
+    const { getByRole } = render(<Header />);
+
+    fireEvent.click(getByRole('button', { name: '社區評價' }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE)
+    );
+  });
+
+  it('demo 點社區評價應導向 seed 社區牆', () => {
+    mockUsePageMode.mockReturnValue('demo');
+    const { getByRole } = render(<Header />);
+
+    fireEvent.click(getByRole('button', { name: '社區評價' }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL('test-uuid'))
+    );
+  });
+
+  it('live 且有社區歸屬時，點社區評價導向對應社區牆', () => {
+    mockUsePageMode.mockReturnValue('live');
+    authMocks.isAuthenticated = true;
+    userCommunityMocks.communityId = '11111111-1111-4111-8111-111111111111';
+
+    const { getByRole } = render(<Header />);
+    fireEvent.click(getByRole('button', { name: '社區評價' }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL('11111111-1111-4111-8111-111111111111'))
+    );
+  });
+
+  it('live 社區資料 loading 期間，點社區評價回退到探索頁', () => {
+    mockUsePageMode.mockReturnValue('live');
+    authMocks.isAuthenticated = true;
+    userCommunityMocks.communityId = '11111111-1111-4111-8111-111111111111';
+    userCommunityMocks.isLoading = true;
+
+    const { getByRole } = render(<Header />);
+    fireEvent.click(getByRole('button', { name: '社區評價' }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE)
+    );
   });
 });

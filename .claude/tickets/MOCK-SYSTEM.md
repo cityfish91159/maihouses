@@ -46,7 +46,7 @@
 
 - [x] **#8c** 社區列表 API — `GET /api/community/list`（1 新檔案）✅ 2026-02-17
 - [x] **#8d** 社區探索頁 — visitor/無歸屬會員的著陸頁（1 新頁面 + 路由，需 `/ui-ux-pro-max`）✅ 2026-02-18
-- [ ] **#12b** Header 社區導航分層 — `useUserCommunity` + `api/community/my` + 導航規則（依賴 #8d + #12）
+- [x] **#12b** Header 社區導航分層 — `useUserCommunity` + `api/community/my` + 導航規則（依賴 #8d + #12）✅ 2026-02-22
 
 ### P2 — 收尾清理
 - [ ] **#9** 移除靜態 HTML mock 頁 + vercel.json 同步（6 檔）
@@ -64,7 +64,7 @@
 - [x] **#24** Chat 三模式支持（`Chat/index.tsx`）✅ 2026-02-18（strict-audit 收斂：2026-02-21）
 - [x] **#24a** UAG Mock 對話 Modal — demo 模式「查看對話」內嵌對話框（1 新組件 + 3 修改）✅ 2026-02-21
 - [ ] **#25** Assure 三模式支持 — `isMock` → usePageMode（`Assure/Detail.tsx`）
-- [ ] **#26** 登出清理 — `cleanupAuthState()` 統一函數 + onAuthStateChange（2 檔）
+- [x] **#26** 登出清理 — `cleanupAuthState()` 統一函數 + onAuthStateChange（2 檔）✅ 2026-02-22
 - [x] **#27** UAG 新房仲空狀態 + MaiMai 引導（1 新組件）✅ 2026-02-17
 
 ### P2 — 房源列表頁三模式重構（`PropertyListPage`）
@@ -647,27 +647,31 @@ function exitDemoMode(queryClient: QueryClient) {
 
 ---
 
-### #12b Header 社區導航分層
+### #12b ✅ Header 社區導航分層
 
-**目標**：「社區評價」按鈕根據使用者狀態導向正確目的地，取代 hardcode `SEED_COMMUNITY_ID`
+**已完成** 2026-02-22（`/superpowers` 流程驗證 + SQL 設計重構）
+
+**目標**：「社區評價」按鈕根據使用者狀態導向正確目的地，取代固定導向行為。
 
 **依賴**：#12、#8d（探索頁須先存在）
 
-**背景**：`Header.tsx:389`（手機選單）和 `Header.tsx:506`（Hero 膠囊）兩處寫死 `ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)`，不論使用者身份一律導向 mock 社區。
+**實作落地檔案**：
 
-**新增**：
-1. `src/hooks/useUserCommunity.ts`
-   - 已登入 → React Query `GET /api/community/my` 取得使用者所屬社區 ID
-   - 未登入 → 回傳 `null`
-   - staleTime 5 分鐘
-2. `api/community/my.ts`
-   - 驗證 JWT → 查詢 `community_members WHERE user_id = ?`
-   - 回傳使用者所屬社區 ID（取最近加入的）
-   - 未登入回 401，無歸屬回 `{ data: null }`
+| 操作 | 檔案 |
+|------|------|
+| 新增 | `src/hooks/useUserCommunity.ts` |
+| 新增 | `src/hooks/__tests__/useUserCommunity.test.tsx` |
+| 新增 | `api/community/my.ts` |
+| 新增 | `api/community/__tests__/my.test.ts` |
+| 新增 | `supabase/migrations/20260222193000_community_members_latest_lookup_index.sql` |
+| 修改 | `src/components/Header/Header.tsx` |
+| 修改 | `src/components/layout/GlobalHeader.tsx` |
+| 修改 | `src/components/Header/Header.demoGate.integration.test.tsx` |
 
-**修改**：
-- `src/components/Header/Header.tsx` — 手機選單（L389）+ Hero 膠囊（L506）兩處都要改
-- `src/components/Header/GlobalHeader.tsx` — 同步修正
+**SQL 設計（重構）**：
+- `/api/community/my` 改為只查 `status='active'` 的歸屬。
+- 排序策略改為 `joined_at DESC` + `created_at DESC`，符合「最近加入」語意且 deterministic。
+- 補索引 `idx_community_members_user_status_joined_created (user_id, status, joined_at DESC, created_at DESC)`，避免 header 導航查詢退化。
 
 **導航規則**：
 
@@ -677,19 +681,13 @@ function exitDemoMode(queryClient: QueryClient) {
 | 已登入 + 有社區歸屬 | `ROUTES.COMMUNITY_WALL(userCommunityId)` |
 | 已登入 + 無社區歸屬 | `ROUTES.COMMUNITY_EXPLORE` |
 | visitor（未登入） | `ROUTES.COMMUNITY_EXPLORE` |
+| API loading | `ROUTES.COMMUNITY_EXPLORE`（安全回退，不導向 seed） |
 
-**施工備註**：
-- Hero 膠囊目前用 `<a href>`（靜態），需改為 `<button onClick>` + `useNavigate` 以配合非同步 hook
-- `useUserCommunity` loading 期間點擊：fallback 導向探索頁（安全），**不可導向 SEED_COMMUNITY_ID**
-
-**驗收**：
-- `rg "SEED_COMMUNITY_ID" src/components/Header/` → 僅在 `mode === 'demo'` 分支內出現
-- visitor 點擊 → 社區探索頁
-- 已登入無歸屬 → 社區探索頁
-- 已登入有歸屬 → 對應社區牆
-- demo → seed 社區（不變）
-- API loading 期間點擊 → 不導向 test-uuid
-- `npm run gate` 通過
+**本輪驗證**：
+- [x] `npm run check:utf8`
+- [x] `cmd /c npm run test -- api/community/__tests__/my.test.ts src/hooks/__tests__/useUserCommunity.test.tsx src/components/Header/Header.demoGate.integration.test.tsx`（3 files, 20 passed）
+- [x] `cmd /c npm run gate`
+- [x] 摘要與施作紀錄已回填到本工單
 
 ---
 

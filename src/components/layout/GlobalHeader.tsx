@@ -7,13 +7,16 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { User, ExternalLink } from 'lucide-react';
+import { User, ExternalLink, Users } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { usePageMode } from '../../hooks/usePageMode';
+import { useUserCommunity } from '../../hooks/useUserCommunity';
 import { useNotifications } from '../../hooks/useNotifications';
 import { getCurrentPath, getLoginUrl } from '../../lib/authUtils';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES, RouteUtils } from '../../constants/routes';
+import { SEED_COMMUNITY_ID } from '../../constants/seed';
 import { UserMenu } from './GlobalHeader/UserMenu';
 import { NotificationButton } from './GlobalHeader/NotificationButton';
 import { LeftSection } from './GlobalHeader/LeftSection';
@@ -30,6 +33,11 @@ interface GlobalHeaderProps {
 
 export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
   const { isAuthenticated, user, signOut, role } = useAuth();
+  const pageMode = usePageMode();
+  const { communityId: userCommunityId, isLoading: isUserCommunityLoading } = useUserCommunity({
+    isAuthenticated: pageMode === 'live' && isAuthenticated,
+    userId: user?.id ?? null,
+  });
   const {
     count: notificationCount,
     notifications,
@@ -47,6 +55,19 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     navigate(RouteUtils.toNavigatePath(ROUTES.CHAT(conversationId)));
   };
 
+  const handleCommunityNavigation = () => {
+    const targetRoute =
+      pageMode === 'demo'
+        ? ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)
+        : isUserCommunityLoading
+          ? ROUTES.COMMUNITY_EXPLORE
+          : pageMode === 'live' && isAuthenticated && userCommunityId
+            ? ROUTES.COMMUNITY_WALL(userCommunityId)
+            : ROUTES.COMMUNITY_EXPLORE;
+
+    navigate(RouteUtils.toNavigatePath(targetRoute));
+  };
+
   return (
     <header
       className={`sticky top-0 z-overlay border-b border-brand-100 bg-white/95 backdrop-blur-md transition-all ${className}`}
@@ -60,6 +81,18 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
+          {mode !== 'community' && (
+            <button
+              type="button"
+              onClick={handleCommunityNavigation}
+              className="inline-flex items-center gap-1 rounded-xl border border-brand-100 bg-white px-3 py-1.5 text-xs font-bold text-brand-700 shadow-sm transition-all hover:bg-brand-50 hover:shadow-md active:scale-95"
+              aria-label="社區評價"
+            >
+              <Users size={14} strokeWidth={2.5} />
+              <span className="hidden sm:inline">社區評價</span>
+            </button>
+          )}
+
           {mode === 'agent' && (
             <a
               href={ROUTES.UAG}

@@ -10,6 +10,12 @@
  */
 
 import { logger } from './logger';
+import {
+  DEMO_STORAGE_KEY,
+  DEMO_UAG_MODE_STORAGE_KEY,
+  FEED_DEMO_ROLE_STORAGE_KEY,
+} from './pageMode';
+import { UAG_LAST_AID_STORAGE_KEY } from '../constants/strings';
 
 /** Auth 模式 */
 export type AuthMode = 'login' | 'signup';
@@ -20,6 +26,51 @@ export type AuthRole = 'agent' | 'consumer';
 /** Auth 頁面基礎路徑 */
 const AUTH_BASE_PATH = '/maihouses/auth.html';
 const DEFAULT_RETURN_PATH = '/maihouses/';
+const AUTH_PENDING_ROLE_STORAGE_KEY = 'mh.auth.pending_role';
+const UAG_SESSION_STORAGE_KEY = 'uag_session';
+const UAG_SESSION_CREATED_STORAGE_KEY = 'uag_session_created';
+const MAIMAI_MOOD_STORAGE_KEY = 'maimai-mood-v1';
+
+interface QueryClientLike {
+  clear: () => void;
+}
+
+export const AUTH_CLEANUP_KEYS = [
+  AUTH_PENDING_ROLE_STORAGE_KEY,
+  UAG_SESSION_STORAGE_KEY,
+  UAG_SESSION_CREATED_STORAGE_KEY,
+  UAG_LAST_AID_STORAGE_KEY,
+  DEMO_UAG_MODE_STORAGE_KEY,
+  DEMO_STORAGE_KEY,
+  MAIMAI_MOOD_STORAGE_KEY,
+] as const;
+
+function removeStorageItem(type: 'local' | 'session', key: string): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    if (type === 'local') {
+      window.localStorage.removeItem(key);
+      return;
+    }
+    window.sessionStorage.removeItem(key);
+  } catch (error) {
+    logger.warn('[authUtils] 清理 storage 失敗', {
+      type,
+      key,
+      error,
+    });
+  }
+}
+
+/**
+ * 統一清理登出後的 auth / demo / UAG 狀態
+ */
+export function cleanupAuthState(queryClient: QueryClientLike): void {
+  queryClient.clear();
+  AUTH_CLEANUP_KEYS.forEach((key) => removeStorageItem('local', key));
+  removeStorageItem('session', FEED_DEMO_ROLE_STORAGE_KEY);
+}
 
 function assertValidAuthMode(mode: AuthMode): void {
   if (mode !== 'login' && mode !== 'signup') {

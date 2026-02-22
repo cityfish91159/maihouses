@@ -8,8 +8,10 @@ import DevTools from './app/devtools';
 import { trackEvent } from './services/analytics';
 import { getErrorMessage } from './lib/error';
 import { logger } from './lib/logger';
+import { cleanupAuthState } from './lib/authUtils';
 import { isDemoMode } from './lib/pageMode';
 import { notify } from './lib/notify';
+import { supabase } from './lib/supabase';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import Wall from './pages/Community/Wall';
@@ -84,6 +86,25 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        queryClient.clear();
+        return;
+      }
+
+      if (event === 'SIGNED_OUT') {
+        cleanupAuthState(queryClient);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     if (config) trackEvent('page_view', loc.pathname);
   }, [loc, config]);
 
@@ -108,11 +129,13 @@ export default function App() {
               <Route
                 path="/"
                 element={
-                  MUSE_STANDALONE
-                    ? <Navigate to="/muse" replace />
-                    : <ErrorBoundary>
-                        <Home config={config} />
-                      </ErrorBoundary>
+                  MUSE_STANDALONE ? (
+                    <Navigate to="/muse" replace />
+                  ) : (
+                    <ErrorBoundary>
+                      <Home config={config} />
+                    </ErrorBoundary>
+                  )
                 }
               />
               {/* 路由常數含 /maihouses 前綴，需經 RouteUtils.toNavigatePath 避免 basename 重複 */}

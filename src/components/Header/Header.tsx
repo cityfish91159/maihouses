@@ -1,9 +1,22 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Search, LogIn, LogOut, UserPlus, List, Menu, X, ChevronDown, User, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Search,
+  LogIn,
+  LogOut,
+  UserPlus,
+  List,
+  Menu,
+  X,
+  ChevronDown,
+  User,
+  Users,
+} from 'lucide-react';
 import clsx from 'clsx';
 import { Logo } from '../Logo/Logo';
 import { DemoGate } from '../DemoGate/DemoGate';
 import { ROUTES, RouteUtils } from '../../constants/routes';
+import { SEED_COMMUNITY_ID } from '../../constants/seed';
 import { getCurrentPath, getLoginUrl, getSignupUrl } from '../../lib/authUtils';
 import { notify } from '../../lib/notify';
 import { MaiMaiBase } from '../MaiMai';
@@ -12,6 +25,7 @@ import { TUTORIAL_CONFIG } from '../../constants/tutorial';
 import { usePageMode } from '../../hooks/usePageMode';
 import { useDemoExit } from '../../hooks/useDemoExit';
 import { useAuth } from '../../hooks/useAuth';
+import { useUserCommunity } from '../../hooks/useUserCommunity';
 import { HEADER_STRINGS } from '../../constants/header';
 import { getErrorMessage } from '../../lib/error';
 import { logger } from '../../lib/logger';
@@ -22,16 +36,30 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [clickCount, setClickCount] = useState(0);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const navigate = useNavigate();
   const mode = usePageMode();
   const { requestDemoExit } = useDemoExit();
   const { setMood, addMessage } = useMaiMai();
   const { isAuthenticated, user, role, signOut, loading } = useAuth();
+  const { communityId: userCommunityId, isLoading: isUserCommunityLoading } = useUserCommunity({
+    isAuthenticated: mode === 'live' && isAuthenticated,
+    userId: user?.id ?? null,
+  });
   const authReturnPath = getCurrentPath();
   const loginUrl = getLoginUrl(authReturnPath);
   const signupUrl = getSignupUrl(authReturnPath);
-  const navigateToCommunityExplore = useCallback(() => {
-    window.location.href = RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE);
-  }, []);
+  const navigateToCommunity = useCallback(() => {
+    const targetRoute =
+      mode === 'demo'
+        ? ROUTES.COMMUNITY_WALL(SEED_COMMUNITY_ID)
+        : isUserCommunityLoading
+          ? ROUTES.COMMUNITY_EXPLORE
+          : mode === 'live' && isAuthenticated && userCommunityId
+            ? ROUTES.COMMUNITY_WALL(userCommunityId)
+            : ROUTES.COMMUNITY_EXPLORE;
+
+    void navigate(RouteUtils.toNavigatePath(targetRoute));
+  }, [isAuthenticated, isUserCommunityLoading, mode, navigate, userCommunityId]);
 
   const handleAuthEntryClick = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -392,7 +420,7 @@ export default function Header() {
                 className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  navigateToCommunityExplore();
+                  navigateToCommunity();
                 }}
               >
                 <Users size={20} strokeWidth={2.5} className="opacity-80" />
@@ -496,7 +524,7 @@ export default function Header() {
               {/* 社區評價 */}
               <button
                 type="button"
-                onClick={navigateToCommunityExplore}
+                onClick={navigateToCommunity}
                 className="flex items-center justify-center rounded-2xl border border-brand-700 bg-brand-700 py-3 text-lg font-bold tracking-wide text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md active:scale-[0.98]"
               >
                 社區評價

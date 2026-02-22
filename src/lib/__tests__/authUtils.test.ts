@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  AUTH_CLEANUP_KEYS,
+  cleanupAuthState,
   getAuthUrl,
   getCurrentPath,
   getLoginUrl,
@@ -9,6 +11,7 @@ import {
   type AuthRole,
 } from '../authUtils';
 import { logger } from '../logger';
+import { FEED_DEMO_ROLE_STORAGE_KEY } from '../pageMode';
 
 // Mock logger
 vi.mock('../logger', () => ({
@@ -26,6 +29,8 @@ describe('authUtils (#15)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    sessionStorage.clear();
   });
 
   describe('getAuthUrl', () => {
@@ -153,6 +158,35 @@ describe('authUtils (#15)', () => {
     });
   });
 
+  describe('cleanupAuthState (#26)', () => {
+    it('should clear query cache and all auth cleanup keys', () => {
+      const queryClient = { clear: vi.fn() };
+
+      AUTH_CLEANUP_KEYS.forEach((key) => localStorage.setItem(key, 'keep'));
+      sessionStorage.setItem(FEED_DEMO_ROLE_STORAGE_KEY, 'resident');
+
+      cleanupAuthState(queryClient);
+
+      expect(queryClient.clear).toHaveBeenCalledTimes(1);
+      AUTH_CLEANUP_KEYS.forEach((key) => {
+        expect(localStorage.getItem(key)).toBeNull();
+      });
+      expect(sessionStorage.getItem(FEED_DEMO_ROLE_STORAGE_KEY)).toBeNull();
+    });
+
+    it('should fail safe in non-browser runtime and still clear query cache', () => {
+      const queryClient = { clear: vi.fn() };
+      vi.stubGlobal('window', undefined);
+
+      try {
+        expect(() => cleanupAuthState(queryClient)).not.toThrow();
+        expect(queryClient.clear).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+  });
+
   describe('edge cases', () => {
     it('should handle empty string return path', () => {
       const url = getAuthUrl('login', '');
@@ -232,9 +266,7 @@ describe('authUtils (#15)', () => {
     });
 
     it('should throw on invalid AuthMode at runtime', () => {
-      expect(() => invokeGetAuthUrlAtRuntime('invalid-mode')).toThrow(
-        '[authUtils] 無效的認證模式'
-      );
+      expect(() => invokeGetAuthUrlAtRuntime('invalid-mode')).toThrow('[authUtils] 無效的認證模式');
     });
 
     it('should throw on invalid AuthRole at runtime', () => {
