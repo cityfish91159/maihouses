@@ -78,7 +78,7 @@ describe('QASection accessibility modals', () => {
     fireEvent.click(screen.getByRole('button', { name: '送出問題' }));
 
     await waitFor(() => expect(askSpy).toHaveBeenCalledTimes(1));
-    await screen.findByText('✅ 問題已送出，住戶將收到通知。');
+    await screen.findByText('問題已送出，住戶將收到通知。');
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 120));
     });

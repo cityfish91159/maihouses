@@ -197,7 +197,10 @@ export const mockService = {
     return getMockTx(caseId);
   },
 
-  completeBuyerInfo: async (_caseId: string, _data: { name: string; phone: string; email?: string }) => {
+  completeBuyerInfo: async (
+    _caseId: string,
+    _data: { name: string; phone: string; email?: string }
+  ) => {
     // Mock: 模擬成功，不真的呼叫 API
   },
 

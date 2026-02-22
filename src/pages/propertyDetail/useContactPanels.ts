@@ -16,7 +16,11 @@ export function useContactPanels(trackLineClick: () => void, trackCallClick: () 
   const [callPanelSource, setCallPanelSource] = useState<PanelSource>('sidebar');
 
   const openContactModal = useCallback(
-    (source: PanelSource, defaultChannel: ContactChannel = 'line', trustAssureRequested = false) => {
+    (
+      source: PanelSource,
+      defaultChannel: ContactChannel = 'line',
+      trustAssureRequested = false
+    ) => {
       setContactSource(source);
       setContactDefaultChannel(defaultChannel);
       setContactTrustAssureRequested(trustAssureRequested);
@@ -54,10 +58,20 @@ export function useContactPanels(trackLineClick: () => void, trackCallClick: () 
   const isActionLocked = linePanelOpen || callPanelOpen || showContactModal;
 
   return {
-    showContactModal, contactSource, contactDefaultChannel, contactTrustAssureRequested,
-    linePanelOpen, callPanelOpen, linePanelSource, callPanelSource,
-    openContactModal, closeContactModal,
-    openLinePanel, openCallPanel, closeLinePanel, closeCallPanel,
+    showContactModal,
+    contactSource,
+    contactDefaultChannel,
+    contactTrustAssureRequested,
+    linePanelOpen,
+    callPanelOpen,
+    linePanelSource,
+    callPanelSource,
+    openContactModal,
+    closeContactModal,
+    openLinePanel,
+    openCallPanel,
+    closeLinePanel,
+    closeCallPanel,
     isActionLocked,
   };
 }

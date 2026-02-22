@@ -540,7 +540,10 @@ const PropertyUploadContent: React.FC = () => {
             </button>
 
             {!userId && (
-              <a href={loginUrl} className="ml-2 text-sm font-bold text-[var(--mh-color-003366)] hover:underline">
+              <a
+                href={loginUrl}
+                className="ml-2 text-sm font-bold text-[var(--mh-color-003366)] hover:underline"
+              >
                 登入同步
               </a>
             )}

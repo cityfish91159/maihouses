@@ -108,7 +108,13 @@ const ProfileTabNavigation: React.FC<Pick<TabButtonProps, 'activeTab' | 'onClick
   </div>
 );
 
-const ProfileTabPanels: React.FC<ProfileTabPanelsProps> = ({ activeTab, values, today, errors, handlers }) => (
+const ProfileTabPanels: React.FC<ProfileTabPanelsProps> = ({
+  activeTab,
+  values,
+  today,
+  errors,
+  handlers,
+}) => (
   <>
     <div
       id={PROFILE_TAB_CONFIG.basic.panelId}
@@ -180,7 +186,10 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({
         hasUnsavedChanges={orchestration.hasUnsavedChanges}
         isSubmitDisabled={orchestration.isSubmitDisabled}
       />
-      <ProfileTabNavigation activeTab={orchestration.activeTab} onClick={orchestration.setActiveTab} />
+      <ProfileTabNavigation
+        activeTab={orchestration.activeTab}
+        onClick={orchestration.setActiveTab}
+      />
       <ProfileTabPanels
         activeTab={orchestration.activeTab}
         values={orchestration.values}

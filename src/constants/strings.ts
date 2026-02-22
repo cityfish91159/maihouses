@@ -4,6 +4,12 @@ import { deepFreeze } from '../lib/deepFreeze';
 /** UAG 最後服務房仲的 localStorage key */
 export const UAG_LAST_AID_STORAGE_KEY = 'uag_last_aid';
 
+/** Auth 狀態相關 localStorage keys */
+export const AUTH_PENDING_ROLE_STORAGE_KEY = 'mh.auth.pending_role';
+export const UAG_SESSION_STORAGE_KEY = 'uag_session';
+export const UAG_SESSION_CREATED_STORAGE_KEY = 'uag_session_created';
+export const MAIMAI_MOOD_STORAGE_KEY = 'maimai-mood-v1';
+
 export const STRINGS = deepFreeze({
   FEED: {
     TITLE: '我的社區',

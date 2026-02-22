@@ -54,7 +54,10 @@ describe('UAGEmptyState', () => {
     expect(screen.getByRole('region', { name: '新手引導' })).toBeInTheDocument();
     expect(screen.getByText('嗨！歡迎加入 MaiHouses！')).toBeInTheDocument();
     expect(screen.getByText('現在先去上架你的第一筆物件吧！')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '上架物件' })).toHaveAttribute('href', '/property/upload');
+    expect(screen.getByRole('link', { name: '上架物件' })).toHaveAttribute(
+      'href',
+      '/property/upload'
+    );
     expect(screen.getByRole('button', { name: '知道了' })).toBeInTheDocument();
   });
 

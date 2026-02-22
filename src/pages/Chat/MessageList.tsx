@@ -73,15 +73,21 @@ export function MessageList({ messages, currentSender, isLoading, error }: Messa
               <div
                 className={clsx(
                   'max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm',
-                  isSelf ? 'bg-brand-700 text-white' : 'border border-brand-100 bg-white text-slate-900'
+                  isSelf
+                    ? 'bg-brand-700 text-white'
+                    : 'border border-brand-100 bg-white text-slate-900'
                 )}
               >
                 <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                <div className={clsx('mt-2 text-[10px]', isSelf ? 'text-white/70' : 'text-slate-400')}>
+                <div
+                  className={clsx('mt-2 text-[10px]', isSelf ? 'text-white/70' : 'text-slate-400')}
+                >
                   {formatTime(msg.created_at)}
                 </div>
                 {isSelf && (
-                  <div className="mt-1 text-[10px] text-white/70">{msg.read_at ? '已讀' : '已送出'}</div>
+                  <div className="mt-1 text-[10px] text-white/70">
+                    {msg.read_at ? '已讀' : '已送出'}
+                  </div>
                 )}
               </div>
             </div>

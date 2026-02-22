@@ -54,7 +54,9 @@ const evaluateAllErrors = (values: Pick<ProfileFormValues, 'name' | 'phone' | 'l
   lineId: evaluateFieldError('lineId', values.lineId),
 });
 
-export function useProfileFormValidation(values: Pick<ProfileFormValues, 'name' | 'phone' | 'lineId'>) {
+export function useProfileFormValidation(
+  values: Pick<ProfileFormValues, 'name' | 'phone' | 'lineId'>
+) {
   const [errors, setErrors] = useState<ProfileValidationErrors>(EMPTY_VALIDATION_ERRORS);
 
   const validateField = useCallback(

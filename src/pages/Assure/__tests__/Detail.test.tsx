@@ -91,7 +91,14 @@ vi.mock('../../../services/trustService', () => ({
 }));
 
 vi.mock('../../../components/TrustRoom/DataCollectionModal', () => ({
-  DataCollectionModal: ({ onSkip }: { isOpen: boolean; onSkip: () => void; isSubmitting: boolean; onSubmit: (data: { name: string; phone: string; email: string }) => void }) => (
+  DataCollectionModal: ({
+    onSkip,
+  }: {
+    isOpen: boolean;
+    onSkip: () => void;
+    isSubmitting: boolean;
+    onSubmit: (data: { name: string; phone: string; email: string }) => void;
+  }) => (
     <div data-testid="data-collection-modal">
       <button onClick={onSkip}>跳過</button>
     </div>
@@ -99,11 +106,21 @@ vi.mock('../../../components/TrustRoom/DataCollectionModal', () => ({
 }));
 
 vi.mock('../../../components/Assure/StepCard', () => ({
-  StepCard: ({ children }: { children: React.ReactNode }) => <div data-testid="step-card">{children}</div>,
+  StepCard: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="step-card">{children}</div>
+  ),
 }));
 
 vi.mock('../../../components/Assure/StepContent', () => ({
-  StepContent: ({ stepKey, handlers }: { stepKey: string; step: unknown; state: unknown; handlers: { onPay: () => void; onConfirm: (step: string) => void } }) => (
+  StepContent: ({
+    stepKey,
+    handlers,
+  }: {
+    stepKey: string;
+    step: unknown;
+    state: unknown;
+    handlers: { onPay: () => void; onConfirm: (step: string) => void };
+  }) => (
     <div data-testid="step-content">
       <button onClick={handlers.onPay}>付款</button>
       <button onClick={() => handlers.onConfirm(stepKey)}>確認</button>

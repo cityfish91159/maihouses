@@ -65,7 +65,10 @@ describe('BasicInfoSection (#15)', () => {
     expect(companyInput).toHaveValue('邁房子');
     expect(companyInput).not.toBeDisabled();
     expect(companyInput).toHaveAttribute('autoComplete', 'organization');
-    expect(companyInput).toHaveAttribute('aria-describedby', 'agent-company-help agent-company-count');
+    expect(companyInput).toHaveAttribute(
+      'aria-describedby',
+      'agent-company-help agent-company-count'
+    );
     expect(companyInput).toHaveAttribute('maxLength', '100');
     expect(companyInput).toHaveClass('min-h-[44px]');
     expect(screen.getByText('將顯示在房源頁與名片卡。')).toBeInTheDocument();

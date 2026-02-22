@@ -1,8 +1,5 @@
 ﻿import React from 'react';
-import {
-  PROFILE_MAX_BIO_LENGTH,
-  PROFILE_MAX_COMPANY_LENGTH,
-} from '../../../../constants/profile';
+import { PROFILE_MAX_BIO_LENGTH, PROFILE_MAX_COMPANY_LENGTH } from '../../../../constants/profile';
 import type { ProfileFormValues } from '../hooks/useProfileFormState';
 import type { ProfileValidationErrors } from '../hooks/useProfileFormValidation';
 import { FieldError } from './FieldError';

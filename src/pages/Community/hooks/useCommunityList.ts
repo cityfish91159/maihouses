@@ -34,30 +34,26 @@ const API_ENDPOINT = '/api/community/list';
 // ─── Fetcher ─────────────────────────────────────────────────────────────────
 
 async function fetchCommunityList(): Promise<CommunityListItem[]> {
-  try {
-    const res = await fetch(API_ENDPOINT);
+  const res = await fetch(API_ENDPOINT);
 
-    if (!res.ok) {
-      const message = `社區清單載入失敗 (HTTP ${res.status})`;
-      logger.error('[useCommunityList] API 錯誤', { status: res.status });
-      throw new Error(message);
-    }
-
-    const json: unknown = await res.json();
-    const parsed = ApiResponseSchema.safeParse(json);
-
-    if (!parsed.success) {
-      const message = '社區清單資料格式錯誤';
-      logger.error('[useCommunityList] Zod 驗證失敗', {
-        error: parsed.error.message,
-      });
-      throw new Error(message);
-    }
-
-    return parsed.data.data;
-  } catch (error) {
-    throw error;
+  if (!res.ok) {
+    const message = `社區清單載入失敗 (HTTP ${res.status})`;
+    logger.error('[useCommunityList] API 錯誤', { status: res.status });
+    throw new Error(message);
   }
+
+  const json: unknown = await res.json();
+  const parsed = ApiResponseSchema.safeParse(json);
+
+  if (!parsed.success) {
+    const message = '社區清單資料格式錯誤';
+    logger.error('[useCommunityList] Zod 驗證失敗', {
+      error: parsed.error.message,
+    });
+    throw new Error(message);
+  }
+
+  return parsed.data.data;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

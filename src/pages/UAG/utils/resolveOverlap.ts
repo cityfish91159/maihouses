@@ -43,7 +43,7 @@ export function resolveOverlap(
   const safePadding = Math.max(0, padding);
 
   // 初始化位置陣列（深拷貝避免修改原始資料）
-  const positions: Position[] = bubbles.map(b => ({ x: b.x, y: b.y }));
+  const positions: Position[] = bubbles.map((b) => ({ x: b.x, y: b.y }));
 
   // Iteratively separate overlaps while keeping runtime predictable.
   for (let iter = 0; iter < MAX_OVERLAP_ITERATIONS; iter++) {

@@ -5,6 +5,8 @@
  */
 
 import { useState } from 'react';
+import type { ReactNode } from 'react';
+import { User, Users, Home, Building, Shield, Key, Glasses, ChevronDown } from 'lucide-react';
 import type { Role } from '../types';
 
 interface RoleSwitcherProps {
@@ -21,13 +23,22 @@ const roleNames: Record<Role, string> = {
   admin: '管理員',
 };
 
-const roleLabels: Record<Role, string> = {
-  guest: '👤 訪客（未登入）',
-  member: '👥 一般會員',
-  resident: '🏠 已驗證住戶',
-  agent: '🏢 認證房仲',
-  official: '⚖️ 官方代表',
-  admin: '🔑 系統管理員',
+const roleIcons: Record<Role, ReactNode> = {
+  guest: <User size={14} aria-hidden="true" />,
+  member: <Users size={14} aria-hidden="true" />,
+  resident: <Home size={14} aria-hidden="true" />,
+  agent: <Building size={14} aria-hidden="true" />,
+  official: <Shield size={14} aria-hidden="true" />,
+  admin: <Key size={14} aria-hidden="true" />,
+};
+
+const roleLabelTexts: Record<Role, string> = {
+  guest: '訪客（未登入）',
+  member: '一般會員',
+  resident: '已驗證住戶',
+  agent: '認證房仲',
+  official: '官方代表',
+  admin: '系統管理員',
 };
 
 export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
@@ -37,16 +48,16 @@ export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
     <div className="fixed bottom-5 right-5 z-[1000]">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[var(--mh-color-1a1a2e)] to-[var(--mh-color-16213e)] px-4 py-2.5 text-xs font-bold text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+        className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[var(--mh-color-1a1a2e)] to-[var(--mh-color-16213e)] px-4 py-2.5 text-xs font-bold text-white shadow-[0_4px_20px_var(--mh-shadow-overlay)]"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-label={`目前身份：${roleNames[role]}，點擊切換`}
       >
-        🕶️ <span>{roleNames[role]}</span> ▾
+        <Glasses size={14} aria-hidden="true" /> <span>{roleNames[role]}</span> <ChevronDown size={12} aria-hidden="true" />
       </button>
       {isOpen && (
         <div
-          className="absolute bottom-[50px] right-0 min-w-[180px] rounded-xl border border-[var(--border)] bg-white p-2 shadow-[0_8px_30px_rgba(0,0,0,0.15)]"
+          className="absolute bottom-[50px] right-0 min-w-[180px] rounded-xl border border-[var(--border)] bg-white p-2 shadow-[0_8px_30px_var(--mh-shadow-dropdown)]"
           role="listbox"
           aria-label="選擇身份"
         >
@@ -63,7 +74,10 @@ export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
                 }}
                 className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs ${role === r ? 'bg-brand-700/10 font-bold text-[var(--primary)]' : 'text-[var(--text-primary)] hover:bg-[var(--mh-color-f6f9ff)]'}`}
               >
-                {roleLabels[r]}
+                <span className="inline-flex items-center gap-1.5">
+                  {roleIcons[r]}
+                  {roleLabelTexts[r]}
+                </span>
               </button>
             )
           )}

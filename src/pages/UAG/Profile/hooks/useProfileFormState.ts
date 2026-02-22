@@ -58,32 +58,35 @@ export function useProfileFormState(profile: AgentProfileMe) {
     setValues(buildInitialFormValues(profile));
   }, [profile]);
 
-  const setField = useCallback(<K extends keyof ProfileFormValues>(field: K, value: ProfileFormValues[K]) => {
-    setValues((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  }, []);
-
-  const toggleSelection = useCallback(
-    (field: 'specialties' | 'certifications', option: string) => {
-      setValues((prev) => {
-        const currentItems = prev[field];
-        const nextItems = currentItems.includes(option)
-          ? currentItems.filter((item) => item !== option)
-          : [...currentItems, option];
-
-        return {
-          ...prev,
-          [field]: nextItems,
-        };
-      });
+  const setField = useCallback(
+    <K extends keyof ProfileFormValues>(field: K, value: ProfileFormValues[K]) => {
+      setValues((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
     },
     []
   );
 
+  const toggleSelection = useCallback((field: 'specialties' | 'certifications', option: string) => {
+    setValues((prev) => {
+      const currentItems = prev[field];
+      const nextItems = currentItems.includes(option)
+        ? currentItems.filter((item) => item !== option)
+        : [...currentItems, option];
+
+      return {
+        ...prev,
+        [field]: nextItems,
+      };
+    });
+  }, []);
+
   const payload = useMemo(() => buildProfilePayload(values), [values]);
-  const initialPayload = useMemo(() => buildProfilePayload(buildInitialFormValues(profile)), [profile]);
+  const initialPayload = useMemo(
+    () => buildProfilePayload(buildInitialFormValues(profile)),
+    [profile]
+  );
 
   const hasUnsavedChanges = useMemo(
     () => JSON.stringify(payload) !== JSON.stringify(initialPayload),

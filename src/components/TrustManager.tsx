@@ -163,9 +163,7 @@ export default function TrustManager({
                               onChange={() => void handleToggleStepDone(tx, step.step)}
                               className="size-[18px] cursor-pointer accent-brand"
                             />
-                            <span
-                              className={`flex-1 text-sm ${step.done ? 'line-through' : ''}`}
-                            >
+                            <span className={`flex-1 text-sm ${step.done ? 'line-through' : ''}`}>
                               {STEP_NAMES[step.step]}
                             </span>
                             {step.confirmed && (

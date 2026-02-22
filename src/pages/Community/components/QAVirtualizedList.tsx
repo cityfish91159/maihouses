@@ -44,7 +44,9 @@ function SimpleQAList({
   maxHeight,
 }: VirtualizedQAListProps) {
   const maxHeightClass =
-    maxHeight === UNANSWERED_SECTION_MAX_HEIGHT ? styles.unansweredMaxHeight : styles.answeredMaxHeight;
+    maxHeight === UNANSWERED_SECTION_MAX_HEIGHT
+      ? styles.unansweredMaxHeight
+      : styles.answeredMaxHeight;
 
   return (
     <div className={`space-y-2 overflow-auto ${maxHeightClass}`}>
@@ -106,8 +108,7 @@ function VirtualizedQAListInner({
   const { visibleItems, totalHeight, offsetY } = useMemo(() => {
     const overscan = 3;
     const startIndex = Math.max(0, Math.floor(scrollTop / ESTIMATED_CARD_HEIGHT) - overscan);
-    const visibleCount =
-      Math.ceil(containerHeight / ESTIMATED_CARD_HEIGHT) + 2 * overscan;
+    const visibleCount = Math.ceil(containerHeight / ESTIMATED_CARD_HEIGHT) + 2 * overscan;
     const endIndex = Math.min(questions.length, startIndex + visibleCount);
 
     return {

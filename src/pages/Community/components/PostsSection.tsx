@@ -7,6 +7,7 @@
 
 import { useState, useCallback, useId, useMemo, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
+import { Flame, Pencil, Lightbulb, Lock } from 'lucide-react';
 import type { Role, Post, WallTab } from '../types';
 import { getPermissions } from '../types';
 import { canPerformAction, getPermissionDeniedMessage } from '../lib';
@@ -36,10 +37,7 @@ interface PostsSectionProps {
   mode: PageMode;
   onRegisterGuide?: RegisterGuideHandler;
   onLike?: (postId: number | string) => Promise<void> | void;
-  onCreatePost?: (
-    content: string,
-    visibility: 'public' | 'private'
-  ) => Promise<void> | void;
+  onCreatePost?: (content: string, visibility: 'public' | 'private') => Promise<void> | void;
   onUnlock?: () => void;
 }
 
@@ -135,8 +133,8 @@ export function PostsSection({
       notify.error(
         perm.isGuest ? S.NOTIFY_PRIVATE_ACCESS_DENIED : S.NOTIFY_VERIFY_REQUIRED,
         perm.isGuest
-          ? `🔐 ${S.NOTIFY_PRIVATE_ACCESS_DENIED_DESC}`
-          : `🏠 ${S.NOTIFY_VERIFY_REQUIRED_DESC}`
+          ? S.NOTIFY_PRIVATE_ACCESS_DENIED_DESC
+          : S.NOTIFY_VERIFY_REQUIRED_DESC
       );
       return;
     }
@@ -193,7 +191,7 @@ export function PostsSection({
   return (
     <section
       id="public-wall"
-      className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]"
+      className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_var(--mh-shadow-card)]"
       aria-labelledby="posts-heading"
     >
       <div className="from-brand/3 to-brand-600/1 border-brand/5 flex items-center justify-between border-b bg-gradient-to-br px-4 py-3.5">
@@ -201,9 +199,7 @@ export function PostsSection({
           id="posts-heading"
           className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700"
         >
-          <span role="img" aria-label="火焰">
-            🔥
-          </span>{' '}
+          <Flame size={16} aria-hidden="true" />
           {S.SECTION_TITLE}
         </h2>
       </div>
@@ -248,9 +244,7 @@ export function PostsSection({
         >
           {S.TAB_PRIVATE}{' '}
           {!canPerformAction(perm, 'view_private') && (
-            <span role="img" aria-label="鎖頭">
-              🔒
-            </span>
+            <Lock size={12} aria-hidden="true" />
           )}
         </button>
       </div>
@@ -304,9 +298,7 @@ export function PostsSection({
                   onClick={() => openPostModal('public')}
                   className="bg-brand/6 hover:bg-brand/12 border-brand/10 flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold text-brand"
                 >
-                  <span role="img" aria-label="鉛筆">
-                    ✏️
-                  </span>{' '}
+                  <Pencil size={12} aria-hidden="true" />
                   {S.BTN_POST_PUBLIC}
                 </button>
               </div>
@@ -333,23 +325,20 @@ export function PostsSection({
                   onClick={() => openPostModal('private')}
                   className="bg-brand/6 hover:bg-brand/12 border-brand/10 flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold text-brand"
                 >
-                  <span role="img" aria-label="鉛筆">
-                    ✏️
-                  </span>{' '}
+                  <Pencil size={12} aria-hidden="true" />
                   {S.BTN_POST_PRIVATE}
                 </button>
               </div>
             ) : (
-              <p className="py-3 text-center text-[11px] text-ink-600">
-                💡 {S.MSG_AGENT_VIEW_ONLY}
+              <p className="flex items-center justify-center gap-1 py-3 text-center text-[11px] text-ink-600">
+                <Lightbulb size={12} aria-hidden="true" />
+                {S.MSG_AGENT_VIEW_ONLY}
               </p>
             )}
           </>
         ) : (
           <div className="bg-brand/3 flex flex-col items-center justify-center rounded-[14px] px-5 py-10 text-center">
-            <div className="mb-3 text-5xl opacity-50" aria-hidden="true">
-              🔐
-            </div>
+            <Lock size={48} className="mb-3 opacity-50" aria-hidden="true" />
             <h4 className="mb-1.5 text-sm font-bold text-brand-700">{S.LOCKED_TITLE}</h4>
             <p className="mb-4 text-xs text-ink-600">
               {perm.isGuest ? S.LOCKED_DESC_GUEST : S.LOCKED_DESC_USER}

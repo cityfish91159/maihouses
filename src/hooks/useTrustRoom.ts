@@ -7,11 +7,14 @@ import type { Transaction, Step, StepData, StepRisks } from '../types/trust';
 // Re-export types for backward compatibility
 export type { Transaction, Step, StepData, StepRisks };
 
+const MOCK_DEMO_CASE_ID = 'MOCK-DEMO-01';
+
 export function useTrustRoom(options?: { isDemoMode?: boolean }) {
   const externalIsDemoMode = options?.isDemoMode ?? false;
+  const initialExternalIsDemoMode = useRef(externalIsDemoMode).current;
 
   // States
-  const [isMock, setIsMock] = useState(externalIsDemoMode);
+  const [isMock, setIsMock] = useState(initialExternalIsDemoMode);
   const [caseId, setCaseId] = useState('');
   const [role, setRole] = useState<'agent' | 'buyer'>('agent');
   const [tx, setTx] = useState<Transaction | null>(null);
@@ -36,11 +39,15 @@ export function useTrustRoom(options?: { isDemoMode?: boolean }) {
         window.history.replaceState(null, '', window.location.pathname);
 
         try {
-          await fetch('/api/trust/session', {
+          const sessionRes = await fetch('/api/trust/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: t }),
           });
+          if (!sessionRes.ok) {
+            logger.error('Session exchange HTTP error', { status: sessionRes.status });
+            notify.error('無效的連結或憑證');
+          }
         } catch (e) {
           logger.error('Session exchange failed', { error: e });
           notify.error('無效的連結或憑證');
@@ -54,7 +61,7 @@ export function useTrustRoom(options?: { isDemoMode?: boolean }) {
           const user = await res.json();
           setRole(user.role);
           setCaseId(user.caseId);
-          setIsMock(false);
+          if (!initialExternalIsDemoMode) setIsMock(false);
           setAuthError(false);
           await fetchDataRef.current?.(user.caseId);
         } else {
@@ -68,7 +75,7 @@ export function useTrustRoom(options?: { isDemoMode?: boolean }) {
     };
 
     init();
-  }, []);
+  }, [initialExternalIsDemoMode]);
 
   // 同步外部 isDemoMode 變化（當全域 demo mode 啟動時，自動切換 isMock）
   useEffect(() => {
@@ -81,7 +88,7 @@ export function useTrustRoom(options?: { isDemoMode?: boolean }) {
   const startMockMode = useCallback(async () => {
     setIsMock(true);
     setAuthError(false);
-    const mockId = 'MOCK-DEMO-01';
+    const mockId = MOCK_DEMO_CASE_ID;
     setCaseId(mockId);
     setRole('agent');
     const mockTx = await mockService.fetchData(mockId);
@@ -166,7 +173,7 @@ export function useTrustRoom(options?: { isDemoMode?: boolean }) {
   // Unified Action Handler
   const dispatchAction = useCallback(
     async (endpoint: string, body: Record<string, unknown> = {}) => {
-      if (isBusy) return;
+      if (isBusy) return false;
       setIsBusy(true);
 
       try {

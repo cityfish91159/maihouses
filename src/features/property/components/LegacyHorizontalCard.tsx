@@ -34,11 +34,7 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
         <div className="horizontal-main">
           <div>
             <div className="horizontal-title-row">
-              <button
-                type="button"
-                onClick={handleNavigate}
-                className="horizontal-title-btn"
-              >
+              <button type="button" onClick={handleNavigate} className="horizontal-title-btn">
                 {data.title}
               </button>
               {firstTag && <span className="horizontal-tag">{firstTag}</span>}
@@ -77,15 +73,10 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
         </div>
 
         <div className="property-cta">
-          <button
-            className="btn-primary horizontal-cta-btn"
-            onClick={handleNavigate}
-          >
+          <button className="btn-primary horizontal-cta-btn" onClick={handleNavigate}>
             查看詳情
           </button>
-          <button className="heart-btn horizontal-heart-btn">
-            ♥
-          </button>
+          <button className="heart-btn horizontal-heart-btn">♥</button>
         </div>
       </div>
     </div>

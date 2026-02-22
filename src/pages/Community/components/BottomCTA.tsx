@@ -50,14 +50,14 @@ export function BottomCTA({ viewerRole }: BottomCTAProps) {
   if (canPerformAction(perm, 'view_private')) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-overlay flex items-center justify-center gap-3 border-t border-[var(--border)] bg-[rgba(255,255,255,0.95)] px-4 py-3 backdrop-blur-md">
+    <div className="fixed inset-x-0 bottom-0 z-overlay flex items-center justify-center gap-3 border-t border-[var(--border)] bg-white/95 px-4 py-3 backdrop-blur-md">
       <p className="text-xs text-[var(--text-secondary)]">
         {isMember ? '驗證住戶身分，解鎖私密版' : '免費註冊查看完整社區牆'}
       </p>
       <button
         type="button"
         onClick={handleSignupClick}
-        className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] px-5 py-2.5 text-[13px] font-bold text-white shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 active:scale-95"
+        className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dark)] px-5 py-2.5 text-[13px] font-bold text-white shadow-lg transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 active:brightness-90"
       >
         {isMember ? '驗證住戶' : '免費註冊'}
       </button>

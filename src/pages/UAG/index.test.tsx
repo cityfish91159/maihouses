@@ -29,9 +29,7 @@ vi.mock('../../lib/notify', () => ({
  * 預設 'demo'，讓既有的 seed 資料測試正常運作
  */
 type PageMode = 'visitor' | 'demo' | 'live';
-const mockedUsePageMode = vi.hoisted(() =>
-  vi.fn<() => PageMode>().mockReturnValue('demo')
-);
+const mockedUsePageMode = vi.hoisted(() => vi.fn<() => PageMode>().mockReturnValue('demo'));
 vi.mock('../../hooks/usePageMode', () => ({
   usePageMode: mockedUsePageMode,
   usePageModeWithAuthState: (isAuthenticated: boolean) =>
@@ -265,10 +263,27 @@ describe('UAGPage', () => {
           '你的帳號角色無法存取 UAG 後台'
         );
       });
-      expect(mockedNavigate).toHaveBeenCalledWith(
-        RouteUtils.toNavigatePath(ROUTES.HOME),
-        { replace: true }
-      );
+      expect(mockedNavigate).toHaveBeenCalledWith(RouteUtils.toNavigatePath(ROUTES.HOME), {
+        replace: true,
+      });
+    });
+  });
+
+  it('#24a demo 模式點擊「查看對話」應開啟 MockChatModal 且不導頁', async () => {
+    renderWithQueryClient();
+
+    const viewChatButtons = await screen.findAllByRole('button', { name: '查看對話' });
+    const firstViewChatButton = viewChatButtons[0];
+    expect(firstViewChatButton).toBeDefined();
+
+    fireEvent.click(firstViewChatButton!);
+
+    expect(await screen.findByRole('dialog', { name: 'Mock 客戶對話' })).toBeInTheDocument();
+    expect(mockedNavigate).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: '關閉對話' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Mock 客戶對話' })).not.toBeInTheDocument();
     });
   });
 });

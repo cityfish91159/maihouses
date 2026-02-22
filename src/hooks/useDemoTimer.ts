@@ -48,10 +48,13 @@ export function useDemoTimer(): void {
     const warnDelay = remaining - DEMO_WARN_BEFORE_MS;
     if (warnDelay > 0 && remaining > WARN_SKIP_THRESHOLD_MS) {
       timers.push(
-        setTimeout(() => {
-          const minutes = Math.max(1, getDemoRemainingMinutes());
-          notify.info('演示即將結束', `剩餘 ${minutes} 分鐘`);
-        }, Math.max(0, warnDelay))
+        setTimeout(
+          () => {
+            const minutes = Math.max(1, getDemoRemainingMinutes());
+            notify.info('演示即將結束', `剩餘 ${minutes} 分鐘`);
+          },
+          Math.max(0, warnDelay)
+        )
       );
     }
 

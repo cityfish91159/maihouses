@@ -162,7 +162,8 @@ export const aiAsk = async (
       ok: false,
       error: {
         code: 'AI_ERROR',
-        message: askResult.error === UNKNOWN_ERROR_MESSAGE ? AI_UNAVAILABLE_MESSAGE : askResult.error,
+        message:
+          askResult.error === UNKNOWN_ERROR_MESSAGE ? AI_UNAVAILABLE_MESSAGE : askResult.error,
       },
     };
   }

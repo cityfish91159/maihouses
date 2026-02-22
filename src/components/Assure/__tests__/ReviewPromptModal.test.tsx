@@ -45,9 +45,7 @@ describe('ReviewPromptModal', () => {
   });
 
   it('open=false 時不渲染', () => {
-    const { container } = renderWithClient(
-      <ReviewPromptModal {...defaultProps} open={false} />
-    );
+    const { container } = renderWithClient(<ReviewPromptModal {...defaultProps} open={false} />);
     expect(container.innerHTML).toBe('');
   });
 

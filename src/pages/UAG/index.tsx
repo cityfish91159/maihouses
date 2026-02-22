@@ -142,38 +142,44 @@ function UAGPageContent() {
     [assetMessageLead, queryClient, uagCacheKey, useMock]
   );
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     setIsSigningOut(true);
     try {
       await signOut();
+    } catch (err) {
+      logger.error('[UAG] 登出失敗', { error: err });
+      notify.error('登出失敗', '請稍後再試');
     } finally {
       setIsSigningOut(false);
     }
-  };
+  }, [signOut]);
 
   /**
    * MSG-5 FIX 1: 使用 await 確認購買成功後才顯示 Modal
    */
-  const onBuyLead = async (leadId: string) => {
-    if (!appData || isBuying) return;
+  const onBuyLead = useCallback(
+    async (leadId: string) => {
+      if (!appData || isBuying) return;
 
-    close();
-    setPurchaseResult(null);
+      close();
+      setPurchaseResult(null);
 
-    // 等待購買結果，只有成功才顯示 Modal
-    const result = await buyLead(leadId);
+      // 等待購買結果，只有成功才顯示 Modal
+      const result = await buyLead(leadId);
 
-    if (result.success && result.lead) {
-      setPurchaseResult('success');
-      setPurchasedLead(result.lead);
-      setCurrentConversationId(result.conversation_id);
-      setShowMessageModal(true);
-    } else {
-      setPurchaseResult('error');
-    }
-    // 動畫結束後清除狀態
-    setTimeout(() => setPurchaseResult(null), 500);
-  };
+      if (result.success && result.lead) {
+        setPurchaseResult('success');
+        setPurchasedLead(result.lead);
+        setCurrentConversationId(result.conversation_id);
+        setShowMessageModal(true);
+      } else {
+        setPurchaseResult('error');
+      }
+      // 動畫結束後清除狀態
+      setTimeout(() => setPurchaseResult(null), 500);
+    },
+    [appData, isBuying, close, buyLead]
+  );
 
   const handleCloseModal = useCallback(() => {
     setShowMessageModal(false);
@@ -255,9 +261,7 @@ function UAGPageContent() {
   if (!appData) return null;
 
   const showWelcome =
-    appData.leads.length === 0 &&
-    appData.listings.length === 0 &&
-    !welcomeDismissed;
+    appData.leads.length === 0 && appData.listings.length === 0 && !welcomeDismissed;
 
   /**
    * 問題 #10-11 修復：不使用假數據 fallback

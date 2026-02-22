@@ -36,13 +36,21 @@
     /* === 缺失的 CSS 變數補充（防止手機白屏） === */
     --danger: var(--mh-color-dc2626);
     --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.08);
+    --mh-shadow-card: rgba(0, 51, 102, 0.04);
+    --mh-shadow-overlay: rgba(0, 0, 0, 0.3);
+    --mh-shadow-dropdown: rgba(0, 0, 0, 0.15);
+    --mh-shadow-elevated: rgba(0, 34, 73, 0.08);
+    --mh-shadow-card-base: rgba(15, 23, 42, 0.08);
+    --mh-shadow-card-hover: rgba(0, 78, 124, 0.15);
+    --mh-shadow-card-hero-hover: rgba(0, 78, 124, 0.2);
+    --mh-shimmer-highlight: rgba(255, 255, 255, 0.7);
     --z-overlay: 40;
     --neutral-100: var(--mh-color-f5f5f5);
     --neutral-150: var(--mh-color-e5e5e5);
     --neutral-300: var(--mh-color-d4d4d4);
     --brand-fg: var(--mh-color-ffffff);
-  
-/* === Auto Generated Color Tokens (hardcoded hex replacement) === */
+
+    /* === Auto Generated Color Tokens (hardcoded hex replacement) === */
     --mh-color-000000: #000000;
     --mh-color-002244: #002244;
     --mh-color-002a44: #002a44;
@@ -199,7 +207,7 @@
     --mh-color-fffbeb: #fffbeb;
     --mh-color-ffffff: #ffffff;
     /* === End Auto Generated Color Tokens === */
-}
+  }
 
   body {
     @apply bg-[var(--bg-page)] font-sans text-[var(--text-primary)] antialiased;
@@ -218,21 +226,21 @@
   /* === 統一卡片樣式 (配合 HomeCard.tsx) === */
   .mh-card {
     @apply rounded-[var(--r-sm)] border border-slate-200 bg-white transition-all duration-200;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 2px 8px var(--mh-shadow-card-base);
   }
 
   .mh-card:hover {
-    box-shadow: 0 12px 32px rgba(0, 78, 124, 0.15);
+    box-shadow: 0 12px 32px var(--mh-shadow-card-hover);
     @apply -translate-y-1 border-[var(--brand)];
   }
 
   .mh-card--hero {
     @apply rounded-[var(--r-2xl)];
-    box-shadow: 0 12px 32px rgba(0, 78, 124, 0.15);
+    box-shadow: 0 12px 32px var(--mh-shadow-card-hover);
   }
 
   .mh-card--hero:hover {
-    box-shadow: 0 16px 40px rgba(0, 78, 124, 0.2);
+    box-shadow: 0 16px 40px var(--mh-shadow-card-hero-hover);
   }
 
   /* === AI 專用樣式 (配合 SmartAsk) === */
@@ -291,7 +299,7 @@
   background: linear-gradient(
     90deg,
     var(--border) 0%,
-    rgba(255, 255, 255, 0.7) 50%,
+    var(--mh-shimmer-highlight) 50%,
     var(--border) 100%
   );
   background-size: 200% 100%;

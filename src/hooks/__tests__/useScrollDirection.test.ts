@@ -118,11 +118,9 @@ describe('useScrollDirection - iOS 手機模擬', () => {
       const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
       renderHook(() => useScrollDirection(10));
 
-      expect(addEventListenerSpy).toHaveBeenCalledWith(
-        'scroll',
-        expect.any(Function),
-        { passive: true }
-      );
+      expect(addEventListenerSpy).toHaveBeenCalledWith('scroll', expect.any(Function), {
+        passive: true,
+      });
     });
 
     it('案例 24: unmount 時正確清理 listener 防止 iOS 記憶體洩漏', () => {

@@ -52,22 +52,19 @@ export function useEffectiveRole({
   authRole,
   devRole,
 }: UseEffectiveRoleOptions): Role {
-  return useMemo(
-    () => {
-      const options: _ResolveEffectiveRoleOptions = {
-        mode,
-        authLoading,
-        isAuthenticated,
-        authRole,
-        isDev: import.meta.env.DEV,
-      };
+  return useMemo(() => {
+    const options: _ResolveEffectiveRoleOptions = {
+      mode,
+      authLoading,
+      isAuthenticated,
+      authRole,
+      isDev: import.meta.env.DEV,
+    };
 
-      if (devRole !== undefined) {
-        options.devRole = devRole;
-      }
+    if (devRole !== undefined) {
+      options.devRole = devRole;
+    }
 
-      return resolveEffectiveRole(options);
-    },
-    [authLoading, authRole, isAuthenticated, mode, devRole]
-  );
+    return resolveEffectiveRole(options);
+  }, [authLoading, authRole, isAuthenticated, mode, devRole]);
 }

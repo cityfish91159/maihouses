@@ -24,25 +24,14 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = (props)
 
   if (!props.open) return null;
 
-  return (
-    <AgentReviewListModalInner
-      key={`${props.agentId}-${mode}`}
-      {...props}
-      mode={mode}
-    />
-  );
+  return <AgentReviewListModalInner key={`${props.agentId}-${mode}`} {...props} mode={mode} />;
 };
 
 interface InnerProps extends AgentReviewListModalProps {
   mode: PageMode;
 }
 
-const AgentReviewListModalInner: React.FC<InnerProps> = ({
-  agentId,
-  agentName,
-  onClose,
-  mode,
-}) => {
+const AgentReviewListModalInner: React.FC<InnerProps> = ({ agentId, agentName, onClose, mode }) => {
   const [page, setPage] = useState(1);
   const [accumulatedReviews, setAccumulatedReviews] = useState<AgentReviewListData['reviews']>([]);
   const useMockReviews = mode === 'demo';
@@ -59,7 +48,9 @@ const AgentReviewListModalInner: React.FC<InnerProps> = ({
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: agentReviewsQueryKey(mode, agentId, page),
     queryFn: () =>
-      useMockReviews ? Promise.resolve(AGENT_REVIEW_LIST_MOCK_DATA) : fetchAgentReviews(agentId, page),
+      useMockReviews
+        ? Promise.resolve(AGENT_REVIEW_LIST_MOCK_DATA)
+        : fetchAgentReviews(agentId, page),
     enabled: Boolean(agentId),
     staleTime: 2 * 60 * 1000,
     retry: 1,
@@ -221,9 +212,7 @@ const AgentReviewListModalInner: React.FC<InnerProps> = ({
                   <span className="text-sm text-text-muted">({reviewData.total} 則評價)</span>
                 </div>
 
-                <div className="space-y-1.5">
-                  {STAR_LEVELS.map((star) => renderStarBar(star))}
-                </div>
+                <div className="space-y-1.5">{STAR_LEVELS.map((star) => renderStarBar(star))}</div>
               </div>
 
               <div className="space-y-4">

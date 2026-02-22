@@ -177,9 +177,7 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
               <Star
                 size={36}
                 className={
-                  star <= displayRating
-                    ? 'fill-amber-400 text-amber-400'
-                    : 'fill-none text-border'
+                  star <= displayRating ? 'fill-amber-400 text-amber-400' : 'fill-none text-border'
                 }
               />
             </button>
@@ -199,11 +197,15 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
             className="w-full rounded-lg border border-border p-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             placeholder="分享您的感受..."
           />
-          <div className={`mt-1 text-right text-xs ${
-            comment.length > 450 ? 'text-red-600' :
-            comment.length > 400 ? 'text-amber-600' :
-            'text-text-muted'
-          }`}>
+          <div
+            className={`mt-1 text-right text-xs ${
+              comment.length > 450
+                ? 'text-red-600'
+                : comment.length > 400
+                  ? 'text-amber-600'
+                  : 'text-text-muted'
+            }`}
+          >
             {comment.length}/500
           </div>
         </div>

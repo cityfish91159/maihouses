@@ -152,10 +152,7 @@ const fetchWithRetry = async (input: RequestInfo, init?: RequestInit): Promise<R
   throw fetchError instanceof Error ? fetchError : new Error(ERROR_REQUEST_FAILED);
 };
 
-const validateAndExtractApiResponse = <T>(
-  json: unknown,
-  schema?: z.ZodType<ApiResponse<T>>
-): T => {
+const validateAndExtractApiResponse = <T>(json: unknown, schema?: z.ZodType<ApiResponse<T>>): T => {
   if (!schema) return json as T;
 
   const parsed = schema.safeParse(json);
@@ -265,7 +262,7 @@ export async function updateAgentProfile(payload: UpdateAgentProfilePayload): Pr
     throw new Error(getApiErrorMessage(json, ERROR_UPDATE_FAILED, response.status));
   }
 
-  return ((json as { data?: { updated_at?: string } })?.data?.updated_at ?? '');
+  return (json as { data?: { updated_at?: string } })?.data?.updated_at ?? '';
 }
 
 export async function uploadAgentAvatar(file: File): Promise<string> {

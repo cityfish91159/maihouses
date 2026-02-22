@@ -21,7 +21,13 @@ interface UseSocialProofOptions {
   liveViewerBaseline: number;
 }
 
-export function useSocialProof({ publicId, mode, isDemoMode, isTrustEnabled, liveViewerBaseline }: UseSocialProofOptions) {
+export function useSocialProof({
+  publicId,
+  mode,
+  isDemoMode,
+  isTrustEnabled,
+  liveViewerBaseline,
+}: UseSocialProofOptions) {
   const { data: publicStats } = useQuery({
     queryKey: ['property-public-stats', publicId],
     queryFn: async () => {

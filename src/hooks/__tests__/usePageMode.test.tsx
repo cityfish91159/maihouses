@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEMO_STORAGE_KEY,
   DEMO_STORAGE_SYNC_DEBOUNCE_MS,
@@ -94,9 +94,7 @@ describe('usePageMode (#1a)', () => {
     // 模擬其他分頁清除 demo 狀態
     clearDemoMode();
     act(() => {
-      window.dispatchEvent(
-        new StorageEvent('storage', { key: DEMO_STORAGE_KEY, newValue: null })
-      );
+      window.dispatchEvent(new StorageEvent('storage', { key: DEMO_STORAGE_KEY, newValue: null }));
       vi.advanceTimersByTime(DEMO_STORAGE_SYNC_DEBOUNCE_MS + 10);
     });
 
@@ -126,9 +124,7 @@ describe('usePageMode (#1a)', () => {
     window.__DEMO_EXPIRING = true;
     clearDemoMode();
     act(() => {
-      window.dispatchEvent(
-        new StorageEvent('storage', { key: DEMO_STORAGE_KEY, newValue: null })
-      );
+      window.dispatchEvent(new StorageEvent('storage', { key: DEMO_STORAGE_KEY, newValue: null }));
       vi.advanceTimersByTime(DEMO_STORAGE_SYNC_DEBOUNCE_MS + 10);
     });
 

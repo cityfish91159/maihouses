@@ -31,9 +31,7 @@ function normalizeSensitiveKey(key: string): string {
   return key.replace(/[_-]/g, '').toLowerCase();
 }
 
-const SENSITIVE_KEY_SET = new Set<string>(
-  SENSITIVE_KEYS.map((key) => normalizeSensitiveKey(key))
-);
+const SENSITIVE_KEY_SET = new Set<string>(SENSITIVE_KEYS.map((key) => normalizeSensitiveKey(key)));
 
 function isErrorRecord(value: unknown): value is ErrorRecord {
   return typeof value === 'object' && value !== null;
@@ -90,11 +88,7 @@ function getMessageFromRecord(record: ErrorRecord, visited: WeakSet<object>): st
   return null;
 }
 
-function sanitizeForSerialization(
-  value: unknown,
-  visited: WeakSet<object>,
-  depth = 0
-): JsonValue {
+function sanitizeForSerialization(value: unknown, visited: WeakSet<object>, depth = 0): JsonValue {
   if (
     value === null ||
     typeof value === 'string' ||
@@ -222,13 +216,9 @@ export function getErrorInfo(error: unknown): ErrorInfo {
  * const data = result.data;
  * ```
  */
-export type Result<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string };
+export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 
-export async function safeAsync<T>(
-  fn: () => Promise<T>
-): Promise<Result<T>> {
+export async function safeAsync<T>(fn: () => Promise<T>): Promise<Result<T>> {
   try {
     const data = await fn();
     return { ok: true, data };
@@ -240,9 +230,7 @@ export async function safeAsync<T>(
 /**
  * 安全地包裝同步函數，自動捕捉錯誤並返回 Result 型別
  */
-export function safeSync<T>(
-  fn: () => T
-): Result<T> {
+export function safeSync<T>(fn: () => T): Result<T> {
   try {
     const data = fn();
     return { ok: true, data };

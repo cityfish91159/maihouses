@@ -58,9 +58,7 @@ const mockToggleMode = vi.fn();
 const mockQueryClient = new QueryClient();
 
 /** 型別安全的 useUAGData mock 工廠 */
-function createMockUAGDataReturn(
-  overrides?: Partial<UseUAGDataReturn>,
-): UseUAGDataReturn {
+function createMockUAGDataReturn(overrides?: Partial<UseUAGDataReturn>): UseUAGDataReturn {
   return {
     data: mockAppData,
     isLoading: false,
@@ -167,7 +165,7 @@ describe('useUAG', () => {
           data: undefined,
           isLoading: true,
           userId: undefined,
-        }),
+        })
       );
 
       const { result } = renderHook(() => useUAG());
@@ -181,7 +179,7 @@ describe('useUAG', () => {
         createMockUAGDataReturn({
           data: undefined,
           isLoading: true,
-        }),
+        })
       );
 
       const { result } = renderHook(() => useUAG());
@@ -214,7 +212,7 @@ describe('useUAG', () => {
           error: mockError,
           useMock: false,
           mode: 'live',
-        }),
+        })
       );
 
       const { result } = renderHook(() => useUAG());
@@ -232,7 +230,7 @@ describe('useUAG', () => {
           error: mockError,
           useMock: false,
           mode: 'live',
-        }),
+        })
       );
 
       const { result } = renderHook(() => useUAG());
@@ -250,7 +248,7 @@ describe('useUAG', () => {
           error: networkError,
           useMock: false,
           mode: 'live',
-        }),
+        })
       );
 
       const { result } = renderHook(() => useUAG());
@@ -265,9 +263,7 @@ describe('useUAG', () => {
 
   describe('Mock/Live 模式', () => {
     it('Mock 模式下 useMock 應為 true', () => {
-      vi.mocked(useUAGData).mockReturnValue(
-        createMockUAGDataReturn({ userId: undefined }),
-      );
+      vi.mocked(useUAGData).mockReturnValue(createMockUAGDataReturn({ userId: undefined }));
 
       const { result } = renderHook(() => useUAG());
 
@@ -279,7 +275,7 @@ describe('useUAG', () => {
         createMockUAGDataReturn({
           useMock: false,
           mode: 'live',
-        }),
+        })
       );
 
       const { result } = renderHook(() => useUAG());
@@ -288,9 +284,7 @@ describe('useUAG', () => {
     });
 
     it('Mock 模式下 userId 可能為 undefined', () => {
-      vi.mocked(useUAGData).mockReturnValue(
-        createMockUAGDataReturn({ userId: undefined }),
-      );
+      vi.mocked(useUAGData).mockReturnValue(createMockUAGDataReturn({ userId: undefined }));
 
       renderHook(() => useUAG());
 
@@ -307,7 +301,7 @@ describe('useUAG', () => {
           useMock: false,
           userId: 'authenticated-user',
           mode: 'live',
-        }),
+        })
       );
 
       renderHook(() => useUAG());
@@ -371,7 +365,7 @@ describe('useUAG', () => {
           useMock: false,
           userId: 'custom-user',
           mode: 'live',
-        }),
+        })
       );
 
       renderHook(() => useUAG());
@@ -401,9 +395,7 @@ describe('useUAG', () => {
     });
 
     it('Mock 模式下應傳遞 useMock: true', () => {
-      vi.mocked(useUAGData).mockReturnValue(
-        createMockUAGDataReturn({ userId: undefined }),
-      );
+      vi.mocked(useUAGData).mockReturnValue(createMockUAGDataReturn({ userId: undefined }));
 
       renderHook(() => useUAG());
 
@@ -420,7 +412,7 @@ describe('useUAG', () => {
           useMock: false,
           userId: 'authenticated-user',
           mode: 'live',
-        }),
+        })
       );
 
       renderHook(() => useUAG());
@@ -436,9 +428,7 @@ describe('useUAG', () => {
     it('應傳遞 refetch 函數給 Realtime 訂閱', () => {
       const customRefetch = vi.fn();
 
-      vi.mocked(useUAGData).mockReturnValue(
-        createMockUAGDataReturn({ refetch: customRefetch }),
-      );
+      vi.mocked(useUAGData).mockReturnValue(createMockUAGDataReturn({ refetch: customRefetch }));
 
       renderHook(() => useUAG());
 
@@ -513,7 +503,7 @@ describe('useUAG', () => {
           useMock: false,
           userId: 'new-user-id',
           mode: 'live',
-        }),
+        })
       );
 
       // 重新渲染
@@ -539,7 +529,7 @@ describe('useUAG', () => {
         createMockUAGDataReturn({
           data: undefined,
           userId: undefined,
-        }),
+        })
       );
 
       renderHook(() => useUAG());
@@ -562,7 +552,7 @@ describe('useUAG', () => {
         createMockUAGDataReturn({
           data: undefined,
           isLoading: true,
-        }),
+        })
       );
 
       renderHook(() => useUAG());
@@ -587,7 +577,7 @@ describe('useUAG', () => {
         createMockUAGDataReturn({
           data: undefined,
           userId: undefined,
-        }),
+        })
       );
 
       const { result } = renderHook(() => useUAG());
@@ -646,7 +636,7 @@ describe('useUAG', () => {
           data: undefined,
           isLoading: true,
           userId: undefined,
-        }),
+        })
       );
 
       const { result: result2 } = renderHook(() => useUAG());
@@ -667,7 +657,7 @@ describe('useUAG', () => {
           error: testError,
           useMock: false,
           mode: 'live',
-        }),
+        })
       );
 
       const { result: result2 } = renderHook(() => useUAG());

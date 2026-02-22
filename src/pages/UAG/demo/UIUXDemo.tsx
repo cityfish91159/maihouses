@@ -146,9 +146,7 @@ function ExclusiveBadgeDemo() {
             <span className={css.demoBadgeBefore}>BEFORE</span>
           </div>
 
-          <div className={css.demoExclusiveBadgeBefore}>
-            ✨ 此客戶包含獨家訊息聯絡權 ✨
-          </div>
+          <div className={css.demoExclusiveBadgeBefore}>✨ 此客戶包含獨家訊息聯絡權 ✨</div>
 
           <div className={css.demoProblemBox}>
             <strong>問題：</strong>使用 emoji ✨ 裝飾文字
@@ -207,9 +205,7 @@ function BuyButtonDemo() {
             <span className={css.demoBadgeBefore}>BEFORE</span>
           </div>
 
-          <button className={css.demoBuyBtnBefore}>
-            🚀 獲取聯絡權限 (LINE/站內信)
-          </button>
+          <button className={css.demoBuyBtnBefore}>🚀 獲取聯絡權限 (LINE/站內信)</button>
 
           <div className={css.demoProblemBox}>
             <strong>問題：</strong>
@@ -295,12 +291,8 @@ function ConfirmButtonDemo() {
           </div>
 
           <div className={css.demoButtonRow}>
-            <button className={css.demoConfirmBeforeDanger}>
-              確定花費 3 點?
-            </button>
-            <button className={css.demoConfirmBeforeCancel}>
-              取消
-            </button>
+            <button className={css.demoConfirmBeforeDanger}>確定花費 3 點?</button>
+            <button className={css.demoConfirmBeforeCancel}>取消</button>
           </div>
 
           <div className={css.demoProblemBox}>
@@ -404,57 +396,33 @@ function SourceSummary() {
         </thead>
         <tbody>
           <tr>
-            <td className={css.demoSummaryCell}>
-              👆 → MousePointerClick
-            </td>
-            <td className={css.demoSummaryCell}>
-              SKILL.md - No emoji icons
-            </td>
-            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
-              SKILL.md 第 163 行
-            </td>
+            <td className={css.demoSummaryCell}>👆 → MousePointerClick</td>
+            <td className={css.demoSummaryCell}>SKILL.md - No emoji icons</td>
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>SKILL.md 第 163 行</td>
           </tr>
           <tr>
             <td className={css.demoSummaryCell}>✨ → Sparkles</td>
-            <td className={css.demoSummaryCell}>
-              SKILL.md - No emoji icons
-            </td>
-            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
-              SKILL.md 第 163 行
-            </td>
+            <td className={css.demoSummaryCell}>SKILL.md - No emoji icons</td>
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>SKILL.md 第 163 行</td>
           </tr>
           <tr>
             <td className={css.demoSummaryCell}>🚀 → Rocket</td>
-            <td className={css.demoSummaryCell}>
-              SKILL.md - No emoji icons
-            </td>
-            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
-              SKILL.md 第 163 行
-            </td>
+            <td className={css.demoSummaryCell}>SKILL.md - No emoji icons</td>
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>SKILL.md 第 163 行</td>
           </tr>
           <tr>
             <td className={css.demoSummaryCell}>Hover 視覺回饋</td>
-            <td className={css.demoSummaryCell}>
-              SKILL.md - Hover feedback
-            </td>
-            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
-              SKILL.md 第 173 行
-            </td>
+            <td className={css.demoSummaryCell}>SKILL.md - Hover feedback</td>
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>SKILL.md 第 173 行</td>
           </tr>
           <tr>
             <td className={css.demoSummaryCell}>Transition 0.2s</td>
-            <td className={css.demoSummaryCell}>
-              SKILL.md - Smooth transitions
-            </td>
-            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
-              SKILL.md 第 174 行
-            </td>
+            <td className={css.demoSummaryCell}>SKILL.md - Smooth transitions</td>
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>SKILL.md 第 174 行</td>
           </tr>
           <tr>
             <td className={css.demoSummaryCell}>Loading 狀態</td>
-            <td className={css.demoSummaryCell}>
-              ux-guidelines.csv - Submit Feedback
-            </td>
+            <td className={css.demoSummaryCell}>ux-guidelines.csv - Submit Feedback</td>
             <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
               --domain ux "confirm danger"
             </td>
@@ -462,9 +430,7 @@ function SourceSummary() {
           <tr>
             <td className={css.demoSummaryCell}>確認按鈕 Coins 圖標</td>
             <td className={css.demoSummaryCell}>SKILL.md - Use SVG icons</td>
-            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>
-              SKILL.md 第 163 行
-            </td>
+            <td className={`${css.demoSummaryCell} ${css.demoSummaryMono}`}>SKILL.md 第 163 行</td>
           </tr>
         </tbody>
       </table>

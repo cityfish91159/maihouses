@@ -118,13 +118,22 @@ export default function Feed() {
   return (
     <>
       {role === 'agent' ? (
-        userId ? <Agent userId={userId} mode={mode} /> : <Agent mode={mode} />
+        userId ? (
+          <Agent userId={userId} mode={mode} />
+        ) : (
+          <Agent mode={mode} />
+        )
       ) : userId ? (
         <Consumer userId={userId} mode={mode} />
       ) : (
         <Consumer mode={mode} />
       )}
-      {isDemoMode && <RoleToggle currentRole={role === 'agent' ? 'agent' : 'member'} onToggle={handleRoleToggle} />}
+      {isDemoMode && (
+        <RoleToggle
+          currentRole={role === 'agent' ? 'agent' : 'member'}
+          onToggle={handleRoleToggle}
+        />
+      )}
     </>
   );
 }

@@ -47,7 +47,9 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
   return (
     <div className="rounded-2xl p-4 glass-card sm:p-5">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="line-clamp-2 text-2xl font-bold leading-tight text-slate-900">{property.title}</h1>
+        <h1 className="line-clamp-2 text-2xl font-bold leading-tight text-slate-900">
+          {property.title}
+        </h1>
 
         <div data-testid="property-info-actions" className="flex items-center gap-2">
           <LineShareAction
@@ -136,7 +138,10 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
 
       <div className="mt-4 flex flex-wrap gap-2">
         {capsuleTags.map((tag) => (
-          <span key={tag} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-brand-700">
+          <span
+            key={tag}
+            className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-brand-700"
+          >
             {tag}
           </span>
         ))}

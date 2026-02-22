@@ -83,7 +83,8 @@ function parseDemoToastOptions(value: unknown): DemoToastOptions | null {
   const idValue = 'id' in value ? value.id : undefined;
   const durationValue = 'duration' in value ? value.duration : undefined;
 
-  if (idValue !== undefined && typeof idValue !== 'string' && typeof idValue !== 'number') return null;
+  if (idValue !== undefined && typeof idValue !== 'string' && typeof idValue !== 'number')
+    return null;
   if (durationValue !== undefined && typeof durationValue !== 'number') return null;
 
   const options: DemoToastOptions = { action };

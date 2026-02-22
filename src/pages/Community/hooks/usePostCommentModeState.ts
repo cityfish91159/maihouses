@@ -67,7 +67,7 @@ export function usePostCommentModeState({
   const interactiveUserId =
     mode === 'visitor'
       ? VISITOR_COMMENT_PROXY_ID
-      : currentUserId ?? (mode === 'demo' ? DEMO_COMMENT_AUTHOR_ID : undefined);
+      : (currentUserId ?? (mode === 'demo' ? DEMO_COMMENT_AUTHOR_ID : undefined));
 
   const showDiscussionRegisterGuide = useCallback(() => {
     if (onRegisterGuide) {

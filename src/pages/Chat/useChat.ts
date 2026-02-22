@@ -16,6 +16,8 @@ const MessageSchema = z.object({
   read_at: z.string().nullable(),
 });
 
+const TypingPayloadSchema = z.object({ senderId: z.string() });
+
 const ProfileSchema = z.object({
   name: z.string().nullable().optional(),
   email: z.string().nullable().optional(),
@@ -147,7 +149,12 @@ export function useChat(conversationId?: string) {
       throw error;
     }
 
-    const row = ConversationSchema.parse(data);
+    const parsed = ConversationSchema.safeParse(data);
+    if (!parsed.success) {
+      logger.warn('chat.loadConversation.invalidSchema', { errors: parsed.error.issues });
+      throw new Error('Invalid conversation data');
+    }
+    const row = parsed.data;
     // 修2: 權限檢查支援匿名用戶（user 可能為 null）
     const isParticipant = isAgent
       ? user && row.agent_id === user.id
@@ -224,7 +231,12 @@ export function useChat(conversationId?: string) {
       throw error;
     }
 
-    const validatedMessages = MessageListSchema.parse(data ?? []);
+    const parsedMessages = MessageListSchema.safeParse(data ?? []);
+    if (!parsedMessages.success) {
+      logger.warn('chat.loadMessages.invalidSchema', { errors: parsedMessages.error.issues });
+      throw new Error('Invalid message data');
+    }
+    const validatedMessages = parsedMessages.data;
     setMessages(validatedMessages);
   }, [conversationId, user, hasValidSession]);
 
@@ -283,12 +295,13 @@ export function useChat(conversationId?: string) {
           throw error;
         }
         if (messageId) {
+          const newId = typeof messageId === 'string' ? messageId : String(messageId);
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === tempId
                 ? {
                     ...msg,
-                    id: String(messageId),
+                    id: newId,
                   }
                 : msg
             )
@@ -369,8 +382,8 @@ export function useChat(conversationId?: string) {
     const channel = supabase
       .channel(`chat-${conversationId}`)
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        const payloadSenderId =
-          typeof payload?.senderId === 'string' ? payload.senderId : null;
+        const typingPayload = TypingPayloadSchema.safeParse(payload);
+        const payloadSenderId = typingPayload.success ? typingPayload.data.senderId : null;
         if (payloadSenderId && typingSenderId && payloadSenderId === typingSenderId) return;
         setIsTyping(true);
         if (typingTimeoutRef.current) {

@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -22,13 +21,7 @@ interface SectionErrorFallbackProps extends Pick<FallbackProps, 'resetErrorBound
 }
 
 const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)';
-const PROFILE_STICKY_SAVE_BAR_HEIGHT_PX = 80;
-type ProfileLayoutStyle = CSSProperties & {
-  '--page-uag-profile-sticky-save-bar-height': string;
-};
-const PROFILE_LAYOUT_STYLE: ProfileLayoutStyle = {
-  '--page-uag-profile-sticky-save-bar-height': `${PROFILE_STICKY_SAVE_BAR_HEIGHT_PX}px`,
-};
+const PROFILE_STORAGE_KEY_PREFIX = 'uag-profile';
 
 const SectionErrorFallback: React.FC<SectionErrorFallbackProps> = ({
   title,
@@ -58,7 +51,6 @@ export default function UAGProfilePage() {
   const uagRoute = RouteUtils.toNavigatePath(ROUTES.UAG);
 
   useEffect(() => {
-    // TODO(#28): 觀察一段時間後移除 legacy mock query 相容清洗
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.get('mock') !== 'true') return;
 
@@ -109,6 +101,7 @@ export default function UAGProfilePage() {
       <div className="min-h-screen bg-bg-base">
         <div className="mx-auto max-w-3xl p-6">
           <button
+            type="button"
             onClick={handleBackToUAG}
             className="mb-4 inline-flex min-h-[44px] min-w-[44px] items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
           >
@@ -128,16 +121,13 @@ export default function UAGProfilePage() {
   const metricsVariant = isDesktop ? 'card' : 'compact';
 
   return (
-    <div
-      style={PROFILE_LAYOUT_STYLE}
-      className="min-h-screen bg-bg-base pb-[calc(var(--page-uag-profile-sticky-save-bar-height)+env(safe-area-inset-bottom,0px))] text-slate-900 lg:pb-0"
-    >
+    <div className="min-h-screen bg-bg-base pb-[calc(80px+env(safe-area-inset-bottom,20px))] text-slate-900 lg:pb-0">
       <div className="mx-auto max-w-5xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <button
               onClick={handleBackToUAG}
-              className="inline-flex min-h-[44px] min-w-[44px] items-center gap-2 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:text-slate-900"
+              className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center gap-2 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:text-slate-900"
             >
               <ArrowLeft size={16} />
               返回 UAG
@@ -198,13 +188,13 @@ export default function UAGProfilePage() {
               onSave={updateProfile}
               formId="profile-form"
               onFormStateChange={handleFormStateChange}
-              storageKeyPrefix="uag-profile"
+              storageKeyPrefix={PROFILE_STORAGE_KEY_PREFIX}
             />
           </ErrorBoundary>
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 min-h-[var(--page-uag-profile-sticky-save-bar-height)] border-t border-slate-200 bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom,0px))] pt-3 shadow-lg lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-50 min-h-[80px] border-t border-slate-200 bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom,20px))] pt-3 shadow-lg lg:hidden">
         <button
           type="submit"
           form="profile-form"

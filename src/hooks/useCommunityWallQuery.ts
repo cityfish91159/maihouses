@@ -163,17 +163,14 @@ export function useCommunityWall(
             };
           });
 
-        queryClient.setQueryData<CommunityWallData>(
-          wallQueryKey,
-          {
-            ...previousData,
-            posts: {
-              ...previousData.posts,
-              public: updatePosts(previousData.posts.public),
-              private: updatePosts(previousData.posts.private),
-            },
-          }
-        );
+        queryClient.setQueryData<CommunityWallData>(wallQueryKey, {
+          ...previousData,
+          posts: {
+            ...previousData.posts,
+            public: updatePosts(previousData.posts.public),
+            private: updatePosts(previousData.posts.private),
+          },
+        });
       }
 
       return { previousData };
@@ -181,10 +178,7 @@ export function useCommunityWall(
     onError: (_err, _postId, context) => {
       // 失敗時回滾
       if (context?.previousData) {
-        queryClient.setQueryData(
-          wallQueryKey,
-          context.previousData
-        );
+        queryClient.setQueryData(wallQueryKey, context.previousData);
       }
     },
     onSettled: () => {

@@ -8,7 +8,6 @@ import { API_ERROR_CODES, errorResponse, successResponse } from '../lib/apiRespo
 const DEFAULT_OFFSET = 0;
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
-const COMMUNITY_BATCH_SIZE = 100;
 const CACHE_CONTROL_HEADER = 's-maxage=60, stale-while-revalidate=300';
 
 const QuerySchema = z.object({
@@ -62,21 +61,14 @@ function buildCommunityListItems(
   communities: CommunityRow[],
   postCountMap: Map<string, number>
 ): CommunityListItem[] {
-  const mapped = communities.map((community) => {
-    const postCount = postCountMap.get(community.id) ?? 0;
-    const reviewCount = community.review_count ?? 0;
-
-    return {
-      id: community.id,
-      name: community.name,
-      address: community.address ?? null,
-      image: community.cover_image ?? null,
-      post_count: postCount,
-      review_count: reviewCount,
-    };
-  });
-
-  return mapped.filter((item) => item.post_count > 0 || item.review_count > 0);
+  return communities.map((community) => ({
+    id: community.id,
+    name: community.name,
+    address: community.address ?? null,
+    image: community.cover_image ?? null,
+    post_count: postCountMap.get(community.id) ?? 0,
+    review_count: community.review_count ?? 0,
+  }));
 }
 
 function enforceListCors(req: VercelRequest, res: VercelResponse): boolean {
@@ -187,30 +179,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const { offset, limit } = queryResult.data;
 
   try {
-    const targetVisibleCount = offset + limit;
-    const visibleItems: CommunityListItem[] = [];
-    let cursor = 0;
-    let reachedEnd = false;
+    const { rows } = await fetchCommunityBatch(offset, limit);
+    const postCountMap = await fetchPostCountMap(rows);
+    const pagedItems = buildCommunityListItems(rows, postCountMap);
 
-    while (visibleItems.length < targetVisibleCount && !reachedEnd) {
-      const { rows, reachedEnd: batchEnd } = await fetchCommunityBatch(cursor, COMMUNITY_BATCH_SIZE);
+    // #8c: 僅回傳有公開內容的社區
+    const visibleItems = pagedItems.filter(
+      (item) => item.post_count > 0 || item.review_count > 0
+    );
 
-      if (rows.length === 0) {
-        reachedEnd = true;
-        break;
-      }
-
-      const postCountMap = await fetchPostCountMap(rows);
-      const batchVisibleItems = buildCommunityListItems(rows, postCountMap);
-      visibleItems.push(...batchVisibleItems);
-
-      reachedEnd = batchEnd;
-      cursor += COMMUNITY_BATCH_SIZE;
-    }
-
-    const pagedItems = visibleItems.slice(offset, offset + limit);
-
-    const responseValidation = CommunityListItemSchema.array().safeParse(pagedItems);
+    const responseValidation = CommunityListItemSchema.array().safeParse(visibleItems);
     if (!responseValidation.success) {
       logger.error('[community/list] response schema validation failed', responseValidation.error);
       res

@@ -159,9 +159,7 @@ describe('P7 Scenario Verification (L7+ Standard)', () => {
   };
 
   const setupFeedMock = (canViewPrivate: boolean) => {
-    const posts = canViewPrivate
-      ? [mockPublicPost, mockPrivatePost]
-      : [mockPublicPost];
+    const posts = canViewPrivate ? [mockPublicPost, mockPrivatePost] : [mockPublicPost];
 
     mockedUseFeedData.mockReturnValue({
       ...mockUseFeedDataBase,

@@ -408,7 +408,12 @@
   width: 120px;
   height: 32px;
   border-radius: 10px;
-  background: linear-gradient(90deg, var(--mh-color-f1f5f9), var(--mh-color-e2e8f0), var(--mh-color-f1f5f9));
+  background: linear-gradient(
+    90deg,
+    var(--mh-color-f1f5f9),
+    var(--mh-color-e2e8f0),
+    var(--mh-color-f1f5f9)
+  );
   background-size: 200% 100%;
   animation: skeleton 1.4s ease-in-out infinite;
 }
@@ -428,7 +433,12 @@
   padding: 24px;
   position: relative;
   z-index: var(--z-content);
-  background: linear-gradient(135deg, var(--mh-color-f8fafc) 0%, var(--mh-color-eef2ff) 50%, var(--mh-color-f0f9ff) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--mh-color-f8fafc) 0%,
+    var(--mh-color-eef2ff) 50%,
+    var(--mh-color-f0f9ff) 100%
+  );
 }
 .uag-grid {
   display: grid;
@@ -736,7 +746,9 @@
   padding: 24px;
   /* 柔和陰影 */
   box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
-  transition: box-shadow 200ms, background 200ms;
+  transition:
+    box-shadow 200ms,
+    background 200ms;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -944,7 +956,12 @@
   min-height: 450px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: var(--radius-lg);
-  background: radial-gradient(circle at 50% 50%, var(--mh-color-ffffff) 0%, var(--mh-color-e5edff) 55%, var(--mh-color-eef2ff) 100%);
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--mh-color-ffffff) 0%,
+    var(--mh-color-e5edff) 55%,
+    var(--mh-color-eef2ff) 100%
+  );
   overflow: hidden;
   box-shadow:
     0 0 0 1px rgba(148, 163, 184, 0.25),
@@ -1017,7 +1034,7 @@
     pointer-events: auto;
   }
   .uag-grade-chip[data-active='true'] {
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.10);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
   }
   .uag-grade-chip-count {
     min-width: 18px;
@@ -2199,7 +2216,9 @@
 }
 .footer-capsule:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--mh-color-00385a), 0 0 0 4px rgba(0, 56, 90, 0.2);
+  box-shadow:
+    0 0 0 2px var(--mh-color-00385a),
+    0 0 0 4px rgba(0, 56, 90, 0.2);
 }
 
 /* ── 桌面版 ── */
@@ -2254,11 +2273,22 @@
 
 /* 購買失敗搖晃 */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-3px); }
-  80% { transform: translateX(3px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
 }
 .animate-shake {
   animation: shake 0.3s ease-in-out;
@@ -2266,9 +2296,15 @@
 
 /* 購買成功脈衝 */
 @keyframes success-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5); }
-  70% { box-shadow: 0 0 0 12px rgba(22, 163, 74, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(22, 163, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+  }
 }
 .animate-success {
   animation: success-pulse 0.5s ease-out;
@@ -2276,9 +2312,15 @@
 
 /* 點數數字跳動 */
 @keyframes points-bump {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.25); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 .animate-points-bump {
   animation: points-bump 0.3s ease-out;
@@ -2791,7 +2833,9 @@
   flex-direction: column;
   gap: 12px;
   box-shadow: 0 1px 4px rgba(0, 56, 90, 0.05);
-  transition: box-shadow 200ms, transform 200ms;
+  transition:
+    box-shadow 200ms,
+    transform 200ms;
 }
 .landing-card:hover {
   box-shadow: 0 4px 16px rgba(0, 56, 90, 0.1);

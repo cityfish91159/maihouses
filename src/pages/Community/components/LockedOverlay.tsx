@@ -6,6 +6,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { Lock, Check } from 'lucide-react';
 
 interface LockedOverlayProps {
   /** 被遮蓋的內容 */
@@ -58,13 +59,13 @@ export function LockedOverlay({
 
       {/* 遮罩層 */}
       <div className="absolute inset-0 flex flex-col items-center justify-center rounded-[14px] bg-white/85 p-5 text-center">
-        <h4 className="mb-1 text-sm font-extrabold text-brand-700">
-          🔒 還有 {hiddenCount} {countLabel}
+        <h4 className="mb-1 flex items-center justify-center gap-1.5 text-sm font-extrabold text-brand-700">
+          <Lock size={14} aria-hidden="true" /> 還有 {hiddenCount} {countLabel}
         </h4>
         <p className="mb-2.5 text-xs text-ink-600">
           {benefits.map((b, i) => (
             <span key={b}>
-              {i > 0 && '　'}✓ {b}
+              {i > 0 && '　'}<Check size={12} className="inline text-brand-600" aria-hidden="true" /> {b}
             </span>
           ))}
         </p>
@@ -73,7 +74,7 @@ export function LockedOverlay({
             type="button"
             onClick={onCtaClick}
             aria-label={ctaText}
-            className="rounded-full bg-gradient-to-br from-brand to-brand-600 px-6 py-2.5 text-[13px] font-bold text-white transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+            className="rounded-full bg-gradient-to-br from-brand to-brand-600 px-6 py-2.5 text-[13px] font-bold text-white transition hover:brightness-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
           >
             {ctaText}
           </button>

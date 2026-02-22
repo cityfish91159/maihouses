@@ -263,11 +263,7 @@ describe('CommunityReviews', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     renderWithRouter(
-      <CommunityReviews
-        isLoggedIn={true}
-        communityId="community-1"
-        onToggleLike={onToggleLike}
-      />
+      <CommunityReviews isLoggedIn={true} communityId="community-1" onToggleLike={onToggleLike} />
     );
 
     await waitFor(() => {
@@ -348,7 +344,11 @@ describe('CommunityReviews', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     renderWithRouter(
-      <CommunityReviews isLoggedIn={true} communityId="community-visitor" onToggleLike={onToggleLike} />
+      <CommunityReviews
+        isLoggedIn={true}
+        communityId="community-visitor"
+        onToggleLike={onToggleLike}
+      />
     );
 
     const likeButton = await screen.findByLabelText('鼓勵這則評價');

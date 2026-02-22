@@ -11,7 +11,9 @@ interface UAGTabBarProps {
   readonly onTabChange: (tab: UAGMobileTab) => void;
 }
 
-type LucideIcon = ForwardRefExoticComponent<Omit<LucideProps, 'ref'> & RefAttributes<SVGSVGElement>>;
+type LucideIcon = ForwardRefExoticComponent<
+  Omit<LucideProps, 'ref'> & RefAttributes<SVGSVGElement>
+>;
 
 const TAB_ITEMS: ReadonlyArray<{
   readonly id: UAGMobileTab;

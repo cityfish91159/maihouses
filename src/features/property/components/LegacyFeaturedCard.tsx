@@ -33,11 +33,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
 
       <div className="property-content">
         <h3 className="property-title">
-          <button
-            type="button"
-            onClick={handleNavigate}
-            className="property-title-btn"
-          >
+          <button type="button" onClick={handleNavigate} className="property-title-btn">
             {data.title}
           </button>
         </h3>
@@ -45,19 +41,14 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
 
         <div className="property-tags-row">
           {(data.tags || []).slice(0, 3).map((tag: string, i: number) => (
-            <span
-              key={i}
-              className={`capsule-chip ${variant !== 'main' ? 'capsule-chip-sm' : ''}`}
-            >
+            <span key={i} className={`capsule-chip ${variant !== 'main' ? 'capsule-chip-sm' : ''}`}>
               {tag}
             </span>
           ))}
         </div>
 
         {variant === 'main' && data.highlights && (
-          <div className="tiny-text tiny-text-highlight">
-            {data.highlights}
-          </div>
+          <div className="tiny-text tiny-text-highlight">{data.highlights}</div>
         )}
 
         <div className="property-rating">

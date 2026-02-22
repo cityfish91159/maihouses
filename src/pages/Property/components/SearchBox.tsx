@@ -57,11 +57,7 @@ export function SearchBox({
         {urlQuery ? (
           <>
             搜尋「{urlQuery}」的結果 ·{' '}
-            <button
-              type="button"
-              className="text-brand-600 hover:underline"
-              onClick={onClear}
-            >
+            <button type="button" className="text-brand-600 hover:underline" onClick={onClear}>
               清除搜尋
             </button>
           </>

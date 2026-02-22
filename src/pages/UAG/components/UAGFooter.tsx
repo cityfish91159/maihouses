@@ -9,10 +9,9 @@ interface UAGFooterProps {
 }
 
 export const UAGFooter: React.FC<UAGFooterProps> = ({ user, pointsBumping }) => {
-  const pointsClass = [
-    styles['footer-capsule'],
-    pointsBumping ? styles['animate-points-bump'] : '',
-  ].filter(Boolean).join(' ');
+  const pointsClass = [styles['footer-capsule'], pointsBumping ? styles['animate-points-bump'] : '']
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className={styles['uag-footer-bar']} role="toolbar" aria-label="快捷操作列">
@@ -26,11 +25,7 @@ export const UAGFooter: React.FC<UAGFooterProps> = ({ user, pointsBumping }) => 
         <span>加值點數</span>
       </button>
 
-      <div
-        className={pointsClass}
-        role="status"
-        aria-label={`目前點數 ${user.points}`}
-      >
+      <div className={pointsClass} role="status" aria-label={`目前點數 ${user.points}`}>
         <Coins size={14} strokeWidth={2.5} aria-hidden="true" />
         <span>點數 {user.points}</span>
       </div>

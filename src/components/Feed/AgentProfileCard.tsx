@@ -72,7 +72,9 @@ export const AgentProfileCard = memo(function AgentProfileCard({
           {avatarLetter}
         </div>
         <div className="flex-1">
-          <h3 className="m-0 mb-1 text-[18px] font-black text-[var(--mh-color-0b214a)]">{profile.name}</h3>
+          <h3 className="m-0 mb-1 text-[18px] font-black text-[var(--mh-color-0b214a)]">
+            {profile.name}
+          </h3>
           <p className="m-0 flex items-center gap-1 text-[13px] text-slate-500">
             {STRINGS.AGENT.PROFILE.FROM_STORE} | {badges}
           </p>

@@ -149,10 +149,7 @@ describe('useAgentProfile (#7 mock mode + var(--mh-color-2211bb)-P8 feedback)', 
     expect(result.current.profile?.company).toBe('邁房子中山店');
     expect(result.current.profile?.phone).toBe('0987654321');
     expect(mockUpdateAgentProfile).not.toHaveBeenCalled();
-    expect(mockNotifySuccess).toHaveBeenCalledWith(
-      '個人資料已儲存',
-      'Mock 模式：資料未實際儲存'
-    );
+    expect(mockNotifySuccess).toHaveBeenCalledWith('個人資料已儲存', 'Mock 模式：資料未實際儲存');
   });
 
   it('demo 模式時 company=null 應保留為 null（不強制回填）', async () => {

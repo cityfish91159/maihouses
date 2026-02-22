@@ -244,4 +244,3 @@ describe('TrustServiceBanner - Performance Optimization', () => {
     expect(bannerDiv).toHaveClass('bg-badge-warning-bg');
   });
 });
-

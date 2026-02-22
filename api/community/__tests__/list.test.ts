@@ -201,7 +201,7 @@ describe('/api/community/list (#8c)', () => {
 
     const req = createMockRequest({
       method: 'GET',
-      query: { offset: '1', limit: '1' },
+      query: { offset: '0', limit: '10' },
     });
     const res = createMockResponse();
 
@@ -212,6 +212,14 @@ describe('/api/community/list (#8c)', () => {
     expect(res.jsonData).toEqual({
       success: true,
       data: [
+        {
+          id: COMMUNITY_A,
+          name: 'A 社區',
+          address: '台北市 A 路',
+          image: null,
+          post_count: 1,
+          review_count: 2,
+        },
         {
           id: COMMUNITY_B,
           name: 'B 社區',

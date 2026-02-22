@@ -17,7 +17,9 @@ export function useAnimatedNumber(
   const prefersReducedMotion = usePrefersReducedMotion();
   const normalizedTarget = useMemo(() => normalizeTarget(targetValue), [targetValue]);
   const shouldAnimate = !prefersReducedMotion && durationMs > 0;
-  const [displayValue, setDisplayValue] = useState<number>(() => (shouldAnimate ? 0 : normalizedTarget));
+  const [displayValue, setDisplayValue] = useState<number>(() =>
+    shouldAnimate ? 0 : normalizedTarget
+  );
   const displayValueRef = useRef<number>(shouldAnimate ? 0 : normalizedTarget);
 
   useEffect(() => {

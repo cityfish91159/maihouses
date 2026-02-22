@@ -4,14 +4,13 @@
  * 社區探索著陸頁 — visitor 和無歸屬會員的社區瀏覽入口
  * #8d 社區探索頁
  */
-import { useState, useCallback, useMemo, useRef, useDeferredValue } from 'react';
+import { useState, useCallback, useMemo, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { MaiMaiBase } from '../../components/MaiMai/MaiMaiBase';
 import { MaiMaiSpeech } from '../../components/MaiMai/MaiMaiSpeech';
-import type { MaiMaiMood } from '../../components/MaiMai/types';
 
 import { usePageMode } from '../../hooks/usePageMode';
 import { useMaiMaiA11yProps } from '../../hooks/useMaiMaiA11yProps';
@@ -20,26 +19,19 @@ import { navigateToAuth, getCurrentPath } from '../../lib/authUtils';
 import { ROUTES, RouteUtils } from '../../constants/routes';
 
 import { useCommunityList, type CommunityListItem } from './hooks/useCommunityList';
+import { useExploreMood } from './hooks/useExploreMood';
 import { CommunityCard } from './components/CommunityCard';
 import { CommunityQuickFilters } from './components/CommunityQuickFilters';
 import { CommunityResultsBar } from './components/CommunityResultsBar';
 
 // ─── 常數 ────────────────────────────────────────────────────────────────────
 
-const CLICK_EASTER_EGG_COUNT = 5;
-const COMMUNITY_COUNT_SPEECH_PREFIX = '有 ';
-const COMMUNITY_COUNT_SPEECH_SUFFIX = ' 個社區！';
 const HIGH_REVIEW_THRESHOLD = 10;
 const HIGH_ACTIVITY_THRESHOLD = 20;
 const TRANSIT_KEYWORDS = ['捷運', '車站', '站'] as const;
 const SCHOOL_KEYWORDS = ['學區', '國小', '國中'] as const;
 
-type ExploreFilterKey =
-  | 'all'
-  | 'highReview'
-  | 'highActivity'
-  | 'nearTransit'
-  | 'schoolZone';
+type ExploreFilterKey = 'all' | 'highReview' | 'highActivity' | 'nearTransit' | 'schoolZone';
 
 type ExploreSortKey = 'recommended' | 'reviewDesc' | 'postDesc' | 'nameAsc';
 
@@ -52,10 +44,6 @@ interface ExploreFilterOption {
 interface ExploreSortOption {
   key: ExploreSortKey;
   label: string;
-}
-
-function buildCommunityCountSpeech(count: number): string {
-  return `${COMMUNITY_COUNT_SPEECH_PREFIX}${count}${COMMUNITY_COUNT_SPEECH_SUFFIX}`;
 }
 
 function includesKeyword(content: string, keywords: readonly string[]): boolean {
@@ -145,16 +133,6 @@ function isExploreSortKey(value: string): value is ExploreSortKey {
   return EXPLORE_SORT_OPTIONS.some((option) => option.key === value);
 }
 
-// 只宣告此頁面實際使用的 mood，避免 idle/peek/shy/sleep/header 空字串造成誤解
-const MOOD_SPEECH: Partial<Record<MaiMaiMood, string>> = {
-  wave: '嗨！想找哪個社區的鄰居評價？',
-  thinking: '輸入社區名或地址試試看…',
-  excited: '找到了嗎？',
-  confused: '沒找到耶…換個關鍵字？',
-  celebrate: '你找到我的彩蛋了！',
-  // happy：動態設定（帶數量），不在此預設
-};
-
 // ─── 骨架屏 ──────────────────────────────────────────────────────────────────
 
 function CardSkeleton() {
@@ -228,6 +206,22 @@ function BottomCTASection() {
   );
 }
 
+// ─── 已登入會員引導 ─────────────────────────────────────────────────────────
+
+function LiveMemberGuidanceSection() {
+  return (
+    <section className="mx-auto mt-10 max-w-[1120px] px-4 pb-16">
+      <div className="flex flex-col items-center gap-3 rounded-[24px] border border-brand-100 bg-brand-50 p-8 text-center">
+        <MapPin size={24} className="text-brand-700" aria-hidden="true" />
+        <p className="text-lg font-bold text-brand-700">尋找你的社區</p>
+        <p className="text-brand-700/60 text-sm">
+          點選上方的社區卡片，即可瀏覽該社區的評價、貼文與問答
+        </p>
+      </div>
+    </section>
+  );
+}
+
 // ─── 主頁面 ───────────────────────────────────────────────────────────────────
 
 export default function Explore() {
@@ -242,18 +236,10 @@ export default function Explore() {
   const [activeFilter, setActiveFilter] = useState<ExploreFilterKey>('all');
   const [sortBy, setSortBy] = useState<ExploreSortKey>('recommended');
   const deferredQuery = useDeferredValue(query);
-  // mood：無搜尋詞時的基礎心情（hover/focus/彩蛋驅動）
-  const [mood, setMood] = useState<MaiMaiMood>('wave');
-  const [speechMessages, setSpeechMessages] = useState<string[]>([
-    MOOD_SPEECH.wave ?? '',
-  ]);
-  const clickCountRef = useRef(0);
-  const queryRef = useRef('');
 
   const activeFilterOption = useMemo(
     () =>
-      EXPLORE_FILTER_OPTIONS.find((option) => option.key === activeFilter) ??
-      DEFAULT_FILTER_OPTION,
+      EXPLORE_FILTER_OPTIONS.find((option) => option.key === activeFilter) ?? DEFAULT_FILTER_OPTION,
     [activeFilter]
   );
 
@@ -276,30 +262,24 @@ export default function Explore() {
     return [...filteredBySearch].sort(getSortComparator(sortBy));
   }, [communities, deferredQuery, activeFilterOption, sortBy]);
 
-  // 更新基礎 mood + speech（只在無搜尋詞時有效，有搜尋詞時由 effectiveMood 覆蓋）
-  const pushMood = useCallback((newMood: MaiMaiMood, text: string) => {
-    setMood(newMood);
-    if (text) {
-      setSpeechMessages((prev) => [...prev.slice(-2), text]);
-    }
-  }, []);
-
-  const handleSearchFocus = useCallback(() => {
-    pushMood('thinking', MOOD_SPEECH.thinking ?? '');
-  }, [pushMood]);
+  // MaiMai mood / speech（由 useExploreMood 統一管理）
+  const {
+    effectiveMood,
+    effectiveSpeech,
+    handleSearchFocus,
+    handleSearchMoodUpdate,
+    handleCardHover,
+    handleCardLeave,
+    handleMaiMaiClick,
+  } = useExploreMood(query, filtered.length);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
-      queryRef.current = val;
       setQuery(val);
-      if (!val.trim()) {
-        pushMood('wave', MOOD_SPEECH.wave ?? '');
-      } else {
-        pushMood('excited', MOOD_SPEECH.excited ?? '');
-      }
+      handleSearchMoodUpdate(val);
     },
-    [pushMood]
+    [handleSearchMoodUpdate]
   );
 
   const handleFilterChange = useCallback((nextFilter: string) => {
@@ -312,45 +292,12 @@ export default function Explore() {
     setSortBy(nextSortBy);
   }, []);
 
-  const handleCardHover = useCallback(() => {
-    pushMood('excited', MOOD_SPEECH.excited ?? '');
-  }, [pushMood]);
-
-  const handleCardLeave = useCallback(() => {
-    // 讀 ref 取最新 query，避免依賴 query state 造成卡片全量 re-render
-    if (queryRef.current.trim()) {
-      pushMood('excited', MOOD_SPEECH.excited ?? '');
-    } else {
-      pushMood('wave', MOOD_SPEECH.wave ?? '');
-    }
-  }, [pushMood]);
-
-  const handleMaiMaiClick = useCallback(() => {
-    clickCountRef.current += 1;
-    if (clickCountRef.current >= CLICK_EASTER_EGG_COUNT) {
-      clickCountRef.current = 0;
-      pushMood('celebrate', MOOD_SPEECH.celebrate ?? '');
-    }
-  }, [pushMood]);
-
   const handleCardClick = useCallback(
     (communityId: string) => {
       void navigate(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_WALL(communityId)));
     },
     [navigate]
   );
-
-  // 有搜尋詞時：搜尋結果決定 mood/speech；無搜尋詞時：回歸基礎 mood/speech
-  const effectiveMood: MaiMaiMood = useMemo(() => {
-    if (!query.trim()) return mood;
-    return filtered.length === 0 ? 'confused' : 'happy';
-  }, [query, filtered.length, mood]);
-
-  const effectiveSpeech: string[] = useMemo(() => {
-    if (!query.trim()) return speechMessages;
-    if (filtered.length === 0) return [...speechMessages.slice(-2), MOOD_SPEECH.confused ?? ''];
-    return [...speechMessages.slice(-2), buildCommunityCountSpeech(filtered.length)];
-  }, [query, filtered.length, speechMessages]);
 
   return (
     <>
@@ -361,32 +308,26 @@ export default function Explore() {
         <section className="border-brand-100/50 border-b bg-brand-50 pb-10 pt-8">
           <div className="mx-auto flex max-w-[1120px] flex-col items-center gap-4 px-4 text-center">
             {/* MaiMai */}
-            <div className="relative">
+            <div className="relative z-overlay">
               <button
                 type="button"
                 onClick={handleMaiMaiClick}
-                className="focus-visible:ring-brand-400 relative block cursor-pointer transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-50 active:scale-95"
+                className="focus-visible:ring-brand-400 relative block cursor-pointer transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-50 active:scale-95"
                 aria-label="點擊邁邁"
               >
-                <MaiMaiBase
-                  mood={effectiveMood}
-                  size={isMobile ? 'sm' : 'md'}
-                  {...a11yProps}
-                />
+                <MaiMaiBase mood={effectiveMood} size={isMobile ? 'sm' : 'md'} {...a11yProps} />
               </button>
               <MaiMaiSpeech messages={effectiveSpeech} />
             </div>
 
             {/* 標題 */}
-            <h1 className="text-2xl font-bold text-brand-700 md:text-3xl">
-              探索社區評價
-            </h1>
+            <h1 className="text-2xl font-bold text-brand-700 md:text-3xl">探索社區評價</h1>
             <p className="text-brand-700/60 text-sm md:text-base">
               找到你關心的社區，看看鄰居怎麼說
             </p>
 
             {/* 搜尋框 */}
-            <div className="flex w-full max-w-xl items-center rounded-full border border-brand-100 bg-white shadow-sm transition-all focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-50">
+            <div role="search" className="flex w-full max-w-xl items-center rounded-full border border-brand-100 bg-white shadow-sm transition-all focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-50">
               <span className="pl-5 text-gray-400">
                 <Search size={18} strokeWidth={2.5} />
               </span>
@@ -455,8 +396,9 @@ export default function Explore() {
           )}
         </section>
 
-        {/* ── 底部 CTA（僅 visitor）── */}
+        {/* ── 底部 CTA / 引導 ── */}
         {mode === 'visitor' && <BottomCTASection />}
+        {mode === 'live' && <LiveMemberGuidanceSection />}
       </main>
     </>
   );

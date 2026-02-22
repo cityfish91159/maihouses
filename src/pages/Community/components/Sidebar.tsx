@@ -6,12 +6,25 @@
 
 import { useMemo } from 'react';
 import {
+  BarChart3,
+  Link2,
+  Home,
+  Bell,
+  HelpCircle,
+  MessageCircle,
+  Flame,
+  Heart,
+} from 'lucide-react';
+import {
   SIDEBAR_HOT_POSTS_COUNT,
   SIDEBAR_QUESTIONS_COUNT,
   type CommunityInfo,
   type Post,
   type Question,
 } from '../types';
+import { SidebarMascot } from './SidebarMascot';
+
+const CARD_SHADOW = 'shadow-[0_4px_14px_var(--mh-shadow-card)]';
 
 /** 格式化可能為 null 的數值 */
 function formatValue(value: number | null | undefined, suffix = ''): string {
@@ -51,19 +64,20 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
   return (
     <aside className="hidden w-[280px] shrink-0 flex-col gap-3 self-start lg:sticky lg:top-[70px] lg:flex">
       {/* 社區數據 */}
-      <div className="rounded-[14px] border border-[var(--line)] bg-white p-3.5 shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
+      <div className={`rounded-[14px] border border-[var(--line)] bg-white p-3.5 ${CARD_SHADOW}`}>
         <h4 className="mb-2.5 flex items-center gap-1.5 text-sm font-extrabold text-[var(--brand)]">
-          📊 社區數據
+          <BarChart3 size={14} aria-hidden="true" />
+          社區數據
         </h4>
         <div className="mt-2.5 grid grid-cols-2 gap-2">
           {[
-            [formatValue(info.members), '已加入成員'],
-            [formatValue(info.avgRating), '平均評分'],
-            [formatValue(info.monthlyInteractions), '本月互動'],
-            [formatValue(info.forSale), '待售物件'],
-          ].map(([num, lbl]) => (
+            { num: formatValue(info.members), lbl: '已加入成員' },
+            { num: formatValue(info.avgRating), lbl: '平均評分' },
+            { num: formatValue(info.monthlyInteractions), lbl: '本月互動' },
+            { num: formatValue(info.forSale), lbl: '待售物件' },
+          ].map(({ num, lbl }) => (
             <div
-              key={lbl as string}
+              key={lbl}
               className="rounded-[10px] bg-gradient-to-br from-[var(--mh-color-f8faff)] to-[var(--mh-color-f0f5ff)] p-3 text-center"
             >
               <div className="text-xl font-black text-[var(--brand)]">{num}</div>
@@ -75,29 +89,36 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
 
       {/* 快速連結 */}
       <nav
-        className="rounded-[14px] border border-[var(--line)] bg-white p-3.5 shadow-[0_4px_14px_rgba(0,51,102,0.04)]"
+        className={`rounded-[14px] border border-[var(--line)] bg-white p-3.5 ${CARD_SHADOW}`}
         aria-label="快速連結"
       >
         <h4 className="mb-2.5 flex items-center gap-1.5 text-sm font-extrabold text-[var(--brand)]">
-          🔗 快速連結
+          <Link2 size={14} aria-hidden="true" />
+          快速連結
         </h4>
         <div className="flex flex-col gap-1">
-          {['🏠 查看此社區物件', '📊 與其他社區比較', '🔔 追蹤此社區'].map((link) => (
+          {[
+            { icon: <Home size={14} aria-hidden="true" />, label: '查看此社區物件' },
+            { icon: <BarChart3 size={14} aria-hidden="true" />, label: '與其他社區比較' },
+            { icon: <Bell size={14} aria-hidden="true" />, label: '追蹤此社區' },
+          ].map((link) => (
             <button
-              key={link}
+              key={link.label}
               type="button"
               className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[13px] font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--mh-color-f0f7ff)]"
             >
-              {link}
+              {link.icon}
+              {link.label}
             </button>
           ))}
         </div>
       </nav>
 
       {/* 最新問答 */}
-      <div className="rounded-[14px] border border-[var(--line)] bg-white p-3.5 shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
+      <div className={`rounded-[14px] border border-[var(--line)] bg-white p-3.5 ${CARD_SHADOW}`}>
         <h4 className="mb-2.5 flex items-center gap-1.5 text-sm font-extrabold text-[var(--brand)]">
-          ❓ 最新問答
+          <HelpCircle size={14} aria-hidden="true" />
+          最新問答
         </h4>
         <div className="flex flex-col gap-1">
           {displayQuestions.map((q) => (
@@ -106,9 +127,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
               href="#qa-section"
               className="flex items-start gap-2 rounded-[10px] px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] no-underline transition-all hover:bg-[var(--mh-color-f0f7ff)]"
             >
-              <span className="shrink-0" aria-hidden="true">
-                💬
-              </span>
+              <MessageCircle size={12} className="shrink-0" aria-hidden="true" />
               <span className="truncate">
                 {q.question.length > 18 ? q.question.substring(0, 18) + '...' : q.question}
               </span>
@@ -124,9 +143,10 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
       </div>
 
       {/* 熱門貼文 */}
-      <div className="rounded-[14px] border border-[var(--line)] bg-white p-3.5 shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
+      <div className={`rounded-[14px] border border-[var(--line)] bg-white p-3.5 ${CARD_SHADOW}`}>
         <h4 className="mb-2.5 flex items-center gap-1.5 text-sm font-extrabold text-[var(--brand)]">
-          🔥 熱門貼文
+          <Flame size={14} aria-hidden="true" />
+          熱門貼文
         </h4>
         <div className="flex flex-col gap-1">
           {hotPosts.map((p) => (
@@ -135,8 +155,9 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
               href="#public-wall"
               className="flex items-start gap-2 rounded-[10px] px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] no-underline transition-all hover:bg-[var(--mh-color-f0f7ff)]"
             >
-              <span className="shrink-0" aria-hidden="true">
-                ❤️ {p.likes}
+              <span className="flex shrink-0 items-center gap-1" aria-hidden="true">
+                <Heart size={12} />
+                {p.likes}
               </span>
               <span className="truncate">
                 {p.title.length > 15 ? p.title.substring(0, 15) + '...' : p.title}
@@ -153,111 +174,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
       </div>
 
       {/* 公仔卡片 */}
-      <div className="rounded-[14px] border border-[var(--line)] bg-gradient-to-br from-[var(--mh-color-f0f7ff)] to-[var(--mh-color-e8f4ff)] p-3.5 text-center shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
-        <svg
-          className="mx-auto mb-2 h-24 w-20 text-brand-700"
-          viewBox="0 0 200 240"
-          aria-hidden="true"
-        >
-          <path
-            d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40"
-            stroke="currentColor"
-            strokeWidth="5"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M 40 80 L 100 40 L 160 80"
-            stroke="currentColor"
-            strokeWidth="6"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <rect
-            x="55"
-            y="80"
-            width="90"
-            height="100"
-            stroke="currentColor"
-            strokeWidth="6"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M 78 110 Q 85 105 92 110"
-            stroke="currentColor"
-            strokeWidth="4"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <path
-            d="M 108 110 Q 115 105 122 110"
-            stroke="currentColor"
-            strokeWidth="4"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <circle cx="85" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="115" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <path
-            d="M 90 145 Q 100 155 110 145"
-            stroke="currentColor"
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <path
-            d="M 55 130 L 25 110"
-            stroke="currentColor"
-            strokeWidth="5"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <path
-            className="origin-[85%_60%] animate-[wave_2.5s_ease-in-out_infinite]"
-            d="M 145 130 L 175 100"
-            stroke="currentColor"
-            strokeWidth="5"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <circle
-            className="origin-[85%_60%] animate-[wave_2.5s_ease-in-out_infinite]"
-            cx="180"
-            cy="95"
-            r="6"
-            stroke="currentColor"
-            strokeWidth="3"
-            fill="none"
-          />
-          <path
-            d="M 85 180 L 85 210 L 75 210"
-            stroke="currentColor"
-            strokeWidth="5"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M 115 180 L 115 210 L 125 210"
-            stroke="currentColor"
-            strokeWidth="5"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <p className="mb-2.5 text-[13px] font-bold text-[var(--brand)]">有問題？問問鄰居！</p>
-        <a
-          href="#qa-section"
-          className="inline-block rounded-full bg-[var(--brand)] px-4 py-2 text-xs font-bold text-white no-underline"
-        >
-          前往問答區 →
-        </a>
-      </div>
+      <SidebarMascot />
     </aside>
   );
 }

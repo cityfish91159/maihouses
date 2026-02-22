@@ -36,26 +36,22 @@ export function CommunityCard({
       <h3 className="mb-1 text-base font-bold text-brand-700">{name}</h3>
 
       {/* 地址 */}
-      {address && (
-        <p className="text-brand-700/60 mb-3 text-sm">{address}</p>
-      )}
+      {address && <p className="text-brand-700/60 mb-3 text-sm">{address}</p>}
 
       {/* 統計 pills */}
       <div className="mb-4 flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+        <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
           <Star size={12} aria-hidden="true" />
           {review_count} 則評價
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600">
+        <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-xs font-semibold text-brand-600">
           <MessageSquare size={12} aria-hidden="true" />
           {post_count} 則貼文
         </span>
       </div>
 
       {/* CTA */}
-      <p className="text-sm font-semibold text-brand-700">
-        查看社區牆 →
-      </p>
+      <p className="text-sm font-semibold text-brand-700">查看社區牆 →</p>
     </button>
   );
 }

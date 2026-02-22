@@ -159,10 +159,7 @@ export function AnswerModal({
           </button>
         </div>
         <div className="space-y-3">
-          <label
-            className="block text-xs font-semibold text-ink-600"
-            htmlFor="qa-answer-textarea"
-          >
+          <label className="block text-xs font-semibold text-ink-600" htmlFor="qa-answer-textarea">
             回答內容
           </label>
           <textarea

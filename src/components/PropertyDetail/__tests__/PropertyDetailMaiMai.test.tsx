@@ -278,7 +278,10 @@ describe('PropertyDetailMaiMai', () => {
     expect(removeWindowListenerSpy).toHaveBeenCalledWith('touchstart', expect.any(Function));
     expect(removeWindowListenerSpy).toHaveBeenCalledWith('scroll', expect.any(Function));
     expect(removeWindowListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
-    expect(removeDocumentListenerSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+    expect(removeDocumentListenerSpy).toHaveBeenCalledWith(
+      'visibilitychange',
+      expect.any(Function)
+    );
   });
 
   it('prevents state updates after unmount', () => {

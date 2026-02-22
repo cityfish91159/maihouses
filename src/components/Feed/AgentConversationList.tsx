@@ -18,13 +18,18 @@ export const AgentConversationList = memo(function AgentConversationList({
   className = '',
 }: AgentConversationListProps): React.ReactElement {
   const conversationItems = useMemo(
-    () => conversations.slice(0, MAX_VISIBLE_CONVERSATIONS).map((conv) => <ConversationItem key={conv.id} conv={conv} />),
+    () =>
+      conversations
+        .slice(0, MAX_VISIBLE_CONVERSATIONS)
+        .map((conv) => <ConversationItem key={conv.id} conv={conv} />),
     [conversations]
   );
 
   if (conversations.length === 0) {
     return (
-      <div className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}>
+      <div
+        className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}
+      >
         <div className="mb-2.5 flex items-center gap-2">
           <MessageCircle className="size-4 text-brand-600" />
           <h4 className="m-0 text-[14px] font-bold text-brand-700">我的客戶</h4>
@@ -35,7 +40,9 @@ export const AgentConversationList = memo(function AgentConversationList({
   }
 
   return (
-    <div className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}>
+    <div
+      className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}
+    >
       <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageCircle className="size-4 text-brand-600" />

@@ -21,9 +21,8 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../../components/MaiMai', async () => {
-  const actual = await vi.importActual<typeof import('../../components/MaiMai')>(
-    '../../components/MaiMai'
-  );
+  const actual =
+    await vi.importActual<typeof import('../../components/MaiMai')>('../../components/MaiMai');
 
   return {
     ...actual,

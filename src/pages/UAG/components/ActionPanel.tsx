@@ -46,7 +46,11 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
           <div className={styles['uag-action-panel']} id="action-panel">
             <div className={styles['ap-empty-state']}>
               <div>
-                <MousePointerClick size={40} strokeWidth={1.5} className={styles['ap-empty-icon']} />
+                <MousePointerClick
+                  size={40}
+                  strokeWidth={1.5}
+                  className={styles['ap-empty-icon']}
+                />
                 <div>
                   請點擊上方雷達泡泡
                   <br />
@@ -78,7 +82,9 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
       styles['uag-action-panel'],
       purchaseResult === 'success' ? styles['animate-success'] : '',
       purchaseResult === 'error' ? styles['animate-shake'] : '',
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     return (
       <section className={styles['k-span-6']} id="action-panel-container" ref={ref}>

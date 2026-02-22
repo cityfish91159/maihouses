@@ -5,7 +5,8 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { MessageCircle, HandHelping } from 'lucide-react';
 import type { Role, Question } from '../types';
 import { getPermissions } from '../types';
 import { canPerformAction, getPermissionDeniedMessage } from '../lib';
@@ -14,8 +15,13 @@ import { useModeAwareAction } from '../../../hooks/useModeAwareAction';
 import { LockedOverlay } from './LockedOverlay';
 import { logger } from '../../../lib/logger';
 import { useQAModalState } from '../hooks/useQAModalState';
+import { useQAFocusTrap } from '../hooks/useQAFocusTrap';
 import { QACard } from './QACard';
-import { VirtualizedQAList, ANSWERED_SECTION_MAX_HEIGHT, UNANSWERED_SECTION_MAX_HEIGHT } from './QAVirtualizedList';
+import {
+  VirtualizedQAList,
+  ANSWERED_SECTION_MAX_HEIGHT,
+  UNANSWERED_SECTION_MAX_HEIGHT,
+} from './QAVirtualizedList';
 import { AskModal, AnswerModal } from './QAModals';
 
 interface QASectionProps {
@@ -41,7 +47,6 @@ export function QASection({
   const questions = Array.isArray(questionsProp) ? questionsProp : questionsProp?.items || [];
   const perm = getPermissions(viewerRole);
   const [feedback, setFeedback] = useState('');
-  const focusRestoreTimerRef = useRef<number | null>(null);
   const {
     askModalOpen,
     setAskModalOpen,
@@ -102,7 +107,7 @@ export function QASection({
         return;
       }
       const msg = getPermissionDeniedMessage('ask_question');
-      setFeedback(`⚠️ ${msg.title}`);
+      setFeedback(msg.title);
       return;
     }
     rememberTriggerFocus();
@@ -118,7 +123,7 @@ export function QASection({
           return;
         }
         const msg = getPermissionDeniedMessage('answer_question');
-        setFeedback(`⚠️ ${msg.title}`);
+        setFeedback(msg.title);
         return;
       }
       rememberTriggerFocus();
@@ -135,7 +140,7 @@ export function QASection({
         onUnlock();
         return;
       }
-      setFeedback('⚠️ 請先登入或註冊');
+      setFeedback('請先登入或註冊');
     },
     [onUnlock]
   );
@@ -156,194 +161,36 @@ export function QASection({
     void dispatchOpenAskModal(undefined).then((result) => {
       if (!result.ok) {
         logger.error('[QASection] Failed to open ask modal', { error: result.error });
-        setFeedback('⚠️ 目前無法開啟發問視窗，請稍後再試。');
+        setFeedback('目前無法開啟發問視窗，請稍後再試。');
       }
     });
   }, [dispatchOpenAskModal]);
 
-  const openAnswerModal = useCallback((question: Question) => {
-    void dispatchOpenAnswerModal(question).then((result) => {
-      if (!result.ok) {
-        logger.error('[QASection] Failed to open answer modal', { error: result.error });
-        setFeedback('⚠️ 目前無法開啟回答視窗，請稍後再試。');
-      }
-    });
-  }, [dispatchOpenAnswerModal]);
-
-  // --- Focus trap ---
-
-  const getActiveDialog = useCallback((): HTMLDivElement | null => {
-    return askModalOpen ? askDialogRef.current : answerModalOpen ? answerDialogRef.current : null;
-  }, [askModalOpen, askDialogRef, answerModalOpen, answerDialogRef]);
-
-  const getFocusableElements = useCallback((container: HTMLElement | null): HTMLElement[] => {
-    if (!container) return [];
-    const selector = 'a[href], button, textarea, input, select, [tabindex]';
-    return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter((el) => {
-      const tabIndexAttr = el.getAttribute('tabindex');
-      const tabIndex = typeof tabIndexAttr === 'string' ? Number(tabIndexAttr) : undefined;
-      const isDisabled = el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
-      const isHidden = el.hasAttribute('aria-hidden');
-      const isNegativeTabIndex = typeof tabIndex === 'number' && tabIndex < 0;
-      return !isDisabled && !isHidden && !isNegativeTabIndex;
-    });
-  }, []);
-
-  /**
-   * 安全聚焦 helper：依序嘗試 main、[data-app-root]、#root、body
-   */
-  const focusSafeElement = (): void => {
-    const candidates = [
-      document.querySelector('main'),
-      document.querySelector('[data-app-root]'),
-      document.getElementById('root'),
-      document.body,
-    ];
-    for (const el of candidates) {
-      if (el instanceof HTMLElement) {
-        const prevTabIndex = el.getAttribute('tabindex');
-        el.dataset.prevTabindex = prevTabIndex ?? '';
-        el.tabIndex = -1;
-        el.focus();
-        if (focusRestoreTimerRef.current !== null) {
-          window.clearTimeout(focusRestoreTimerRef.current);
+  const openAnswerModal = useCallback(
+    (question: Question) => {
+      void dispatchOpenAnswerModal(question).then((result) => {
+        if (!result.ok) {
+          logger.error('[QASection] Failed to open answer modal', { error: result.error });
+          setFeedback('目前無法開啟回答視窗，請稍後再試。');
         }
-        focusRestoreTimerRef.current = window.setTimeout(() => {
-          const stored = el.dataset.prevTabindex;
-          if (stored === '') {
-            el.removeAttribute('tabindex');
-          } else if (stored !== undefined) {
-            el.tabIndex = Number(stored);
-          }
-          delete el.dataset.prevTabindex;
-          focusRestoreTimerRef.current = null;
-        }, 0);
-        return;
-      }
-    }
-    if (import.meta.env.DEV) {
-      logger.warn('[QASection] focusSafeElement: 找不到可聚焦的 fallback 元素');
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (focusRestoreTimerRef.current !== null) {
-        window.clearTimeout(focusRestoreTimerRef.current);
-        focusRestoreTimerRef.current = null;
-      }
-    };
-  }, []);
-
-  const trapFocusWithinModal = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key !== 'Tab') return;
-      const container = getActiveDialog();
-      if (!container) return;
-      const focusable = getFocusableElements(container);
-
-      if (!focusable.length) {
-        const prevTabIndex = container.getAttribute('tabindex');
-        container.dataset.prevTabindex = prevTabIndex ?? '';
-        container.tabIndex = -1;
-        container.focus();
-        event.preventDefault();
-        return;
-      }
-
-      const [first] = focusable;
-      const last = focusable.at(-1);
-      const activeEl = document.activeElement;
-      const active = activeEl instanceof HTMLElement ? activeEl : null;
-      if (!active || !container.contains(active)) {
-        first?.focus();
-        event.preventDefault();
-        return;
-      }
-      if (!event.shiftKey && active === last) {
-        first?.focus();
-        event.preventDefault();
-      }
-      if (event.shiftKey && active === first) {
-        last?.focus();
-        event.preventDefault();
-      }
+      });
     },
-    [getActiveDialog, getFocusableElements]
+    [dispatchOpenAnswerModal]
   );
 
-  useEffect(() => {
-    const activeDialog = getActiveDialog();
-    if (!activeDialog) {
-      document.body.style.overflow = '';
-      return;
-    }
-
-    document.body.style.overflow = 'hidden';
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && submitting !== 'ask' && submitting !== 'answer') {
-        if (askModalOpen) {
-          setAskModalOpen(false);
-          resetAskModal();
-        }
-        if (answerModalOpen) {
-          setAnswerModalOpen(false);
-          resetAnswerModal();
-        }
-      }
-      trapFocusWithinModal(event);
-    };
-
-    const ensureFocusStaysInside = (event: FocusEvent) => {
-      const targetNode = event.target instanceof Node ? event.target : null;
-      if (!targetNode || !activeDialog.contains(targetNode)) {
-        const focusable = getFocusableElements(activeDialog);
-        focusable[0]?.focus();
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('focusin', ensureFocusStaysInside);
-
-    return () => {
-      document.body.style.overflow = '';
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('focusin', ensureFocusStaysInside);
-
-      if (activeDialog && activeDialog.dataset.prevTabindex !== undefined) {
-        const stored = activeDialog.dataset.prevTabindex;
-        if (stored === '') {
-          activeDialog.removeAttribute('tabindex');
-        } else {
-          activeDialog.tabIndex = Number(stored);
-        }
-        delete activeDialog.dataset.prevTabindex;
-      }
-
-      const target = restoreFocusRef.current;
-      if (target && document.body.contains(target)) {
-        target.focus();
-      } else {
-        focusSafeElement();
-      }
-      restoreFocusRef.current = null;
-    };
-  }, [
+  // --- Focus trap（邏輯抽至 useQAFocusTrap hook）---
+  useQAFocusTrap({
     askModalOpen,
     answerModalOpen,
     submitting,
-    getActiveDialog,
-    trapFocusWithinModal,
-    getFocusableElements,
-    resetAnswerModal,
-    resetAskModal,
+    askDialogRef,
+    answerDialogRef,
     restoreFocusRef,
-    setAnswerModalOpen,
     setAskModalOpen,
-  ]);
+    setAnswerModalOpen,
+    resetAskModal,
+    resetAnswerModal,
+  });
 
   // --- Feedback timer ---
 
@@ -399,7 +246,7 @@ export function QASection({
       await onAskQuestion(trimmed);
       setAskModalOpen(false);
       resetAskModal();
-      setFeedback('✅ 問題已送出，住戶將收到通知。');
+      setFeedback('問題已送出，住戶將收到通知。');
     } catch (err) {
       logger.error('[QASection] Failed to submit question', { error: err });
       setAskError('送出失敗，請稍後再試。');
@@ -428,7 +275,7 @@ export function QASection({
       await onAnswerQuestion(String(activeQuestion.id), trimmed);
       setAnswerModalOpen(false);
       resetAnswerModal();
-      setFeedback('✅ 回答已送出，感謝你的協助。');
+      setFeedback('回答已送出，感謝你的協助。');
     } catch (err) {
       logger.error('[QASection] Failed to submit answer', { error: err });
       setAnswerError('送出失敗，請稍後再試。');
@@ -451,7 +298,7 @@ export function QASection({
 
   return (
     <section
-      className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]"
+      className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_var(--mh-shadow-card)]"
       aria-labelledby="qa-heading"
       id="qa-section"
     >
@@ -461,7 +308,7 @@ export function QASection({
             id="qa-heading"
             className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700"
           >
-            🙋 準住戶問答
+            <HandHelping size={16} aria-hidden="true" /> 準住戶問答
             {unansweredQuestions.length > 0 && (
               <span className="ml-1.5 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-bold text-brand-600">
                 {unansweredQuestions.length} 題待回答
@@ -523,7 +370,10 @@ export function QASection({
           </div>
 
           <div className="mt-3 flex flex-col gap-1">
-            <div className="text-sm font-bold text-ink-600">💬 你也有問題想問？</div>
+            <div className="flex items-center gap-1 text-sm font-bold text-ink-600">
+              <MessageCircle size={14} aria-hidden="true" />
+              你也有問題想問？
+            </div>
             <p className="text-xs text-ink-600">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
             <button
               type="button"

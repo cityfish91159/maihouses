@@ -39,10 +39,7 @@ export function NotificationButton({
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
 
-      if (
-        !target.closest('#gh-notification-btn') &&
-        !target.closest('#gh-notification-dropdown')
-      ) {
+      if (!target.closest('#gh-notification-btn') && !target.closest('#gh-notification-dropdown')) {
         setNotificationMenuOpen(false);
       }
     };

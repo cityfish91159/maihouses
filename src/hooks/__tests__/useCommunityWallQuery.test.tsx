@@ -128,9 +128,12 @@ describe('useCommunityWall - API mutations', () => {
   it('calls createPost API with provided arguments', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
-    const { result, unmount } = renderHook(() => useCommunityWall('community-1', { enabled: false }), {
-      wrapper,
-    });
+    const { result, unmount } = renderHook(
+      () => useCommunityWall('community-1', { enabled: false }),
+      {
+        wrapper,
+      }
+    );
 
     await act(async () => {
       await result.current.createPost('new post', 'private');
@@ -145,9 +148,12 @@ describe('useCommunityWall - API mutations', () => {
   it('calls askQuestion API', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
-    const { result, unmount } = renderHook(() => useCommunityWall('community-1', { enabled: false }), {
-      wrapper,
-    });
+    const { result, unmount } = renderHook(
+      () => useCommunityWall('community-1', { enabled: false }),
+      {
+        wrapper,
+      }
+    );
 
     await act(async () => {
       await result.current.askQuestion('Is parking easy?');
@@ -162,9 +168,12 @@ describe('useCommunityWall - API mutations', () => {
   it('calls answerQuestion API', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
-    const { result, unmount } = renderHook(() => useCommunityWall('community-1', { enabled: false }), {
-      wrapper,
-    });
+    const { result, unmount } = renderHook(
+      () => useCommunityWall('community-1', { enabled: false }),
+      {
+        wrapper,
+      }
+    );
 
     await act(async () => {
       await result.current.answerQuestion('question-1', 'Answer');

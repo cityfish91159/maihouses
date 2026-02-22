@@ -61,10 +61,7 @@ export function MockChatModal({
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const wasOpenRef = useRef(false);
 
-  const baseMessages = useMemo(
-    () => MOCK_CONVERSATIONS[conversationId] ?? [],
-    [conversationId]
-  );
+  const baseMessages = useMemo(() => MOCK_CONVERSATIONS[conversationId] ?? [], [conversationId]);
   const allMessages = useMemo(
     () => [...baseMessages, ...localMessages],
     [baseMessages, localMessages]
@@ -106,9 +103,9 @@ export function MockChatModal({
     const roundIndex = Math.floor(localMessages.length / 2);
     const delay =
       AUTO_REPLY_DELAY_STEPS_MS[roundIndex % AUTO_REPLY_DELAY_STEPS_MS.length] ??
-      AUTO_REPLY_DELAY_STEPS_MS[0];
+      800;
     const replyIndex = roundIndex % MOCK_AUTO_REPLIES.length;
-    const replyText = MOCK_AUTO_REPLIES[replyIndex] ?? MOCK_AUTO_REPLIES[0] ?? '';
+    const replyText = MOCK_AUTO_REPLIES[replyIndex] ?? '';
 
     setLocalMessages((prev) => [...prev, nextAgentMessage]);
     setDraft('');
@@ -176,7 +173,9 @@ export function MockChatModal({
     };
 
     document.addEventListener('keydown', handleDialogKeyDown);
-    return () => { document.removeEventListener('keydown', handleDialogKeyDown); };
+    return () => {
+      document.removeEventListener('keydown', handleDialogKeyDown);
+    };
   }, [isOpen, handleClose]);
 
   useEffect(() => {

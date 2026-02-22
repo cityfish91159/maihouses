@@ -82,7 +82,11 @@ export default function App() {
   const loc = useLocation();
 
   useEffect(() => {
-    getConfig().then(setConfig);
+    getConfig()
+      .then(setConfig)
+      .catch((error: unknown) => {
+        logger.error('[App] 設定檔載入失敗', { error });
+      });
   }, []);
 
   useEffect(() => {

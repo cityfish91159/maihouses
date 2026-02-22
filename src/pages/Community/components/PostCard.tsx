@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Heart, MessageCircle, Eye, Lock, Mail, Loader2 } from 'lucide-react';
 import type { Post } from '../types';
 import type { PageMode } from '../../../hooks/usePageMode';
 import { useThrottle } from '../../../hooks/useThrottle';
@@ -56,33 +57,25 @@ function PostStats({ post }: { post: Post }) {
     <div className="flex gap-3 text-[11px] text-ink-600">
       {post.likes !== undefined && (
         <span className="flex items-center gap-1">
-          <span role="img" aria-label="愛心">
-            ❤️
-          </span>{' '}
+          <Heart size={12} aria-label="愛心" />
           {post.likes}
         </span>
       )}
       {post.comments !== undefined && (
         <span className="flex items-center gap-1">
-          <span role="img" aria-label="留言數">
-            💬
-          </span>{' '}
+          <MessageCircle size={12} aria-label="留言數" />
           {post.comments}
         </span>
       )}
       {post.views !== undefined && (
         <span className="flex items-center gap-1">
-          <span role="img" aria-label="觀看數">
-            👁️
-          </span>{' '}
+          <Eye size={12} aria-label="觀看數" />
           {post.views}
         </span>
       )}
       {post.private && (
         <span className="flex items-center gap-1">
-          <span role="img" aria-label="鎖頭">
-            🔒
-          </span>{' '}
+          <Lock size={12} aria-label="鎖頭" />
           {S.PRIVATE_POST_LABEL}
         </span>
       )}
@@ -114,9 +107,7 @@ function PostActions({
         aria-expanded={isCommentsOpen}
         onClick={onToggleComments}
       >
-        <span role="img" aria-label="信封">
-          📩
-        </span>{' '}
+        <Mail size={12} aria-hidden="true" />{' '}
         {S.BTN_MSG_AGENT}
       </button>
     );
@@ -134,16 +125,12 @@ function PostActions({
       >
         {isLiking ? (
           <>
-            <span role="img" aria-label="沙漏">
-              ⏳
-            </span>{' '}
+            <Loader2 size={12} className="animate-spin" aria-hidden="true" />{' '}
             {S.BTN_LIKING}
           </>
         ) : (
           <>
-            <span role="img" aria-label="愛心">
-              ❤️
-            </span>{' '}
+            <Heart size={12} aria-hidden="true" />{' '}
             {S.BTN_LIKE}
           </>
         )}
@@ -159,9 +146,7 @@ function PostActions({
         aria-expanded={isCommentsOpen}
         onClick={onToggleComments}
       >
-        <span role="img" aria-label="對話框">
-          💬
-        </span>{' '}
+        <MessageCircle size={14} aria-label="對話框" />
         {S.BTN_REPLY}
       </button>
     </>
@@ -169,7 +154,13 @@ function PostActions({
 }
 
 export function PostCard({
-  post, communityId, currentUserId, userInitial, mode, onRegisterGuide, onLike,
+  post,
+  communityId,
+  currentUserId,
+  userInitial,
+  mode,
+  onRegisterGuide,
+  onLike,
 }: PostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -179,7 +170,9 @@ export function PostCard({
 
   useEffect(() => {
     isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const handleLike = useThrottle(

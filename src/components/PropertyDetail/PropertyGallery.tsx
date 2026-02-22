@@ -95,14 +95,17 @@ export const PropertyGallery = memo(function PropertyGallery({
     [activeImageIndex, imageCount, onPhotoClick]
   );
 
-  const { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd } =
-    useSwipeNavigation({
-      enabled: imageCount > 1,
-      swipeThreshold: SWIPE_THRESHOLD,
-      swipeIntentThreshold: SWIPE_INTENT_THRESHOLD,
-      swipeCooldownMs: SWIPE_COOLDOWN_MS,
-      onNavigate: navigateBySwipe,
-    });
+  const {
+    onTouchStart: handleTouchStart,
+    onTouchMove: handleTouchMove,
+    onTouchEnd: handleTouchEnd,
+  } = useSwipeNavigation({
+    enabled: imageCount > 1,
+    swipeThreshold: SWIPE_THRESHOLD,
+    swipeIntentThreshold: SWIPE_INTENT_THRESHOLD,
+    swipeCooldownMs: SWIPE_COOLDOWN_MS,
+    onNavigate: navigateBySwipe,
+  });
 
   return (
     <div className="mb-4">

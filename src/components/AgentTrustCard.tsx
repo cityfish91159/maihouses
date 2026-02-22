@@ -1,13 +1,5 @@
 import React, { useState, useMemo, memo, useId } from 'react';
-import {
-  Shield,
-  ThumbsUp,
-  Star,
-  MessageCircle,
-  Phone,
-  Clock,
-  UserCircle,
-} from 'lucide-react';
+import { Shield, ThumbsUp, Star, MessageCircle, Phone, Clock, UserCircle } from 'lucide-react';
 import { Agent } from '../lib/types';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAgentProfile } from '../services/agentService';

@@ -202,12 +202,13 @@ describe('pageMode utils (#1a)', () => {
       };
       // spy 在記錄順序同時呼叫真實 removeItem，確保 storage 實際被清除
       const originalRemoveItem = Storage.prototype.removeItem;
-      const removeItemSpy = vi
-        .spyOn(Storage.prototype, 'removeItem')
-        .mockImplementation(function (this: Storage, key: string) {
-          callOrder.push(`removeItem:${key}`);
-          originalRemoveItem.call(this, key);
-        });
+      const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(function (
+        this: Storage,
+        key: string
+      ) {
+        callOrder.push(`removeItem:${key}`);
+        originalRemoveItem.call(this, key);
+      });
 
       setDemoMode();
       localStorage.setItem(DEMO_UAG_MODE_STORAGE_KEY, '1');

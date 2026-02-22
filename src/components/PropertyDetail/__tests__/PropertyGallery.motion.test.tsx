@@ -49,7 +49,10 @@ describe('PropertyGallery motion and swipe', () => {
   });
 
   it('shows skeleton before image load and hides skeleton after load', () => {
-    const { mainImage } = setupGallery(['https://example.com/p1.jpg', 'https://example.com/p2.jpg']);
+    const { mainImage } = setupGallery([
+      'https://example.com/p1.jpg',
+      'https://example.com/p2.jpg',
+    ]);
 
     expect(screen.getByTestId('gallery-main-skeleton')).toBeInTheDocument();
 
@@ -205,7 +208,10 @@ describe('PropertyGallery motion and swipe', () => {
   });
 
   it('shows skeleton again when switching to another image', () => {
-    const { mainImage } = setupGallery(['https://example.com/p1.jpg', 'https://example.com/p2.jpg']);
+    const { mainImage } = setupGallery([
+      'https://example.com/p1.jpg',
+      'https://example.com/p2.jpg',
+    ]);
 
     fireEvent.load(mainImage);
     expect(screen.queryByTestId('gallery-main-skeleton')).not.toBeInTheDocument();

@@ -191,9 +191,7 @@ describe('CommunityTeaser', () => {
     const card = screen.getByRole('button', { name: '查看 Seed User 的評價詳情' });
     fireEvent.click(card);
 
-    expect(mockNavigate).toHaveBeenCalledWith(
-      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE)
-    );
+    expect(mockNavigate).toHaveBeenCalledWith(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE));
   });
 
   it('navigates to community explore when clicking see more button', () => {
@@ -209,8 +207,6 @@ describe('CommunityTeaser', () => {
     fireEvent.click(ctaButton);
 
     expect(ctaButton.tagName).toBe('BUTTON');
-    expect(mockNavigate).toHaveBeenCalledWith(
-      RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE)
-    );
+    expect(mockNavigate).toHaveBeenCalledWith(RouteUtils.toNavigatePath(ROUTES.COMMUNITY_EXPLORE));
   });
 });

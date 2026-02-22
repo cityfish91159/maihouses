@@ -132,11 +132,7 @@ export default function MaiCard({
             </div>
             <div className={styles['mai-right']}>
               <div className={styles['mai-thumb']}>
-                <img
-                  alt="物件主圖"
-                  src={imageUrl}
-                  className={styles['mai-thumb-image']}
-                />
+                <img alt="物件主圖" src={imageUrl} className={styles['mai-thumb-image']} />
               </div>
               <div className={styles['mai-mini']}>
                 {Array.from({ length: 3 }).map((_, idx) => (

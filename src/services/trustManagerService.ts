@@ -99,9 +99,7 @@ export async function getCurrentUser(): Promise<ServiceResult<{ id: string; emai
 /**
  * 取得使用者的信任交易案件列表
  */
-export async function loadTrustCases(
-  agentId: string
-): Promise<ServiceResult<TrustTransaction[]>> {
+export async function loadTrustCases(agentId: string): Promise<ServiceResult<TrustTransaction[]>> {
   try {
     const { data, error } = await supabase
       .from('trust_transactions')
@@ -201,7 +199,9 @@ export async function createTrustCase(params: {
 
     return { success: true, data: parseResult.data };
   } catch (err) {
-    logger.error('[trustManagerService] createTrustCase exception', { error: getErrorMessage(err) });
+    logger.error('[trustManagerService] createTrustCase exception', {
+      error: getErrorMessage(err),
+    });
     return { success: false, error: '建立案件失敗' };
   }
 }
@@ -232,7 +232,9 @@ export async function updateTrustSteps(params: {
 
     return { success: true };
   } catch (err) {
-    logger.error('[trustManagerService] updateTrustSteps exception', { error: getErrorMessage(err) });
+    logger.error('[trustManagerService] updateTrustSteps exception', {
+      error: getErrorMessage(err),
+    });
     return { success: false, error: '更新步驟失敗' };
   }
 }

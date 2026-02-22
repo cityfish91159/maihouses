@@ -125,4 +125,3 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
     </div>
   );
 };
-

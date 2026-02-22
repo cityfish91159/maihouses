@@ -242,7 +242,10 @@ export function LineLinkPanel({
                   <p className="text-sm text-text-muted">
                     你仍可先送出聯絡需求，系統會通知經紀人主動與你聯繫。
                   </p>
-                  <label htmlFor={fallbackInputId} className="mt-3 block text-sm font-medium text-ink-900">
+                  <label
+                    htmlFor={fallbackInputId}
+                    className="mt-3 block text-sm font-medium text-ink-900"
+                  >
                     你的 LINE ID
                   </label>
                   <input
@@ -267,7 +270,7 @@ export function LineLinkPanel({
                       'mt-1 min-h-[44px] w-full rounded-xl border bg-bg-card px-3 text-sm text-ink-900 outline-none placeholder:text-text-muted focus:ring-2',
                       fallbackLineIdError
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-200 motion-safe:animate-shake'
-                        : 'border-border focus:border-brand-500 focus:ring-brand-200',
+                        : 'focus:ring-brand-200 border-border focus:border-brand-500',
                       motionA11y.transitionColors
                     )}
                   />

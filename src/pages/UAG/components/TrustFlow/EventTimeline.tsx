@@ -41,11 +41,7 @@ export function EventTimeline({ selectedCase }: EventTimelineProps) {
                   : '系統'}
             </span>
           </div>
-          {event.detail && (
-            <div className="text-ink-300 mt-0.5 text-[11px]">
-              {event.detail}
-            </div>
-          )}
+          {event.detail && <div className="text-ink-300 mt-0.5 text-[11px]">{event.detail}</div>}
         </div>
         <div>
           {event.hash && (

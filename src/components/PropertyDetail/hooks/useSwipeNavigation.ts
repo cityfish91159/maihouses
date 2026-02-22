@@ -120,4 +120,3 @@ export function useSwipeNavigation({
 
   return { onTouchStart, onTouchMove, onTouchEnd };
 }
-

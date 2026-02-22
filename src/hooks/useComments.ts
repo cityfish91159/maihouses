@@ -230,9 +230,7 @@ export function useComments({
                 return {
                   ...reply,
                   isLiked: nextLiked,
-                  likesCount: nextLiked
-                    ? reply.likesCount + 1
-                    : Math.max(0, reply.likesCount - 1),
+                  likesCount: nextLiked ? reply.likesCount + 1 : Math.max(0, reply.likesCount - 1),
                 };
               }
               return reply;

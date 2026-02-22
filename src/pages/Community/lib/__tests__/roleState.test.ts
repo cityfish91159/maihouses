@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  parseWallRoleParam,
-  resolveInitialWallRole,
-} from '../roleState';
+import { parseWallRoleParam, resolveInitialWallRole } from '../roleState';
 
 describe('roleState', () => {
   it('parseWallRoleParam 解析有效角色', () => {

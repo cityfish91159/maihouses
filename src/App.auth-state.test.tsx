@@ -229,9 +229,9 @@ describe('App auth state bridge (#26)', () => {
     emitAuthEvent('SIGNED_OUT');
 
     expect(cleanupAuthStateMock).toHaveBeenCalledTimes(1);
-    const firstCall = cleanupAuthStateMock.mock.calls[0];
-    const queryClientLike = firstCall?.[0] as { clear?: () => void } | undefined;
-    expect(typeof queryClientLike?.clear).toBe('function');
+    expect(cleanupAuthStateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ clear: expect.any(Function) })
+    );
   });
 
   it('unsubscribes auth state listener on unmount', async () => {

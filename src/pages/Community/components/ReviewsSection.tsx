@@ -6,6 +6,7 @@
  */
 
 import { useMemo } from 'react';
+import { Star, CircleCheck, Scale } from 'lucide-react';
 import type { Role, Review } from '../types';
 import { getPermissions } from '../types';
 import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
@@ -60,10 +61,10 @@ function ReviewCard({ entry }: ReviewCardProps) {
         className={`flex items-start gap-2.5 rounded-[10px] p-2 text-[13px] leading-relaxed ${isPro ? 'to-brand-100/50 bg-gradient-to-br from-brand-50' : 'from-brand-100/30 bg-gradient-to-br to-brand-100'}`}
       >
         <span
-          className="flex size-6 shrink-0 items-center justify-center text-base"
+          className="flex size-6 shrink-0 items-center justify-center"
           aria-hidden="true"
         >
-          {isPro ? '✅' : '⚖️'}
+          {isPro ? <CircleCheck size={16} className="text-brand-600" /> : <Scale size={16} className="text-ink-500" />}
         </span>
         <span className="flex-1 text-ink-900">{entry.text}</span>
       </div>
@@ -130,7 +131,7 @@ export function ReviewsSection({
 
   return (
     <section
-      className="bg-white/98 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]"
+      className="bg-white/98 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_var(--mh-shadow-card)]"
       aria-labelledby="reviews-heading"
     >
       <div className="from-brand/8 to-brand-600/4 border-brand/5 flex items-center justify-between border-b bg-gradient-to-br px-4 py-3.5">
@@ -139,7 +140,8 @@ export function ReviewsSection({
             id="reviews-heading"
             className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700"
           >
-            ⭐ 社區評價
+            <Star size={16} aria-hidden="true" />
+            社區評價
           </h2>
           <p className="mt-0.5 text-[11px] text-ink-600">來自最真實的評價</p>
         </div>

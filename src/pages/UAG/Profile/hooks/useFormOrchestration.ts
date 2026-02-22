@@ -75,8 +75,14 @@ export function useFormOrchestration({
 }: UseFormOrchestrationParams) {
   const tabStorageKey = buildProfileTabStorageKey(storageKeyPrefix, profile.id);
   const { activeTab, setActiveTab } = usePersistedTab(tabStorageKey);
-  const { values, setField, toggleSelection, payload, hasUnsavedChanges } = useProfileFormState(profile);
-  const { errors, hasErrors: hasValidationErrors, validateField, validateAll } = useProfileFormValidation({
+  const { values, setField, toggleSelection, payload, hasUnsavedChanges } =
+    useProfileFormState(profile);
+  const {
+    errors,
+    hasErrors: hasValidationErrors,
+    validateField,
+    validateAll,
+  } = useProfileFormValidation({
     name: values.name,
     phone: values.phone,
     lineId: values.lineId,

@@ -215,19 +215,13 @@ export default function UAGDeAIDemo() {
         <div className={styles['deai-header-inner']}>
           {/* Logo area */}
           <div className={styles['deai-header-logo']}>
-            <div className={styles['deai-header-logo-mark']}>
-              M
-            </div>
-            <span className={styles['deai-header-logo-text']}>
-              邁房子
-            </span>
+            <div className={styles['deai-header-logo-mark']}>M</div>
+            <span className={styles['deai-header-logo-text']}>邁房子</span>
           </div>
 
           {/* Navigation */}
           <nav className={styles['deai-header-nav']}>
-            <span
-              className={`${styles['deai-badge']} ${styles['deai-header-primary-badge']}`}
-            >
+            <span className={`${styles['deai-badge']} ${styles['deai-header-primary-badge']}`}>
               UAG 客戶雷達
             </span>
             <span className={styles['deai-header-separator']}>·</span>
@@ -239,24 +233,18 @@ export default function UAGDeAIDemo() {
           {/* User info placeholder */}
           <div className={styles['deai-header-user']}>
             <span className={styles['deai-header-user-name']}>游杰倫</span>
-            <div className={styles['deai-header-user-avatar']}>
-              游
-            </div>
+            <div className={styles['deai-header-user-avatar']}>游</div>
           </div>
         </div>
       </header>
 
       {/* Agent Bar */}
       <div className={styles['deai-agent-bar']}>
-        <div className={styles['deai-agent-avatar']}>
-          游
-        </div>
+        <div className={styles['deai-agent-avatar']}>游</div>
         <div className={styles['deai-agent-info']}>
           <div className={styles['deai-agent-name-row']}>
             游杰倫
-            <span className={styles['deai-agent-code']}>
-              #12345
-            </span>
+            <span className={styles['deai-agent-code']}>#12345</span>
           </div>
           <div className={styles['deai-agent-metrics']}>
             <span>

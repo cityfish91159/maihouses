@@ -196,11 +196,11 @@ export function useCommunityReviews({
   }, [communityId, isDemo, isVisible]);
 
   // 基底資料：mock 用常數，無 communityId 回空，其餘用 fetch 結果
-  const totalReviews = isDemo ? MOCK_TOTAL_REVIEWS : (!communityId ? null : fetchedTotal);
+  const totalReviews = isDemo ? MOCK_TOTAL_REVIEWS : !communityId ? null : fetchedTotal;
 
   // 套用本地按讚覆蓋（demo 模式按讚不寫 DB）
   const reviewPreviews = useMemo(() => {
-    const baseReviews: ReviewPreview[] = isDemo ? MOCK_REVIEWS : (!communityId ? [] : fetchedReviews);
+    const baseReviews: ReviewPreview[] = isDemo ? MOCK_REVIEWS : !communityId ? [] : fetchedReviews;
 
     if (Object.keys(localLikeOverrides).length === 0) return baseReviews;
     return baseReviews.map((review) => {
@@ -212,9 +212,7 @@ export function useCommunityReviews({
       return {
         ...review,
         liked: newLiked,
-        totalLikes: newLiked
-          ? review.totalLikes + 1
-          : Math.max(0, review.totalLikes - 1),
+        totalLikes: newLiked ? review.totalLikes + 1 : Math.max(0, review.totalLikes - 1),
       };
     });
   }, [isDemo, communityId, fetchedReviews, localLikeOverrides]);

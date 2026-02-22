@@ -23,6 +23,12 @@ import {
   WallErrorBoundary,
   VersionBadge,
 } from './components';
+import {
+  WallEmptyState,
+  WallLoadingState,
+  WallAuthErrorState,
+  WallErrorState,
+} from './components/WallStates';
 import { notify } from '../../lib/notify';
 import { MockToggle } from '../../components/common/MockToggle';
 import { mhEnv } from '../../lib/mhEnv';
@@ -41,7 +47,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useModeAwareAction } from '../../hooks/useModeAwareAction';
 import { usePageModeWithAuthState, type PageMode } from '../../hooks/usePageMode';
 import { useEffectiveRole } from '../../hooks/useEffectiveRole';
-import { ROUTES } from '../../constants/routes';
 import {
   COMMUNITY_WALL_ROLE_PARAM,
   COMMUNITY_WALL_ROLE_STORAGE_KEY,
@@ -62,7 +67,7 @@ function getMetadataString(metadata: unknown, key: 'name' | 'full_name'): string
     return null;
   }
 
-  const candidate = Reflect.get(metadata, key);
+  const candidate = (metadata as Record<string, unknown>)[key];
   if (typeof candidate !== 'string') {
     return null;
   }
@@ -236,7 +241,11 @@ function WallInner() {
         return;
       }
 
-      const nextParams = updateURLParam(searchParamsRef.current, COMMUNITY_WALL_ROLE_PARAM, newRole);
+      const nextParams = updateURLParam(
+        searchParamsRef.current,
+        COMMUNITY_WALL_ROLE_PARAM,
+        newRole
+      );
       setSearchParams(nextParams, { replace: true });
       safeLocalStorage.setItem(COMMUNITY_WALL_ROLE_STORAGE_KEY, newRole);
     },
@@ -440,117 +449,27 @@ function WallInner() {
 
   // ============ 條件渲染區（所有 Hooks 已在上方宣告完畢）============
 
-  // 無 communityId
-  if (!communityId) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <div className="border-brand/10 rounded-2xl border bg-white px-8 py-10 text-center shadow-[0_10px_30px_rgba(0,34,73,0.08)]">
-          <div className="mb-3 text-4xl">🧭</div>
-          <p className="mb-4 text-base font-semibold text-ink-900">找不到指定的社區牆</p>
-          <p className="mb-6 text-sm text-ink-600">請確認網址是否正確，或回到首頁重新選擇社區。</p>
-          <a
-            href={ROUTES.HOME}
-            className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-brand-600"
-          >
-            回到首頁
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  // Auth 載入中
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <GlobalHeader mode="community" title="載入中..." />
-        <div className="mx-auto max-w-[960px] p-2.5">
-          <WallSkeleton />
-        </div>
-      </div>
-    );
-  }
-
-  // Auth 錯誤
+  if (!communityId) return <WallEmptyState />;
+  if (authLoading) return <WallLoadingState skeleton={<WallSkeleton />} />;
   if (authError) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <GlobalHeader mode="community" title="登入異常" />
-        <div className="mx-auto max-w-[960px] p-4">
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
-            <p className="text-lg font-semibold text-red-700">登入狀態異常</p>
-            <p className="mt-2 text-sm text-red-600">{authError.message}</p>
-            <button
-              type="button"
-              onClick={handleReload}
-              disabled={isReloading}
-              aria-busy={isReloading}
-              className="mt-4 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-700"
-            >
-              {isReloading ? '⏳ 重新整理中…' : '重新載入'}
-            </button>
-          </div>
-        </div>
-      </div>
+      <WallAuthErrorState
+        message={authError.message}
+        isReloading={isReloading}
+        onReload={handleReload}
+      />
     );
   }
-
-  // Loading 狀態（僅 API 模式）
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <GlobalHeader mode="community" title="載入中..." />
-        <div className="mx-auto max-w-[960px] p-2.5">
-          <WallSkeleton />
-        </div>
-      </div>
-    );
-  }
-
-  // Error 狀態（僅 API 模式）
+  if (isLoading) return <WallLoadingState skeleton={<WallSkeleton />} />;
   if (error) {
-    const errorMsg = error.message || '';
-    const isAuthError =
-      errorMsg.includes('401') || errorMsg.includes('403') || errorMsg.includes('權限');
-
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft">
-        <div className="text-center">
-          <div className="mb-2 text-2xl">{isAuthError ? '🔐' : '😢'}</div>
-          <div className="mb-2 text-sm text-ink-600">
-            {isAuthError ? '請先登入' : '載入失敗，請稍後再試'}
-          </div>
-          {isAuthError ? (
-            <button
-              type="button"
-              onClick={handleLogin}
-              className="rounded-lg bg-brand px-4 py-2 text-sm text-white"
-            >
-              前往登入
-            </button>
-          ) : (
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-              <button
-                type="button"
-                onClick={handleReload}
-                disabled={isReloading}
-                aria-busy={isReloading}
-                className={`border-brand/40 hover:bg-brand/10 rounded-lg border px-4 py-2 text-sm font-semibold transition ${isReloading ? 'text-brand/60 cursor-not-allowed' : 'text-brand'}`}
-              >
-                {isReloading ? '⏳ 重新整理中…' : '🔄 重新整理'}
-              </button>
-              <button
-                type="button"
-                onClick={forceEnableMock}
-                className="rounded-lg bg-[var(--mh-color-1a1a2e)] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
-              >
-                🧪 改用示範資料
-              </button>
-            </div>
-          )}
-        </div>
-        <VersionBadge />
-      </div>
+      <WallErrorState
+        error={error}
+        isReloading={isReloading}
+        onReload={handleReload}
+        onLogin={handleLogin}
+        onForceEnableMock={forceEnableMock}
+      />
     );
   }
 

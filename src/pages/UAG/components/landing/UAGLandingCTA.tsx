@@ -15,9 +15,7 @@ export function UAGLandingCTA() {
   return (
     <section className={styles['landing-cta']}>
       <h2 className={styles['landing-cta-title']}>先看看再決定？</h2>
-      <p className={styles['landing-cta-desc']}>
-        不用註冊，直接體驗完整後台介面
-      </p>
+      <p className={styles['landing-cta-desc']}>不用註冊，直接體驗完整後台介面</p>
 
       <div className={styles['landing-actions']}>
         <button

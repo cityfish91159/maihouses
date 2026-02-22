@@ -48,10 +48,11 @@ export default function AssetMonitor({ leads, onSendMessage, onViewChat }: Asset
                 const { percent, timeDisplay } = calculateProtectionInfo(lead);
                 const gradeKey = lead.grade.toLowerCase();
                 const protectText = getProtectionText(lead);
-                const gradeClass =
-                  styles[`lead-grade-${gradeKey}`] ?? styles['lead-grade-f'];
-                const protectTextClass = styles[`protect-text-${gradeKey}`] ?? styles['protect-text-f'];
-                const progressFillClass = styles[`progress-fill-${gradeKey}`] ?? styles['progress-fill-f'];
+                const gradeClass = styles[`lead-grade-${gradeKey}`] ?? styles['lead-grade-f'];
+                const protectTextClass =
+                  styles[`protect-text-${gradeKey}`] ?? styles['protect-text-f'];
+                const progressFillClass =
+                  styles[`progress-fill-${gradeKey}`] ?? styles['progress-fill-f'];
                 const filledSegmentCount = Math.max(0, Math.min(20, Math.round(percent / 5)));
 
                 return (

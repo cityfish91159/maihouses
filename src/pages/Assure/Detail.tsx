@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrustRoom } from '../../hooks/useTrustRoom';
 import { RotateCcw, User, Briefcase, Zap, ShieldCheck, FilePlus } from 'lucide-react';
@@ -54,34 +54,44 @@ export default function AssureDetail() {
   const [pendingAction, setPendingAction] = useState<null | 'pay' | 'reset'>(null);
   const [hasDismissedDataModal, setHasDismissedDataModal] = useState(false);
 
-  // var(--mh-color-1133bb): 評價提示 Modal
+  // 評價提示 Modal
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
 
   // Note: Token handling and initialization is now managed by useTrustRoom hook
   // We just need to handle the "No Token" state in the UI
 
-  const handleAction = async (endpoint: string, body: Record<string, unknown> = {}) => {
-    setPendingAction(null);
-    const success = await dispatchAction(endpoint, body);
-    if (success) {
-      setInputBuffer('');
-      setSupplementInput('');
-    }
-    return success;
-  };
+  const handleAction = useCallback(
+    async (endpoint: string, body: Record<string, unknown> = {}) => {
+      setPendingAction(null);
+      const success = await dispatchAction(endpoint, body);
+      if (success) {
+        setInputBuffer('');
+        setSupplementInput('');
+      }
+      return success;
+    },
+    [dispatchAction]
+  );
 
-  const submitAgent = (step: string) =>
-    handleAction('submit', { step, data: { note: inputBuffer } });
-  const confirmStep = async (step: string) => {
-    const success = await handleAction('confirm', { step, note: inputBuffer });
-    // var(--mh-color-1133bb): Step 2 確認成功後 500ms 彈出評價提示
-    if (success && step === '2' && role === 'buyer') {
-      setTimeout(() => {
-        setShowReviewPrompt(true);
-      }, REVIEW_PROMPT_DELAY_MS);
-    }
-  };
-  const pay = () => {
+  const submitAgent = useCallback(
+    (step: string) => handleAction('submit', { step, data: { note: inputBuffer } }),
+    [handleAction, inputBuffer]
+  );
+
+  const confirmStep = useCallback(
+    async (step: string) => {
+      const success = await handleAction('confirm', { step, note: inputBuffer });
+      // Step 2 確認成功後 500ms 彈出評價提示
+      if (success && step === '2' && role === 'buyer') {
+        setTimeout(() => {
+          setShowReviewPrompt(true);
+        }, REVIEW_PROMPT_DELAY_MS);
+      }
+    },
+    [handleAction, inputBuffer, role]
+  );
+
+  const pay = useCallback(() => {
     if (pendingAction !== 'pay') {
       setPendingAction('pay');
       notify.info('再點一次確認付款');
@@ -89,16 +99,22 @@ export default function AssureDetail() {
     }
     setPendingAction(null);
     handleAction('payment');
-  };
-  const toggleCheck = (itemId: string, checked: boolean) => {
-    if (role === 'buyer') handleAction('checklist', { itemId, checked });
-  };
-  const addSupplement = () => {
+  }, [handleAction, pendingAction]);
+
+  const toggleCheck = useCallback(
+    (itemId: string, checked: boolean) => {
+      if (role === 'buyer') handleAction('checklist', { itemId, checked });
+    },
+    [handleAction, role]
+  );
+
+  const addSupplement = useCallback(() => {
     const content = supplementInput.trim();
     if (!content) return;
     handleAction('supplement', { content });
-  };
-  const reset = () => {
+  }, [handleAction, supplementInput]);
+
+  const reset = useCallback(() => {
     if (pendingAction !== 'reset') {
       setPendingAction('reset');
       notify.warning('再點一次確認重置');
@@ -106,7 +122,7 @@ export default function AssureDetail() {
     }
     setPendingAction(null);
     handleAction('reset');
-  };
+  }, [handleAction, pendingAction]);
 
   useEffect(() => {
     if (!pendingAction) return;
@@ -361,6 +377,7 @@ export default function AssureDetail() {
           </p>
           <div className="flex gap-2">
             <input
+              name="supplement"
               value={supplementInput}
               onChange={(e) => setSupplementInput(e.target.value)}
               className="flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
@@ -389,7 +406,7 @@ export default function AssureDetail() {
         />
       )}
 
-      {/* var(--mh-color-1133bb): 評價提示 Modal */}
+      {/* 評價提示 Modal */}
       {showReviewPrompt && tx && caseId && lastAgentId && (
         <ReviewPromptModal
           open={showReviewPrompt}

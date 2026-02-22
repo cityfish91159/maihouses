@@ -55,14 +55,18 @@ export function CaseSelector({
               isActive ? 'border-2 border-brand bg-indigo-50' : 'border border-slate-200 bg-white'
             }`}
           >
-            <div className={`mb-0.5 text-xs font-bold ${isActive ? 'text-brand' : 'text-slate-700'}`}>
+            <div
+              className={`mb-0.5 text-xs font-bold ${isActive ? 'text-brand' : 'text-slate-700'}`}
+            >
               {buyerDisplay.name}
             </div>
             <div className="text-ink-300 mb-1 max-w-[120px] truncate whitespace-nowrap text-[11px]">
               {c.propertyTitle}
             </div>
             <div className="flex items-center gap-1.5">
-              <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${statusBadgeClass}`}>
+              <span
+                className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${statusBadgeClass}`}
+              >
                 M{c.currentStep}
               </span>
               <span className="text-[10px] text-slate-400">{formatRelativeTime(c.lastUpdate)}</span>

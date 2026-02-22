@@ -57,10 +57,10 @@ describe('useCommunityList', () => {
 
   it('成功載入並回傳社區清單（含中文）', async () => {
     vi.mocked(fetch).mockResolvedValue(
-      new Response(
-        JSON.stringify({ success: true, data: MOCK_COMMUNITIES }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      )
+      new Response(JSON.stringify({ success: true, data: MOCK_COMMUNITIES }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
     );
 
     const { result } = renderHook(() => useCommunityList(), {
@@ -75,9 +75,7 @@ describe('useCommunityList', () => {
   });
 
   it('HTTP 5xx 時 isError=true', async () => {
-    vi.mocked(fetch).mockResolvedValue(
-      new Response('{}', { status: 500 })
-    );
+    vi.mocked(fetch).mockResolvedValue(new Response('{}', { status: 500 }));
 
     const { result } = renderHook(() => useCommunityList(), {
       wrapper: makeWrapper(),
@@ -101,10 +99,10 @@ describe('useCommunityList', () => {
 
   it('API 回傳空陣列時 data 為 []', async () => {
     vi.mocked(fetch).mockResolvedValue(
-      new Response(
-        JSON.stringify({ success: true, data: [] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      )
+      new Response(JSON.stringify({ success: true, data: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
     );
 
     const { result } = renderHook(() => useCommunityList(), {
@@ -118,10 +116,10 @@ describe('useCommunityList', () => {
 
   it('回傳 refetch 函式', async () => {
     vi.mocked(fetch).mockResolvedValue(
-      new Response(
-        JSON.stringify({ success: true, data: [] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      )
+      new Response(JSON.stringify({ success: true, data: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
     );
 
     const { result } = renderHook(() => useCommunityList(), {
@@ -154,7 +152,16 @@ describe('useCommunityList', () => {
       new Response(
         JSON.stringify({
           success: true,
-          data: [{ id: 'not-a-valid-uuid', name: '無效社區', address: null, image: null, post_count: 0, review_count: 0 }],
+          data: [
+            {
+              id: 'not-a-valid-uuid',
+              name: '無效社區',
+              address: null,
+              image: null,
+              post_count: 0,
+              review_count: 0,
+            },
+          ],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       )
@@ -171,10 +178,10 @@ describe('useCommunityList', () => {
 
   it('API 回傳結構完全不符預期時 isError=true（Zod 深層驗證失敗）', async () => {
     vi.mocked(fetch).mockResolvedValue(
-      new Response(
-        JSON.stringify({ message: '完全不符合格式' }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      )
+      new Response(JSON.stringify({ message: '完全不符合格式' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
     );
 
     const { result } = renderHook(() => useCommunityList(), {

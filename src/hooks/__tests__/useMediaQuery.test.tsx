@@ -14,17 +14,11 @@ function createMatchMediaController(initialMatches: boolean) {
         return matches;
       },
       onchange: null,
-      addEventListener: (
-        eventName: string,
-        listener: EventListenerOrEventListenerObject
-      ) => {
+      addEventListener: (eventName: string, listener: EventListenerOrEventListenerObject) => {
         if (eventName !== 'change') return;
         listeners.add(listener as MediaQueryChangeListener);
       },
-      removeEventListener: (
-        eventName: string,
-        listener: EventListenerOrEventListenerObject
-      ) => {
+      removeEventListener: (eventName: string, listener: EventListenerOrEventListenerObject) => {
         if (eventName !== 'change') return;
         listeners.delete(listener as MediaQueryChangeListener);
       },

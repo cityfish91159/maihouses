@@ -4,7 +4,9 @@ import { useMood } from '../context/MoodContext';
 const chipClassName = (active: boolean): string =>
   [
     'cursor-pointer rounded-full border px-2.5 py-1.5 text-[var(--mh-color-0a2246)]',
-    active ? 'border-[var(--mh-color-1749d7)] bg-[var(--mh-color-eaf1ff)]' : 'border-[var(--mh-color-dddddd)] bg-white',
+    active
+      ? 'border-[var(--mh-color-1749d7)] bg-[var(--mh-color-eaf1ff)]'
+      : 'border-[var(--mh-color-dddddd)] bg-white',
   ].join(' ');
 
 export const FloatingMoodChips: React.FC = () => {

@@ -69,6 +69,10 @@
   --error: var(--mh-color-ef4444);
   --warning: var(--mh-color-f59e0b);
 
+  /* brand focus shadow */
+  --brand-focus-shadow-10: rgba(0, 56, 90, 0.1);
+  --brand-focus-shadow-15: rgba(0, 56, 90, 0.15);
+
   /* ui-ux-pro-max: Flat Design 過渡 (150-200ms) */
   --transition-fast: 100ms ease;
   --transition: 150ms ease;
@@ -378,13 +382,13 @@
 /* ui-ux-pro-max: Micro-interactions - hover (50-100ms), subtle visual change */
 .deai-v2-bubble:hover {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(0, 56, 90, 0.1);
+  box-shadow: 0 0 0 3px var(--brand-focus-shadow-10);
 }
 
 .deai-v2-bubble:focus {
   outline: none;
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(0, 56, 90, 0.15);
+  box-shadow: 0 0 0 3px var(--brand-focus-shadow-15);
 }
 
 /* ui-ux-pro-max: Flat Design - solid background colors */

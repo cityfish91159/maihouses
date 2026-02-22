@@ -121,7 +121,15 @@ export function CallConfirmPanel({
     } finally {
       setIsSubmitting(false);
     }
-  }, [displayedPhone, isSubmitting, normalizedPhone, onClose, onFallbackContact, onTrustAction, trustChecked]);
+  }, [
+    displayedPhone,
+    isSubmitting,
+    normalizedPhone,
+    onClose,
+    onFallbackContact,
+    onTrustAction,
+    trustChecked,
+  ]);
 
   const handleFallbackSubmit = useCallback(async () => {
     if (isSubmitting) return;
@@ -240,7 +248,10 @@ export function CallConfirmPanel({
                   <p className="text-sm text-text-muted">
                     你仍可先送出聯絡需求，系統會通知經紀人儘快回電。
                   </p>
-                  <label htmlFor={fallbackInputId} className="mt-3 block text-sm font-medium text-ink-900">
+                  <label
+                    htmlFor={fallbackInputId}
+                    className="mt-3 block text-sm font-medium text-ink-900"
+                  >
                     你的電話
                   </label>
                   <input
@@ -265,7 +276,7 @@ export function CallConfirmPanel({
                       'mt-1 min-h-[44px] w-full rounded-xl border bg-bg-card px-3 text-sm text-ink-900 outline-none placeholder:text-text-muted focus:ring-2',
                       fallbackPhoneError
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-200 motion-safe:animate-shake'
-                        : 'border-border focus:border-brand-500 focus:ring-brand-200',
+                        : 'focus:ring-brand-200 border-border focus:border-brand-500',
                       motionA11y.transitionColors
                     )}
                   />

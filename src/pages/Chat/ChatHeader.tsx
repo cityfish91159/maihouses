@@ -1,4 +1,3 @@
-
 interface ChatHeaderProps {
   isLoading?: boolean;
   counterpartName?: string | undefined;
@@ -72,7 +71,12 @@ export function ChatHeader({
         <div className="flex items-center gap-3">
           <div className="h-16 w-20 overflow-hidden rounded-xl border border-brand-100 bg-slate-50">
             {propertyImage ? (
-              <img src={propertyImage} alt="" aria-hidden="true" className="size-full object-cover" />
+              <img
+                src={propertyImage}
+                alt=""
+                aria-hidden="true"
+                className="size-full object-cover"
+              />
             ) : null}
           </div>
           <div>

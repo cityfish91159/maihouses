@@ -192,7 +192,11 @@ export const MediaSection: React.FC = () => {
                     {Array.from({ length: 20 }, (_, idx) => (
                       <span
                         key={idx}
-                        className={idx < Math.round(compressionProgress / 5) ? 'bg-blue-500' : 'bg-transparent'}
+                        className={
+                          idx < Math.round(compressionProgress / 5)
+                            ? 'bg-blue-500'
+                            : 'bg-transparent'
+                        }
                       />
                     ))}
                   </div>

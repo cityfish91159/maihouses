@@ -23,6 +23,11 @@ const LAST_CHAT_STORAGE_KEY = 'mai-last-chat';
 const GOODNIGHT_STORAGE_PREFIX = 'mai-goodnight-';
 const GOODNIGHT_SENT_VALUE = '1';
 
+const TYPEWRITER_STEP_DELAY_MS = 1500;
+const GREETING_ROTATE_INTERVAL_MS = 5000;
+const STATUS_RESET_SUCCESS_MS = 2000;
+const STATUS_RESET_ERROR_MS = 2500;
+
 function getGoodnightStorageKey(date: Date): string {
   return `${GOODNIGHT_STORAGE_PREFIX}${date.toDateString()}`;
 }
@@ -67,7 +72,7 @@ export default function SmartAsk() {
           },
         ]);
         safeLocalStorage.setItem(LAST_CHAT_STORAGE_KEY, today);
-      }, 1500);
+      }, TYPEWRITER_STEP_DELAY_MS);
 
       return () => clearTimeout(timer);
     }
@@ -96,7 +101,7 @@ export default function SmartAsk() {
             },
           ]);
           safeLocalStorage.setItem(getGoodnightStorageKey(now), GOODNIGHT_SENT_VALUE);
-        }, 5000);
+        }, GREETING_ROTATE_INTERVAL_MS);
 
         return () => clearTimeout(timer);
       }
@@ -158,10 +163,7 @@ export default function SmartAsk() {
           const lastIdx = prev.length - 1;
           const last = prev[lastIdx];
           if (!last || last.role !== 'assistant') return prev;
-          return [
-            ...prev.slice(0, lastIdx),
-            { ...last, content: last.content + chunk },
-          ];
+          return [...prev.slice(0, lastIdx), { ...last, content: last.content + chunk }];
         });
       });
 
@@ -188,11 +190,11 @@ export default function SmartAsk() {
   // 成功/錯誤狀態維持短暫提示後回到 idle
   useEffect(() => {
     if (status === 'success') {
-      const timer = setTimeout(() => setStatus('idle'), 2000);
+      const timer = setTimeout(() => setStatus('idle'), STATUS_RESET_SUCCESS_MS);
       return () => clearTimeout(timer);
     }
     if (status === 'error') {
-      const timer = setTimeout(() => setStatus('idle'), 2500);
+      const timer = setTimeout(() => setStatus('idle'), STATUS_RESET_ERROR_MS);
       return () => clearTimeout(timer);
     }
   }, [status]);
@@ -202,9 +204,7 @@ export default function SmartAsk() {
       {/* --- Background Elements --- */}
       <div className="bg-brand-100/30 pointer-events-none absolute -right-24 -top-24 size-80 rounded-full mix-blend-multiply blur-3xl"></div>
       <div className="bg-brand-700/5 pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full mix-blend-multiply blur-3xl"></div>
-      <div
-        className="pointer-events-none absolute inset-0 z-0 [background-image:linear-gradient(to_right,rgba(var(--brand-primary-rgb),0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(var(--brand-primary-rgb),0.03)_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]"
-      ></div>
+      <div className="pointer-events-none absolute inset-0 z-0 [background-image:linear-gradient(to_right,rgba(var(--brand-primary-rgb),0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(var(--brand-primary-rgb),0.03)_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
 
       {/* Decorative Top Bar */}
       <div className="relative z-20 h-1.5 w-full bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500"></div>

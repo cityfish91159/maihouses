@@ -273,4 +273,3 @@ export function migrateLegacyData(oldKey: string, newKey?: string): boolean {
     return false;
   }
 }
-

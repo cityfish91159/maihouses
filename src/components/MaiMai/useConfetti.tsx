@@ -44,7 +44,13 @@ export function useConfetti(options: UseConfettiOptions = {}) {
     particleCount = 100,
     spread = 70,
     origin = { x: 0.5, y: 0.6 },
-    colors = ['var(--mh-color-fbbf24)', 'var(--mh-color-f472b6)', 'var(--mh-color-38bdf8)', 'var(--mh-color-a78bfa)', 'var(--mh-color-22c55e)'],
+    colors = [
+      'var(--mh-color-fbbf24)',
+      'var(--mh-color-f472b6)',
+      'var(--mh-color-38bdf8)',
+      'var(--mh-color-a78bfa)',
+      'var(--mh-color-22c55e)',
+    ],
   } = options;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -83,10 +89,7 @@ export function useConfetti(options: UseConfettiOptions = {}) {
   // Canvas 組件 (useMemo 優於 useCallback,因為返回 JSX 而非函數)
   const ConfettiCanvas = useCallback((): JSX.Element => {
     return (
-      <canvas
-        ref={canvasRef}
-        className="pointer-events-none fixed inset-0 z-[9999] size-full"
-      />
+      <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-[9999] size-full" />
     );
   }, []);
 
