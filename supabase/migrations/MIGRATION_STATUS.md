@@ -1,6 +1,6 @@
 ﻿# Migration 執行狀態追蹤
 
-最後確認：2026-02-08
+最後確認：2026-02-22
 
 ## 已執行（經 DB 查詢確認）
 
@@ -31,6 +31,14 @@
 | `20260122_be5_create_case_hash_fix.sql`      | fn_create_trust_case hash 修復          | ⚠️ 待確認 |
 | `20260122_be5_update_step_return_old.sql`    | fn_update_trust_case_step 回傳 old_step | ⚠️ 待確認 |
 | `20260122_push_subscriptions_fail_count.sql` | BE-8 fail_count 欄位                    | ⚠️ 待確認 |
+
+## 新增待執行（2026-02-22 P0 安全收斂）
+
+| 檔案                                                  | 內容                                                | 狀態      |
+| ----------------------------------------------------- | --------------------------------------------------- | --------- |
+| `20260222201000_p0_harden_public_insert_policies.sql` | `shadow_logs` / `rival_decoder` INSERT policy 收斂 | ⚠️ 待執行 |
+| `20260222202000_p0_harden_security_definer_boundaries.sql` | `get_property_stats_optimized` 權限與 search_path 收斂 | ⚠️ 待執行 |
+| `20260222_sql_audit_40_p0_security_verification.sql` | P0 安全驗證（read-only）                            | ⚠️ 待執行 |
 
 ## 驗證指令
 

@@ -1,0 +1,16 @@
+-- ============================================================================
+-- SQL Audit Flow (Manual Run Order)
+-- Date: 2026-02-22
+-- ============================================================================
+-- Run these files in order:
+-- 1) 20260222_sql_audit_10_effective_state_check.sql
+-- 2) 20260222_sql_audit_20_reconcile_migration_history.sql
+-- 3) 20260222_sql_audit_30_final_summary.sql
+-- 4) 20260222_sql_audit_40_p0_security_verification.sql
+--
+-- If step 10 contains any FALSE in hardening checks:
+-- - Execute these migration files first, then rerun step 10:
+--   a) 20260221170000_sql_logic_security_hardening_followup.sql
+--   b) 20260221174000_p0_rls_ownership_failsafe_fix.sql
+--   c) 20260222201000_p0_harden_public_insert_policies.sql
+--   d) 20260222202000_p0_harden_security_definer_boundaries.sql
